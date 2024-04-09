@@ -76,5 +76,5 @@ For more on how this all works and how to get started, check out these companion
 [MAGIC]: https://www.github.com/planet-nine-app/MAGIC
 [teleportation]: https://www.github.com/planet-nine-app/teleportation
 [manifest-v3]: https://adguard.com/en/blog/chrome-manifest-v3-where-we-stand.html
-[ficus]: https://github.com/planet-nine-app/the-advancement/blob/main/ficus.jpg?raw=true
+[ficus]: https://github.com/planet-nine-app/the-advancement/blob/main/resources/ficus.jpg?raw=true
 
