@@ -4,6 +4,8 @@ The Advancement is a repo with a mission to help a movement to improve the world
 
 ## Overview
 
+_This repo is a work in progress_
+
 *The Advancement* is the *free* consumer-facing application of the [Planet Nine][planet-nine] stack, built on top of [Sessionless], [MAGIC], and [teleportation].
 It is a set of browser extensions paired with companion apps that allow users to navigate cyberspace without a shared credential like email, and without the need for passwords. 
 Since it allows for a lot of behaviors, there's a bit of a smorgasbord (I suspect this word won't translate well, but many of its synonyms in English are idiomatic. Maybe conglomeration?) to choose from. 
@@ -39,14 +41,17 @@ And who likes advertising?
 
 I've always had this thing where I don't believe it should ever be my responsibility to tell you who I am.
 99% of the time you shouldn't have to know who I am at all. 
-For the 1% of the time that you do, like a bank or court I guess, 
+For the 1% of the time that you do, like a bank or court I guess, we can leave that to governments.
 
+To this end, the first feature of The Advancement is to provide users with a set of emails that, for all intents and purposes, do not exist. 
+Users can optionally use these emails automagically to sign up for things around the internet. 
+The Advancement will remember which email is used where, just like a password manager, so that users don't have to.
+Similarly if you need to put in an email to get past some gatekeeping, just magic on in your Advancement email, and let us handle the cans of spam that'll be lobbed at you. 
 
+If you haven't given up on email entirely, and want to clean up yours, I suggest checking out [this project](https://github.com/HellBri8nger/gmail-unsubscriber) which provides a python script for unsubscribing from all the garbage The Advertisement has signed you up for. 
 
-
-
-The first order of business in defending against the Advertisement is identifying them in the first place.
-The Advancement provides browser extensions for doing just that. 
+The second order of business in defending against the Advertisement is identifying them in the first place.
+The Advancement provides browser extensions for doing just that or at least it will once I finish it). 
 Most browsers are supported, if your browser of choice isn't on the list below, let us know.
 
 #### Supported browsers
@@ -60,7 +65,7 @@ Not everyone has fun the same way, so we wanted to keep it flexible.
 
 These extensions are ad ~blockers~ cover-uppers. 
 With [Google's adoption of manifest v3][manifest-v3], ad blockers are losing their ability to rely on huge filter sets for blocking ad domains.
-In that link you can read about one ad blockers attempt to continue without the filter rules, but we wanted to go an alternative route.
+In that link you can read about one ad blocker's attempt to continue without the filter rules, but we wanted to go an alternative route.
 
 You see there's nothing stopping us in manifest v3 from just covering up ads with this harmless ficus.
 
