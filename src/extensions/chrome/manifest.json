@@ -6,14 +6,15 @@
     "icons": {
       "16": "./assets/icons/hi_icon.png"
     },
-    "content_scripts": [
-        {
-          "matches": ["<all_urls>"],
-          "css": ["styles.css"],
-          "js": ["./content/index.js"]
-        }
-      ]
-}
+     "content_scripts": [{
+        "matches": ["<all_urls>"],
+        "js": [
+          "content/scripts/InputDetector.js",    
+          "content/scripts/TypingSimulator.js", 
+          "content/index.js"           
+        ]
+      }]
+    }
 
 
   
