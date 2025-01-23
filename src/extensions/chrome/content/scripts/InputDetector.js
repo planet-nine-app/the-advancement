@@ -63,11 +63,11 @@ class InputDetector {
   markField(input, className) {
       input.classList.add(className);
       const iconContainer = document.createElement('div');
-      iconContainer.className = 'password-manager-icon';
+      iconContainer.className = 'disguise-self';
       input.parentNode.insertBefore(iconContainer, input.nextSibling);
 
       iconContainer.addEventListener('click', () => {
-          console.log(`Clicked password manager icon for ${className}`);
+          console.log(`Clicked disguise self icon for ${className}`);
       });
   }
 
