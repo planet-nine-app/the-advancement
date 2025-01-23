@@ -68,13 +68,6 @@ observer.observe(document.body, {
         await simulator.typeIntoElement(element, email);
         event.preventDefault();
       }
-      if (element.type === 'password') {
-        element.focus();
-        //element.value = "Password1!";
-        const password = 'Password1!';
-        await simulator.typeIntoElement(element, password);
-        event.preventDefault();
-      }
     });
   }, 3000);
 })();
