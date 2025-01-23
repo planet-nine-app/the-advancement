@@ -84,10 +84,6 @@ class InputDetector {
 
       // Process regular inputs
       for (const input of inputs) {
-          if (input.type === 'password') {
-              this.markField(input, 'password-field');
-              continue;
-          }
           if (
               input.type === 'email' ||
               input.id.toLowerCase().includes('email') ||
@@ -104,11 +100,6 @@ class InputDetector {
       // Process shadow DOM inputs
       for (const input of shadowInputs) {
           console.log('Processing shadow input:', input);
-          if (input.type === 'password') {
-              console.log('found a password field');
-              this.markField(input, 'password-field');
-              continue;
-          }
           if (
               input.type === 'email' ||
               input.id.toLowerCase().includes('email') ||
