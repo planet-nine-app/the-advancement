@@ -2,7 +2,7 @@
     "name": "The Advancement",
     "description": "Trolling the oligarchs",
     "version": "1.0",
-    "manifest_version": 3,
+    "manifest_version": 1,
     "icons": {
       "16": "./assets/icons/hi_icon.png"
     },
