@@ -1,0 +1,17 @@
+{
+    "name": "The Advancement",
+    "description": "Trolling the oligarchs",
+    "version": "0.0.1",
+    "manifest_version": 1,
+    "icons": {
+      "16": "./assets/icons/hi_icon.png"
+    },
+     "content_scripts": [{
+        "matches": ["<all_urls>"],
+        "js": [
+          "content/scripts/InputDetector.js",    
+          "content/scripts/TypingSimulator.js", 
+          "content/index.js"           
+        ]
+      }]
+    }
