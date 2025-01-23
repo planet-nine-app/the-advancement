@@ -1,6 +1,6 @@
 class InputDetector {
   constructor() {
-      this.loginKeywords = ['user', 'username', 'login', 'account'];
+      this.loginKeywords = ['user', 'username', 'login', 'account', 'email'];
   }
 
   searchNode(node) {
