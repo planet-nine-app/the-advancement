@@ -672,7 +672,47 @@ I talked much earlier about handles, and how I've had different ones over the ye
 In games like these I could have the same handle, and be different things. 
 Zach the fighter, Zach the paladin, and Zach the, ahem, treasure hunter, each had different incredible adventures. 
 
+The whole of the digital realm I could be whomever or whatever I wanted.
+Companies could give me structure to fit myself into, or some lack of structure to explore.
+The notion that you had to be yourself was so anathema that you would never even dream of sharing personal information in some random chat room. 
 
+You'd drop into a chat room, get bombarded with "asl," and only fools would actually drop the correct answers to those questions. 
+And in this way the creepy old men would self-select by "being" totally legal teen women who would go off together and have criminally unsatisfying lesbian cybersex. 
+
+And the rest of us who weren't there because nudey pics still downloaded too slowly were the most interesting group of philosophers, scientists, inventors, artists, and writers ever assembled--it didn't matter that in real life we were whatever we were, and we didn't have to share our phone numbers to get there.
+That's what the internet's for goshdarnit!
+
+I want this back.
+
+### The frontlines
+
+In 2018, the EU passed the first real protections against the incredible spying apparatus the internet had become.
+Probably the most noticable thing it did from a day-to-day perspective is that it makes websites which use cookies to track you have to disclose that they do so, and make them opt-in.
+How many of y'all know how that works, and what you should opt-in to?
+How many of you care to learn?
+
+I'll give you two guesses as to who the biggest provider of cookie-based tracking is.
+
+And here's how that tracking works. 
+Google and Meta each give you a number.
+Every time you log in to anything anywhere, you're given another number.
+
+Then Google and Meta spend billions and billions of dollars making sure that they can tie the second number to the first. 
+Then that first number is given some set of lifetime-values: the amount of money you're likely to spend based on your demographics, and your personality, all of which they know because they've been spying on you since the first time your mouse clicked login.
+
+And somewhere, deep in the bowels of a network you're not invited to, they've added those two numbers together, and probably handed it off to all the governments that they regularly break the regulations of with impunity. 
+I don't know what this number looks like, but in computers we have these things called universal unique identifiers (UUIDs), and they look like this: C6B20666-6AF4-4DF6-AB57-8F47A429D415. 
+
+And that's what you and I are: C6B20666-6AF4-4DF6-AB57-8F47A429D415, just a hexadecimal number, followed around the internet by the largest corporations the Earth has ever known. 
+
+Against this there are browsers blocking trackers like Firefox and even Safari, browser extensions fighting back like Privacy Badger and ClearURLs, platforms like signal and matrix for messaging, ad blockers like UBlock, DuckDuckGo for search, Protonmail for email, OpenStreetMap for maps, self-hosted cloud apps you can run in your house. 
+
+These are the projects on the frontlines of this battle. 
+Please check them out and give them your support.
+
+###  
+
+ 
 
 
 
