@@ -710,7 +710,54 @@ Against this there are browsers blocking trackers like Firefox and even Safari, 
 These are the projects on the frontlines of this battle. 
 Please check them out and give them your support.
 
-###  
+### Fuckin' nazis
+
+My dad's favorite movie is Patton. 
+The movie begins with the incomporable George C. Scott's rendition of the titular general's speech to the third army in advance of the allied invasion of France. 
+It's a good speech.
+
+I remember watching it as a kid, one of those memories that's not really continuous with anything else, just some moment you remember for some reason or another.
+There's a part where Scott's Patton says, "we're going to hold them by the nose, and kick them in the ass!" and my dad turned to me and said, "that's really what he did. His army would hold the front, and then attack the rear."
+
+And so when the richest man on Earth threw a nazi salute up at the inauguration of the president that my dad tried to overthrow the government for it hit a bit personally.
+My dad may have forgotten about the war that his dad fought in, but hearing about it left an impression on me.
+
+So I figured what worked for Patton, might just work for me, and I got to work on the kick them in the ass part.
+
+The specifics of the work are far too much to go into here, but the gist of it is this: build a system that
+
+a) allows for monetization that isn't ad-based
+b) allow users to proliferate their digital identities
+c) mess with existing notions of identity
+
+For now, I'll just ask that you take my word on a). 
+It's obviously quite important, but again too big for here.
+
+For b) we already know the model, but we have a lot more computing horsepower to go along with it.
+You just bring back the handle--Ramdatooki, zweibel, and zkpunk can all live again. 
+And why don't we throw in anonymity alongside pseudonymity. 
+
+Of course websites aren't just going to switch to handles overnight, and remembering which ones you used where is impossible, so what if we treated it like a password manager?
+And what if we setup a mail server that gave everyone random site-by-site emails that did nothing other than confirm themselves when users signed up for and in to things?
+And then, what if we just signed up a few extra users every time you went somewhere, and poked around at some things?
+
+And thinking about that, what if we took all the accounts on social media that people are abandoning because of the nazi thing, and start handing them to people who turn them into zombie bots, and all of a sudden uuids like C6B20666-6AF4-4DF6-AB57-8F47A429D415 started being into different things? 
+What happens to the advertising platforms when all of the spying that they rely on suddenly becomes junk, _not_ because we undid 30 years and trillions of dollars worth of spying infrastructure, but because the number that they think we are just isn't us anymore?
+
+## You are not a number
+
+In the sixties Patrick McGoohan wrote, directed, and starred in an incredible 17 episode show called The Prisoner.
+In it McGoohan plays a spy who attempts to retire, and for doing so is sent to a mysterious island as a prisoner. 
+The opening of the show always features a shadowy character named Number 2 who tells McGoohan that they need information, and that McGoohan is Number Six.
+To this, McGoohan responds:
+
+"I am not a number, I am a free man!"
+
+Turning human beings into numbers is a dehumanizing act akin to calling them animals or statistics. 
+It makes it easier to convince yourself that you're doing the right thing, because there's no way all those poeple are going to figure it out. 
+After all, they were dumb enough to become numbers.
+
+
 
  
 
