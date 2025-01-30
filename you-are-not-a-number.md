@@ -757,10 +757,197 @@ Turning human beings into numbers is a dehumanizing act akin to calling them ani
 It makes it easier to convince yourself that you're doing the right thing, because there's no way all those poeple are going to figure it out. 
 After all, they were dumb enough to become numbers.
 
+But I'd imagine that faced by some similarly nefarious captor dictating to us just what number we had to be our reactions might be similar to the prisoner's... unless we were actual prisoners where this is exactly what happens.
+And at the risk of a reductio ad Hitler, let's also remember how the nazis assigned numbers to the jews and members of other groups they wanted to extinguish. 
+
+#### A brief aside on how computers work, and how we can't get rid of numbers all together
+
+Ok, so letters in computers are called chars, and an ordered group of chars is called a string.
+These are represented inside of the computer as zeros and ones in a system called binary.
+But even that is an abstraction over high and low voltages within the actual circuitry of the chips in the computer.
+
+And so we could say that some computer representation of you was high-high-low-high, and try to convince people that that wasn't a number, but then smart alecs would be like, "oh yeah, but high and low are like five volts and zero volts so it's still really a number." 
+And then all of this would devolve into some barroom discussion of the semantic metaphysics of Maxwell's equations, and while that would be fun for a bit, we'd have lost sight of the fact that billionaires are counting us to get bogged down in semantics rather than revolting.
+
+So we can't get totally away from numbers on computers.
+
+But.
+
+## Nothing says you can't be lots of numbers
+
+#### The Green Lantern
+
+My first job out of high school was as a barista at Starbucks. 
+Being 19 years old, and having to work at five in the morning, wasn't my favorite, but the coffee helped.
+To maximize my ability to intake the coffee, because Howard Schultz forbid you take a second to drink some once the customers start coming in, I would mix hot coffee and iced coffee together.
+To this day, I prefer my coffee luke warm, much to the horror of my wife, and probably you the reader.
+
+For lack of other prospects I stuck around with the company and worked my way up to manager.
+The partners at my first store called my luke warm coffee a green lantern.
+Because when you have a unique drink, that becomes your name at the store.
+
+#### Lazer
+
+We used to play punk rock softball on Wednesdays back then. 
+Chicago has a special breed, played barehanded with a sixteen inch ball. 
+We'd play 30 to a side, forties in hand, in parks around the city.
+
+Athletic ability was not our forte, we were band and theater kids, not jocks, and for some reason I was one of the few people who could throw from third to first with accuracy.
+One night I made a throw and someone (I remember who, but won't dox him here) was like, "damn dude, that was like a laser!"
+And from that night on, I was Lazer to that group. 
+There are still some people who only know me as that.
+
+#### Zachary
+
+How many people would you say you've introduced yourself to? 
+Let's call it a couple thousand. 
+For me most of those people know me as what I introduced myself as, Zach.
+
+There are more than ten, but less than twenty people that know me as Zachary. 
+Sadly that number has dwindled as people have aged, and time has taken them.
+It's what my family calls me. 
+ 
+Who was I in my early twenties?
+The professional Green Lantern, the wild partier Lazer, or Zachary--just some kid trying to find his way in the world?
+Do we not all have these kind of personas?
+
+And aren't we all entitled to not have to share the antics of Lazer with our job and our family? 
+Anyone who's been fired from a job, or trapped in a political polemic with a family member because of a Facebook post knows the answer to that one.
+
+### Billions and billions
+
+If you're the type to hang around the interwebs and join things chances are you've had a password or two stolen, and dumped onto the dark web. 
+Maybe you're already using a password manager because of that, or otherwise making sure passwords are unique across different logins. 
+What if we could do the same with email?
+
+Oho! You exclaim, I already know about adding a + to the end of the first part of my email and making new ones like zach+anotheremail@planetnine.app. 
+But that's just an alias to your original email. 
+I'm talking about just a random new email that you never look at, or have to worry about.
+
+Did you know you can just like setup an email server, and give yourself names?
+People don't really do it that much because there's all this bullshit that the big email providers (google) have added to make sure people don't just get spammed all the time.
+I'll leave it to you to decide whether they're succeeding at keeping the spam at bay, or simply ensuring they're the only spam providers around.
+
+Thing is though, nothing is stopping you from _receiving_ emails.
+
+Now let me ask you this, when's the last time you sent a jaunty personal email to a friend just for fun?
+For the two people who said recently, does the email you used to do that need to be the same email you use to sign in to things? 
+
+How's about the next thing you sign up for we use an email like: C6B20666-6AF4-4DF6-AB57-9F47A429D415@iamnotanumber.com?
+Did you look up to see if this is the same uuid as before?
+Does it matter?
+
+And what if even the domain proliferated so that sometimes you were @iamnotanumber.com, and sometimes you were @oligarchymorelikeolibarfy.com?
+
+And what if all this happened for free, and all you had to do was turn a browser extension on?
+
+And then maybe that random app free trial you signed up for can just go away rather than email you every other day to come back and subscribe.
+
+#### What about my phone number?
+
+Have you seen The Wire?
+If you haven't you should immediately stop reading this, and dedicated the next five seasons worth of tv you watch to the greatest show ever made.
+If you have, you know just how easy it is to get burner phone numbers. 
+
+It isn't your number that matters for the six numbers the website sends you, it's the notion that that phone number is attached to a device that's on your person at all times. 
+So long as we get that code to something that fits that bill then we're good. 
+And again that's the browser extension that gives you a burner number, and then fills in the code. 
+
+At least that's the short-term solution.
+Long-term, we become our own carrier with some kind of rotating number system that follows the law, and doesn't get shared with gigantocorps.
+But Rome wasn't built in a day.
+
+## But what about all those places that already have my number?
+
+In 2008, I was working at the Apple Store on Michigan Avenue in Chicago when the iPhone 3G, and the App Store launched.
+Back in those days, the iPhone only worked with AT&T, and so we had to port a lot of customers numbers over to that service. 
+To do so required a bunch of personal information from the account holder.
+
+Since we were the only way to get these phones, our store served the plebes and elites alike, but if you were a big enough deal you could at least skip the line that wrapped around the block.
+I handled a number of these special transactions, and it was after helping a very nice family get iPhones on their account where the account holder was a certain retired Bulls basketball player who might take it personally if I further reveal who he was, that I realized I was in the wrong business.
+
+I decided then to go back to school.
+It took two years to get all those ducks in a row, but in 2010, I sold or donated about 90% of my possesions, loaded the rest of everythning I owned into my 2000 Camry, and moved out to Portland, OR. to go back to Reed College, the school I had done my freshman year at a decade earlier.
+
+Moving is scary.
+Leaving our comfort zones, the people we know and love, our haunts, the places we feel safe, our _communities_...that's scarier to most of us than even death.
+It's why back in the day exile, and excomunication were the real bad punishments.
+At least with the iron maiden you died fairly quickly, and didn't have to deal with the daily torment that people no longer wanted to be your friend.
+
+Online though you don't have to leave, and go to a new place. 
+I lived through all my friends ditching Friendster for MySpace, and then MySpace for Facebook. 
+It's like that sad reminder that each one of us leaves the playground with our friends one last time, we just don't know it then.
+
+But of course you need somewhere to go. 
+Gore forbid we just ditch the internet and go touch grass or something. 
+
+### DID you, or DID you not?
+
+There is one number we haven't talked about yet used to identify people online. 
+
+DID stands for Distributed IDentifier.
+It's a way of assigning a canonical id to a user within a distributed system.
+The most popular system using DIDs right now is Bluesky, where if you own your own domain you can set your DID in a DNS record and have your handle be handle@<your-domain.com>.
+
+A yoctosecond is 10^-24 seconds.
+It's used to describe the lifetime of really elusive particles.
+It's also about the time it took Meta and Google to connect your Bluesky DID to their uuids. 
+
+I keep trying to update the wikipedia page with this info, but someone keeps erasing it.
+
+The thing is, so long as distributed systems are trying to give you a single canonical identifier, the l337 coders at the gigantocorps will be linking them to their number for you, and serving you ads based on what you post on Bluesky. 
+
+The Fediverse[^11] works in a similar way, but instead of giving you a canonical id for all of the Fediverse, your ids are stored in a server that is federated with the system. 
+That server is typically only linked to one of the Fediverse's implementations, and so if you really really want to you can proliferate your identities across the Fediverse, but to do so you need different emails, and you need to connect to a bunch of different servers, and since this isn't a common use case, none of the existing apps are built to do this. 
+
+I want to be clear that I really like the Fediverse, and AT-protocol endeavors like Bluesky. 
+They are absolutely a step in the right direction, and if they were built now, I think they would have been more careful with how identity was handled. 
+As they exist, the protocols are set, and changing protocols is very difficult as ipv6, tls 1.3, and HTTP/2 can attest to.
+
+The goal is to reward and monetize the content creators on these platforms for blazing the trail, but monetization is out of the scope of this doc. 
+
+## We're living in a society
+
+Humans are social animals.
+That's the axiom of social media, but how social is social media today, and how much of it is just short quips of entertainment?
+
+One day in the car, after our son was born, my wife turned to me and said, "I wish there was a place that adults could just like go, and hang out, and talk with each other, and maybe other adults. Away from kids you know?"
+
+I chuckled and said, "That's called a bar babe. You just described a bar."
+
+I've been to a lot of bars. 
+You know what makes a good bar? 
+People being there when you arrive.
+
+At first it's the bartender, so you get to know them. 
+Then it's regulars.
+Then you and your friends become regulars so you know one of y'all will be there.
+
+This worked before texting.
+And it worked before the bar.
+
+Summer break before eigth grade, I spent most of my days riding my bike to the pool. 
+That's where my friends were. 
+
+Then it was the mall.
+Then it was Pete's garage.
+Then it was Skippy's house.
+Then it was the gazebo.
+Then it was Jack's.
+Then it was the Quad.
+Then it was the Manor.
+
+and so on.
+
+The places are third places. 
+Your home is the first place, your job the second place, and your third place is where you go for your community.
+Instagram is not your community.
+
+There's been much written about the loss of third places, including the sociological dynamo Bowling Alone, which was written about this and other losses in community back in 2000. 
+
 
 
  
-
 
 
 
@@ -797,3 +984,7 @@ After all, they were dumb enough to become numbers.
 [^8]: "So banks don't hold a lot of cash, because cash is better used in investments. So to handle their day-to-day operation they borrow money for really short terms (like for a day) from money market funds. They pay this back with a small amount of interest, and that gets paid to the investors in the money market. When Lehman Brothers collapsed, the debt it owed to the money market represented money that was effectively gone."
 
 [^9]: "These jamokes reneged on so many dumb promises this time, but the one that I think just really sums it all up is Haven, the healthcare venture that Warren Buffet and Jeff Bezos started to fix healthcare. It shudown unceremoniously in 2021, after doing nothing. The second richest man on Earth just gives up after a couple of years, because something's too hard, what a ballsack."
+
+[^10]: "At the time, all Starbucks employees were granted stock options, and thus the company referred to its employees as 'partners'."
+
+[^11]: "Both The Fediverse, and Bluesky are implementations of distributed systems based on underlying protocols. The Fediverse's ActivityPub protocol, and thus The Fediverse, came first, but despite the first-mover advantage, lags behind Bluesky these days in user adoption. The reason for this is a combo of marketing and usability, and definitely outside of the scope of this footnote."
