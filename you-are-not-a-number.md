@@ -944,6 +944,44 @@ Your home is the first place, your job the second place, and your third place is
 Instagram is not your community.
 
 There's been much written about the loss of third places, including the sociological dynamo Bowling Alone, which was written about this and other losses in community back in 2000. 
+The general theme of these writings is that humans not congregating in person is leading to the crumbling and decay of society. 
+We've replaced the places we'd go to solve the world's problems with places that're the source of those problems. 
+
+I'm not here to tell you how to spend your spare time, but in trying to build something that could solve this identity problem, I felt it needed to have some sense of community to keep the feeling going.
+The "social graph," a meaningless term for the notion that people are connected to each other, isn't possible when the computers don't know who you are. 
+But online still needs its communities, so how do we do that?
+
+### Well how does the bar work?
+
+When I was working at Starbucks in my early twenties, I would hang out in this hip cozy cafe in the [Flat Iron building][flatiron] at the corner of Milwaukee, North, and Damen in Chicago's Wicker Park--a neighborhood so cool, it spawned a movie.
+
+It was a large cafe with maybe three or four sections.
+I hung out in the cool upper level, which I knew was cool because I was there.
+And up there I met the other upper level regulars, a fine group of men and women whose names I've forgotten.
+
+Is my life better or worse because I met these people before I had some way to save them in a database forever?
+If somehow I found out there was a cafe reunion of some sorts would I go?
+Life goes on you know?
+Maybe we don't need to carry around a record of every person we've ever talked to for more than two minutes.
+
+The cafes and bars work because they're there.
+You can go to them or not.
+If you keep going to them, they _become_ your third place--the community's built by the participants.
+
+So what if that was how social media worked? 
+What if instead of following people, and having to get people to follow you, you could "go to" places.
+You like the place, you keep showing up and build the community.
+You don't like the place, you're under no obligation to stay.
+
+And so now when you leave one of these platforms where you've sunk a decade into building followers, you've got followers already because they're part of your _community_.
+
+This isn't some far fetched dream, it's how the whole internet worked before they decided you had to be you online.
+If you wanted to see what shows were playing that weekend, you'd hop into some chatroom for your genre of choice in your locale, give yourself the handle musicdude22, and just ask.
+People would just like tell you.
+
+Then maybe you'd hang around for a while, chat about tunes, learn some new bands, and then log off. 
+Maybe you come back, maybe you don't it doesn't matter. 
+The chatroom lives on, just sitting there to help the next audiophile find their next show. 
 
 
 
@@ -966,6 +1004,7 @@ There's been much written about the loss of third places, including the sociolog
 [sim]: https://en.wikipedia.org/wiki/SIM_swap_scam
 [investigation]: https://www.vice.com/en/article/fcc-propose-fines-verizon-att-sprint-tmobile-selling-location-data/
 [oh-the-forties-were-a-looong-time-ago]: https://www.nationalgeographic.com/history/article/141207-world-war-advertising-consumption-anniversary-people-photography-culture
+[flatiron]: https://en.wikipedia.org/wiki/Flat_Iron_Building_(Chicago)
 
 [^1]: "auth is short for authentication (authn) and authorization (authz). The former establishes who you are, and the latter establishes that you are able to do what you're trying to do. I like writing about auth, which is why I'm going to leave this as a footnote, and not add fifty paragraphs to this post."
 
