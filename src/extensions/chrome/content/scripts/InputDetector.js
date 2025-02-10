@@ -72,7 +72,7 @@ class InputDetector {
     
     const icon = document.createElement('img');
     icon.src = chrome.runtime.getURL('assets/icons/wand.svg');
-    icon.alt = 'Disguise Icon';
+    icon.alt = 'Wand Icon';
     
     icon.style.width = '20px';
     icon.style.height = '20px';
