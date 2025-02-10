@@ -6,7 +6,13 @@
     "icons": {
       "16": "./assets/icons/disguise-mask.png"
     },
+    "web_accessible_resources": [
+      "assets/icons/*"
+    ],
      "content_scripts": [{
+      "css": [
+      "content/styles.css"
+      ],  
         "matches": ["<all_urls>"],
         "js": [
           "content/scripts/InputDetector.js",    

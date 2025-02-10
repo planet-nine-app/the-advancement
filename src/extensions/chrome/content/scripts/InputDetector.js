@@ -1,6 +1,11 @@
 class InputDetector {
   constructor() {
       this.loginKeywords = ['user', 'username', 'login', 'account', 'email'];
+      const simulator = new TypingSimulator({
+        minDelay: 50,
+        maxDelay: 150,
+        naturalMode: true,
+      });
   }
 
   searchNode(node) {
@@ -61,15 +66,30 @@ class InputDetector {
   }
 
   markField(input, className) {
-      input.classList.add(className);
-      const iconContainer = document.createElement('div');
-      iconContainer.className = 'disguise-self';
-      input.parentNode.insertBefore(iconContainer, input.nextSibling);
+    input.classList.add(className);
+    const iconContainer = document.createElement('div');
+    iconContainer.className = 'disguise-self';
+    
+    const icon = document.createElement('img');
+    icon.src = chrome.runtime.getURL('assets/icons/wand.svg');
+    icon.alt = 'Disguise Icon';
+    
+    icon.style.width = '20px';
+    icon.style.height = '20px';
+    icon.style.display = 'inline-block';
+    
+    iconContainer.appendChild(icon);
+    input.parentNode.insertBefore(iconContainer, input.nextSibling);
 
-      iconContainer.addEventListener('click', () => {
-          console.log(`Clicked disguise self icon for ${className}`);
-      });
-  }
+    iconContainer.addEventListener('click', (event) => {
+        if (input.type === 'email') {
+            input.focus();
+            const email = 'letstest@planetnineapp.com';
+            simulator.typeIntoElement(input, email);
+            event.preventDefault();
+        }
+    });
+}
 
   detectFields() {
       // Find all input fields on the page
@@ -89,10 +109,12 @@ class InputDetector {
               input.id.toLowerCase().includes('email') ||
               input.name.toLowerCase().includes('email')
           ) {
+               console.log('marking email-field')
               this.markField(input, 'email-field');
               continue;
           }
           if (this.isLoginField(input)) {
+            console.log('marking login field')
               this.markField(input, 'login-field');
           }
       }
