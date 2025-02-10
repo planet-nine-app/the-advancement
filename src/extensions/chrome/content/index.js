@@ -24,17 +24,26 @@ const simulator = new TypingSimulator({
 });
 
 let histeresis = false;
-// TODO: PageObserver class
-// Also run detection when dynamic content is added
 const observer = new MutationObserver((mutations) => {
   for (const mutation of mutations) {
     if (!histeresis && mutation.addedNodes.length) {
-      histeresis = true;
-      setTimeout(() => {
-        histeresis = false;
-        console.log('histeresis changed to ', histeresis);
-      }, 1500);
-      detector.detectFields();
+      // Check if any of the added nodes are inputs or contain inputs
+      const hasNewInputs = Array.from(mutation.addedNodes).some(node => {
+        if (node.nodeName === 'INPUT') return true;
+        if (node.getElementsByTagName) {
+          return node.getElementsByTagName('input').length > 0;
+        }
+        return false;
+      });
+
+      if (hasNewInputs) {
+        histeresis = true;
+        setTimeout(() => {
+          histeresis = false;
+          console.log('histeresis changed to ', histeresis);
+        }, 1500);
+        detector.detectFields();
+      }
     }
   }
 });
