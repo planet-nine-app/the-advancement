@@ -46,7 +46,7 @@ For the 1% of the time that you do, like a bank or court I guess, we can leave t
 To this end, the first feature of The Advancement is to provide users with a set of emails that, for all intents and purposes, do not exist. 
 Users can optionally use these emails automagically to sign up for things around the internet. 
 The Advancement will remember which email is used where, just like a password manager, so that users don't have to.
-Similarly if you need to put in an email to get past some gatekeeping, just magic on in your Advancement email, and let us handle the cans of spam that'll be lobbed at you. 
+Similarly if you need to put in an email to get past some gatekeeping, just wave your wand (cursor), and the Advancement will use your email, and then we'll handle the cans of spam that'll be lobbed at you. 
 
 If you haven't given up on email entirely, and want to clean up yours, I suggest checking out [this project](https://github.com/HellBri8nger/gmail-unsubscriber) which provides a python script for unsubscribing from all the garbage The Advertisement has signed you up for. 
 
@@ -56,7 +56,7 @@ Most browsers are supported, if your browser of choice isn't on the list below, 
 
 #### Supported browsers
 
-TODO
+Safari and Chrome are under construction.
 
 The extensions are geared towards a gaming experience, and a non-gaming experience, which users can opt into in the app.
 Not everyone has fun the same way, so we wanted to keep it flexible.
@@ -89,12 +89,13 @@ Check out the [teleportation][teleportation] repo for more on this.
 
 For more on how this all works and how to get started, check out these companion docs.
 
-| Dev          | UX          | Product     |
-|--------------|-------------|-------------|
-| [README-DEV] | [README-UX] | coming soon |
+| Dev          | UX          | Product     | The Non-Technical |
+|--------------|-------------|-------------|-------------------|
+| [README-DEV] | [README-UX] | coming soon | [README-NT]       |
 
 [README-DEV]: ./README-DEV.md
 [README-UX]: ./README-UX.md
+[README-NT]: ./README-NT.md
 
 [Sessionless]: https://www.github.com/planet-nine-app/sessionless
 [MAGIC]: https://www.github.com/planet-nine-app/MAGIC
