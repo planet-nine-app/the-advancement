@@ -1,7 +1,8 @@
 class InputDetector {
   constructor() {
+    // TODO: Get from BE
       this.loginKeywords = ['user', 'username', 'login', 'account', 'email'];
-      const simulator = new TypingSimulator({
+       this.simulator = new TypingSimulator({
         minDelay: 50,
         maxDelay: 150,
         naturalMode: true,
@@ -57,7 +58,7 @@ class InputDetector {
           input.id.toLowerCase(),
           input.name.toLowerCase(),
           input.placeholder.toLowerCase(),
-          input.getAttribute('aria-label')?.toLowerCase() || '',
+                    input.getAttribute('aria-label')?.toLowerCase() || '',
       ];
 
       return this.loginKeywords.some((keyword) =>
@@ -74,45 +75,32 @@ class InputDetector {
     icon.src = chrome.runtime.getURL('assets/icons/wand.svg');
     icon.alt = 'Wand Icon';
     
-    icon.style.width = '20px';
-    icon.style.height = '20px';
-    icon.style.display = 'inline-block';
-    
     iconContainer.appendChild(icon);
     input.parentNode.insertBefore(iconContainer, input.nextSibling);
 
     iconContainer.addEventListener('click', (event) => {
-        if (input.type === 'email') {
             input.focus();
             const email = 'letstest@planetnineapp.com';
-            simulator.typeIntoElement(input, email);
+            this.simulator.typeIntoElement(input, email);
             event.preventDefault();
-        }
-    });
+        });
 }
 
   detectFields() {
       // Find all input fields on the page
       const inputs = document.getElementsByTagName('input');
-      console.log('got ' + inputs.length + ' inputs');
+      console.log('Method 1 -- tagName inputs:' + inputs.length);
 
+      // TODO: Do we need this? 
       const inputsByQuerySelector = document.querySelectorAll('input');
       console.log('Method 2 - querySelectorAll:', inputsByQuerySelector.length);
 
       const shadowInputs = this.findInputsInShadowDOM(document.body);
       console.log('Method 3 - Shadow DOM inputs:', shadowInputs.length);
 
+
       // Process regular inputs
       for (const input of inputs) {
-          if (
-              input.type === 'email' ||
-              input.id.toLowerCase().includes('email') ||
-              input.name.toLowerCase().includes('email')
-          ) {
-               console.log('marking email-field')
-              this.markField(input, 'email-field');
-              continue;
-          }
           if (this.isLoginField(input)) {
             console.log('marking login field')
               this.markField(input, 'login-field');
@@ -121,6 +109,7 @@ class InputDetector {
 
       // Process shadow DOM inputs
       for (const input of shadowInputs) {
+        //TODO: Process shadow doms as above
           console.log('Processing shadow input:', input);
           if (
               input.type === 'email' ||
