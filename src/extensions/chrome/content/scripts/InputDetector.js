@@ -1,6 +1,12 @@
 class InputDetector {
   constructor() {
+    // TODO: Get from BE
       this.loginKeywords = ['user', 'username', 'login', 'account', 'email'];
+       this.simulator = new TypingSimulator({
+        minDelay: 50,
+        maxDelay: 150,
+        naturalMode: true,
+      });
   }
 
   searchNode(node) {
@@ -52,7 +58,7 @@ class InputDetector {
           input.id.toLowerCase(),
           input.name.toLowerCase(),
           input.placeholder.toLowerCase(),
-          input.getAttribute('aria-label')?.toLowerCase() || '',
+                    input.getAttribute('aria-label')?.toLowerCase() || '',
       ];
 
       return this.loginKeywords.some((keyword) =>
@@ -61,44 +67,49 @@ class InputDetector {
   }
 
   markField(input, className) {
-      input.classList.add(className);
-      const iconContainer = document.createElement('div');
-      iconContainer.className = 'disguise-self';
-      input.parentNode.insertBefore(iconContainer, input.nextSibling);
+    input.classList.add(className);
+    const iconContainer = document.createElement('div');
+    iconContainer.className = 'disguise-self';
+    
+    const icon = document.createElement('img');
+    icon.src = chrome.runtime.getURL('assets/icons/wand.svg');
+    icon.alt = 'Wand Icon';
+    
+    iconContainer.appendChild(icon);
+    input.parentNode.insertBefore(iconContainer, input.nextSibling);
 
-      iconContainer.addEventListener('click', () => {
-          console.log(`Clicked disguise self icon for ${className}`);
-      });
-  }
+    iconContainer.addEventListener('click', (event) => {
+            input.focus();
+            const email = 'letstest@planetnineapp.com';
+            this.simulator.typeIntoElement(input, email);
+            event.preventDefault();
+        });
+}
 
   detectFields() {
       // Find all input fields on the page
       const inputs = document.getElementsByTagName('input');
-      console.log('got ' + inputs.length + ' inputs');
+      console.log('Method 1 -- tagName inputs:' + inputs.length);
 
+      // TODO: Do we need this? 
       const inputsByQuerySelector = document.querySelectorAll('input');
       console.log('Method 2 - querySelectorAll:', inputsByQuerySelector.length);
 
       const shadowInputs = this.findInputsInShadowDOM(document.body);
       console.log('Method 3 - Shadow DOM inputs:', shadowInputs.length);
 
+
       // Process regular inputs
       for (const input of inputs) {
-          if (
-              input.type === 'email' ||
-              input.id.toLowerCase().includes('email') ||
-              input.name.toLowerCase().includes('email')
-          ) {
-              this.markField(input, 'email-field');
-              continue;
-          }
           if (this.isLoginField(input)) {
+            console.log('marking login field')
               this.markField(input, 'login-field');
           }
       }
 
       // Process shadow DOM inputs
       for (const input of shadowInputs) {
+        //TODO: Process shadow doms as above
           console.log('Processing shadow input:', input);
           if (
               input.type === 'email' ||
