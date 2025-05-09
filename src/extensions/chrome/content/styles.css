@@ -2,3 +2,13 @@
     color: #FF6EC7 !important;
     cursor: url('./assets/icons/wand_cursor.svg'), auto !important;
   } */
+
+  .disguise-self {
+    width: 24px;  
+    height: 24px;
+    img {
+      display: inline-block;
+      height: 20px;
+      width: 20px;
+    }
+}
