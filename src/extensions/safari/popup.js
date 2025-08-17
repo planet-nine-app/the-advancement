@@ -1,0 +1,780 @@
+/**
+ * The Advancement Safari Extension Popup
+ * Home Base Selection and Settings Management
+ * 
+ * Adapts The Nullary's base management patterns for extension UI
+ */
+
+(function() {
+    'use strict';
+
+    console.log('🚀 The Advancement popup initializing...');
+
+    // ========================================
+    // State Management
+    // ========================================
+    
+    const PopupState = {
+        currentTab: 'home',
+        selectedBase: null,
+        availableBases: [],
+        isLoading: false,
+        hasKeys: false,
+        connectionStatus: 'connecting'
+    };
+
+    // ========================================
+    // Enhanced Integration Setup
+    // ========================================
+    
+    // Initialize bridge if available
+    const popupBridge = window.AdvancementPopupBridge ? new AdvancementPopupBridge() : null;
+    
+    // ========================================
+    // Base Discovery System
+    // ========================================
+    
+    class BaseDiscoveryService {
+        constructor(bridge = null) {
+            this.bridge = bridge;
+            this.discoveryEndpoint = 'https://dev.bdo.allyabase.com/bases';
+            this.cache = {
+                bases: null,
+                timestamp: null,
+                duration: 10 * 60 * 1000 // 10 minutes
+            };
+        }
+
+        async discoverBases() {
+            console.log('🔍 Discovering available Planet Nine bases...');
+            
+            // Check cache first
+            if (this.isCacheValid()) {
+                console.log('📦 Using cached base data');
+                return this.cache.bases;
+            }
+
+            try {
+                // Try bridge first if available
+                if (this.bridge) {
+                    try {
+                        const bridgeBases = await this.bridge.discoverBases();
+                        if (bridgeBases && bridgeBases.length > 0) {
+                            console.log('🌉 Got bases via bridge:', bridgeBases.length);
+                            const processedBases = this.processBases(bridgeBases);
+                            this.cache.bases = processedBases;
+                            this.cache.timestamp = Date.now();
+                            return processedBases;
+                        }
+                    } catch (bridgeError) {
+                        console.warn('Bridge discovery failed, falling back to direct:', bridgeError);
+                    }
+                }
+
+                // Fallback to direct discovery
+                const response = await fetch(this.discoveryEndpoint, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'User-Agent': 'The-Advancement-Safari/1.0.0'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Base discovery failed: ${response.status}`);
+                }
+
+                const basesData = await response.json();
+                const processedBases = this.processBases(basesData);
+                
+                // Cache the results
+                this.cache.bases = processedBases;
+                this.cache.timestamp = Date.now();
+                
+                console.log(`✅ Discovered ${processedBases.length} bases`);
+                return processedBases;
+                
+            } catch (error) {
+                console.warn('⚠️ Base discovery failed, using fallback bases:', error);
+                return this.getFallbackBases();
+            }
+        }
+
+        processBases(basesData) {
+            // Process the response to extract base information
+            // Adapting from The Nullary's base-command.js patterns
+            const bases = [];
+            
+            if (basesData && typeof basesData === 'object') {
+                for (const [baseId, baseInfo] of Object.entries(basesData)) {
+                    if (baseInfo && typeof baseInfo === 'object') {
+                        bases.push({
+                            id: baseId,
+                            name: baseInfo.name || baseId.toUpperCase(),
+                            description: baseInfo.description || `Planet Nine base: ${baseId}`,
+                            dns: baseInfo.dns || {},
+                            status: 'connecting',
+                            features: this.detectFeatures(baseInfo.dns),
+                            isHomeBase: false
+                        });
+                    }
+                }
+            }
+
+            // Add default development base if not found
+            if (!bases.find(base => base.id === 'dev')) {
+                bases.unshift(this.getDevBase());
+            }
+
+            return bases;
+        }
+
+        detectFeatures(dns) {
+            const features = [];
+            
+            if (dns) {
+                if (dns.bdo) features.push('BDO');
+                if (dns.sanora) features.push('Sanora');
+                if (dns.dolores) features.push('Dolores');
+                if (dns.fount) features.push('Fount');
+                if (dns.addie) features.push('Addie');
+            }
+            
+            return features;
+        }
+
+        getDevBase() {
+            return {
+                id: 'dev',
+                name: 'DEV',
+                description: 'Development Planet Nine base',
+                dns: {
+                    bdo: 'dev.bdo.allyabase.com',
+                    sanora: 'dev.sanora.allyabase.com',
+                    dolores: 'dev.dolores.allyabase.com',
+                    fount: 'dev.fount.allyabase.com',
+                    addie: 'dev.addie.allyabase.com'
+                },
+                status: 'connecting',
+                features: ['BDO', 'Sanora', 'Dolores', 'Fount', 'Addie'],
+                isHomeBase: false
+            };
+        }
+
+        getFallbackBases() {
+            return [
+                this.getDevBase(),
+                {
+                    id: 'local',
+                    name: 'LOCAL',
+                    description: 'Local development base',
+                    dns: {
+                        bdo: 'localhost:3003',
+                        sanora: 'localhost:7243',
+                        dolores: 'localhost:3007'
+                    },
+                    status: 'connecting',
+                    features: ['BDO', 'Sanora', 'Dolores'],
+                    isHomeBase: false
+                }
+            ];
+        }
+
+        isCacheValid() {
+            return this.cache.bases && 
+                   this.cache.timestamp && 
+                   (Date.now() - this.cache.timestamp) < this.cache.duration;
+        }
+
+        async checkBaseStatus(base) {
+            // Check if base is online by pinging BDO endpoint
+            try {
+                const bdoUrl = base.dns.bdo;
+                if (!bdoUrl) return 'offline';
+
+                const url = bdoUrl.startsWith('http') ? bdoUrl : `https://${bdoUrl}`;
+                const response = await fetch(`${url}/health`, {
+                    method: 'GET',
+                    timeout: 5000,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+
+                return response.ok ? 'online' : 'offline';
+            } catch (error) {
+                console.warn(`Base ${base.name} status check failed:`, error);
+                return 'offline';
+            }
+        }
+    }
+
+    // ========================================
+    // Storage Service
+    // ========================================
+    
+    class ExtensionStorage {
+        constructor() {
+            this.storagePrefix = 'advancement-';
+        }
+
+        async getHomeBase() {
+            try {
+                const stored = localStorage.getItem(this.storagePrefix + 'home-base');
+                return stored ? JSON.parse(stored) : null;
+            } catch (error) {
+                console.warn('Failed to load home base from storage:', error);
+                return null;
+            }
+        }
+
+        async setHomeBase(base) {
+            try {
+                localStorage.setItem(this.storagePrefix + 'home-base', JSON.stringify(base));
+                console.log('💾 Home base saved:', base.name);
+            } catch (error) {
+                console.error('Failed to save home base:', error);
+            }
+        }
+
+        async getSettings() {
+            try {
+                const stored = localStorage.getItem(this.storagePrefix + 'settings');
+                return stored ? JSON.parse(stored) : this.getDefaultSettings();
+            } catch (error) {
+                console.warn('Failed to load settings:', error);
+                return this.getDefaultSettings();
+            }
+        }
+
+        async setSettings(settings) {
+            try {
+                localStorage.setItem(this.storagePrefix + 'settings', JSON.stringify(settings));
+            } catch (error) {
+                console.error('Failed to save settings:', error);
+            }
+        }
+
+        getDefaultSettings() {
+            return {
+                emailMode: 'random',
+                adMode: 'peaceful',
+                autoDetection: true,
+                naturalTyping: true
+            };
+        }
+    }
+
+    // ========================================
+    // UI Management
+    // ========================================
+    
+    class PopupUI {
+        constructor() {
+            // Use enhanced services if bridge is available
+            if (popupBridge && window.EnhancedBaseDiscoveryService && window.EnhancedExtensionStorage) {
+                this.baseDiscovery = new window.EnhancedBaseDiscoveryService(popupBridge);
+                this.storage = new window.EnhancedExtensionStorage(popupBridge);
+                this.bridge = popupBridge;
+                console.log('🌉 Using enhanced services with bridge integration');
+            } else {
+                this.baseDiscovery = new BaseDiscoveryService();
+                this.storage = new ExtensionStorage();
+                this.bridge = null;
+                console.log('📦 Using standard services without bridge');
+            }
+            
+            this.initializeElements();
+            this.attachEventListeners();
+        }
+
+        initializeElements() {
+            // Tab elements
+            this.tabButtons = document.querySelectorAll('.nav-tab');
+            this.tabContents = document.querySelectorAll('.tab-content');
+            
+            // Status elements
+            this.statusIndicator = document.getElementById('status-indicator');
+            this.statusText = document.getElementById('status-text');
+            this.footerStatus = document.getElementById('footer-status');
+            
+            // Home base elements
+            this.noBaseSelected = document.getElementById('no-base-selected');
+            this.selectedBase = document.getElementById('selected-base');
+            this.selectedBaseName = document.getElementById('selected-base-name');
+            this.selectedBaseUrl = document.getElementById('selected-base-url');
+            this.selectedBaseStatus = document.getElementById('selected-base-status');
+            
+            // Bases list elements
+            this.loadingBases = document.getElementById('loading-bases');
+            this.basesList = document.getElementById('bases-list');
+            this.refreshBtn = document.getElementById('refresh-bases');
+            
+            // Keys elements
+            this.keyStatus = document.getElementById('key-status');
+            this.generateKeysBtn = document.getElementById('generate-keys');
+            this.viewPublicKeyBtn = document.getElementById('view-public-key');
+        }
+
+        attachEventListeners() {
+            // Tab switching
+            this.tabButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    this.switchTab(e.target.dataset.tab);
+                });
+            });
+
+            // Refresh bases
+            this.refreshBtn.addEventListener('click', () => {
+                this.refreshBases();
+            });
+
+            // Key management
+            this.generateKeysBtn.addEventListener('click', () => {
+                this.generateKeys();
+            });
+
+            this.viewPublicKeyBtn.addEventListener('click', () => {
+                this.viewPublicKey();
+            });
+
+            // Settings
+            this.attachSettingsListeners();
+        }
+
+        attachSettingsListeners() {
+            // Email mode settings
+            const emailRadios = document.querySelectorAll('input[name="email-mode"]');
+            emailRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    this.updateSettings();
+                });
+            });
+
+            // Ad mode settings
+            const adRadios = document.querySelectorAll('input[name="ad-mode"]');
+            adRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    this.updateSettings();
+                });
+            });
+        }
+
+        // Tab Management
+        switchTab(tabName) {
+            // Update buttons
+            this.tabButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabName);
+            });
+
+            // Update content
+            this.tabContents.forEach(content => {
+                content.classList.toggle('active', content.id === `content-${tabName}`);
+            });
+
+            PopupState.currentTab = tabName;
+
+            // Load tab-specific data
+            if (tabName === 'home') {
+                this.loadHomeBases();
+            } else if (tabName === 'keys') {
+                this.loadKeyStatus();
+            } else if (tabName === 'privacy') {
+                this.loadSettings();
+            }
+        }
+
+        // Status Management
+        updateConnectionStatus(status) {
+            PopupState.connectionStatus = status;
+            
+            const statusMap = {
+                connecting: { icon: '⚪', text: 'Connecting...', class: 'connecting' },
+                online: { icon: '🟢', text: 'Online', class: 'online' },
+                offline: { icon: '🔴', text: 'Offline', class: 'offline' }
+            };
+
+            const statusInfo = statusMap[status] || statusMap.connecting;
+            
+            this.statusIndicator.textContent = statusInfo.icon;
+            this.statusText.textContent = statusInfo.text;
+            this.statusIndicator.className = `status-indicator ${statusInfo.class}`;
+            this.footerStatus.textContent = statusInfo.text;
+        }
+
+        // Home Base Management
+        async loadHomeBases() {
+            // Load saved home base
+            const savedBase = await this.storage.getHomeBase();
+            if (savedBase) {
+                this.updateSelectedBase(savedBase);
+            }
+
+            // Load available bases
+            await this.refreshBases();
+        }
+
+        async refreshBases() {
+            console.log('🔄 Refreshing base list...');
+            
+            this.refreshBtn.classList.add('spinning');
+            this.showLoading(true);
+
+            try {
+                const bases = await this.baseDiscovery.discoverBases();
+                PopupState.availableBases = bases;
+                
+                // Check status of each base
+                await this.checkBasesStatus(bases);
+                
+                this.renderBasesList(bases);
+                this.updateConnectionStatus('online');
+                
+            } catch (error) {
+                console.error('Failed to refresh bases:', error);
+                this.updateConnectionStatus('offline');
+            } finally {
+                this.showLoading(false);
+                this.refreshBtn.classList.remove('spinning');
+            }
+        }
+
+        async checkBasesStatus(bases) {
+            const statusPromises = bases.map(async (base) => {
+                base.status = await this.baseDiscovery.checkBaseStatus(base);
+                return base;
+            });
+            
+            await Promise.all(statusPromises);
+        }
+
+        renderBasesList(bases) {
+            this.basesList.innerHTML = '';
+            
+            if (bases.length === 0) {
+                this.basesList.innerHTML = `
+                    <div class="empty-state">
+                        <span class="empty-icon">📡</span>
+                        <h3>No bases found</h3>
+                        <p>Unable to discover Planet Nine bases. Check your connection.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            bases.forEach(base => {
+                const baseElement = this.createBaseCard(base);
+                this.basesList.appendChild(baseElement);
+            });
+        }
+
+        createBaseCard(base) {
+            const card = document.createElement('div');
+            card.className = 'base-card';
+            if (base.isHomeBase) {
+                card.classList.add('selected');
+            }
+
+            const featuresHtml = base.features.map(feature => 
+                `<span class="feature-tag">✅ ${feature}</span>`
+            ).join('');
+
+            const primaryUrl = base.dns.bdo || base.dns.sanora || Object.values(base.dns)[0] || 'Unknown';
+
+            card.innerHTML = `
+                <div class="base-header">
+                    <span class="base-icon">🏢</span>
+                    <div class="base-info">
+                        <h3 class="base-name">${base.name}</h3>
+                        <p class="base-url">${primaryUrl}</p>
+                    </div>
+                    <div class="base-status">
+                        <span class="status-dot ${base.status}">●</span>
+                    </div>
+                </div>
+                <div class="base-features">
+                    ${featuresHtml}
+                </div>
+            `;
+
+            card.addEventListener('click', () => {
+                this.selectHomeBase(base);
+            });
+
+            return card;
+        }
+
+        async selectHomeBase(base) {
+            console.log('🏠 Selecting home base:', base.name);
+            
+            // Update state
+            PopupState.selectedBase = base;
+            
+            // Update all bases to reflect selection
+            PopupState.availableBases.forEach(b => {
+                b.isHomeBase = (b.id === base.id);
+            });
+            
+            // Save to storage
+            await this.storage.setHomeBase(base);
+            
+            // Update UI
+            this.updateSelectedBase(base);
+            this.renderBasesList(PopupState.availableBases);
+            
+            // Show success feedback
+            this.showToast(`Home base set to ${base.name}`, 'success');
+        }
+
+        updateSelectedBase(base) {
+            if (!base) {
+                this.noBaseSelected.classList.remove('hidden');
+                this.selectedBase.classList.add('hidden');
+                return;
+            }
+
+            this.noBaseSelected.classList.add('hidden');
+            this.selectedBase.classList.remove('hidden');
+            
+            this.selectedBaseName.textContent = base.name;
+            this.selectedBaseUrl.textContent = base.dns.bdo || base.dns.sanora || 'Unknown';
+            
+            const statusClass = base.status || 'connecting';
+            this.selectedBaseStatus.className = `status-dot ${statusClass}`;
+        }
+
+        showLoading(show) {
+            if (show) {
+                this.loadingBases.classList.remove('hidden');
+                this.basesList.style.display = 'none';
+            } else {
+                this.loadingBases.classList.add('hidden');
+                this.basesList.style.display = 'block';
+            }
+        }
+
+        // Key Management
+        async loadKeyStatus() {
+            console.log('🔑 Loading key status...');
+            
+            try {
+                // Check if Sessionless is available (we're in an extension context)
+                const hasKeys = await this.checkSessionlessKeys();
+                PopupState.hasKeys = hasKeys;
+                
+                this.renderKeyStatus(hasKeys);
+                
+            } catch (error) {
+                console.error('Failed to load key status:', error);
+                this.renderKeyStatus(false);
+            }
+        }
+
+        async checkSessionlessKeys() {
+            try {
+                if (this.bridge) {
+                    // Use bridge to check keys via content script
+                    const result = await this.bridge.hasKeys();
+                    return result.hasKeys || false;
+                } else {
+                    // Fallback - assume no keys for now
+                    console.warn('No bridge available for key checking');
+                    return false;
+                }
+            } catch (error) {
+                console.warn('Failed to check sessionless keys:', error);
+                return false;
+            }
+        }
+
+        renderKeyStatus(hasKeys) {
+            if (hasKeys) {
+                this.keyStatus.innerHTML = `
+                    <div class="key-info">
+                        <span class="key-icon">🔑</span>
+                        <div class="key-details">
+                            <h3>Keys Configured</h3>
+                            <p>Your cryptographic identity is ready for Planet Nine services</p>
+                            <div class="key-value" id="public-key-display">
+                                Click "View Public Key" to see your public key
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                this.generateKeysBtn.textContent = '🔄 Regenerate Keys';
+                this.viewPublicKeyBtn.style.display = 'flex';
+            } else {
+                this.keyStatus.innerHTML = `
+                    <div class="key-info">
+                        <span class="key-icon">🚫</span>
+                        <div class="key-details">
+                            <h3>No Keys Found</h3>
+                            <p>Generate cryptographic keys to access Planet Nine services</p>
+                        </div>
+                    </div>
+                `;
+                
+                this.generateKeysBtn.textContent = '🔑 Generate New Keys';
+                this.viewPublicKeyBtn.style.display = 'none';
+            }
+        }
+
+        async generateKeys() {
+            console.log('🔑 Generating new keys...');
+            
+            this.generateKeysBtn.textContent = '⏳ Generating...';
+            this.generateKeysBtn.disabled = true;
+            
+            try {
+                if (this.bridge) {
+                    // Use bridge to generate keys via content script
+                    const result = await this.bridge.generateKeys();
+                    console.log('✅ Keys generated via bridge:', result);
+                    
+                    PopupState.hasKeys = true;
+                    this.renderKeyStatus(true);
+                    this.showToast('New keys generated successfully!', 'success');
+                } else {
+                    throw new Error('Bridge not available for key generation');
+                }
+                
+            } catch (error) {
+                console.error('Key generation failed:', error);
+                this.showToast('Key generation failed. Please try again.', 'error');
+            } finally {
+                this.generateKeysBtn.textContent = PopupState.hasKeys ? '🔄 Regenerate Keys' : '🔑 Generate New Keys';
+                this.generateKeysBtn.disabled = false;
+            }
+        }
+
+        async viewPublicKey() {
+            console.log('👁️ Viewing public key...');
+            
+            try {
+                if (this.bridge) {
+                    // Use bridge to get public key via content script
+                    const result = await this.bridge.getPublicKey();
+                    const publicKey = result.publicKey;
+                    
+                    const publicKeyDisplay = document.getElementById('public-key-display');
+                    if (publicKeyDisplay && publicKey) {
+                        publicKeyDisplay.textContent = publicKey;
+                        this.showToast('Public key displayed', 'info');
+                    } else {
+                        throw new Error('No public key available');
+                    }
+                } else {
+                    throw new Error('Bridge not available for public key retrieval');
+                }
+                
+            } catch (error) {
+                console.error('Failed to get public key:', error);
+                this.showToast('Failed to retrieve public key', 'error');
+            }
+        }
+
+        // Settings Management
+        async loadSettings() {
+            const settings = await this.storage.getSettings();
+            
+            // Update email mode
+            const emailRadio = document.querySelector(`input[name="email-mode"][value="${settings.emailMode}"]`);
+            if (emailRadio) {
+                emailRadio.checked = true;
+            }
+            
+            // Update ad mode
+            const adRadio = document.querySelector(`input[name="ad-mode"][value="${settings.adMode}"]`);
+            if (adRadio) {
+                adRadio.checked = true;
+            }
+        }
+
+        async updateSettings() {
+            const emailMode = document.querySelector('input[name="email-mode"]:checked')?.value || 'random';
+            const adMode = document.querySelector('input[name="ad-mode"]:checked')?.value || 'peaceful';
+            
+            const settings = {
+                emailMode,
+                adMode,
+                autoDetection: true,
+                naturalTyping: true
+            };
+            
+            await this.storage.setSettings(settings);
+            this.showToast('Settings saved', 'success');
+        }
+
+        // Toast Notifications
+        showToast(message, type = 'info') {
+            // Simple toast implementation
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--primary);
+                color: white;
+                padding: 8px 16px;
+                border-radius: 4px;
+                font-size: 12px;
+                z-index: 10000;
+                animation: fadeInOut 3s ease-in-out;
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 3000);
+        }
+    }
+
+    // ========================================
+    // Initialization
+    // ========================================
+    
+    function initializePopup() {
+        console.log('🚀 Initializing The Advancement popup...');
+        
+        // Create UI manager
+        const ui = new PopupUI();
+        
+        // Set initial status
+        ui.updateConnectionStatus('connecting');
+        
+        // Load initial tab
+        ui.switchTab('home');
+        
+        // Check connection after a moment
+        setTimeout(() => {
+            ui.updateConnectionStatus('online');
+        }, 1500);
+        
+        console.log('✅ Popup initialized successfully');
+    }
+
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializePopup);
+    } else {
+        initializePopup();
+    }
+
+    // Add CSS animation for toasts
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+        }
+    `;
+    document.head.appendChild(style);
+
+})();

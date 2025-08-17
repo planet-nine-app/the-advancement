@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDisplayName</key>
+    <string>The Advancement</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.planetnine.the-advancement.safari</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>The Advancement</string>
+    <key>CFBundlePackageType</key>
+    <string>XPC!</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.14</string>
+    <key>NSExtension</key>
+    <dict>
+        <key>NSExtensionMainStoryboard</key>
+        <string>SafariExtensionViewController</string>
+        <key>NSExtensionPointIdentifier</key>
+        <string>com.apple.Safari.extension</string>
+        <key>SFSafariContentScript</key>
+        <array>
+            <dict>
+                <key>Script</key>
+                <string>advancement-content.js</string>
+            </dict>
+        </array>
+        <key>SFSafariWebsiteAccess</key>
+        <dict>
+            <key>Level</key>
+            <string>All</string>
+        </dict>
+        <key>SFSafariToolbarItem</key>
+        <dict>
+            <key>Action</key>
+            <string>showPopover</string>
+            <key>Identifier</key>
+            <string>AdvancementToolbarItem</string>
+            <key>Image</key>
+            <string>advancement-icon</string>
+            <key>Label</key>
+            <string>The Advancement</string>
+            <key>Popover</key>
+            <string>popup.html</string>
+        </dict>
+    </dict>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2024 Planet Nine App. All rights reserved.</string>
+</dict>
+</plist>

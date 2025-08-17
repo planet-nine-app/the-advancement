@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Advancement - Home Base Selection</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div id="advancement-popup">
+        <!-- Header -->
+        <header class="popup-header">
+            <div class="logo">
+                <span class="advancement-icon">🚀</span>
+                <h1>The Advancement</h1>
+            </div>
+            <div class="connection-status" id="connection-status">
+                <span class="status-indicator" id="status-indicator">⚪</span>
+                <span class="status-text" id="status-text">Connecting...</span>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="popup-nav">
+            <button class="nav-tab active" id="tab-home" data-tab="home">
+                🏠 Home Base
+            </button>
+            <button class="nav-tab" id="tab-keys" data-tab="keys">
+                🔐 Keys
+            </button>
+            <button class="nav-tab" id="tab-privacy" data-tab="privacy">
+                🎭 Privacy
+            </button>
+        </nav>
+
+        <!-- Home Base Tab -->
+        <div class="tab-content active" id="content-home">
+            <div class="home-base-section">
+                <div class="section-header">
+                    <h2>Your Home Base</h2>
+                    <p class="description">Choose a Planet Nine base as your primary home. This enables enhanced features across The Nullary apps.</p>
+                </div>
+
+                <!-- Current Home Base -->
+                <div class="current-home-base" id="current-home-base">
+                    <div class="no-base-selected" id="no-base-selected">
+                        <div class="empty-state">
+                            <span class="empty-icon">🌍</span>
+                            <h3>No Home Base Selected</h3>
+                            <p>Select a base below to unlock enhanced Planet Nine features</p>
+                        </div>
+                    </div>
+                    
+                    <div class="selected-base hidden" id="selected-base">
+                        <div class="base-card selected">
+                            <div class="base-header">
+                                <span class="base-icon">🏠</span>
+                                <div class="base-info">
+                                    <h3 class="base-name" id="selected-base-name">DEV</h3>
+                                    <p class="base-url" id="selected-base-url">dev.bdo.allyabase.com</p>
+                                </div>
+                                <div class="base-status">
+                                    <span class="status-dot online" id="selected-base-status">●</span>
+                                </div>
+                            </div>
+                            <div class="base-features">
+                                <span class="feature-tag">✅ BDO</span>
+                                <span class="feature-tag">✅ Sanora</span>
+                                <span class="feature-tag">✅ Dolores</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Available Bases -->
+                <div class="available-bases-section">
+                    <div class="section-header">
+                        <h3>Available Bases</h3>
+                        <button class="refresh-btn" id="refresh-bases" title="Refresh base list">
+                            <span class="refresh-icon">🔄</span>
+                        </button>
+                    </div>
+
+                    <div class="bases-list" id="bases-list">
+                        <!-- Loading state -->
+                        <div class="loading-bases" id="loading-bases">
+                            <div class="loading-spinner">
+                                <span class="spinner">⏳</span>
+                                <p>Discovering bases...</p>
+                            </div>
+                        </div>
+
+                        <!-- Base items will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Keys Tab -->
+        <div class="tab-content" id="content-keys">
+            <div class="keys-section">
+                <div class="section-header">
+                    <h2>Cryptographic Identity</h2>
+                    <p class="description">Your sessionless keys provide secure, passwordless authentication across Planet Nine.</p>
+                </div>
+
+                <div class="key-status" id="key-status">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <div class="key-actions">
+                    <button class="action-btn primary" id="generate-keys">
+                        <span class="btn-icon">🔑</span>
+                        Generate New Keys
+                    </button>
+                    <button class="action-btn secondary" id="view-public-key">
+                        <span class="btn-icon">👁️</span>
+                        View Public Key
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy Tab -->
+        <div class="tab-content" id="content-privacy">
+            <div class="privacy-section">
+                <div class="section-header">
+                    <h2>Privacy Settings</h2>
+                    <p class="description">Control your privacy and auto-fill preferences.</p>
+                </div>
+
+                <div class="privacy-options">
+                    <div class="option-group">
+                        <h3>Email Auto-fill</h3>
+                        <div class="privacy-emails">
+                            <div class="email-option">
+                                <input type="radio" id="email-random" name="email-mode" value="random" checked>
+                                <label for="email-random">
+                                    <span class="email-text">letstest@planetnineapp.com</span>
+                                    <span class="email-desc">Rotating privacy emails</span>
+                                </label>
+                            </div>
+                            <div class="email-option">
+                                <input type="radio" id="email-off" name="email-mode" value="off">
+                                <label for="email-off">
+                                    <span class="email-text">Disabled</span>
+                                    <span class="email-desc">No automatic email filling</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="option-group">
+                        <h3>Ad Experience</h3>
+                        <div class="ad-options">
+                            <div class="ad-option">
+                                <input type="radio" id="ad-peaceful" name="ad-mode" value="peaceful" checked>
+                                <label for="ad-peaceful">
+                                    <span class="ad-text">🌿 Peaceful (Ficus)</span>
+                                    <span class="ad-desc">Cover ads with plants</span>
+                                </label>
+                            </div>
+                            <div class="ad-option">
+                                <input type="radio" id="ad-gaming" name="ad-mode" value="gaming">
+                                <label for="ad-gaming">
+                                    <span class="ad-text">🎮 Gaming Mode</span>
+                                    <span class="ad-desc">Interactive ad destruction</span>
+                                </label>
+                            </div>
+                            <div class="ad-option">
+                                <input type="radio" id="ad-disabled" name="ad-mode" value="disabled">
+                                <label for="ad-disabled">
+                                    <span class="ad-text">❌ Disabled</span>
+                                    <span class="ad-desc">No ad covering</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="popup-footer">
+            <div class="footer-info">
+                <span class="version">v1.0.0</span>
+                <span class="separator">•</span>
+                <span class="status" id="footer-status">Ready</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="popup-content-bridge.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>
