@@ -149,6 +149,179 @@ const TELEPORTED_PRODUCTS = [
     }
 ];
 
+// Mock menu catalog products (these create complete menus when combined)
+const MENU_CATALOG_PRODUCTS = [
+    // Menu structure definition (uploaded with menu catalog)
+    {
+        id: 'menu_structure_1',
+        title: 'Menu Structure - Café Luna',
+        description: 'Menu structure definition for Café Luna',
+        price: 0, // Structure products are free
+        currency: 'usd',
+        type: 'menu_structure',
+        creator: 'creator1',
+        base: 'dev',
+        metadata: {
+            menuCatalogId: 'cafe_luna_menu',
+            isMenuStructure: true,
+            created_at: '2024-01-25T10:00:00Z',
+            menuData: {
+                title: 'Café Luna Menu',
+                description: 'Fresh coffee, pastries, and light meals',
+                menus: {
+                    beverages: {
+                        title: 'Beverages',
+                        products: ['coffee_espresso', 'coffee_latte', 'tea_green', 'smoothie_berry']
+                    },
+                    food: {
+                        title: 'Food',
+                        submenus: {
+                            breakfast: {
+                                title: 'Breakfast',
+                                products: ['bagel_everything', 'muffin_blueberry']
+                            },
+                            lunch: {
+                                title: 'Lunch',
+                                products: ['sandwich_turkey', 'salad_caesar']
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        teleport_signature: 'mock_menu_signature_1'
+    },
+    // Individual menu items (regular products with menu metadata)
+    {
+        id: 'coffee_espresso',
+        title: 'Espresso',
+        description: 'Rich, bold espresso shot',
+        price: 250, // $2.50 in cents
+        currency: 'usd',
+        type: 'menu_item',
+        creator: 'creator1',
+        base: 'dev',
+        metadata: {
+            menuCatalogId: 'cafe_luna_menu',
+            category: 'beverages',
+            created_at: '2024-01-25T10:30:00Z'
+        },
+        teleport_signature: 'mock_menu_item_1'
+    },
+    {
+        id: 'coffee_latte',
+        title: 'Caffe Latte',
+        description: 'Espresso with steamed milk and a light foam',
+        price: 450, // $4.50 in cents
+        currency: 'usd',
+        type: 'menu_item',
+        creator: 'creator1',
+        base: 'dev',
+        metadata: {
+            menuCatalogId: 'cafe_luna_menu',
+            category: 'beverages',
+            created_at: '2024-01-25T10:30:00Z'
+        },
+        teleport_signature: 'mock_menu_item_2'
+    },
+    {
+        id: 'tea_green',
+        title: 'Green Tea',
+        description: 'Premium loose leaf green tea',
+        price: 300, // $3.00 in cents
+        currency: 'usd',
+        type: 'menu_item',
+        creator: 'creator1',
+        base: 'dev',
+        metadata: {
+            menuCatalogId: 'cafe_luna_menu',
+            category: 'beverages',
+            created_at: '2024-01-25T10:30:00Z'
+        },
+        teleport_signature: 'mock_menu_item_3'
+    },
+    {
+        id: 'smoothie_berry',
+        title: 'Mixed Berry Smoothie',
+        description: 'Blended berries with yogurt and honey',
+        price: 550, // $5.50 in cents
+        currency: 'usd',
+        type: 'menu_item',
+        creator: 'creator1',
+        base: 'dev',
+        metadata: {
+            menuCatalogId: 'cafe_luna_menu',
+            category: 'beverages',
+            created_at: '2024-01-25T10:30:00Z'
+        },
+        teleport_signature: 'mock_menu_item_4'
+    },
+    {
+        id: 'bagel_everything',
+        title: 'Everything Bagel',
+        description: 'Fresh bagel with cream cheese',
+        price: 350, // $3.50 in cents
+        currency: 'usd',
+        type: 'menu_item',
+        creator: 'creator1',
+        base: 'dev',
+        metadata: {
+            menuCatalogId: 'cafe_luna_menu',
+            category: 'breakfast',
+            created_at: '2024-01-25T10:30:00Z'
+        },
+        teleport_signature: 'mock_menu_item_5'
+    },
+    {
+        id: 'muffin_blueberry',
+        title: 'Blueberry Muffin',
+        description: 'House-made blueberry muffin',
+        price: 300, // $3.00 in cents
+        currency: 'usd',
+        type: 'menu_item',
+        creator: 'creator1',
+        base: 'dev',
+        metadata: {
+            menuCatalogId: 'cafe_luna_menu',
+            category: 'breakfast',
+            created_at: '2024-01-25T10:30:00Z'
+        },
+        teleport_signature: 'mock_menu_item_6'
+    },
+    {
+        id: 'sandwich_turkey',
+        title: 'Turkey Club Sandwich',
+        description: 'Sliced turkey, bacon, lettuce, tomato on sourdough',
+        price: 850, // $8.50 in cents
+        currency: 'usd',
+        type: 'menu_item',
+        creator: 'creator1',
+        base: 'dev',
+        metadata: {
+            menuCatalogId: 'cafe_luna_menu',
+            category: 'lunch',
+            created_at: '2024-01-25T10:30:00Z'
+        },
+        teleport_signature: 'mock_menu_item_7'
+    },
+    {
+        id: 'salad_caesar',
+        title: 'Caesar Salad',
+        description: 'Crisp romaine with parmesan and croutons',
+        price: 750, // $7.50 in cents
+        currency: 'usd',
+        type: 'menu_item',
+        creator: 'creator1',
+        base: 'dev',
+        metadata: {
+            menuCatalogId: 'cafe_luna_menu',
+            category: 'lunch',
+            created_at: '2024-01-25T10:30:00Z'
+        },
+        teleport_signature: 'mock_menu_item_8'
+    }
+];
+
 // ========================================
 // Routes
 // ========================================
@@ -174,7 +347,7 @@ app.get('/api/bases', (req, res) => {
     });
 });
 
-// API: Simulate teleported product feed from a base
+// API: Simulate teleported product feed from a base (includes menu detection)
 app.get('/api/teleport/:baseId', async (req, res) => {
     const { baseId } = req.params;
     const { pubKey } = req.query;
@@ -190,15 +363,34 @@ app.get('/api/teleport/:baseId', async (req, res) => {
             });
         }
 
-        // Filter products from this base
+        // Filter regular products from this base
         const baseProducts = TELEPORTED_PRODUCTS.filter(product => product.base === baseId);
+        
+        // Filter menu catalog products from this base
+        const menuProducts = MENU_CATALOG_PRODUCTS.filter(product => product.base === baseId);
+        
+        // Detect and reconstruct menu catalogs
+        const menuCatalogs = detectAndReconstructMenus(menuProducts);
+        
+        // Combine all products (regular + menu items for individual ordering)
+        const allProducts = [
+            ...baseProducts,
+            ...menuProducts.filter(p => p.type === 'menu_item') // Include individual menu items for ordering
+        ];
         
         // Simulate teleportation validation (in production, this would verify signatures)
         const teleportedContent = {
             base: base,
-            products: baseProducts.map(product => ({
+            products: allProducts.map(product => ({
                 ...product,
                 creator_info: PRODUCT_CREATORS[product.creator],
+                base_info: base,
+                teleport_verified: true,
+                teleport_timestamp: new Date().toISOString()
+            })),
+            menuCatalogs: menuCatalogs.map(catalog => ({
+                ...catalog,
+                creator_info: PRODUCT_CREATORS[catalog.creator],
                 base_info: base,
                 teleport_verified: true,
                 teleport_timestamp: new Date().toISOString()
@@ -208,11 +400,12 @@ app.get('/api/teleport/:baseId', async (req, res) => {
                 base_pubkey: base.pubKey,
                 timestamp: new Date().toISOString(),
                 signature_valid: true,
-                total_products: baseProducts.length
+                total_products: allProducts.length,
+                total_menu_catalogs: menuCatalogs.length
             }
         };
 
-        console.log(`✅ Teleported ${baseProducts.length} products from ${base.name}`);
+        console.log(`✅ Teleported ${allProducts.length} products and ${menuCatalogs.length} menu catalogs from ${base.name}`);
         
         res.json({
             success: true,
@@ -227,6 +420,99 @@ app.get('/api/teleport/:baseId', async (req, res) => {
         });
     }
 });
+
+/**
+ * Detect menu products and reconstruct complete menu catalogs
+ * @param {Array} products - Array of products to analyze
+ * @returns {Array} Array of reconstructed menu catalogs
+ */
+function detectAndReconstructMenus(products) {
+    const menuCatalogs = [];
+    
+    // Group products by menuCatalogId
+    const menuGroups = new Map();
+    
+    products.forEach(product => {
+        const catalogId = product.metadata?.menuCatalogId;
+        if (!catalogId) return;
+        
+        if (!menuGroups.has(catalogId)) {
+            menuGroups.set(catalogId, {
+                structure: null,
+                items: [],
+                catalog: null
+            });
+        }
+        
+        const group = menuGroups.get(catalogId);
+        
+        if (product.metadata?.isMenuStructure) {
+            group.structure = product.metadata.menuData;
+            group.catalog = product;
+        } else if (product.type === 'menu_item') {
+            group.items.push({
+                id: product.id,
+                name: product.title,
+                description: product.description,
+                price: product.price,
+                currency: product.currency,
+                category: product.metadata?.category
+            });
+        }
+    });
+    
+    // Reconstruct complete menu catalogs
+    menuGroups.forEach((group, catalogId) => {
+        if (!group.structure || !group.catalog) {
+            console.warn(`⚠️ Incomplete menu catalog: ${catalogId}`);
+            return;
+        }
+        
+        const reconstructedMenu = {
+            id: catalogId,
+            title: group.structure.title,
+            description: group.structure.description,
+            type: 'menu_catalog',
+            creator: group.catalog.creator,
+            base: group.catalog.base,
+            menus: {},
+            products: group.items,
+            metadata: {
+                totalProducts: group.items.length,
+                menuCount: Object.keys(group.structure.menus || {}).length,
+                created_at: group.catalog.metadata?.created_at,
+                menuCatalogId: catalogId
+            },
+            teleport_signature: group.catalog.teleport_signature
+        };
+        
+        // Rebuild menu structure with product references
+        if (group.structure.menus) {
+            Object.entries(group.structure.menus).forEach(([menuKey, menu]) => {
+                reconstructedMenu.menus[menuKey] = {
+                    title: menu.title,
+                    products: menu.products || []
+                };
+                
+                // Handle submenus
+                if (menu.submenus) {
+                    reconstructedMenu.menus[menuKey].submenus = {};
+                    Object.entries(menu.submenus).forEach(([submenuKey, submenu]) => {
+                        reconstructedMenu.menus[menuKey].submenus[submenuKey] = {
+                            title: submenu.title,
+                            products: submenu.products || []
+                        };
+                    });
+                }
+            });
+        }
+        
+        menuCatalogs.push(reconstructedMenu);
+        console.log(`🍽️ Reconstructed menu catalog: ${reconstructedMenu.title} (${group.items.length} items)`);
+    });
+    
+    return menuCatalogs;
+}
 
 // API: Get product details (for purchase)
 app.get('/api/product/:productId', (req, res) => {

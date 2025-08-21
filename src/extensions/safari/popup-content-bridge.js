@@ -144,6 +144,23 @@
         async getPrivacySettings() {
             return this.sendMessage('getPrivacySettings');
         }
+
+        // Spellbook management methods
+        async loadSpellbook() {
+            return this.sendMessage('loadSpellbook');
+        }
+
+        async getSpellbookStatus() {
+            return this.sendMessage('getSpellbookStatus');
+        }
+
+        async listSpells() {
+            return this.sendMessage('listSpells');
+        }
+
+        async getSpell(spellName) {
+            return this.sendMessage('getSpell', { spellName });
+        }
     }
 
     // ========================================

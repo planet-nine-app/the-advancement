@@ -308,6 +308,170 @@ body {
     border: 1px solid rgba(39, 174, 96, 0.2);
 }
 
+/* Spellbook section */
+.spellbook-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.spellbook-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.spellbook-info {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.spellbook-info.error {
+    background: rgba(231, 76, 60, 0.1);
+    border-color: var(--cancel);
+    color: var(--cancel);
+}
+
+.spellbook-icon {
+    font-size: var(--font-size-xl);
+    flex-shrink: 0;
+}
+
+.spellbook-details {
+    flex: 1;
+}
+
+.spellbook-details h3 {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+}
+
+.spellbook-details p {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.spellbook-meta {
+    display: flex;
+    gap: var(--spacing-md);
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+}
+
+.cache-status {
+    font-weight: 500;
+}
+
+.spellbook-loading {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-secondary);
+}
+
+.spellbook-loading .spinner {
+    font-size: var(--font-size-xl);
+    animation: pulse 2s infinite;
+}
+
+/* Spells list */
+.spells-list {
+    max-height: 150px;
+    overflow-y: auto;
+    border-radius: 6px;
+}
+
+.spell-card {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+    transition: all 0.2s ease;
+}
+
+.spell-card:last-child {
+    margin-bottom: 0;
+}
+
+.spell-card:hover {
+    background: var(--surface);
+    border-color: var(--primary);
+    transform: translateX(2px);
+}
+
+.spell-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+}
+
+.spell-icon {
+    font-size: var(--font-size-base);
+    flex-shrink: 0;
+}
+
+.spell-info {
+    flex: 1;
+}
+
+.spell-name {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 1px;
+}
+
+.spell-meta {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+}
+
+.spell-details {
+    margin-top: var(--spacing-xs);
+}
+
+.spell-stats {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.spell-stats .stat {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    background: var(--surface);
+    padding: 1px var(--spacing-xs);
+    border-radius: 3px;
+    border: 1px solid var(--border);
+}
+
+.spells-list::-webkit-scrollbar {
+    width: 4px;
+}
+
+.spells-list::-webkit-scrollbar-track {
+    background: var(--surface);
+    border-radius: 2px;
+}
+
+.spells-list::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+}
+
+.spells-list::-webkit-scrollbar-thumb:hover {
+    background: var(--inactive);
+}
+
 /* Available bases section */
 .available-bases-section {
     margin-bottom: var(--spacing-lg);

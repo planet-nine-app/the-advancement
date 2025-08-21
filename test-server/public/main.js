@@ -170,6 +170,12 @@ class TestStoreApp {
     async initializeComponents() {
         console.log('🔧 Initializing app components...');
         
+        // Set up siteContributors for spell integration
+        this.setupSiteContributors();
+        
+        // Initialize nineum balance system
+        this.initializeNineumBalance();
+        
         // Components are initialized by their own scripts:
         // - teleportationClient (teleportation-client.js)
         // - purchaseFlow (purchase-flow.js)
@@ -396,6 +402,98 @@ class TestStoreApp {
         };
     }
 
+    initializeNineumBalance() {
+        // Initialize nineum balance from localStorage or default to 0
+        const savedBalance = localStorage.getItem('advancement-nineum-balance');
+        this.nineumBalance = savedBalance ? parseInt(savedBalance, 10) : 0;
+        
+        console.log('⭐ Nineum balance initialized:', this.nineumBalance);
+        this.updateNineumDisplay();
+        
+        // Listen for nineum updates from spell casting
+        document.addEventListener('nineum-earned', (event) => {
+            this.addNineum(event.detail.amount, event.detail.source);
+        });
+        
+        // Expose nineum management globally for The Advancement
+        window.NineumManager = {
+            getBalance: () => this.nineumBalance,
+            addNineum: (amount, source) => this.addNineum(amount, source),
+            setBalance: (amount) => this.setNineumBalance(amount)
+        };
+    }
+
+    updateNineumDisplay() {
+        const nineumAmountElement = document.getElementById('nineum-amount');
+        if (nineumAmountElement) {
+            nineumAmountElement.textContent = this.nineumBalance.toLocaleString();
+            
+            // Add visual effect for balance changes
+            nineumAmountElement.style.animation = 'none';
+            setTimeout(() => {
+                nineumAmountElement.style.animation = 'sparkle 0.8s ease-out';
+            }, 10);
+        }
+    }
+
+    addNineum(amount, source = 'spell casting') {
+        const previousBalance = this.nineumBalance;
+        this.nineumBalance += amount;
+        
+        console.log(`⭐ Nineum earned! +${amount} from ${source} (${previousBalance} → ${this.nineumBalance})`);
+        
+        // Save to localStorage
+        localStorage.setItem('advancement-nineum-balance', this.nineumBalance.toString());
+        
+        // Update display with animation
+        this.updateNineumDisplay();
+        
+        // Show toast notification
+        this.showToast(`+${amount} Nineum earned from ${source}!`, 'success');
+        
+        // Update spell info if visible
+        this.updateSpellStatusAfterEarning();
+    }
+
+    setNineumBalance(amount) {
+        this.nineumBalance = amount;
+        localStorage.setItem('advancement-nineum-balance', amount.toString());
+        this.updateNineumDisplay();
+    }
+
+    updateSpellStatusAfterEarning() {
+        const spellStatusElement = document.getElementById('spell-status');
+        if (spellStatusElement) {
+            spellStatusElement.textContent = 'Spell cast successfully! Nineum earned.';
+            spellStatusElement.style.color = 'var(--secondary)';
+            
+            // Reset status after a moment
+            setTimeout(() => {
+                spellStatusElement.textContent = 'Ready to cast (siteContributors configured)';
+            }, 3000);
+        }
+    }
+
+    setupSiteContributors() {
+        // Set up siteContributors window variable for spell integration
+        // This allows the site owner to participate in spell transactions
+        window.siteContributors = [
+            {
+                contributor: '0x1234567890abcdef1234567890abcdef12345678901234567890abcdef12345678', // Site owner pubKey
+                percent: 0.1 // 10% of spell transaction
+            }
+        ];
+        
+        console.log('🪄 Site contributors configured for spell integration:', window.siteContributors);
+        
+        // Update spell status indicator
+        const spellStatusElement = document.getElementById('spell-status');
+        if (spellStatusElement) {
+            spellStatusElement.textContent = 'Ready to cast (siteContributors configured)';
+            spellStatusElement.style.color = 'var(--secondary)';
+        }
+    }
+
     logDebugInfo() {
         console.table(this.getDebugInfo());
     }
@@ -418,8 +516,17 @@ window.testStoreApp = testStoreApp;
 // Console shortcuts for debugging
 window.debugTestStore = () => testStoreApp.logDebugInfo();
 window.refreshTestStore = () => testStoreApp.refreshApplicationStatus();
+window.addTestNineum = (amount = 100) => {
+    if (window.NineumManager) {
+        window.NineumManager.addNineum(amount, 'debug test');
+        console.log(`⭐ Added ${amount} test nineum`);
+    } else {
+        console.warn('NineumManager not available');
+    }
+};
 
 console.log('📋 Debug commands available:');
 console.log('  - debugTestStore() - Show debug information');
 console.log('  - refreshTestStore() - Refresh application status');
+console.log('  - addTestNineum(amount) - Add test nineum to balance');
 console.log('  - testStoreApp.getDebugInfo() - Get detailed debug info');

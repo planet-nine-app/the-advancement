@@ -305,6 +305,13 @@
             this.selectedBaseUrl = document.getElementById('selected-base-url');
             this.selectedBaseStatus = document.getElementById('selected-base-status');
             
+            // Spellbook elements
+            this.spellbookSection = document.getElementById('spellbook-section');
+            this.spellbookStatus = document.getElementById('spellbook-status');
+            this.spellbookLoading = document.getElementById('spellbook-loading');
+            this.spellsList = document.getElementById('spells-list');
+            this.refreshSpellbookBtn = document.getElementById('refresh-spellbook');
+            
             // Bases list elements
             this.loadingBases = document.getElementById('loading-bases');
             this.basesList = document.getElementById('bases-list');
@@ -327,6 +334,11 @@
             // Refresh bases
             this.refreshBtn.addEventListener('click', () => {
                 this.refreshBases();
+            });
+
+            // Refresh spellbook
+            this.refreshSpellbookBtn.addEventListener('click', () => {
+                this.refreshSpellbook();
             });
 
             // Key management
@@ -377,6 +389,7 @@
             // Load tab-specific data
             if (tabName === 'home') {
                 this.loadHomeBases();
+                this.loadSpellbookStatus();
             } else if (tabName === 'keys') {
                 this.loadKeyStatus();
             } else if (tabName === 'privacy') {
@@ -550,6 +563,173 @@
             } else {
                 this.loadingBases.classList.add('hidden');
                 this.basesList.style.display = 'block';
+            }
+        }
+
+        // Spellbook Management
+        async loadSpellbookStatus() {
+            console.log('📚 Loading spellbook status...');
+            
+            try {
+                // Check if we have a home base first
+                const homeBase = await this.storage.getHomeBase();
+                if (!homeBase) {
+                    this.renderSpellbookStatus(null, 'No home base selected');
+                    return;
+                }
+
+                // Load spellbook status
+                if (this.bridge) {
+                    const status = await this.bridge.getSpellbookStatus();
+                    this.renderSpellbookStatus(status);
+                } else {
+                    this.renderSpellbookStatus(null, 'Bridge not available');
+                }
+            } catch (error) {
+                console.error('Failed to load spellbook status:', error);
+                this.renderSpellbookStatus(null, error.message);
+            }
+        }
+
+        async refreshSpellbook() {
+            console.log('🔄 Refreshing spellbook...');
+            
+            this.refreshSpellbookBtn.classList.add('spinning');
+            this.showSpellbookLoading(true);
+
+            try {
+                const homeBase = await this.storage.getHomeBase();
+                if (!homeBase) {
+                    throw new Error('No home base selected');
+                }
+
+                if (this.bridge) {
+                    // Load fresh spellbook
+                    const spellbook = await this.bridge.loadSpellbook();
+                    
+                    if (spellbook) {
+                        // Get updated status
+                        const status = await this.bridge.getSpellbookStatus();
+                        this.renderSpellbookStatus(status);
+                        
+                        // Load and display spells
+                        const spells = await this.bridge.listSpells();
+                        this.renderSpellsList(spells);
+                        
+                        this.showToast('Spellbook refreshed successfully!', 'success');
+                    } else {
+                        throw new Error('No spellbook found - ensure seeding script has been run');
+                    }
+                } else {
+                    throw new Error('Bridge not available');
+                }
+                
+            } catch (error) {
+                console.error('Failed to refresh spellbook:', error);
+                this.renderSpellbookStatus(null, error.message);
+                this.showToast('Failed to refresh spellbook', 'error');
+            } finally {
+                this.showSpellbookLoading(false);
+                this.refreshSpellbookBtn.classList.remove('spinning');
+            }
+        }
+
+        renderSpellbookStatus(status, errorMessage = null) {
+            if (errorMessage) {
+                this.spellbookStatus.innerHTML = `
+                    <div class="spellbook-info error">
+                        <span class="spellbook-icon">⚠️</span>
+                        <div class="spellbook-details">
+                            <h3>Spellbook Error</h3>
+                            <p>${errorMessage}</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            if (!status) {
+                this.spellbookStatus.innerHTML = `
+                    <div class="spellbook-info">
+                        <span class="spellbook-icon">🔍</span>
+                        <div class="spellbook-details">
+                            <h3>No Spellbook Status</h3>
+                            <p>Unable to determine spellbook status</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const cacheStatusIcon = status.cacheStatus === 'valid' ? '✅' : '⏰';
+            const cacheStatusText = status.cacheStatus === 'valid' ? 'Fresh' : 'Needs refresh';
+
+            this.spellbookStatus.innerHTML = `
+                <div class="spellbook-info">
+                    <span class="spellbook-icon">📚</span>
+                    <div class="spellbook-details">
+                        <h3>${status.loaded ? status.spellbookName : 'No Spellbook'}</h3>
+                        <p>${status.loaded ? `${status.spellCount} spells available` : 'No spells loaded'}</p>
+                        <div class="spellbook-meta">
+                            <span class="cache-status">${cacheStatusIcon} ${cacheStatusText}</span>
+                            ${status.lastFetch ? `<span class="last-fetch">Updated ${new Date(status.lastFetch).toLocaleTimeString()}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Load spells if available
+            if (status.loaded && this.bridge) {
+                this.bridge.listSpells().then(spells => {
+                    this.renderSpellsList(spells);
+                }).catch(error => {
+                    console.warn('Failed to load spells list:', error);
+                });
+            }
+        }
+
+        renderSpellsList(spells) {
+            if (!spells || spells.length === 0) {
+                this.spellsList.innerHTML = `
+                    <div class="empty-state">
+                        <span class="empty-icon">🪄</span>
+                        <p>No spells available</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const spellsHtml = spells.map(spell => {
+                const destinationsCount = spell.destinations ? spell.destinations.length : 0;
+                return `
+                    <div class="spell-card">
+                        <div class="spell-header">
+                            <span class="spell-icon">${spell.mp ? '🔮' : '⚡'}</span>
+                            <div class="spell-info">
+                                <h4 class="spell-name">${spell.name}</h4>
+                                <p class="spell-meta">Cost: ${spell.cost} MP</p>
+                            </div>
+                        </div>
+                        <div class="spell-details">
+                            <div class="spell-stats">
+                                <span class="stat">🎯 ${destinationsCount} destinations</span>
+                                <span class="stat">⚗️ ${spell.resolver}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            this.spellsList.innerHTML = spellsHtml;
+        }
+
+        showSpellbookLoading(show) {
+            if (show) {
+                this.spellbookLoading.classList.remove('hidden');
+                this.spellsList.style.display = 'none';
+            } else {
+                this.spellbookLoading.classList.add('hidden');
+                this.spellsList.style.display = 'block';
             }
         }
 

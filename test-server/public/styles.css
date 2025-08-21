@@ -94,7 +94,7 @@ body {
     gap: var(--spacing-xl);
 }
 
-.advancement-status, .home-base-indicator {
+.advancement-status, .nineum-balance, .home-base-indicator {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
@@ -102,6 +102,41 @@ body {
     background: rgba(255, 255, 255, 0.1);
     border-radius: 6px;
     font-size: var(--font-size-sm);
+}
+
+.nineum-balance {
+    background: linear-gradient(135deg, rgba(241, 196, 15, 0.2), rgba(155, 89, 182, 0.2));
+    border: 1px solid var(--quaternary);
+    min-width: 120px;
+}
+
+.nineum-icon {
+    font-size: var(--font-size-lg);
+    animation: sparkle 3s infinite;
+}
+
+.nineum-amount {
+    font-weight: bold;
+    color: var(--quaternary);
+    font-size: var(--font-size-lg);
+    text-shadow: 0 0 4px rgba(241, 196, 15, 0.3);
+}
+
+.nineum-label {
+    color: var(--text);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+@keyframes sparkle {
+    0%, 100% { 
+        filter: brightness(1); 
+        transform: scale(1);
+    }
+    50% { 
+        filter: brightness(1.3) drop-shadow(0 0 4px rgba(241, 196, 15, 0.6)); 
+        transform: scale(1.1);
+    }
 }
 
 .status-indicator {
@@ -613,6 +648,155 @@ body {
     }
 }
 
+/* Menu catalog styling */
+.menu-card {
+    border: 2px solid var(--secondary);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.menu-icon {
+    font-size: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-stats {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.menu-catalog-badge {
+    margin-top: 1rem;
+}
+
+.badge {
+    background: var(--secondary);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Menu modal styling */
+.menu-modal .modal-content {
+    max-width: 800px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.menu-modal-content {
+    padding: 0;
+}
+
+.menu-modal .modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+/* Menu structure display */
+.menu-structure-display {
+    font-family: var(--font-family);
+}
+
+.menu-header h3 {
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.menu-description {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+.menu-section {
+    margin-bottom: 2rem;
+}
+
+.menu-section-title {
+    color: var(--primary);
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.menu-subsection {
+    margin-left: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.menu-subsection-title {
+    color: var(--secondary);
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.menu-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.2s ease;
+}
+
+.menu-item:hover {
+    background-color: #f8f9fa;
+}
+
+.menu-item.clickable {
+    cursor: pointer;
+    padding: 0.75rem;
+    margin: 0 -0.75rem;
+    border-radius: 4px;
+}
+
+.menu-item.clickable:hover {
+    background-color: #e9ecef;
+}
+
+.menu-item-info {
+    flex: 1;
+}
+
+.menu-item-name {
+    font-weight: 600;
+    color: var(--text);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.menu-item-description {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.menu-item-price {
+    font-weight: bold;
+    color: var(--primary);
+    min-width: 60px;
+    text-align: right;
+    margin-left: 1rem;
+}
+
+/* Menu fallback display */
+.menu-fallback {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.menu-fallback h4 {
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .main-content {
@@ -643,5 +827,97 @@ body {
     .modal-content {
         width: 95%;
         margin: var(--spacing-lg);
+    }
+}
+
+/* Spell Test Section */
+.spell-test-section {
+    background: linear-gradient(135deg, rgba(155, 89, 182, 0.1), rgba(102, 126, 234, 0.1));
+    border: 2px solid var(--primary);
+    border-radius: 12px;
+    padding: var(--spacing-xl);
+    margin-top: var(--spacing-xl);
+}
+
+.spell-test-section h3 {
+    color: var(--primary);
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+.spell-description {
+    color: var(--text);
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+    font-style: italic;
+}
+
+.spell-card-container {
+    display: flex;
+    gap: var(--spacing-xl);
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.spell-test-card {
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(155, 89, 182, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.spell-test-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(155, 89, 182, 0.4);
+}
+
+.spell-info {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: var(--spacing-lg);
+    min-width: 250px;
+}
+
+.spell-info p {
+    margin-bottom: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+}
+
+.spell-info strong {
+    color: var(--primary);
+}
+
+#spell-status {
+    color: var(--secondary);
+    font-weight: bold;
+}
+
+/* Spell element interactions */
+[spell] {
+    cursor: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><text x="16" y="24" text-anchor="middle" font-size="20">🪄</text></svg>') 16 16, pointer;
+}
+
+[spell]:hover {
+    filter: drop-shadow(0 0 8px rgba(155, 89, 182, 0.8));
+    transition: filter 0.2s ease;
+}
+
+/* Responsive design for spell section */
+@media (max-width: 768px) {
+    .spell-card-container {
+        flex-direction: column;
+        gap: var(--spacing-lg);
+    }
+    
+    .spell-test-card {
+        width: 100%;
+        max-width: 320px;
+    }
+    
+    .spell-info {
+        min-width: auto;
+        width: 100%;
+        max-width: 320px;
     }
 }

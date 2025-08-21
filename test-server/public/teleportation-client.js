@@ -10,6 +10,7 @@ class TeleportationClient {
         this.siteOwner = null;
         this.homeBase = null;
         this.teleportedProducts = [];
+        this.teleportedMenus = [];
         this.isLoading = false;
         
         this.initializeElements();
@@ -182,12 +183,13 @@ class TeleportationClient {
             // Request teleported content from the home base
             const teleportedData = await this.requestTeleportation(this.homeBase.id, userPubKey);
             
-            if (teleportedData && teleportedData.products) {
-                this.teleportedProducts = teleportedData.products;
-                this.renderProducts();
-                console.log(`✅ Teleported ${this.teleportedProducts.length} products from ${this.homeBase.name}`);
+            if (teleportedData) {
+                this.teleportedProducts = teleportedData.products || [];
+                this.teleportedMenus = teleportedData.menuCatalogs || [];
+                this.renderContent();
+                console.log(`✅ Teleported ${this.teleportedProducts.length} products and ${this.teleportedMenus.length} menu catalogs from ${this.homeBase.name}`);
             } else {
-                this.showFeedMessage('📦', 'No products available from your home base.');
+                this.showFeedMessage('📦', 'No content available from your home base.');
             }
             
         } catch (error) {
@@ -224,15 +226,24 @@ class TeleportationClient {
         return result.data;
     }
 
-    renderProducts() {
+    renderContent() {
         this.productsGrid.innerHTML = '';
         this.feedStatus.style.display = 'none';
 
-        if (this.teleportedProducts.length === 0) {
-            this.showFeedMessage('📦', 'No products available from your home base.');
+        const totalItems = this.teleportedProducts.length + this.teleportedMenus.length;
+        
+        if (totalItems === 0) {
+            this.showFeedMessage('📦', 'No content available from your home base.');
             return;
         }
 
+        // Render menu catalogs first
+        this.teleportedMenus.forEach(menu => {
+            const menuCard = this.createMenuCard(menu);
+            this.productsGrid.appendChild(menuCard);
+        });
+
+        // Then render regular products
         this.teleportedProducts.forEach(product => {
             const productCard = this.createProductCard(product);
             this.productsGrid.appendChild(productCard);
@@ -290,6 +301,131 @@ class TeleportationClient {
         });
 
         return card;
+    }
+
+    createMenuCard(menu) {
+        if (!window.MenuDisplay) {
+            console.warn('MenuDisplay not available, creating basic menu card');
+            return this.createBasicMenuCard(menu);
+        }
+
+        const menuCard = window.MenuDisplay.createMenuCatalogCard(menu, {
+            onClick: (menuCatalog) => {
+                this.handleMenuClick(menuCatalog);
+            }
+        });
+
+        return menuCard;
+    }
+
+    createBasicMenuCard(menu) {
+        const card = document.createElement('div');
+        card.className = 'product-card menu-card';
+        card.dataset.menuId = menu.id;
+
+        const itemCount = menu.metadata?.totalProducts || menu.products?.length || 0;
+        const menuCount = menu.metadata?.menuCount || Object.keys(menu.menus || {}).length;
+
+        card.innerHTML = `
+            <div class="product-header">
+                <div class="product-image menu-icon">
+                    🍽️
+                </div>
+                <div class="product-info">
+                    <h4 class="product-title">${this.escapeHtml(menu.title)}</h4>
+                    <p class="product-creator">Restaurant Menu</p>
+                    <div class="menu-stats">
+                        ${itemCount} items • ${menuCount} categories
+                    </div>
+                </div>
+            </div>
+            <p class="product-description">${this.escapeHtml(menu.description || 'Complete restaurant menu')}</p>
+            <div class="menu-catalog-badge">
+                <span class="badge">MENU CATALOG</span>
+            </div>
+        `;
+
+        // Add click handler
+        card.addEventListener('click', () => {
+            this.handleMenuClick(menu);
+        });
+
+        return card;
+    }
+
+    handleMenuClick(menu) {
+        console.log('🍽️ Menu clicked:', menu.title);
+        
+        // Show menu details modal
+        this.showMenuModal(menu);
+    }
+
+    showMenuModal(menu) {
+        // Create a modal overlay
+        const modal = document.createElement('div');
+        modal.className = 'modal menu-modal';
+        modal.innerHTML = `
+            <div class="modal-overlay"></div>
+            <div class="modal-content menu-modal-content">
+                <div class="modal-header">
+                    <h3>${this.escapeHtml(menu.title)}</h3>
+                    <button class="modal-close">✕</button>
+                </div>
+                <div class="modal-body" id="menu-modal-body">
+                    <!-- Menu content will be inserted here -->
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary modal-close">Close</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Add menu content
+        const modalBody = modal.querySelector('#menu-modal-body');
+        if (window.MenuDisplay) {
+            const menuDisplay = window.MenuDisplay.createMenuStructureDisplay(menu, {
+                showPrices: true,
+                onItemClick: (product) => {
+                    console.log('🛒 Menu item clicked:', product.name);
+                    modal.remove();
+                    // Trigger product selection for purchase
+                    this.handleProductClick({
+                        ...product,
+                        title: product.name,
+                        creator_info: menu.creator_info,
+                        base_info: menu.base_info
+                    });
+                }
+            });
+            modalBody.appendChild(menuDisplay);
+        } else {
+            modalBody.innerHTML = `
+                <div class="menu-fallback">
+                    <h4>${this.escapeHtml(menu.title)}</h4>
+                    <p>${this.escapeHtml(menu.description || '')}</p>
+                    <p>Menu contains ${menu.metadata?.totalProducts || 0} items across ${menu.metadata?.menuCount || 0} categories.</p>
+                </div>
+            `;
+        }
+
+        // Close handlers
+        const closeElements = modal.querySelectorAll('.modal-close, .modal-overlay');
+        closeElements.forEach(element => {
+            element.addEventListener('click', () => {
+                modal.remove();
+            });
+        });
+
+        // ESC key handler
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                modal.remove();
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
     }
 
     handleProductClick(product) {

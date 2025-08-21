@@ -8,6 +8,7 @@ This test server demonstrates the complete Planet Nine purchase flow with The Ad
 
 ### 🌍 **Complete Planet Nine Integration**
 - **Teleported Product Feeds** - Products discovered from user's selected home base
+- **Menu Catalog Teleportation** - Complete restaurant menus from Planet Nine bases ✨ **NEW**
 - **Multi-PubKey System** - Site owner, product creator, and base public key verification
 - **Stripe Payment Processing** - Secure payments via The Advancement extension
 - **Addie Coordination** - Payment processing through user's home base
@@ -66,8 +67,14 @@ This test server demonstrates the complete Planet Nine purchase flow with The Ad
    - Check that your home base is displayed
    - Wait for teleported products to load in the right column
 
-3. **Make a Test Purchase**:
-   - Click any product in the teleported feed
+3. **Browse Teleported Content**:
+   - Regular products appear as standard product cards
+   - Menu catalogs appear with 🍽️ icon and "MENU CATALOG" badge
+   - Click menu catalogs to view complete restaurant menus
+   - Individual menu items can be ordered directly
+
+4. **Make a Test Purchase**:
+   - Click any product or menu item in the teleported feed
    - Review the purchase modal with multi-pubKey verification
    - Accept terms and click "Complete Purchase"
    - Payment will be processed via The Advancement extension
@@ -118,6 +125,27 @@ Simulates teleported product feed from a Planet Nine base.
           "name": "Alice Creator",
           "pubKey": "0xabcdef1234567890..."
         },
+        "teleport_verified": true
+      }
+    ],
+    "menuCatalogs": [
+      {
+        "id": "cafe_luna_menu",
+        "title": "Café Luna Menu", 
+        "type": "menu_catalog",
+        "menus": {
+          "beverages": {
+            "title": "Beverages",
+            "products": ["coffee_espresso", "coffee_latte"]
+          }
+        },
+        "products": [
+          {
+            "id": "coffee_espresso",
+            "name": "Espresso",
+            "price": 250
+          }
+        ],
         "teleport_verified": true
       }
     ]
@@ -197,6 +225,11 @@ The server includes 3 test products:
    - Creator: Alice Creator
    - Base: LOCAL
    - Type: Physical shipping required
+
+4. **"Café Luna Menu"** - Complete restaurant menu catalog ✨ **NEW**
+   - Creator: Alice Creator
+   - Base: DEV
+   - Type: Menu catalog with 8 items across beverages, breakfast, and lunch categories
 
 ### PubKeys for Testing
 ```javascript

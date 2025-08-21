@@ -1,0 +1,89 @@
+{
+  "manifest_version": 3,
+  "name": "The Advancement",
+  "version": "1.0.0",
+  "description": "Privacy-first browser extension with sessionless authentication, spell casting, nineum rewards, and Planet Nine ecosystem integration.",
+  
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "webNavigation",
+    "clipboardWrite"
+  ],
+  
+  "host_permissions": [
+    "http://localhost/*",
+    "http://127.0.0.1/*", 
+    "https://dev.*.allyabase.com/*",
+    "https://*.planetnineapp.com/*",
+    "*://localhost:*/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "sessionless-bundle.js",
+        "sessionless-safari.js", 
+        "advancement-content.js"
+      ],
+      "run_at": "document_end",
+      "all_frames": true
+    }
+  ],
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "The Advancement - Planet Nine Extension",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "popup.html",
+        "popup.css",
+        "popup.js",
+        "stripe-integration.js",
+        "sessionless-bundle.js",
+        "sessionless-safari.js",
+        "InputDetector.js",
+        "TypingSimulator.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:*/*",
+      "https://dev.*.allyabase.com/*",
+      "https://*.planetnineapp.com/*"
+    ]
+  },
+  
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
+  
+  "author": "Planet Nine",
+  "homepage_url": "https://github.com/anthropics/planet-nine"
+}

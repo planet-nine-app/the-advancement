@@ -21,6 +21,11 @@
                         <span class="status-indicator" id="status-indicator">⚪</span>
                         <span class="status-text" id="status-text">Checking Advancement...</span>
                     </div>
+                    <div class="nineum-balance" id="nineum-balance">
+                        <span class="nineum-icon">⭐</span>
+                        <span class="nineum-amount" id="nineum-amount">0</span>
+                        <span class="nineum-label">Nineum</span>
+                    </div>
                     <div class="home-base-indicator" id="home-base-indicator">
                         <span class="base-icon">🏠</span>
                         <span class="base-name" id="home-base-name">No Home Base</span>
@@ -89,6 +94,67 @@
                         </div>
                     </div>
                 </section>
+
+                <section class="spell-test-section">
+                    <h3>🪄 Spell Test Integration</h3>
+                    <p class="spell-description">
+                        Test the complete spell flow: spell element detection → The Advancement spellbook validation → spell casting
+                    </p>
+                    <div class="spell-card-container">
+                        <!-- Embedded SpellTest Card -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="280" height="200" viewBox="0 0 280 200" class="spell-test-card">
+                            <!-- Gradient Definition for SpellTest Button -->
+                            <defs>
+                                <radialGradient id="spellTestGradient" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#9b59b6">
+                                        <animate attributeName="stop-color" values="#9b59b6;#e74c3c;#f39c12;#2ecc71;#3498db;#9b59b6" dur="3s" repeatCount="indefinite"/>
+                                    </stop>
+                                    <stop offset="100%" stop-color="#2c3e50">
+                                        <animate attributeName="stop-color" values="#2c3e50;#8e44ad;#e67e22;#27ae60;#2980b9;#2c3e50" dur="3s" repeatCount="indefinite"/>
+                                    </stop>
+                                </radialGradient>
+                            </defs>
+
+                            <!-- Card Background -->
+                            <rect x="0" y="0" width="280" height="200" fill="#2e2e40" stroke="#9b59b6" stroke-width="3" rx="15"/>
+                            
+                            <!-- Card Border -->
+                            <rect x="10" y="10" width="260" height="180" fill="none" stroke="#667eea" stroke-width="2" rx="10"/>
+                            
+                            <!-- Card Title Background -->
+                            <rect x="20" y="20" width="240" height="40" fill="#4B0082" rx="8"/>
+                            
+                            <!-- Card Title -->
+                            <text x="140" y="45" text-anchor="middle" fill="#FFD700" font-family="serif" font-size="16" font-weight="bold">
+                                🪄 SPELL TEST CARD 🪄
+                            </text>
+                            
+                            <!-- Main Spell Description -->
+                            <text x="140" y="85" text-anchor="middle" fill="#E0E6FF" font-family="serif" font-size="12">
+                                Click the spell button to test the complete flow:
+                            </text>
+                            <text x="140" y="105" text-anchor="middle" fill="#E0E6FF" font-family="serif" font-size="12">
+                                The Advancement detects spell → validates spellbook → casts spell
+                            </text>
+                            
+                            <!-- Spell Test Button - FLASHY! -->
+                            <rect spell="spellTest" x="90" y="130" width="100" height="40" fill="url(#spellTestGradient)" stroke="#FFD700" stroke-width="3" rx="8">
+                                <animate attributeName="stroke" values="#FFD700;#FF1493;#00BFFF;#32CD32;#9b59b6;#FFD700" dur="2s" repeatCount="indefinite"/>
+                            </rect>
+                            <text spell="spellTest" x="140" y="155" text-anchor="middle" fill="white" font-size="14" font-weight="bold">
+                                🪄 CAST SPELL 🪄
+                                <animate attributeName="fill" values="white;#FFD700;#FF1493;white" dur="1.5s" repeatCount="indefinite"/>
+                            </text>
+                        </svg>
+                        
+                        <div class="spell-info">
+                            <p><strong>Status:</strong> <span id="spell-status">Ready to cast</span></p>
+                            <p><strong>Spell Cost:</strong> 400 MP</p>
+                            <p><strong>Resolver:</strong> fount</p>
+                            <p><strong>Requirements:</strong> The Advancement extension + Spellbook loaded</p>
+                        </div>
+                    </div>
+                </section>
             </div>
 
             <!-- Right Column: Teleported Product Feed -->
@@ -151,6 +217,8 @@
     </div>
 
     <!-- Scripts -->
+    <script src="/menu-utils.js"></script>
+    <script src="/menu-display.js"></script>
     <script src="/teleportation-client.js"></script>
     <script src="/purchase-flow.js"></script>
     <script src="/main.js"></script>
