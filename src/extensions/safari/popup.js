@@ -27,62 +27,7 @@
     // Enhanced Integration Setup
     // ========================================
     
-    // Create a simple bridge for Web Extension communication
-    const popupBridge = {
-        async generateKeys() {
-            return new Promise((resolve, reject) => {
-                chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-                    chrome.tabs.sendMessage(tabs[0].id, {
-                        type: 'sessionless-generate-keys'
-                    }, (response) => {
-                        if (chrome.runtime.lastError) {
-                            reject(new Error(chrome.runtime.lastError.message));
-                        } else if (response && response.success) {
-                            resolve(response.data);
-                        } else {
-                            reject(new Error(response?.error || 'Key generation failed'));
-                        }
-                    });
-                });
-            });
-        },
-
-        async hasKeys() {
-            return new Promise((resolve, reject) => {
-                chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-                    chrome.tabs.sendMessage(tabs[0].id, {
-                        type: 'sessionless-has-keys'
-                    }, (response) => {
-                        if (chrome.runtime.lastError) {
-                            reject(new Error(chrome.runtime.lastError.message));
-                        } else if (response && response.success) {
-                            resolve(response.data);
-                        } else {
-                            resolve({ hasKeys: false });
-                        }
-                    });
-                });
-            });
-        },
-
-        async getPublicKey() {
-            return new Promise((resolve, reject) => {
-                chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
-                    chrome.tabs.sendMessage(tabs[0].id, {
-                        type: 'sessionless-get-public-key'
-                    }, (response) => {
-                        if (chrome.runtime.lastError) {
-                            reject(new Error(chrome.runtime.lastError.message));
-                        } else if (response && response.success) {
-                            resolve(response.data);
-                        } else {
-                            reject(new Error(response?.error || 'Failed to get public key'));
-                        }
-                    });
-                });
-            });
-        }
-    };
+    // Note: Bridge communication now handled by AdvancementPopupBridge in popup-content-bridge.js
     
     // ========================================
     // Base Discovery System
@@ -417,12 +362,23 @@
     
     class PopupUI {
         constructor() {
+            // Create the proper AdvancementPopupBridge instance
+            let advancementBridge = null;
+            if (window.AdvancementPopupBridge) {
+                try {
+                    advancementBridge = new window.AdvancementPopupBridge();
+                    console.log('🌉 Created AdvancementPopupBridge instance');
+                } catch (error) {
+                    console.warn('Failed to create AdvancementPopupBridge:', error);
+                }
+            }
+            
             // Use enhanced services if bridge is available
-            if (popupBridge && window.EnhancedBaseDiscoveryService && window.EnhancedExtensionStorage) {
-                this.baseDiscovery = new window.EnhancedBaseDiscoveryService(popupBridge);
-                this.storage = new window.EnhancedExtensionStorage(popupBridge);
-                this.bridge = popupBridge;
-                console.log('🌉 Using enhanced services with bridge integration');
+            if (advancementBridge && window.EnhancedBaseDiscoveryService && window.EnhancedExtensionStorage) {
+                this.baseDiscovery = new window.EnhancedBaseDiscoveryService(advancementBridge);
+                this.storage = new window.EnhancedExtensionStorage(advancementBridge);
+                this.bridge = advancementBridge;
+                console.log('🌉 Using enhanced services with AdvancementPopupBridge integration');
             } else {
                 this.baseDiscovery = new BaseDiscoveryService();
                 this.storage = new ExtensionStorage();

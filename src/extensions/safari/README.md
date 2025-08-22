@@ -2,77 +2,324 @@
 
 ## Overview
 
-The Safari extension for **The Advancement** provides comprehensive privacy and convenience features, combining sessionless authentication, intelligent input detection, natural typing simulation, and ad covering capabilities. It's designed to protect user privacy while making web browsing more convenient and secure.
+The Safari extension for **The Advancement** provides comprehensive privacy and convenience features, combining sessionless authentication, intelligent input detection, natural typing simulation, ad covering capabilities, and Planet Nine ecosystem integration. It features a sophisticated popup interface for home base management, spellbook functionality, and privacy settings.
 
-This architecture keeps all Sessionless cryptography in the native macOS app, with the Safari extension acting as a secure bridge.
+This architecture includes both a content script system and a popup-based management interface, with bridge communication between components.
 
 ## Features
 
-### 🔐 Sessionless Authentication
-- **Cryptographic Key Management**: Secure key generation and storage using macOS Keychain
-- **Passwordless Authentication**: No shared secrets or personal information required
-- **Native App Integration**: Communicates with native macOS app for secure operations
-- **secp256k1 Support**: Industry-standard elliptic curve cryptography
+### 🏠 **Home Base Management** (NEW - January 2025)
+- **Three-Tab Popup Interface**: Home Base selection, Keys management, Privacy settings
+- **Multi-Environment Support**: DEV (dev.allyabase.com), TEST (127.0.0.1:5114-5118), LOCAL (localhost)
+- **Base Discovery System**: Multiple discovery methods with intelligent fallbacks
+- **Persistent Selection**: Home base choice saved across browser sessions
+- **Real-time Status Monitoring**: Live connection status and base health checks
+- **Protocol Intelligence**: Automatic HTTP/HTTPS selection based on address
 
-### 🕵️ Intelligent Input Detection
+### 📚 **Spellbook Integration** (NEW - January 2025)
+- **BDO-Based Spellbook Fetching**: Retrieves spellbooks from home base's BDO service
+- **Real-time Spell Management**: Load, list, and execute spells from selected base
+- **Fallback System**: Local spellbook when bridge communication unavailable
+- **Spell Status Tracking**: Monitor spell usage and availability
+- **Auto-refresh Functionality**: Manual and automatic spellbook updates
+
+### 🔐 **Sessionless Authentication**
+- **Real secp256k1 Cryptography**: Industry-standard elliptic curve cryptography with compressed keys (02/03 prefix)
+- **Cryptographic Key Management**: Secure key generation and storage
+- **Passwordless Authentication**: No shared secrets or personal information required
+- **Bridge Communication**: Secure popup ↔ content script messaging
+- **Graceful Degradation**: Fallback functionality when native bridge unavailable
+
+### 🕵️ **Intelligent Input Detection**
 - **Email Field Detection**: Automatically identifies email input fields across all websites
 - **Login Field Recognition**: Detects username/login fields using keyword analysis
 - **Shadow DOM Support**: Works with modern web components and shadow DOM
 - **iframe Compatibility**: Scans input fields within embedded frames
 - **Dynamic Content Monitoring**: Detects fields added after page load
 
-### ⌨️ Natural Typing Simulation
+### ⌨️ **Natural Typing Simulation**
 - **Human-like Typing**: Variable delays between keystrokes (50-150ms)
 - **Natural Variations**: Occasional longer pauses and timing variations
 - **Complete Event Simulation**: Proper keydown, keypress, input, keyup, change, and blur events
 - **Bot Detection Avoidance**: Realistic typing patterns to avoid automated detection
 
-### 🌿 Ad Covering System (Planned)
+### 🌿 **Ad Covering System** (Planned)
 - **Ficus Feature**: Cover ads with peaceful plant images instead of blocking
 - **Content Creator Support**: Ensures creators still get paid for ad impressions
 - **Gaming Mode**: Optional "kill the ad" interactive experience
 - **Click-to-Dismiss**: Simple tap anywhere on ad to make it disappear
 
-### 🎭 Privacy Icons
+### 🎭 **Privacy Features**
+- **Privacy Email Rotation**: Multiple privacy-focused email addresses
 - **Field Marking**: Visual indicators on detected input fields
-- **Disguise Self Icons**: Gradient circular icons next to sensitive fields
-- **User Control**: Click icons for privacy options and controls
+- **Ad Experience Settings**: Choose between peaceful or gaming mode
+- **Auto-detection Controls**: Toggle automatic field detection
 
 ## Architecture
 
-### Content Script (`advancement-content.js`)
-The main content script combines all extension functionality:
+The Safari extension follows a **dual-layer architecture** with separate concerns for user interface and content functionality:
+
+### **Layer 1: Popup Interface** (User Management)
+- **`popup.html`**: Three-tab interface (Home Base, Keys, Privacy)
+- **`popup.js`**: Main UI logic and user interaction handling
+- **`popup-content-bridge.js`**: Bridge communication and enhanced services
+- **`popup.css`**: Styling following Planet Nine design patterns
+
+### **Layer 2: Content Script** (Web Page Integration)
+- **`advancement-content.js`**: Comprehensive content script with full functionality
+- **`sessionless-real.js`**: Real secp256k1 cryptographic implementation
+- **`secp256k1-real.js`**: Low-level cryptographic operations
+
+### **Bridge Communication System**
 
 ```javascript
-// Global objects available to web pages
-window.Sessionless      // Cryptographic authentication API
-window.AdvancementExtension  // Privacy and convenience features
+// Three-tier bridge architecture:
+
+1. AdvancementPopupBridge (popup-content-bridge.js)
+   ├── Safari extension messaging interface
+   ├── Enhanced base discovery and storage
+   └── Spellbook management coordination
+
+2. EnhancedBaseDiscoveryService (popup-content-bridge.js)
+   ├── Multi-source base discovery (content script → API → fallback)
+   ├── Protocol-aware status checking (HTTP/HTTPS)
+   └── Intelligent caching and fallback strategies
+
+3. SpellbookManager (advancement-content.js)
+   ├── BDO-based spellbook fetching from home bases
+   ├── Real-time spell loading and management
+   └── Fallback spellbook when bridge unavailable
 ```
 
-### Native App Integration (`SessionlessApp.swift`)
-- **XPC Communication**: Secure inter-process communication with Safari
-- **Keychain Storage**: Encrypted key storage using macOS security framework
-- **Cryptographic Operations**: All signing operations happen in native app
-- **Background Service**: Runs as accessory app (hidden from dock)
+### **Key Components**
 
-### Component Classes
-- **InputDetector**: Scans pages for email and login fields
-- **TypingSimulator**: Provides natural typing automation
-- **SessionlessCore**: Handles cryptographic operations
-- **SessionlessKeyManager**: Manages secure key storage
+#### **Popup Management (popup.js)**
+```javascript
+class PopupUI {
+    constructor() {
+        // Bridge instantiation
+        this.bridge = new AdvancementPopupBridge();
+        this.baseDiscovery = new EnhancedBaseDiscoveryService(this.bridge);
+        this.storage = new EnhancedExtensionStorage(this.bridge);
+    }
+    
+    // Tab management, base selection, spellbook loading
+}
+```
+
+#### **Content Script Integration (advancement-content.js)**
+```javascript
+// Global APIs available to web pages
+window.RealSessionless = {
+    generateKeys(), hasKeys(), getPublicKey(), sign(), authenticate()
+}
+
+window.AdvancementExtension = {
+    // Input detection, typing simulation, privacy features
+    detector: new InputDetector(),
+    simulator: new TypingSimulator(),
+    spellbookManager: new SpellbookManager(),
+    
+    // APIs for web page interaction
+    scanPage(), getRandomEmail(), loadSpellbook()
+}
+```
+
+#### **Bridge Communication (popup-content-bridge.js)**
+```javascript
+class AdvancementPopupBridge {
+    // Safari extension messaging
+    sendMessage(action, data) {
+        return safari.extension.dispatchMessage('advancementRequest', {
+            requestId, action, data
+        });
+    }
+    
+    // Comprehensive API methods
+    async generateKeys(), hasKeys(), getPublicKey(), sign()
+    async discoverBases(), checkBaseStatus(), setHomeBase(), getHomeBase()
+    async loadSpellbook(), getSpellbookStatus(), listSpells()
+}
+```
+
+### **Environment Management**
+
+The extension supports three Planet Nine environments:
+
+#### **DEV Environment** (Production Development)
+- **Base URLs**: `dev.bdo.allyabase.com`, `dev.sanora.allyabase.com`, etc.
+- **Protocol**: HTTPS
+- **Purpose**: Integration with production Planet Nine development infrastructure
+
+#### **TEST Environment** (3-Base Docker Ecosystem)
+- **Base URLs**: `127.0.0.1:5114-5118` (BDO, Sanora, Dolores, Fount, Addie)
+- **Protocol**: HTTP (automatic detection)
+- **Purpose**: Local testing with complete 3-base ecosystem
+
+#### **LOCAL Environment** (Single-Service Development)
+- **Base URLs**: `localhost:3003`, `localhost:7243`, etc.
+- **Protocol**: HTTP (automatic detection)
+- **Purpose**: Individual service development and testing
 
 ## Project Structure
 
 ```
 safari/
-├── advancement-content.js    # Main content script (combined functionality)
-├── sessionless-content.js    # Legacy sessionless-only script
-├── SessionlessApp.swift      # Native macOS app
-├── InputDetector.js         # Standalone input detection class
-├── TypingSimulator.js       # Standalone typing simulation class
-├── Info.plist              # Safari extension manifest
-└── README.md               # This documentation
+├── manifest.json                # Chrome-style manifest (new format)
+├── Info.plist                  # Safari extension manifest (legacy)
+│
+├── # === POPUP INTERFACE ===
+├── popup.html                  # Three-tab popup UI (Home Base, Keys, Privacy)
+├── popup.css                   # Planet Nine styling for popup
+├── popup.js                    # Main popup logic and UI management
+├── popup-content-bridge.js     # Bridge communication and enhanced services
+│
+├── # === CONTENT SCRIPTS ===
+├── advancement-content.js      # Main content script (full functionality)
+├── sessionless-real.js         # Real secp256k1 implementation
+├── secp256k1-real.js           # Low-level cryptographic operations
+├── sessionless-content.js      # Legacy sessionless-only script
+│
+├── # === STANDALONE COMPONENTS ===
+├── InputDetector.js            # Standalone input detection class
+├── TypingSimulator.js          # Standalone typing simulation class
+├── stripe-integration.js       # Payment processing integration
+│
+├── # === NATIVE APP (Future) ===
+├── SessionlessApp.swift        # Native macOS app (XPC bridge)
+│
+└── README.md                   # This documentation
 ```
+
+### **File Purposes**
+
+#### **Popup Layer**
+- **`popup.html`**: HTML structure for three-tab interface
+- **`popup.css`**: Styling following Planet Nine design patterns
+- **`popup.js`**: PopupUI class, tab management, base selection, spellbook integration
+- **`popup-content-bridge.js`**: AdvancementPopupBridge, EnhancedBaseDiscoveryService, EnhancedExtensionStorage
+
+#### **Content Script Layer**
+- **`advancement-content.js`**: Complete content script with SpellbookManager, message handling
+- **`sessionless-real.js`**: Real cryptographic implementation with proper secp256k1
+- **`secp256k1-real.js`**: Low-level cryptographic primitives
+
+#### **Component Layer**
+- **`InputDetector.js`**: Standalone input field detection across DOM types
+- **`TypingSimulator.js`**: Human-like typing simulation with natural timing
+- **`stripe-integration.js`**: Payment processing for Planet Nine commerce
+
+### **Key Architecture Decisions**
+
+#### **1. Dual-Layer Separation**
+- **Popup Layer**: User management, settings, base selection
+- **Content Layer**: Web page integration, real-time functionality
+
+#### **2. Bridge Communication**
+- **AdvancementPopupBridge**: Safari extension messaging interface
+- **Enhanced Services**: Intelligent fallback and caching strategies
+- **Message Routing**: Popup ↔ Content Script ↔ Native App (future)
+
+#### **3. Environment Abstraction**
+- **Protocol Intelligence**: Automatic HTTP/HTTPS based on address
+- **Multi-Source Discovery**: Content script → Direct API → Hardcoded fallbacks
+- **Persistent Storage**: localStorage with bridge backup
+
+#### **4. Graceful Degradation**
+- **Bridge Unavailable**: Fall back to direct operations
+- **Service Offline**: Use cached data and fallback spellbooks
+- **Network Issues**: Maintain functionality with local storage
+
+## Current Status & Known Issues
+
+### ✅ **Working Features**
+- **Popup Interface**: Three-tab UI loads and displays correctly
+- **Base Discovery**: DEV, TEST, and LOCAL bases discovered and displayed
+- **Base Selection**: Users can select home base (persisted to localStorage)
+- **Protocol Intelligence**: Automatic HTTP for 127.0.0.1/localhost, HTTPS for remote
+- **Real Cryptography**: Proper secp256k1 with compressed keys (02/03 prefix)
+- **Fallback Systems**: Graceful degradation when bridge methods unavailable
+- **Fallback Spellbook**: Local spellbook display when bridge/BDO unavailable
+
+### 🚧 **In Development**
+- **Safari Extension Messaging**: Bridge communication between popup and content script
+- **Full Spellbook Integration**: Real-time spellbook fetching from home base BDO
+- **Native App Integration**: XPC communication for secure cryptographic operations
+- **Payment Processing**: Stripe integration for Planet Nine commerce
+
+### ⚠️ **Known Issues**
+
+#### **Bridge Communication**
+```javascript
+// Current issue: Safari extension messaging not fully implemented
+// Symptoms: "this.bridge.getHomeBase is not a function" errors
+// Status: AdvancementPopupBridge exists but Safari messaging layer incomplete
+```
+
+#### **Content Script Integration**
+```javascript
+// Issue: Popup can't communicate with content script SpellbookManager
+// Impact: Spellbook falls back to local instead of fetching from BDO
+// Solution: Implement Safari extension message routing
+```
+
+#### **Native App Dependency**
+```javascript
+// Issue: Current implementation expects native macOS app for crypto
+// Impact: Extension works in fallback mode only
+// Options: 1) Implement native app, 2) Use browser-based crypto
+```
+
+## Development Workflow
+
+### **Quick Testing**
+```bash
+# 1. Start TEST environment
+cd /path/to/allyabase/deployment/docker
+./test-all-bases.sh --build
+
+# 2. Load extension in Safari
+# Safari > Develop > Show Extension Builder
+# Add extension from safari/ directory
+
+# 3. Test popup functionality
+# Click extension icon → verify three tabs work
+# Select TEST base → verify spellbook loads (fallback)
+```
+
+### **Debug Bridge Communication**
+```javascript
+// In popup console:
+console.log('Bridge instance:', this.bridge);
+console.log('Available methods:', Object.getOwnPropertyNames(this.bridge));
+
+// Check if AdvancementPopupBridge was created
+console.log('AdvancementPopupBridge available:', !!window.AdvancementPopupBridge);
+```
+
+### **Test Spellbook Integration**
+```javascript
+// In content script console (on any webpage):
+console.log('SpellbookManager:', window.AdvancementExtension?.spellbookManager);
+console.log('Available spells:', await window.AdvancementExtension?.listSpells());
+```
+
+## Next Steps for Full Integration
+
+### **Priority 1: Safari Extension Messaging**
+1. Implement Safari extension message routing between popup and content script
+2. Connect AdvancementPopupBridge.sendMessage() to actual Safari messaging API
+3. Add message handlers in content script for bridge requests
+
+### **Priority 2: Spellbook BDO Integration**
+1. Connect popup spellbook refresh to content script SpellbookManager
+2. Test real spellbook fetching from TEST environment (127.0.0.1:5114)
+3. Implement proper error handling and fallback strategies
+
+### **Priority 3: Architecture Decision**
+1. **Option A**: Implement native macOS app for secure cryptographic operations
+2. **Option B**: Use browser-based cryptography (current sessionless-real.js implementation)
+3. **Option C**: Hybrid approach with progressive enhancement
 
 ## Setup Instructions
 
