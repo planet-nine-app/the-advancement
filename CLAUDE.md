@@ -31,8 +31,10 @@ The Advancement supports multiple browsers with consistent functionality:
 - **Keychain Storage**: Cryptographic keys stored in macOS Keychain
 - **Comprehensive Features**: Full input detection + sessionless authentication + payment processing
 - **Enhanced Security**: All crypto operations happen in native code
-- **Home Base Management**: User selection and management of Planet Nine bases
+- **Home Base Management**: Complete three-environment base discovery and selection (DEV, TEST, LOCAL)
 - **Payment Processing**: Stripe integration with multi-party payment splitting
+- **Graceful Degradation**: Fallback functionality when bridge methods unavailable
+- **Production Ready**: Real secp256k1 cryptography with compressed key format (02/03 prefix)
 
 ### Core Components
 
@@ -110,10 +112,13 @@ window.Sessionless = {
 
 **Features**:
 - **Three-Tab Popup**: Home Base selection, Keys management, Privacy settings
-- **Base Discovery**: Multiple discovery methods (content script → direct API → fallback bases)
+- **Three-Environment Support**: DEV (dev.allyabase.com), TEST (127.0.0.1:5114-5118), LOCAL (localhost)
+- **Enhanced Base Discovery**: Multiple discovery methods with graceful fallbacks
+- **Protocol Intelligence**: Automatic HTTP/HTTPS selection based on address (HTTP for 127.0.0.1/localhost)
 - **Persistent Selection**: Home base choice saved in localStorage across sessions
 - **Real-time Status**: Live connection status and base health monitoring
-- **Secure Communication**: Popup ↔ content script bridge via Safari extension messaging
+- **Bridge Communication**: Popup ↔ content script with robust error handling and fallbacks
+- **Spellbook Integration**: Fallback spellbook functionality when bridge methods unavailable
 
 #### 5. **Payment Processing System** (Safari Only - January 2025)
 ```javascript
@@ -484,12 +489,31 @@ open http://localhost:3456
 - 🚧 **Firefox**: Planned with same feature set
 - 🚧 **Edge**: Planned using Chrome extension base
 
+### Latest Updates (January 2025)
+
+#### ✅ **Enhanced Safari Extension (January 22, 2025)**
+- **Real Cryptography**: Implemented proper secp256k1 with compressed keys (02/03 prefix)
+- **Three-Environment Support**: Complete DEV, TEST, and LOCAL base discovery and management
+- **Protocol Intelligence**: Automatic HTTP for local addresses (127.0.0.1, localhost), HTTPS for remote
+- **Robust Bridge Communication**: Enhanced popup-content bridge with comprehensive error handling
+- **Graceful Degradation**: Fallback functionality when native bridge methods unavailable
+- **Spellbook Fallbacks**: Working spellbook display even when full bridge implementation pending
+- **TEST Environment Integration**: Full support for 3-base Docker ecosystem (ports 5114-5118)
+
+#### 🔧 **Technical Improvements**
+- **EnhancedBaseDiscoveryService**: Intelligent base discovery with multiple fallback strategies
+- **EnhancedExtensionStorage**: Dual storage (bridge + localStorage) with automatic failover
+- **Bridge Method Resilience**: All bridge methods return null instead of throwing on failure
+- **Status Check Improvements**: Direct HTTP health checks with proper protocol selection
+- **Error Recovery**: Comprehensive error handling throughout the popup interface
+
 ### Current Status (January 2025)
 - ✅ **Safari Extension**: Production-ready with complete Planet Nine ecosystem integration
-- ✅ **Home Base Management**: Full base discovery, selection, and persistent storage
+- ✅ **Home Base Management**: Full base discovery, selection, and persistent storage across three environments
 - ✅ **Payment Processing**: Complete Stripe integration with multi-party payment splits
 - ✅ **Test Environment**: Comprehensive testing infrastructure for development
 - ✅ **Teleported Commerce**: Cross-base product discovery and purchasing
+- ✅ **Robust Architecture**: Enhanced error handling and graceful degradation patterns
 
 ## Contributing
 

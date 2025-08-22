@@ -121,19 +121,43 @@
 
         // Base management methods
         async discoverBases() {
-            return this.sendMessage('discoverBases');
+            try {
+                return await this.sendMessage('discoverBases');
+            } catch (error) {
+                console.warn('Bridge discoverBases failed, using direct fallback:', error);
+                // Return null to trigger fallback in enhanced service
+                return null;
+            }
         }
 
         async checkBaseStatus(baseUrl) {
-            return this.sendMessage('checkBaseStatus', { baseUrl });
+            try {
+                return await this.sendMessage('checkBaseStatus', { baseUrl });
+            } catch (error) {
+                console.warn('Bridge checkBaseStatus failed for', baseUrl, ':', error);
+                // Return null to trigger fallback in enhanced service
+                return null;
+            }
         }
 
         async setHomeBase(base) {
-            return this.sendMessage('setHomeBase', { base });
+            try {
+                return await this.sendMessage('setHomeBase', { base });
+            } catch (error) {
+                console.warn('Bridge setHomeBase failed:', error);
+                // Don't throw, let the storage class handle fallback
+                return null;
+            }
         }
 
         async getHomeBase() {
-            return this.sendMessage('getHomeBase');
+            try {
+                return await this.sendMessage('getHomeBase');
+            } catch (error) {
+                console.warn('Bridge getHomeBase failed:', error);
+                // Return null to trigger fallback in enhanced storage
+                return null;
+            }
         }
 
         // Privacy settings methods
@@ -147,19 +171,39 @@
 
         // Spellbook management methods
         async loadSpellbook() {
-            return this.sendMessage('loadSpellbook');
+            try {
+                return await this.sendMessage('loadSpellbook');
+            } catch (error) {
+                console.warn('Bridge loadSpellbook failed:', error);
+                return null;
+            }
         }
 
         async getSpellbookStatus() {
-            return this.sendMessage('getSpellbookStatus');
+            try {
+                return await this.sendMessage('getSpellbookStatus');
+            } catch (error) {
+                console.warn('Bridge getSpellbookStatus failed:', error);
+                return null;
+            }
         }
 
         async listSpells() {
-            return this.sendMessage('listSpells');
+            try {
+                return await this.sendMessage('listSpells');
+            } catch (error) {
+                console.warn('Bridge listSpells failed:', error);
+                return [];
+            }
         }
 
         async getSpell(spellName) {
-            return this.sendMessage('getSpell', { spellName });
+            try {
+                return await this.sendMessage('getSpell', { spellName });
+            } catch (error) {
+                console.warn('Bridge getSpell failed for', spellName, ':', error);
+                return null;
+            }
         }
     }
 
@@ -183,7 +227,7 @@
             
             try {
                 // First try to get bases from content script (if available)
-                const contentBases = await this.bridge.discoverBases().catch(() => null);
+                const contentBases = await this.bridge.discoverBases();
                 
                 if (contentBases && contentBases.length > 0) {
                     console.log('📡 Got bases from content script:', contentBases.length);
@@ -297,6 +341,25 @@
             return [
                 this.getDevBase(),
                 {
+                    id: 'test',
+                    name: 'TEST',
+                    description: 'Test environment base (3-base ecosystem)',
+                    dns: {
+                        bdo: '127.0.0.1:5114',
+                        sanora: '127.0.0.1:5115',
+                        dolores: '127.0.0.1:5116',
+                        fount: '127.0.0.1:5117',
+                        addie: '127.0.0.1:5118'
+                    },
+                    status: 'connecting',
+                    features: ['BDO', 'Sanora', 'Dolores', 'Fount', 'Addie'],
+                    isHomeBase: false,
+                    metadata: {
+                        discovered: Date.now(),
+                        source: 'fallback'
+                    }
+                },
+                {
                     id: 'local',
                     name: 'LOCAL',
                     description: 'Local development base',
@@ -319,7 +382,7 @@
         async checkBaseStatus(base) {
             try {
                 // Try to use bridge first
-                const status = await this.bridge.checkBaseStatus(base.dns.bdo).catch(() => null);
+                const status = await this.bridge.checkBaseStatus(base.dns.bdo);
                 if (status) {
                     return status;
                 }
@@ -337,7 +400,15 @@
             const bdoUrl = base.dns.bdo;
             if (!bdoUrl) return 'offline';
 
-            const url = bdoUrl.startsWith('http') ? bdoUrl : `https://${bdoUrl}`;
+            // Use HTTP for local addresses, HTTPS for remote
+            let url;
+            if (bdoUrl.startsWith('http')) {
+                url = bdoUrl;
+            } else if (bdoUrl.startsWith('127.0.0.1') || bdoUrl.startsWith('localhost')) {
+                url = `http://${bdoUrl}`;
+            } else {
+                url = `https://${bdoUrl}`;
+            }
             
             try {
                 const response = await fetch(`${url}/health`, {
@@ -366,7 +437,7 @@
         async getHomeBase() {
             try {
                 // Try to get from content script first
-                const bridgeBase = await this.bridge.getHomeBase().catch(() => null);
+                const bridgeBase = await this.bridge.getHomeBase();
                 if (bridgeBase) {
                     return bridgeBase;
                 }
@@ -383,11 +454,16 @@
         async setHomeBase(base) {
             try {
                 // Save via bridge
-                await this.bridge.setHomeBase(base);
+                const result = await this.bridge.setHomeBase(base);
                 
                 // Also save locally as backup
                 localStorage.setItem(this.storagePrefix + 'home-base', JSON.stringify(base));
-                console.log('💾 Home base saved via bridge:', base.name);
+                
+                if (result) {
+                    console.log('💾 Home base saved via bridge:', base.name);
+                } else {
+                    console.log('💾 Home base saved locally (bridge unavailable):', base.name);
+                }
             } catch (error) {
                 console.error('Failed to save home base via bridge:', error);
                 
@@ -400,7 +476,7 @@
         async getSettings() {
             try {
                 // Try to get from content script first
-                const bridgeSettings = await this.bridge.getPrivacySettings().catch(() => null);
+                const bridgeSettings = await this.bridge.getPrivacySettings();
                 if (bridgeSettings) {
                     return bridgeSettings;
                 }
@@ -417,10 +493,16 @@
         async setSettings(settings) {
             try {
                 // Save via bridge
-                await this.bridge.updatePrivacySettings(settings);
+                const result = await this.bridge.updatePrivacySettings(settings);
                 
                 // Also save locally as backup
                 localStorage.setItem(this.storagePrefix + 'settings', JSON.stringify(settings));
+                
+                if (result) {
+                    console.log('💾 Settings saved via bridge');
+                } else {
+                    console.log('💾 Settings saved locally (bridge unavailable)');
+                }
             } catch (error) {
                 console.error('Failed to save settings via bridge:', error);
                 

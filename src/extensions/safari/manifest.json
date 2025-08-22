@@ -29,8 +29,8 @@
     {
       "matches": ["<all_urls>"],
       "js": [
-        "sessionless-bundle.js",
-        "sessionless-safari.js", 
+        "secp256k1-real.js",
+        "sessionless-real.js", 
         "advancement-content.js"
       ],
       "run_at": "document_end",

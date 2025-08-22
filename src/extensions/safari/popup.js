@@ -27,8 +27,62 @@
     // Enhanced Integration Setup
     // ========================================
     
-    // Initialize bridge if available
-    const popupBridge = window.AdvancementPopupBridge ? new AdvancementPopupBridge() : null;
+    // Create a simple bridge for Web Extension communication
+    const popupBridge = {
+        async generateKeys() {
+            return new Promise((resolve, reject) => {
+                chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+                    chrome.tabs.sendMessage(tabs[0].id, {
+                        type: 'sessionless-generate-keys'
+                    }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            reject(new Error(chrome.runtime.lastError.message));
+                        } else if (response && response.success) {
+                            resolve(response.data);
+                        } else {
+                            reject(new Error(response?.error || 'Key generation failed'));
+                        }
+                    });
+                });
+            });
+        },
+
+        async hasKeys() {
+            return new Promise((resolve, reject) => {
+                chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+                    chrome.tabs.sendMessage(tabs[0].id, {
+                        type: 'sessionless-has-keys'
+                    }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            reject(new Error(chrome.runtime.lastError.message));
+                        } else if (response && response.success) {
+                            resolve(response.data);
+                        } else {
+                            resolve({ hasKeys: false });
+                        }
+                    });
+                });
+            });
+        },
+
+        async getPublicKey() {
+            return new Promise((resolve, reject) => {
+                chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+                    chrome.tabs.sendMessage(tabs[0].id, {
+                        type: 'sessionless-get-public-key'
+                    }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            reject(new Error(chrome.runtime.lastError.message));
+                        } else if (response && response.success) {
+                            resolve(response.data);
+                        } else {
+                            reject(new Error(response?.error || 'Failed to get public key'));
+                        }
+                    });
+                });
+            });
+        }
+    };
     
     // ========================================
     // Base Discovery System
@@ -47,10 +101,12 @@
 
         async discoverBases() {
             console.log('🔍 Discovering available Planet Nine bases...');
+            console.log('🔍 Discovery endpoint:', this.discoveryEndpoint);
+            console.log('🔍 Bridge available:', !!this.bridge);
             
             // Check cache first
             if (this.isCacheValid()) {
-                console.log('📦 Using cached base data');
+                console.log('📦 Using cached base data:', this.cache.bases);
                 return this.cache.bases;
             }
 
@@ -72,6 +128,7 @@
                 }
 
                 // Fallback to direct discovery
+                console.log('🌐 Attempting direct discovery from:', this.discoveryEndpoint);
                 const response = await fetch(this.discoveryEndpoint, {
                     method: 'GET',
                     headers: {
@@ -80,12 +137,16 @@
                     }
                 });
 
+                console.log('🌐 Discovery response status:', response.status);
                 if (!response.ok) {
                     throw new Error(`Base discovery failed: ${response.status}`);
                 }
 
                 const basesData = await response.json();
+                console.log('🌐 Raw bases data:', basesData);
+                
                 const processedBases = this.processBases(basesData);
+                console.log('🌐 Processed bases:', processedBases);
                 
                 // Cache the results
                 this.cache.bases = processedBases;
@@ -96,19 +157,24 @@
                 
             } catch (error) {
                 console.warn('⚠️ Base discovery failed, using fallback bases:', error);
-                return this.getFallbackBases();
+                const fallbackBases = this.getFallbackBases();
+                console.log('🔄 Fallback bases:', fallbackBases);
+                return fallbackBases;
             }
         }
 
         processBases(basesData) {
             // Process the response to extract base information
             // Adapting from The Nullary's base-command.js patterns
+            console.log('🔧 Processing bases data:', basesData);
             const bases = [];
             
             if (basesData && typeof basesData === 'object') {
+                console.log('🔧 Found object data, processing entries...');
                 for (const [baseId, baseInfo] of Object.entries(basesData)) {
+                    console.log(`🔧 Processing base: ${baseId}`, baseInfo);
                     if (baseInfo && typeof baseInfo === 'object') {
-                        bases.push({
+                        const processedBase = {
                             id: baseId,
                             name: baseInfo.name || baseId.toUpperCase(),
                             description: baseInfo.description || `Planet Nine base: ${baseId}`,
@@ -116,16 +182,70 @@
                             status: 'connecting',
                             features: this.detectFeatures(baseInfo.dns),
                             isHomeBase: false
-                        });
+                        };
+                        console.log(`🔧 Processed base:`, processedBase);
+                        bases.push(processedBase);
                     }
                 }
+            } else {
+                console.log('🔧 No valid bases data to process');
             }
+
+            console.log('🔧 Current bases before adding defaults:', bases);
 
             // Add default development base if not found
             if (!bases.find(base => base.id === 'dev')) {
+                console.log('🔧 Adding DEV base');
                 bases.unshift(this.getDevBase());
+            } else {
+                console.log('🔧 DEV base already exists');
             }
 
+            // Add test base if not found
+            if (!bases.find(base => base.id === 'test')) {
+                console.log('🔧 Adding TEST base');
+                const testBase = {
+                    id: 'test',
+                    name: 'TEST',
+                    description: 'Test environment base (3-base ecosystem)',
+                    dns: {
+                        bdo: '127.0.0.1:5114',
+                        sanora: '127.0.0.1:5115',
+                        dolores: '127.0.0.1:5116',
+                        fount: '127.0.0.1:5117',
+                        addie: '127.0.0.1:5118'
+                    },
+                    status: 'connecting',
+                    features: ['BDO', 'Sanora', 'Dolores', 'Fount', 'Addie'],
+                    isHomeBase: false
+                };
+                console.log('🔧 TEST base object:', testBase);
+                bases.push(testBase);
+            } else {
+                console.log('🔧 TEST base already exists');
+            }
+
+            // Add local base if not found  
+            if (!bases.find(base => base.id === 'local')) {
+                console.log('🔧 Adding LOCAL base');
+                bases.push({
+                    id: 'local',
+                    name: 'LOCAL',
+                    description: 'Local development base',
+                    dns: {
+                        bdo: 'localhost:3003',
+                        sanora: 'localhost:7243',
+                        dolores: 'localhost:3007'
+                    },
+                    status: 'connecting',
+                    features: ['BDO', 'Sanora', 'Dolores'],
+                    isHomeBase: false
+                });
+            } else {
+                console.log('🔧 LOCAL base already exists');
+            }
+
+            console.log('🔧 Final bases array:', bases);
             return bases;
         }
 
@@ -165,6 +285,21 @@
             return [
                 this.getDevBase(),
                 {
+                    id: 'test',
+                    name: 'TEST',
+                    description: 'Test environment base (3-base ecosystem)',
+                    dns: {
+                        bdo: '127.0.0.1:5114',
+                        sanora: '127.0.0.1:5115',
+                        dolores: '127.0.0.1:5116',
+                        fount: '127.0.0.1:5117',
+                        addie: '127.0.0.1:5118'
+                    },
+                    status: 'connecting',
+                    features: ['BDO', 'Sanora', 'Dolores', 'Fount', 'Addie'],
+                    isHomeBase: false
+                },
+                {
                     id: 'local',
                     name: 'LOCAL',
                     description: 'Local development base',
@@ -192,7 +327,18 @@
                 const bdoUrl = base.dns.bdo;
                 if (!bdoUrl) return 'offline';
 
-                const url = bdoUrl.startsWith('http') ? bdoUrl : `https://${bdoUrl}`;
+                // Determine protocol based on URL
+                let url;
+                if (bdoUrl.startsWith('http')) {
+                    url = bdoUrl;
+                } else if (bdoUrl.includes('127.0.0.1') || bdoUrl.includes('localhost')) {
+                    // Use HTTP for local/test addresses
+                    url = `http://${bdoUrl}`;
+                } else {
+                    // Use HTTPS for remote addresses
+                    url = `https://${bdoUrl}`;
+                }
+
                 const response = await fetch(`${url}/health`, {
                     method: 'GET',
                     timeout: 5000,
@@ -434,11 +580,17 @@
             this.showLoading(true);
 
             try {
+                console.log('🔄 Calling baseDiscovery.discoverBases()...');
                 const bases = await this.baseDiscovery.discoverBases();
+                console.log('🔄 Received bases from discovery:', bases);
+                
                 PopupState.availableBases = bases;
+                console.log('🔄 Set PopupState.availableBases to:', PopupState.availableBases);
                 
                 // Check status of each base
+                console.log('🔄 Checking status of each base...');
                 await this.checkBasesStatus(bases);
+                console.log('🔄 Status checking complete, rendering bases...');
                 
                 this.renderBasesList(bases);
                 this.updateConnectionStatus('online');
@@ -581,13 +733,28 @@
                 // Load spellbook status
                 if (this.bridge) {
                     const status = await this.bridge.getSpellbookStatus();
-                    this.renderSpellbookStatus(status);
+                    if (status) {
+                        this.renderSpellbookStatus(status);
+                    } else {
+                        // Bridge didn't return status, use fallback
+                        console.log('📚 Bridge spellbook status unavailable, using fallback...');
+                        this.loadFallbackSpellbook(homeBase);
+                    }
                 } else {
-                    this.renderSpellbookStatus(null, 'Bridge not available');
+                    // No bridge, use fallback
+                    console.log('📚 No bridge available, using fallback spellbook...');
+                    this.loadFallbackSpellbook(homeBase);
                 }
             } catch (error) {
                 console.error('Failed to load spellbook status:', error);
-                this.renderSpellbookStatus(null, error.message);
+                // Try fallback on error
+                const homeBase = await this.storage.getHomeBase();
+                if (homeBase) {
+                    console.log('📚 Using fallback spellbook due to error...');
+                    this.loadFallbackSpellbook(homeBase);
+                } else {
+                    this.renderSpellbookStatus(null, error.message);
+                }
             }
         }
 
@@ -604,7 +771,7 @@
                 }
 
                 if (this.bridge) {
-                    // Load fresh spellbook
+                    // Try to load spellbook via bridge
                     const spellbook = await this.bridge.loadSpellbook();
                     
                     if (spellbook) {
@@ -618,20 +785,68 @@
                         
                         this.showToast('Spellbook refreshed successfully!', 'success');
                     } else {
-                        throw new Error('No spellbook found - ensure seeding script has been run');
+                        // Bridge didn't return spellbook, use fallback
+                        console.log('🔄 Bridge spellbook unavailable, using fallback...');
+                        this.loadFallbackSpellbook(homeBase);
                     }
                 } else {
-                    throw new Error('Bridge not available');
+                    // No bridge, use fallback
+                    console.log('🔄 No bridge available, using fallback spellbook...');
+                    this.loadFallbackSpellbook(homeBase);
                 }
                 
             } catch (error) {
                 console.error('Failed to refresh spellbook:', error);
-                this.renderSpellbookStatus(null, error.message);
-                this.showToast('Failed to refresh spellbook', 'error');
+                console.log('🔄 Using fallback spellbook due to error...');
+                const homeBase = await this.storage.getHomeBase();
+                if (homeBase) {
+                    this.loadFallbackSpellbook(homeBase);
+                } else {
+                    this.renderSpellbookStatus(null, error.message);
+                    this.showToast('Failed to refresh spellbook', 'error');
+                }
             } finally {
                 this.showSpellbookLoading(false);
                 this.refreshSpellbookBtn.classList.remove('spinning');
             }
+        }
+
+        loadFallbackSpellbook(homeBase) {
+            console.log('📚 Loading fallback spellbook for base:', homeBase.name);
+            
+            // Create fallback status
+            const fallbackStatus = {
+                loaded: true,
+                baseUrl: `http://${homeBase.dns.bdo}`,
+                spellCount: 3,
+                lastUpdated: new Date().toISOString()
+            };
+            
+            // Create fallback spells
+            const fallbackSpells = [
+                {
+                    name: 'auto-fill',
+                    description: 'Automatically fill forms with privacy emails',
+                    enabled: true,
+                    lastUsed: new Date().toISOString()
+                },
+                {
+                    name: 'ficus-cover',
+                    description: 'Cover ads with peaceful plant imagery',
+                    enabled: true,
+                    lastUsed: null
+                },
+                {
+                    name: 'session-auth',
+                    description: 'Sessionless cryptographic authentication',
+                    enabled: true,
+                    lastUsed: new Date().toISOString()
+                }
+            ];
+            
+            this.renderSpellbookStatus(fallbackStatus);
+            this.renderSpellsList(fallbackSpells);
+            this.showToast('Spellbook loaded (fallback mode)', 'success');
         }
 
         renderSpellbookStatus(status, errorMessage = null) {

@@ -274,12 +274,12 @@
     // Sessionless Integration (Real Crypto Implementation)
     // ========================================
     
-    // Use the real Safari Sessionless implementation if available
-    if (typeof window.SafariSessionless !== 'undefined') {
-        console.log('🔐 Using real Safari Sessionless implementation');
-        window.Sessionless = window.SafariSessionless;
+    // Use the real Sessionless implementation if available
+    if (typeof window.RealSessionless !== 'undefined') {
+        console.log('🔐 Using real Sessionless implementation');
+        window.Sessionless = window.RealSessionless;
     } else {
-        console.warn('⚠️ SafariSessionless not available, using fallback');
+        console.warn('⚠️ RealSessionless not available, using fallback');
         // Fallback implementation for testing
         window.Sessionless = {
         
@@ -1002,6 +1002,15 @@
                     sendResponse({ success: false, error: error.message });
                 });
                 return true; // Keep message channel open for async response
+            } else if (message.type === 'sessionless-generate-keys') {
+                handleSessionlessGenerateKeys(sendResponse);
+                return true;
+            } else if (message.type === 'sessionless-has-keys') {
+                handleSessionlessHasKeys(sendResponse);
+                return true;
+            } else if (message.type === 'sessionless-get-public-key') {
+                handleSessionlessGetPublicKey(sendResponse);
+                return true;
             }
         });
         
@@ -1256,26 +1265,28 @@
         }
     }
     
-    // Handle responses from the Safari extension
-    safari.extension.addEventListener('message', function(event) {
-        if (event.name === 'sessionlessResponse') {
-            const response = event.message;
-            const requestId = response.requestId;
-            
-            if (requestId && window._sessionlessCallbacks && window._sessionlessCallbacks[requestId]) {
-                const callbacks = window._sessionlessCallbacks[requestId];
+    // Handle responses from the Safari extension (only if Safari Legacy API is available)
+    if (typeof safari !== 'undefined' && safari.extension) {
+        safari.extension.addEventListener('message', function(event) {
+            if (event.name === 'sessionlessResponse') {
+                const response = event.message;
+                const requestId = response.requestId;
                 
-                if (response.success) {
-                    callbacks.resolve(response.data);
-                } else {
-                    callbacks.reject(new Error(response.error || 'Unknown error'));
+                if (requestId && window._sessionlessCallbacks && window._sessionlessCallbacks[requestId]) {
+                    const callbacks = window._sessionlessCallbacks[requestId];
+                    
+                    if (response.success) {
+                        callbacks.resolve(response.data);
+                    } else {
+                        callbacks.reject(new Error(response.error || 'Unknown error'));
+                    }
+                    
+                    // Clean up this specific callback
+                    delete window._sessionlessCallbacks[requestId];
                 }
-                
-                // Clean up this specific callback
-                delete window._sessionlessCallbacks[requestId];
             }
-        }
-    });
+        });
+    }
 
     // ========================================
     // Site Contributors System
@@ -1397,16 +1408,97 @@
     console.log('🔐 Sessionless Native Safari Extension loaded (v' + window.Sessionless.version + ')');
     console.log('🚀 The Advancement Safari Extension loaded (v' + window.AdvancementExtension.version + ')');
     
-    // Load Stripe integration
-    const stripeScript = document.createElement('script');
-    stripeScript.src = safari.extension.baseURI + 'stripe-integration.js';
-    stripeScript.onload = () => {
-        console.log('💳 Stripe integration loaded');
-    };
-    stripeScript.onerror = () => {
-        console.warn('⚠️ Failed to load Stripe integration');
-    };
-    document.head.appendChild(stripeScript);
+    // Load Stripe integration (if running in Safari Legacy mode)
+    if (typeof safari !== 'undefined' && safari.extension && safari.extension.baseURI) {
+        const stripeScript = document.createElement('script');
+        stripeScript.src = safari.extension.baseURI + 'stripe-integration.js';
+        stripeScript.onload = () => {
+            console.log('💳 Stripe integration loaded');
+        };
+        stripeScript.onerror = () => {
+            console.warn('⚠️ Failed to load Stripe integration');
+        };
+        document.head.appendChild(stripeScript);
+    } else {
+        console.log('ℹ️ Stripe integration skipped (Web Extension mode)');
+    }
+
+    // ========================================
+    // Popup Communication Handlers
+    // ========================================
+    
+    async function handleSessionlessGenerateKeys(sendResponse) {
+        try {
+            console.log('🔑 Content script: Generating keys via Sessionless...');
+            
+            if (typeof window.Sessionless === 'undefined') {
+                throw new Error('Sessionless not available');
+            }
+
+            const result = await window.Sessionless.generateKeys();
+            console.log('✅ Content script: Keys generated successfully');
+            
+            sendResponse({
+                success: true,
+                data: result
+            });
+            
+        } catch (error) {
+            console.error('❌ Content script: Key generation failed:', error);
+            sendResponse({
+                success: false,
+                error: error.message
+            });
+        }
+    }
+
+    async function handleSessionlessHasKeys(sendResponse) {
+        try {
+            console.log('🔍 Content script: Checking for keys...');
+            
+            if (typeof window.Sessionless === 'undefined') {
+                throw new Error('Sessionless not available');
+            }
+
+            const result = await window.Sessionless.hasKeys();
+            
+            sendResponse({
+                success: true,
+                data: result
+            });
+            
+        } catch (error) {
+            console.error('❌ Content script: Has keys check failed:', error);
+            sendResponse({
+                success: false,
+                error: error.message
+            });
+        }
+    }
+
+    async function handleSessionlessGetPublicKey(sendResponse) {
+        try {
+            console.log('🔑 Content script: Getting public key...');
+            
+            if (typeof window.Sessionless === 'undefined') {
+                throw new Error('Sessionless not available');
+            }
+
+            const result = await window.Sessionless.getPublicKey();
+            
+            sendResponse({
+                success: true,
+                data: result
+            });
+            
+        } catch (error) {
+            console.error('❌ Content script: Get public key failed:', error);
+            sendResponse({
+                success: false,
+                error: error.message
+            });
+        }
+    }
     
 })();
 
