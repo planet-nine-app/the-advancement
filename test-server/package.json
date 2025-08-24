@@ -18,12 +18,15 @@
   "author": "Planet Nine",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
     "body-parser": "^1.20.2",
-    "stripe": "^14.0.0",
+    "cors": "^2.8.5",
     "crypto": "^1.0.1",
-    "node-fetch": "^3.3.2"
+    "express": "^4.18.2",
+    "fount-js": "^0.0.6",
+    "magic-gateway-js": "^0.0.3",
+    "node-fetch": "^3.3.2",
+    "sessionless-node": "^0.11.0",
+    "stripe": "^14.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

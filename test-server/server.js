@@ -13,6 +13,9 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
 const crypto = require('crypto');
+const gateway = require('magic-gateway-js').default || require('magic-gateway-js');
+const sessionless = require('sessionless-node');
+const fount = require('fount-js').default || require('fount-js');
 
 const app = express();
 const PORT = process.env.PORT || 3456;
@@ -321,6 +324,80 @@ const MENU_CATALOG_PRODUCTS = [
         teleport_signature: 'mock_menu_item_8'
     }
 ];
+
+// ========================================
+// MAGIC Protocol Setup
+// ========================================
+
+// Key storage functions for test environment
+const saveKeys = (keys) => {
+    console.log('🔑 MAGIC: Saving keys for test environment');
+    // In production, this would persist to secure storage
+    global.testServerKeys = keys;
+    return keys;
+};
+
+const getKeys = () => {
+    console.log('🔑 MAGIC: Retrieving keys for test environment');
+    return global.testServerKeys || null;
+};
+
+// Set up sessionless for test environment
+sessionless.generateKeys(saveKeys, getKeys).then(() => {
+    console.log('🔐 MAGIC: Test server keys initialized');
+}).catch(err => {
+    console.log('🔐 MAGIC: Using existing keys or creating new ones');
+});
+
+// Configure fount for test environment
+fount.baseURL = 'http://127.0.0.1:5116/'; // Test environment fount
+
+// Create fount user for MAGIC protocol
+let fountUser = null;
+fount.createUser(saveKeys, getKeys).then(user => {
+    fountUser = user;
+    console.log(`⚡ MAGIC: Fount user created - ${user.uuid}`);
+}).catch(err => {
+    console.log('⚡ MAGIC: Fount user creation deferred - will try on first spell');
+});
+
+// Spellbook definition for this test server
+const getSpellbook = () => {
+    return {
+        spellTest: {
+            cost: 400,
+            destinations: [
+                { 
+                    stopName: 'test-server', 
+                    stopURL: 'http://127.0.0.1:3456/' 
+                },
+                { 
+                    stopName: 'fount', 
+                    stopURL: 'http://127.0.0.1:5116/magic/spell/' 
+                }
+            ],
+            resolver: 'fount',
+            mp: true
+        }
+    };
+};
+
+// Gateway configuration
+const myStopName = 'test-server';
+const extraForGateway = (spellName) => {
+    console.log(`🪄 MAGIC Gateway: Extra config for spell "${spellName}"`);
+    return {};
+};
+
+const onSuccess = (req, res, result) => {
+    console.log(`✅ MAGIC: Spell "${req.body.spell}" completed successfully`);
+    result.testServerResponse = { 
+        message: 'Hello from the test server!',
+        timestamp: new Date().toISOString(),
+        serverName: 'The Advancement Test Server'
+    };
+    res.json(result);
+};
 
 // ========================================
 // Routes
@@ -680,30 +757,86 @@ app.get('/api/health', (req, res) => {
             'teleportation',
             'multi-pubkey',
             'stripe-integration',
-            'addie-coordination'
+            'addie-coordination',
+            'magic-protocol'
         ]
     });
 });
 
-// Error handling
-app.use((err, req, res, next) => {
-    console.error('Server error:', err);
-    res.status(500).json({
-        success: false,
-        error: 'Internal server error'
+// Debug endpoint to check spellbook structure
+app.get('/debug/spellbook', (req, res) => {
+    const spellbook = getSpellbook();
+    res.json({
+        success: true,
+        spellbook: spellbook,
+        keys: Object.keys(spellbook),
+        hasSpellTest: !!spellbook.spellTest
     });
 });
 
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        error: 'Endpoint not found'
+// ========================================
+// MAGIC Gateway Integration
+// ========================================
+
+// Initialize MAGIC gateway after routes are defined but before error handlers
+const initializeGateway = async () => {
+    try {
+        // Ensure we have a fount user
+        if (!fountUser) {
+            console.log('⚡ MAGIC: Creating fount user for gateway initialization...');
+            fountUser = await fount.createUser(saveKeys, getKeys);
+            console.log(`⚡ MAGIC: Fount user created - ${fountUser.uuid}`);
+        }
+
+        // Set up the gateway with our Express app
+        console.log('🪄 MAGIC: Initializing gateway...');
+        gateway.expressApp(
+            app, 
+            fountUser, 
+            getSpellbook(), 
+            myStopName, 
+            sessionless, 
+            extraForGateway, 
+            onSuccess
+        );
+        console.log('✅ MAGIC: Gateway initialized successfully');
+        console.log('🔮 MAGIC routes added to Express app');
+        
+        // Add error handlers AFTER gateway routes
+        addErrorHandlers();
+        
+    } catch (error) {
+        console.error('❌ MAGIC: Gateway initialization failed:', error);
+        console.log('⚠️  MAGIC: Server will run without MAGIC protocol support');
+        
+        // Still add error handlers even if gateway failed
+        addErrorHandlers();
+    }
+};
+
+// Error handlers - called after gateway initialization
+function addErrorHandlers() {
+    // Error handling
+    app.use((err, req, res, next) => {
+        console.error('Server error:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Internal server error'
+        });
     });
-});
+
+    // 404 handler
+    app.use((req, res) => {
+        console.log(`❌ 404: ${req.method} ${req.path}`);
+        res.status(404).json({
+            success: false,
+            error: 'Endpoint not found'
+        });
+    });
+}
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`🚀 The Advancement Test Server running on port ${PORT}`);
     console.log(`🌐 Website: http://localhost:${PORT}`);
     console.log(`📡 API: http://localhost:${PORT}/api/*`);
@@ -712,7 +845,12 @@ app.listen(PORT, () => {
     console.log(`   - Multi-pubKey system (site, creator, base)`);
     console.log(`   - Stripe payment processing via The Advancement`);
     console.log(`   - Addie coordination at user's home base`);
+    console.log(`   - MAGIC protocol support with spellTest`);
     console.log(`\n🔧 Test this with The Advancement Safari extension!`);
+    
+    // Initialize MAGIC gateway
+    await initializeGateway();
+    console.log(`\n🪄 MAGIC spellTest endpoint: http://localhost:${PORT}/spellTest`);
 });
 
 module.exports = app;

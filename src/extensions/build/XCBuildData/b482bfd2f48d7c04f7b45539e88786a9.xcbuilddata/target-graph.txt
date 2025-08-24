@@ -1,0 +1,4 @@
+Target dependency graph (2 targets)
+Target 'TheAdvancement' in project 'TheAdvancement'
+➜ Explicit dependency on target 'TheAdvancementExtension' in project 'TheAdvancement'
+Target 'TheAdvancementExtension' in project 'TheAdvancement' (no dependencies)

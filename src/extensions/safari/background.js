@@ -80,6 +80,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       handleSessionlessSign(request.data, sendResponse);
       return true;
       
+    case 'native-message':
+      // Handle native messaging for Safari Web Extension
+      handleNativeMessage(request.data, sendResponse);
+      return true;
+      
     default:
       console.log('❓ Unknown message type:', request.type);
       sendResponse({ success: false, error: 'Unknown message type' });
@@ -327,6 +332,33 @@ async function handleSessionlessSign(data, sendResponse) {
   } catch (error) {
     console.error('❌ Signing delegation error:', error);
     sendResponse({ success: false, error: error.message });
+  }
+}
+
+// Safari Web Extension Native Messaging Handler
+async function handleNativeMessage(data, sendResponse) {
+  try {
+    console.log('📤 Background: Sending native message:', data);
+    
+    // Use browser API for Safari Web Extension native messaging
+    const response = await browser.runtime.sendNativeMessage(
+      'com.planetnine.the-advancement.safari',
+      data
+    );
+    
+    console.log('📥 Background: Native app response:', response);
+    
+    sendResponse({
+      success: true,
+      data: response
+    });
+    
+  } catch (error) {
+    console.error('❌ Background: Native messaging error:', error);
+    sendResponse({
+      success: false,
+      error: error.message
+    });
   }
 }
 

@@ -241,7 +241,7 @@ const observer = new MutationObserver((mutations) => {
 The Advancement includes a comprehensive test server demonstrating the complete Planet Nine purchase flow:
 
 **Location**: `test-server/`
-**Purpose**: Test teleported product feeds, multi-pubKey verification, Stripe integration, and Addie coordination
+**Purpose**: Test teleported product feeds, multi-pubKey verification, Stripe integration, Addie coordination, and MAGIC protocol spell casting
 
 #### Test Server Features
 - **Express.js API**: Complete backend with teleportation and payment endpoints
@@ -250,6 +250,8 @@ The Advancement includes a comprehensive test server demonstrating the complete 
 - **Stripe Integration**: Real payment processing through The Advancement extension
 - **Payment Splits**: Automatic 70% creator, 20% base, 10% site distribution
 - **Home Base Coordination**: Payments routed through user's selected Planet Nine base
+- **MAGIC Protocol Gateway**: Full magic-gateway-js integration with spellTest support
+- **Spell Casting**: End-to-end spell casting from extension to test server via MAGIC protocol
 
 #### Quick Start Testing
 ```bash
@@ -269,6 +271,57 @@ open http://localhost:3456
 - **Multiple Creators**: Alice Creator, Bob Developer with unique pubKeys
 - **Multiple Bases**: DEV and LOCAL test bases
 - **Payment Methods**: Stripe test cards with full payment processing
+- **MAGIC Spells**: spellTest spell with proper MAGIC protocol structure and dual destinations
+
+### MAGIC Protocol Integration (August 2025)
+
+The Advancement now includes complete MAGIC protocol support for spell casting:
+
+#### **spellTest Implementation** ✅
+- **Full MAGIC Protocol**: Complete implementation following MAGIC protocol specification
+- **Test Server Gateway**: magic-gateway-js integration with dual-destination routing
+- **Extension Integration**: Content script handles spellTest detection and casting
+- **Native Messaging**: Background script forwards to Swift for cryptographic signing
+- **End-to-End Flow**: Spell detection → signature → gateway processing → server response
+
+#### **MAGIC Protocol Components**
+- **Spell Detection**: Content script detects `[spell="spellTest"]` elements on web pages
+- **Payload Creation**: Creates proper MAGIC payload with timestamp, caster, cost, ordinal, etc.
+- **Cryptographic Signing**: Swift handles secp256k1 signature via native messaging
+- **Gateway Forwarding**: Test server acts as MAGIC gateway, forwards to fount resolver
+- **Response Handling**: Extension displays server response with success/error states
+
+#### **Technical Flow**
+1. **User Interaction**: Clicks element with `spell="spellTest"` attribute
+2. **Content Script**: Detects spell, creates MAGIC payload, sends to background
+3. **Background Script**: Forwards to Swift via native messaging for signature
+4. **Swift Processing**: Signs payload with user's private key, posts to test server
+5. **Test Server Gateway**: Processes spell, adds gateway entry, attempts fount forwarding
+6. **Response Display**: Extension shows test server response to user
+
+#### **Test Server MAGIC Setup**
+```javascript
+// MAGIC protocol dependencies
+const gateway = require('magic-gateway-js').default;
+const sessionless = require('sessionless-node');
+const fount = require('fount-js').default;
+
+// Spellbook with dual destinations (required for gateway)
+const spellbook = {
+    spellTest: {
+        cost: 400,
+        destinations: [
+            { stopName: 'test-server', stopURL: 'http://127.0.0.1:3456/' },
+            { stopName: 'fount', stopURL: 'http://127.0.0.1:5116/magic/spell/' }
+        ],
+        resolver: 'fount',
+        mp: true
+    }
+};
+
+// Gateway endpoint: POST /magic/spell/spellTest
+gateway.expressApp(app, fountUser, spellbook, 'test-server', sessionless, extraConfig, onSuccess);
+```
 
 ## File Structure
 

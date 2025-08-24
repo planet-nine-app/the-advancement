@@ -20,34 +20,16 @@
     <string>10.14</string>
     <key>NSExtension</key>
     <dict>
-        <key>NSExtensionMainStoryboard</key>
-        <string>SafariExtensionViewController</string>
         <key>NSExtensionPointIdentifier</key>
-        <string>com.apple.Safari.extension</string>
-        <key>SFSafariContentScript</key>
-        <array>
-            <dict>
-                <key>Script</key>
-                <string>advancement-content.js</string>
-            </dict>
-        </array>
-        <key>SFSafariWebsiteAccess</key>
+        <string>com.apple.Safari.web-extension</string>
+        <key>NSExtensionPrincipalClass</key>
+        <string>SessionlessSafariExtension</string>
+        <key>SFSafariWebExtension</key>
         <dict>
-            <key>Level</key>
-            <string>All</string>
-        </dict>
-        <key>SFSafariToolbarItem</key>
-        <dict>
-            <key>Action</key>
-            <string>showPopover</string>
-            <key>Identifier</key>
-            <string>AdvancementToolbarItem</string>
-            <key>Image</key>
-            <string>advancement-icon</string>
-            <key>Label</key>
-            <string>The Advancement</string>
-            <key>Popover</key>
-            <string>popup.html</string>
+            <key>Manifest Version</key>
+            <integer>3</integer>
+            <key>Bundle Location</key>
+            <string>.</string>
         </dict>
     </dict>
     <key>NSHumanReadableCopyright</key>
