@@ -1,0 +1,2 @@
+Target dependency graph (1 target)
+Target 'The Advancement Extension (macOS)' in project 'The Advancement' (no dependencies)

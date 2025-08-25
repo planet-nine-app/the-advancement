@@ -373,7 +373,7 @@ const getSpellbook = () => {
                 },
                 { 
                     stopName: 'fount', 
-                    stopURL: 'http://127.0.0.1:5116/magic/spell/' 
+                    stopURL: 'http://127.0.0.1:5117/resolve/' 
                 }
             ],
             resolver: 'fount',
@@ -391,6 +391,7 @@ const extraForGateway = (spellName) => {
 
 const onSuccess = (req, res, result) => {
     console.log(`✅ MAGIC: Spell "${req.body.spell}" completed successfully`);
+    console.log('the actual result of the spell is: ', result);
     result.testServerResponse = { 
         message: 'Hello from the test server!',
         timestamp: new Date().toISOString(),
@@ -406,6 +407,11 @@ const onSuccess = (req, res, result) => {
 // Serve the test website
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Serve favicon
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(__dirname, 'favicon.png'));
 });
 
 // API: Get website owner info (for The Advancement)

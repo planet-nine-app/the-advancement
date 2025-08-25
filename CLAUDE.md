@@ -281,23 +281,39 @@ The Advancement now includes complete MAGIC protocol support for spell casting:
 - **Full MAGIC Protocol**: Complete implementation following MAGIC protocol specification
 - **Test Server Gateway**: magic-gateway-js integration with dual-destination routing
 - **Extension Integration**: Content script handles spellTest detection and casting
-- **Native Messaging**: Background script forwards to Swift for cryptographic signing
-- **End-to-End Flow**: Spell detection → signature → gateway processing → server response
+- **Background Spellbook Manager**: Centralized spellbook management with Swift integration
+- **End-to-End Flow**: Spell detection → background management → Swift signing → gateway processing
+
+#### **Enhanced Architecture (Latest Update)**
+- **Centralized Spellbook Management**: Background script manages all spellbook operations
+- **Swift Integration**: All BDO requests go through Swift for proper authentication
+- **Shared Cache**: Popup and content script share same spellbook cache (5-minute timeout)
+- **Message Types**: `castSpell` for content script, `getSpellbook` for popup requests
+- **Automatic Refresh**: Background refreshes spellbook when spells not found
 
 #### **MAGIC Protocol Components**
 - **Spell Detection**: Content script detects `[spell="spellTest"]` elements on web pages
-- **Payload Creation**: Creates proper MAGIC payload with timestamp, caster, cost, ordinal, etc.
+- **Background Processing**: Background script handles spellbook lookup and MAGIC payload creation
 - **Cryptographic Signing**: Swift handles secp256k1 signature via native messaging
 - **Gateway Forwarding**: Test server acts as MAGIC gateway, forwards to fount resolver
 - **Response Handling**: Extension displays server response with success/error states
 
-#### **Technical Flow**
+#### **Updated Technical Flow**
 1. **User Interaction**: Clicks element with `spell="spellTest"` attribute
-2. **Content Script**: Detects spell, creates MAGIC payload, sends to background
-3. **Background Script**: Forwards to Swift via native messaging for signature
-4. **Swift Processing**: Signs payload with user's private key, posts to test server
+2. **Content Script**: Sends `{ type: 'castSpell', spellName: 'spellTest' }` to background
+3. **Background Script**: 
+   - Checks cached spellbook or fetches via Swift from BDO
+   - Finds spell, creates MAGIC payload with proper structure
+   - Sends `{ action: 'castSpell' }` to Swift for signature and posting
+4. **Swift Processing**: Signs payload, posts to `http://localhost:3456/magic/spell/spellTest`
 5. **Test Server Gateway**: Processes spell, adds gateway entry, attempts fount forwarding
-6. **Response Display**: Extension shows test server response to user
+6. **Response Display**: Background forwards response to content script for user display
+
+#### **Popup Integration**
+- **Unified Management**: Popup now uses same background spellbook manager
+- **Message Type**: Sends `{ type: 'getSpellbook' }` instead of direct Swift calls
+- **Shared Cache**: Benefits from same 5-minute spellbook cache as content script
+- **Proper Display**: Handles nested Swift response structure for spellbook rendering
 
 #### **Test Server MAGIC Setup**
 ```javascript
@@ -567,6 +583,27 @@ open http://localhost:3456
 - ✅ **Test Environment**: Comprehensive testing infrastructure for development
 - ✅ **Teleported Commerce**: Cross-base product discovery and purchasing
 - ✅ **Robust Architecture**: Enhanced error handling and graceful degradation patterns
+
+### Latest Safari Web Extension Fixes (August 2025)
+
+#### ✅ **Safari Web Extension Messaging Resolution**
+- **Complex Object Serialization**: Fixed Safari Web Extensions returning `true` instead of proper response objects
+- **Background Response Structure**: Implemented consistent `{ success: true/false, data: {...}, error: "..." }` format
+- **Native Message Handling**: Proper Swift response processing with validation and error handling
+- **Async Response Management**: Correct handling of asynchronous `sendResponse` calls in Safari context
+
+#### ✅ **Complete Clear Data Implementation**
+- **Swift Integration**: Added `clearBdoUser` and `clearFountUser` handlers in SafariWebExtensionHandler.swift
+- **Popup Functionality**: Removed blocking confirm dialogs that prevented execution in Safari popup context
+- **Method Call Resolution**: Fixed popup clear functions to use proper `this.bdoClient.bridge.sendToSwift()` path
+- **UserDefaults Management**: Complete Swift-side storage clearing for both BDO and fount users
+- **Comprehensive Clear All**: Single action clears both browser storage and Swift UserDefaults
+
+#### ✅ **Spell Casting Messaging Restored**
+- **Browser Runtime API**: Restored `browser.runtime.sendMessage` for spell casting with Safari Legacy fallback
+- **Content Script Fix**: Removed Chrome detection blocking that prevented Safari execution
+- **Message Flow**: Complete content script ↔ background ↔ Swift messaging chain functional
+- **Error Propagation**: Proper error handling and success responses throughout entire spell casting pipeline
 
 ## Contributing
 
