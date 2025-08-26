@@ -183,10 +183,24 @@ async function handleMagicSpell(message, spellInfo, homeBase, sendResponse) {
                 } else if (response && response.success) {
                     console.log(`✅ [STEP 5/6] BACKGROUND: MAGIC spell completed successfully`);
                     console.log(`📤 [STEP 5/6] BACKGROUND: Forwarding response to content script...`);
-                    sendResponse({
+                    let extra = {};
+                    if(response.data && response.data.testServerResponse) {
+                        extra = JSON.parse(JSON.stringify(response.data.testServerResponse));
+                    }
+                    
+                    // Create clean response object that Safari can serialize
+                    const cleanResponse = {
                         success: true,
-                        data: response.data
-                    });
+                        data: {
+                            message: `${spellInfo.name} completed successfully`,
+                            extra,
+                            spellName: spellInfo.name,
+                            timestamp: Date.now()
+                        }
+                    };
+
+                    console.log(`📤 [STEP 5/6] BACKGROUND: Sending clean response:`, cleanResponse);
+                    sendResponse(cleanResponse);
                 } else {
                     console.error(`❌ [STEP 5/6] BACKGROUND: Swift response error:`, response?.error || 'Unknown error');
                     sendResponse({
@@ -300,12 +314,166 @@ browser.runtime.sendNativeMessage(
     }
 );
 
-// Handle messages from popup and content scripts
-browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+// Handle messages from popup and content scripts using Promise returns instead of sendResponse
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('📨 Background received message:', message);
     console.log('📨 Message type:', message.type);
     
+    // Return Promises instead of using sendResponse callbacks
     if (message.type === 'castSpell') {
+        return handleCastSpell(message, sender);
+    } else if (message.type === 'clearFountUser' || message.type === 'clearBdoUser') {
+        return handleClearAction(message.type);
+    } else if (message.type === 'getSpellbook') {
+        return handleGetSpellbook(message);
+    } else if (message.type === 'nativeMessage') {
+        return handleNativeMessage(message);
+    } else if (message.type === 'magicSpell') {
+        return handleMagicSpell(message);
+    } else {
+        console.log('❌ Background: Unknown message type:', message.type);
+        return Promise.resolve({ success: false, error: `Unknown message type: ${message.type}` });
+    }
+});
+
+// Promise-based handler functions
+async function handleClearAction(messageType) {
+    console.log('🗑️ Background handling clear action:', messageType);
+    
+    return new Promise((resolve, reject) => {
+        // Send clear action directly to Swift
+        browser.runtime.sendNativeMessage(
+            "com.planetnine.the-advancement.The-Advancement",
+            {
+                action: messageType,
+                requestId: Date.now().toString()
+            },
+            (response) => {
+                console.log('📥 Background received clear response from Swift:', response);
+                
+                if (browser.runtime.lastError) {
+                    console.error('❌ Background clear action error:', browser.runtime.lastError);
+                    resolve({
+                        success: false,
+                        error: browser.runtime.lastError.message
+                    });
+                } else if (response && response.success) {
+                    console.log('✅ Background clear action successful');
+                    resolve({
+                        success: true,
+                        data: { message: `${messageType} completed successfully` }
+                    });
+                } else {
+                    console.error('❌ Background clear action Swift error:', response?.error);
+                    resolve({
+                        success: false,
+                        error: response?.error || 'Clear action failed'
+                    });
+                }
+            }
+        );
+    });
+}
+
+async function handleMagicSpellPromise(message, spellInfo, homeBase) {
+    console.log(`🔮 [STEP 3/6] BACKGROUND: Handling MAGIC spell: ${spellInfo.name}`);
+    console.log(`💰 [STEP 3/6] BACKGROUND: Spell cost: ${spellInfo.cost}, resolver: ${spellInfo.resolver}`);
+    console.log(`🎯 [STEP 3/6] BACKGROUND: Destinations:`, spellInfo.destinations);
+    
+    return new Promise((resolve, reject) => {
+        // Get first destination URL for Swift
+        const firstDestination = spellInfo.destinations?.[0];
+        if (!firstDestination) {
+            resolve({
+                success: false,
+                error: 'No destinations found in spell'
+            });
+            return;
+        }
+        
+        console.log(`🏁 [STEP 3/6] BACKGROUND: First destination:`, firstDestination);
+        console.log(`🌐 [STEP 3/6] BACKGROUND: First destination URL: ${firstDestination.stopURL}`);
+        
+        // Create MAGIC protocol payload
+        console.log(`👤 [STEP 3/6] BACKGROUND: Getting fount user...`);
+        getFountUser().then(fountUser => {
+            console.log(`👤 [STEP 3/6] BACKGROUND: Fount user:`, fountUser);
+            
+            const magicPayload = {
+                timestamp: Date.now().toString(),
+                spell: spellInfo.name,
+                casterUUID: fountUser.uuid,
+                totalCost: spellInfo.cost,
+                mp: spellInfo.mp,
+                ordinal: fountUser.ordinal + 1,
+                casterSignature: null,
+                gateways: []
+            };
+            
+            console.log(`🔮 [STEP 3/6] BACKGROUND: MAGIC payload created:`, magicPayload);
+            
+            const nativePayload = {
+                action: 'castSpell',
+                requestId: Date.now().toString(),
+                spellName: spellInfo.name,
+                magicPayload: magicPayload,
+                destinations: spellInfo.destinations,
+                firstDestinationURL: firstDestination.stopURL
+            };
+            
+            console.log(`📤 [STEP 3/6] BACKGROUND: Sending to Swift:`, nativePayload);
+            console.log(`🎯 [STEP 3/6] BACKGROUND: Swift will POST to: ${firstDestination.stopURL}${spellInfo.name}`);
+            
+            browser.runtime.sendNativeMessage(
+                "com.planetnine.the-advancement.The-Advancement",
+                nativePayload,
+                (response) => {
+                    console.log(`📥 [STEP 5/6] BACKGROUND: Received response from Swift:`, response);
+                    
+                    if (browser.runtime.lastError) {
+                        console.error(`❌ [STEP 5/6] BACKGROUND: Native messaging error:`, browser.runtime.lastError);
+                        resolve({
+                            success: false,
+                            error: browser.runtime.lastError.message
+                        });
+                    } else if (response && response.success) {
+                        console.log(`✅ [STEP 5/6] BACKGROUND: MAGIC spell completed successfully`);
+                        console.log(`📤 [STEP 5/6] BACKGROUND: Forwarding response to content script...`);
+                        
+                        // Create clean response object that Safari can serialize
+                        const cleanResponse = {
+                            success: true,
+                            data: {
+                                message: `${spellInfo.name} completed successfully`,
+                                testServerResponse: response.data?.testServerResponse || null,
+                                spellName: spellInfo.name,
+                                timestamp: Date.now()
+                            }
+                        };
+                        
+                        console.log(`📤 [STEP 5/6] BACKGROUND: Sending clean response:`, cleanResponse);
+                        resolve(cleanResponse);
+                    } else {
+                        console.error(`❌ [STEP 5/6] BACKGROUND: Swift response error:`, response?.error || 'Unknown error');
+                        resolve({
+                            success: false,
+                            error: response?.error || 'Unknown error from Swift'
+                        });
+                    }
+                }
+            );
+        }).catch(error => {
+            console.error(`❌ [STEP 3/6] BACKGROUND: Error getting fount user:`, error);
+            resolve({
+                success: false,
+                error: `Failed to get fount user: ${error.message}`
+            });
+        });
+    });
+}
+
+async function handleCastSpell(message, sender) {
+    try {
         console.log(`📥 [STEP 2/6] BACKGROUND: Received castSpell message:`, message);
         console.log(`🪄 [STEP 2/6] BACKGROUND: Spell name: ${message.spellName}`);
         
@@ -333,11 +501,10 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 
                 if (!spellInfo) {
                     console.error(`❌ [STEP 2/6] BACKGROUND: Spell "${message.spellName}" not found even after refresh`);
-                    sendResponse({
+                    return {
                         success: false,
                         error: `Spell "${message.spellName}" not found in spellbook`
-                    });
-                    return;
+                    };
                 }
             }
             
@@ -348,69 +515,75 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             if (spellInfo.mp === true) {
                 console.log(`⚡ [STEP 2/6] BACKGROUND: MAGIC protocol spell detected - forwarding to Swift...`);
                 // MAGIC protocol spell - send to Swift for signing and casting
-                await handleMagicSpell(message, spellInfo, homeBase, sendResponse);
+                return await handleMagicSpellPromise(message, spellInfo, homeBase);
             } else {
                 console.log(`🔄 [STEP 2/6] BACKGROUND: Regular spell detected - handling locally...`);
                 // Regular spell - handle locally
-                await handleRegularSpell(message, spellInfo, sendResponse);
+                return await handleRegularSpellPromise(message, spellInfo);
             }
             
         } catch (error) {
             console.error(`❌ [STEP 2/6] BACKGROUND: Exception in spell casting:`, error);
-            sendResponse({
+            return {
                 success: false,
                 error: error.message
-            });
-        }
-        
-        return true; // Indicate async response
-        
-    } else if (message.type === 'getSpellbook') {
-        console.log('📚 Background handling getSpellbook request from popup');
-        
-        try {
-            // Parse base URL to determine environment
-            const baseUrl = message.baseUrl;
-            let homeBase = { env: 'dev' }; // default
-            
-            if (baseUrl?.includes('127.0.0.1:5114')) {
-                homeBase = { env: 'test' };
-            } else if (baseUrl?.includes('localhost:3003')) {
-                homeBase = { env: 'local' };
-            }
-            
-            console.log('🏠 Background determined home base from URL:', homeBase);
-            
-            // Use spellbook manager (with caching and Swift integration)
-            const spellbook = await spellbookManager.getSpellbook(homeBase);
-            
-            // Format response for popup (expects spellbooks array)
-            const response = {
-                success: true,
-                data: {
-                    spellbooks: [spellbook] // Wrap single spellbook in array for popup
-                }
             };
-            
-            console.log('✅ Background returning cached/fresh spellbook to popup');
-            sendResponse(response);
-            
-        } catch (error) {
-            console.error('❌ Background getSpellbook error:', error);
-            sendResponse({
-                success: false,
-                error: error.message
-            });
+        }
+    } catch (error) {
+        console.error(`❌ [STEP 2/6] BACKGROUND: Outer exception in handleCastSpell:`, error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+async function handleGetSpellbook(message) {
+    console.log('📚 Background handling getSpellbook request from popup');
+    
+    try {
+        // Parse base URL to determine environment
+        const baseUrl = message.baseUrl;
+        let homeBase = { env: 'dev' }; // default
+        
+        if (baseUrl?.includes('127.0.0.1:5114')) {
+            homeBase = { env: 'test' };
+        } else if (baseUrl?.includes('localhost:3003')) {
+            homeBase = { env: 'local' };
         }
         
-        return true; // async response
+        console.log('🏠 Background determined home base from URL:', homeBase);
         
-    } else if (message.type === 'nativeMessage') {
-        console.log('🔧 Background forwarding to Swift...');
-        console.log('🔧 Action:', message.payload?.action);
+        // Use spellbook manager (with caching and Swift integration)
+        const spellbook = await spellbookManager.getSpellbook(homeBase);
         
-        // Forward ALL native messages to Swift (including getSpellbook)
-        // Swift handles BDO authentication and signing
+        // Format response for popup (expects spellbooks array)
+        const response = {
+            success: true,
+            data: {
+                spellbooks: [spellbook] // Wrap single spellbook in array for popup
+            }
+        };
+        
+        console.log('✅ Background returning cached/fresh spellbook to popup');
+        return response;
+        
+    } catch (error) {
+        console.error('❌ Background getSpellbook error:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+async function handleNativeMessage(message) {
+    console.log('🔧 Background forwarding to Swift...');
+    console.log('🔧 Action:', message.payload?.action);
+    console.log('🔧 Full payload:', message.payload);
+    
+    return new Promise((resolve, reject) => {
+        // Forward ALL native messages to Swift
         browser.runtime.sendNativeMessage(
             "com.planetnine.the-advancement.The-Advancement",
             message.payload,
@@ -419,79 +592,35 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
                 
                 if (browser.runtime.lastError) {
                     console.log('❌ Background native messaging error:', browser.runtime.lastError);
-                    sendResponse({
+                    resolve({
                         success: false,
                         error: browser.runtime.lastError.message
                     });
-                } else {
-                    console.log('✅ Background forwarding Swift response to popup', response);
-                    sendResponse({
+                } else if (response && response.success) {
+                    console.log('✅ Background forwarding successful Swift response');
+                    resolve({
                         success: true,
-                        data: response.data
+                        data: response.data || response
+                    });
+                } else {
+                    console.error('❌ Background Swift response error:', response?.error || 'Unknown error');
+                    resolve({
+                        success: false,
+                        error: response?.error || 'Unknown error from Swift'
                     });
                 }
             }
         );
-        
-        // Return true to indicate async response
-        return true;
-        
-    } else if (message.type === 'magicSpell') {
-        console.log('🪄 Background processing MAGIC spell:', message.action);
-        
-        if (message.action === 'castSpell') {
-            const { spellName, payload, destinations } = message.data;
-            
-            console.log('🔮 Background casting spell:', spellName);
-            console.log('📡 Destinations:', destinations);
-            
-            // Prepare native message for Swift to handle signature and spell casting
-            const nativePayload = {
-                action: 'castSpell',
-                requestId: Date.now().toString(),
-                spellName: spellName,
-                magicPayload: payload,
-                destinations: destinations
-            };
-            
-            // Send to Swift for signature and casting
-            browser.runtime.sendNativeMessage(
-                "com.planetnine.the-advancement.The-Advancement",
-                nativePayload,
-                (response) => {
-                    console.log('📥 Background received spell response:', response);
-                    
-                    if (browser.runtime.lastError) {
-                        console.log('❌ Background spell casting error:', browser.runtime.lastError);
-                        sendResponse({
-                            success: false,
-                            error: browser.runtime.lastError.message
-                        });
-                    } else if (response && response.success) {
-                        console.log('✅ Background forwarding spell response to content script');
-                        sendResponse({
-                            success: true,
-                            data: response.data
-                        });
-                    } else {
-                        console.error('❌ Background Swift response error:', response?.error || 'Unknown error');
-                        sendResponse({
-                            success: false,
-                            error: response?.error || 'Unknown error from Swift'
-                        });
-                    }
-                }
-            );
-            
-            // Return true to indicate async response
-            return true;
-        }
-        
-    } else {
-        console.log('❌ Background: Unknown message type:', message.type);
-    }
-    
-    return false;
-});
+    });
+}
+
+async function handleMagicSpell(message) {
+    console.log('🪄 Background processing MAGIC spell:', message.action);
+    // This would handle the magicSpell type if needed
+    return {
+        success: false,
+        error: 'magicSpell type not fully implemented in Promise pattern yet'
+    };
+}
 
 console.log('✅ Background script ready for native messaging');

@@ -386,7 +386,7 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         ]
         
         // Post to fount to create user
-        let fountUrl = "http://127.0.0.1:5116/user/create" // Test environment fount
+        let fountUrl = "http://127.0.0.1:5117/user/create" // Test environment fount
         let response = try await makeAuthenticatedRequest(to: fountUrl, method: "PUT", payload: payload)
         
         guard let uuid = response["uuid"] as? String else {

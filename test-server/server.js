@@ -350,16 +350,10 @@ sessionless.generateKeys(saveKeys, getKeys).then(() => {
 });
 
 // Configure fount for test environment
-fount.baseURL = 'http://127.0.0.1:5116/'; // Test environment fount
+fount.baseURL = 'http://127.0.0.1:5117/'; // Test environment fount
 
-// Create fount user for MAGIC protocol
-let fountUser = null;
-fount.createUser(saveKeys, getKeys).then(user => {
-    fountUser = user;
-    console.log(`⚡ MAGIC: Fount user created - ${user.uuid}`);
-}).catch(err => {
-    console.log('⚡ MAGIC: Fount user creation deferred - will try on first spell');
-});
+// Global fount user for MAGIC protocol (will be created in initializeGateway)
+global.fountUser = null;
 
 // Spellbook definition for this test server
 const getSpellbook = () => {
@@ -752,6 +746,40 @@ app.post('/api/purchase/process', async (req, res) => {
     }
 });
 
+// API: Get nineum balance from fount user
+app.get('/api/nineum-balance', async (req, res) => {
+    try {
+        // Ensure we have a fount user
+        if (!global.fountUser) {
+            console.log('⚡ MAGIC: Creating fount user for nineum balance check...');
+            global.fountUser = await fount.createUser(saveKeys, getKeys);
+            console.log(`⚡ MAGIC: Fount user created - ${global.fountUser.uuid}`);
+        }
+
+        // Get the latest fount user data (including nineum count)
+        const latestFountUser = await fount.getUserByUUID(global.fountUser.uuid, saveKeys, getKeys);
+        
+        console.log(`⭐ Nineum balance requested - User: ${latestFountUser.uuid}, Balance: ${latestFountUser.nineumCount || 0}`);
+        
+        res.json({
+            success: true,
+            data: {
+                nineumCount: latestFountUser.nineumCount || 0,
+                uuid: latestFountUser.uuid,
+                lastUpdated: new Date().toISOString()
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Failed to get nineum balance:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get nineum balance',
+            fallbackBalance: 0
+        });
+    }
+});
+
 // API: Health check
 app.get('/api/health', (req, res) => {
     res.json({
@@ -788,17 +816,17 @@ app.get('/debug/spellbook', (req, res) => {
 const initializeGateway = async () => {
     try {
         // Ensure we have a fount user
-        if (!fountUser) {
+        if (!global.fountUser) {
             console.log('⚡ MAGIC: Creating fount user for gateway initialization...');
-            fountUser = await fount.createUser(saveKeys, getKeys);
-            console.log(`⚡ MAGIC: Fount user created - ${fountUser.uuid}`);
+            global.fountUser = await fount.createUser(saveKeys, getKeys);
+            console.log(`⚡ MAGIC: Fount user created - ${global.fountUser.uuid}`);
         }
 
         // Set up the gateway with our Express app
         console.log('🪄 MAGIC: Initializing gateway...');
         gateway.expressApp(
             app, 
-            fountUser, 
+            global.fountUser, 
             getSpellbook(), 
             myStopName, 
             sessionless, 

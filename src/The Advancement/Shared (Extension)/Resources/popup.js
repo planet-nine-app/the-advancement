@@ -205,8 +205,18 @@
                     });
                 }
                 
-                // Also clear via background script message
-                await this.bdoClient.bridge.sendToSwift('clearBdoUser');
+                // Also clear via background script message  
+                await new Promise((resolve, reject) => {
+                    browser.runtime.sendMessage({ type: 'clearBdoUser' }, (response) => {
+                        if (browser.runtime.lastError) {
+                            reject(new Error(browser.runtime.lastError.message));
+                        } else if (response && response.success) {
+                            resolve(response);
+                        } else {
+                            reject(new Error(response?.error || 'Clear BDO user failed'));
+                        }
+                    });
+                });
                 
                 // Show success message
                 if (this.spellsList) {
@@ -239,7 +249,18 @@
                 }
                 
                 // Also clear from Swift UserDefaults via native message
-                await this.bdoClient.bridge.sendToSwift('clearFountUser');
+                await new Promise((resolve, reject) => {
+                    browser.runtime.sendMessage({ type: 'clearFountUser' }, (response) => {
+                        console.log('📥 Popup received clearFountUser response:', response);
+                        if (browser.runtime.lastError) {
+                            reject(new Error(browser.runtime.lastError.message));
+                        } else if (response && response.success) {
+                            resolve(response);
+                        } else {
+                            reject(new Error(response?.error || 'Clear fount user failed'));
+                        }
+                    });
+                });
                 
                 // Show success message
                 if (this.spellsList) {
@@ -272,8 +293,29 @@
                 }
                 
                 // Clear Swift UserDefaults for both BDO and fount users
-                await this.bdoClient.bridge.sendToSwift('clearFountUser');
-                await this.bdoClient.bridge.sendToSwift('clearBdoUser');
+                await new Promise((resolve, reject) => {
+                    browser.runtime.sendMessage({ type: 'clearFountUser' }, (response) => {
+                        if (browser.runtime.lastError) {
+                            reject(new Error(browser.runtime.lastError.message));
+                        } else if (response && response.success) {
+                            resolve(response);
+                        } else {
+                            reject(new Error(response?.error || 'Clear fount user failed'));
+                        }
+                    });
+                });
+                
+                await new Promise((resolve, reject) => {
+                    browser.runtime.sendMessage({ type: 'clearBdoUser' }, (response) => {
+                        if (browser.runtime.lastError) {
+                            reject(new Error(browser.runtime.lastError.message));
+                        } else if (response && response.success) {
+                            resolve(response);
+                        } else {
+                            reject(new Error(response?.error || 'Clear BDO user failed'));
+                        }
+                    });
+                });
                 
                 // Show success message
                 if (this.spellsList) {

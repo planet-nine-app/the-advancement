@@ -174,7 +174,7 @@ class TestStoreApp {
         this.setupSiteContributors();
         
         // Initialize nineum balance system
-        this.initializeNineumBalance();
+        await this.initializeNineumBalance();
         
         // Components are initialized by their own scripts:
         // - teleportationClient (teleportation-client.js)
@@ -402,13 +402,35 @@ class TestStoreApp {
         };
     }
 
-    initializeNineumBalance() {
-        // Initialize nineum balance from localStorage or default to 0
-        const savedBalance = localStorage.getItem('advancement-nineum-balance');
-        this.nineumBalance = savedBalance ? parseInt(savedBalance, 10) : 0;
+    async initializeNineumBalance() {
+        console.log('⭐ Initializing nineum balance from fount user...');
         
-        console.log('⭐ Nineum balance initialized:', this.nineumBalance);
+        try {
+            // Fetch real nineum balance from fount user
+            const response = await fetch('/api/nineum-balance');
+            const result = await response.json();
+            
+            if (result.success) {
+                this.nineumBalance = result.data.nineumCount;
+                console.log(`⭐ Nineum balance loaded from fount: ${this.nineumBalance} (User: ${result.data.uuid})`);
+            } else {
+                // Fallback to localStorage or default
+                const savedBalance = localStorage.getItem('advancement-nineum-balance');
+                this.nineumBalance = result.fallbackBalance || (savedBalance ? parseInt(savedBalance, 10) : 0);
+                console.log(`⚠️ Using fallback nineum balance: ${this.nineumBalance} (${result.error})`);
+            }
+        } catch (error) {
+            console.error('❌ Failed to fetch nineum balance from fount:', error);
+            // Fallback to localStorage or default
+            const savedBalance = localStorage.getItem('advancement-nineum-balance');
+            this.nineumBalance = savedBalance ? parseInt(savedBalance, 10) : 0;
+            console.log(`⚠️ Using localStorage fallback: ${this.nineumBalance}`);
+        }
+        
         this.updateNineumDisplay();
+        
+        // Set up automatic balance refresh every 30 seconds
+        this.startNineumBalanceRefresh();
         
         // Listen for nineum updates from spell casting
         document.addEventListener('nineum-earned', (event) => {
@@ -419,7 +441,8 @@ class TestStoreApp {
         window.NineumManager = {
             getBalance: () => this.nineumBalance,
             addNineum: (amount, source) => this.addNineum(amount, source),
-            setBalance: (amount) => this.setNineumBalance(amount)
+            setBalance: (amount) => this.setNineumBalance(amount),
+            refresh: () => this.refreshNineumBalance()
         };
     }
 
@@ -459,6 +482,42 @@ class TestStoreApp {
         this.nineumBalance = amount;
         localStorage.setItem('advancement-nineum-balance', amount.toString());
         this.updateNineumDisplay();
+    }
+
+    startNineumBalanceRefresh() {
+        // Refresh nineum balance every 30 seconds
+        this.nineumRefreshInterval = setInterval(() => {
+            this.refreshNineumBalance();
+        }, 30000);
+        
+        console.log('⭐ Nineum balance auto-refresh started (every 30 seconds)');
+    }
+
+    async refreshNineumBalance() {
+        try {
+            const response = await fetch('/api/nineum-balance');
+            const result = await response.json();
+            
+            if (result.success) {
+                const oldBalance = this.nineumBalance;
+                this.nineumBalance = result.data.nineumCount;
+                
+                if (oldBalance !== this.nineumBalance) {
+                    console.log(`⭐ Nineum balance updated: ${oldBalance} → ${this.nineumBalance}`);
+                    this.updateNineumDisplay();
+                    
+                    // Show notification if balance increased
+                    if (this.nineumBalance > oldBalance) {
+                        const earned = this.nineumBalance - oldBalance;
+                        this.showToast(`+${earned} Nineum earned!`, 'success');
+                    }
+                }
+            } else {
+                console.log('⚠️ Failed to refresh nineum balance:', result.error);
+            }
+        } catch (error) {
+            console.error('❌ Nineum balance refresh failed:', error);
+        }
     }
 
     updateSpellStatusAfterEarning() {
