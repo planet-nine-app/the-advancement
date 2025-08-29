@@ -15,6 +15,57 @@
 
     console.log('🚀 The Advancement Safari Extension loading...');
     
+    // ========================================
+    // BDO Bridge for castSpell Integration
+    // ========================================
+    
+    /**
+     * Provides BDO card retrieval for castSpell.js
+     * Handles message signing and BDO communication through Safari extension bridge
+     */
+    window.castSpellBridge = {
+        async getCardFromBDO(bdoPubKey) {
+            console.log(`🌉 The Advancement BDO Bridge: Fetching card ${bdoPubKey}`);
+            
+            try {
+                // Check if we have the bridge available
+                if (!browser || !browser.runtime || !browser.runtime.sendMessage) {
+                    throw new Error('Safari extension bridge not available');
+                }
+                
+                // Send message to background script to handle BDO retrieval
+                const response = await browser.runtime.sendMessage({
+                    type: 'getBDOCard',
+                    bdoPubKey: bdoPubKey,
+                    timestamp: Date.now()
+                });
+                
+                console.log(`🌉 BDO Bridge response:`, response);
+                
+                if (response && response.success) {
+                    return {
+                        success: true,
+                        data: response.data
+                    };
+                } else {
+                    return {
+                        success: false,
+                        error: response?.error || 'Failed to retrieve card from BDO'
+                    };
+                }
+                
+            } catch (error) {
+                console.warn(`❌ BDO Bridge error:`, error);
+                return {
+                    success: false,
+                    error: error.message
+                };
+            }
+        }
+    };
+    
+    console.log('🌉 BDO Bridge for castSpell registered');
+    
     // Add visual indicator that extension is loaded
     const indicator = document.createElement('div');
     indicator.id = 'advancement-extension-indicator';

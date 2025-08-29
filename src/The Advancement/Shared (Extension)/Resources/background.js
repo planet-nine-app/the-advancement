@@ -326,6 +326,8 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return handleClearAction(message.type);
     } else if (message.type === 'getSpellbook') {
         return handleGetSpellbook(message);
+    } else if (message.type === 'getBDOCard') {
+        return handleGetBDOCard(message, sender);
     } else if (message.type === 'nativeMessage') {
         return handleNativeMessage(message);
     } else if (message.type === 'magicSpell') {
@@ -531,6 +533,68 @@ async function handleCastSpell(message, sender) {
         }
     } catch (error) {
         console.error(`❌ [STEP 2/6] BACKGROUND: Outer exception in handleCastSpell:`, error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+/**
+ * Handle BDO card retrieval for castSpell integration
+ */
+async function handleGetBDOCard(message, sender) {
+    console.log('🃏 Background handling getBDOCard request:', message.bdoPubKey);
+    
+    try {
+        const { bdoPubKey } = message;
+        
+        if (!bdoPubKey) {
+            throw new Error('bdoPubKey is required');
+        }
+        
+        // Determine BDO URL based on environment
+        // For now, use dev environment - could be enhanced to detect user's selected base
+        const bdoUrl = 'https://dev.bdo.allyabase.com/';
+        
+        console.log(`🔍 Background requesting card from BDO: ${bdoUrl} with pubKey: ${bdoPubKey}`);
+        
+        // Send getBDOCard request to Swift for authenticated retrieval
+        const swiftResponse = await new Promise((resolve, reject) => {
+            browser.runtime.sendNativeMessage(
+                "com.planetnine.the-advancement.The-Advancement",
+                {
+                    action: 'getBDOCard',
+                    bdoPubKey: bdoPubKey,
+                    baseUrl: bdoUrl,
+                    requestId: Date.now().toString()
+                },
+                (response) => {
+                    if (browser.runtime.lastError) {
+                        reject(new Error(browser.runtime.lastError.message));
+                    } else {
+                        resolve(response);
+                    }
+                }
+            );
+        });
+        
+        console.log('📡 Background received Swift BDO response:', swiftResponse);
+        
+        if (swiftResponse && swiftResponse.success && swiftResponse.data) {
+            return {
+                success: true,
+                data: swiftResponse.data
+            };
+        } else {
+            return {
+                success: false,
+                error: swiftResponse?.error || 'Failed to retrieve card from BDO'
+            };
+        }
+        
+    } catch (error) {
+        console.error('❌ Background BDO card retrieval error:', error);
         return {
             success: false,
             error: error.message
