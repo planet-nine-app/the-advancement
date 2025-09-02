@@ -159,32 +159,64 @@ window.AdvancementExtension = {
 - **Privacy Rotation**: Different emails for different sites
 - **No Tracking**: Extension doesn't store which email was used where
 
-## Ad Covering System (The Ficus Feature)
+## Ad Covering System (The Ficus Feature) ✅ (September 2025)
 
 ### Philosophy: Cover, Don't Block
 
-Unlike traditional ad blockers, The Advancement **covers** ads instead of blocking them:
+Unlike traditional ad blockers, The Advancement **covers** ads instead of blocking them. **FULLY IMPLEMENTED** in Safari extension with dual-mode experience:
 
+#### **AdversementSystem Class** ✅
 ```javascript
-// TODO: Implement in both Chrome and Safari extensions
-function coverAdsWithFicus() {
-    // 1. Detect ad elements on page
-    // 2. Cover with peaceful plant images (ficus trees)
-    // 3. Ensure content creators still get paid
-    // 4. Add click-to-dismiss functionality
-    // 5. Optional gaming mode for "killing" ads
+class AdversementSystem {
+    constructor() {
+        this.adStrings = ['ads_', 'ad-', 'ads-', 'googlesyndication', 'pagead2', 'fixed-ad'];
+        this.coveredAds = new Set();
+        this.isMonsterMode = false;
+    }
+    
+    // Real-time ad detection using MutationObserver
+    // Covers ads with ficus plants or slimes based on mode
+    // Event-driven communication with entertainment system
 }
 ```
 
+#### **Entertainment System Integration** ✅
+```javascript
+class EntertainmentSystem {
+    // NES-inspired gaming overlay with SVG coordinate system
+    // Entity Component System for damage node physics
+    // Custom event bridge for content script communication
+    
+    attackSlime(x, y) {
+        const damage = Math.floor(Math.random() * 41) + 30; // 30-70 damage
+        this.createDamageNode(damage, x, y); // Flying damage numbers
+    }
+}
+```
+
+**Implementation Features**:
+- **Dual Mode Experience**: Peaceful ficus plants OR interactive slime monsters
+- **Real-time Ad Detection**: MutationObserver scans for dynamic ads using keyword matching
+- **Click-to-Attack**: Monster mode allows users to "attack" ad slimes with damage numbers
+- **Physics-Based Animation**: ECS system with gravity, velocity, and lifetime components
+- **Visual Polish**: Large, bold damage numbers with text shadows and smooth animations
+- **Event-Driven Architecture**: Custom events bridge content script isolation
+- **Performance Optimized**: Efficient DOM scanning and element management
+
+**Ad Detection Strings**:
+- `ads_`, `ad-`, `ads-`, `googlesyndication`, `pagead2`, `fixed-ad`
+- Scans element IDs, class names, and attributes
+- Covers ads ≥50x50 pixels with overlays
+
 **Benefits**:
 - **Creator Support**: Ad impressions still count, creators get paid
-- **User Experience**: No annoying ads, but peaceful plant imagery
-- **Manifest v3 Compliant**: Works within new Chrome extension limitations
-- **Gaming Optional**: Interactive "destroy the ad" experience available
+- **User Experience**: Choice between peaceful plants or interactive gaming
+- **Manifest v3 Compliant**: Works within Chrome extension limitations
+- **Gaming Experience**: NES-inspired overlay with physics-based damage system
 
 **Implementation Status**:
-- 🚧 **Chrome**: TODO comments in place, ready for implementation
-- 🚧 **Safari**: TODO structure with planned architecture
+- ✅ **Safari**: Complete implementation with entertainment system
+- 🚧 **Chrome**: Architecture ready for implementation
 
 ## Development Patterns
 
@@ -387,7 +419,10 @@ the-advancement/
             ├── stripe-integration.js # Payment processing system (NEW)
             ├── sessionless-content.js # Legacy sessionless script
             ├── InputDetector.js      # Standalone input detector
-            └── TypingSimulator.js    # Standalone typing simulator
+            ├── TypingSimulator.js    # Standalone typing simulator
+            ├── adversement.js        # Ad covering system (NEW - September 2025)
+            ├── entertainment-system.js # Gaming overlay system (NEW - September 2025)
+            └── ecs.js                # Entity Component System (NEW - September 2025)
 ```
 
 ## Key Dependencies
@@ -427,9 +462,11 @@ Sessionless.generateKeys();  // Create cryptographic identity
 
 ### Visual Feedback
 - **Privacy Icons**: 🎭 Gradient circular icons next to detected fields
-- **Ficus Plants**: 🌿 Peaceful plant images covering ads (planned)
+- **Ficus Plants**: 🌿 Peaceful plant images covering ads with click-to-dismiss
+- **Slime Monsters**: 👹 Interactive slime overlays in monster mode
+- **Damage Numbers**: Large, bold flying damage text (30-70 damage) with physics
 - **Click Feedback**: Visual confirmation of auto-fill actions
-- **Gaming Elements**: Optional interactive ad "destruction" (planned)
+- **Gaming Console**: NES-inspired purple border overlay with ESC toggle
 
 ## Security Considerations
 

@@ -30,7 +30,10 @@
     {
       "matches": ["<all_urls>"],
       "js": [
-        "content.js"
+        "content.js",
+        "ecs.js",
+        "adversement.js",
+        "entertainment-system.js"
       ],
       "run_at": "document_end",
       "all_frames": true
@@ -61,7 +64,9 @@
     {
       "resources": [
         "InputDetector.js",
-        "TypingSimulator.js"
+        "TypingSimulator.js",
+        "ficus.jpg",
+        "slime.png"
       ],
       "matches": ["<all_urls>"]
     }

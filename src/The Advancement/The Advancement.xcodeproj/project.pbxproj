@@ -113,14 +113,19 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Resources/_locales,
+				Resources/adversement.js,
 				Resources/background.js,
 				Resources/content.js,
 				Resources/crypto.js,
+				Resources/ecs.js,
+				"Resources/entertainment-system.js",
+				Resources/ficus.jpg,
 				Resources/images,
 				Resources/manifest.json,
 				Resources/popup.css,
 				Resources/popup.html,
 				Resources/popup.js,
+				Resources/slime.png,
 				SafariWebExtensionHandler.swift,
 				Sessionless.swift,
 			);
@@ -130,14 +135,19 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Resources/_locales,
+				Resources/adversement.js,
 				Resources/background.js,
 				Resources/content.js,
 				Resources/crypto.js,
+				Resources/ecs.js,
+				"Resources/entertainment-system.js",
+				Resources/ficus.jpg,
 				Resources/images,
 				Resources/manifest.json,
 				Resources/popup.css,
 				Resources/popup.html,
 				Resources/popup.js,
+				Resources/slime.png,
 				SafariWebExtensionHandler.swift,
 				Sessionless.swift,
 			);
