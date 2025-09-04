@@ -79,6 +79,9 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         case "clearBdoUser":
             handleClearBdoUser(context: context, requestId: requestId)
             
+        case "signCovenantStep":
+            handleSignCovenantStep(parameters: parameters, context: context, requestId: requestId)
+            
         default:
             sendError(context: context, requestId: requestId, error: "Unknown action: \(action)")
         }
@@ -211,6 +214,39 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         
         sendSuccess(context: context, requestId: requestId, data: response)
         logger.info("ADVANCEMENT - ✅ Swift: BDO user cleared successfully")
+    }
+    
+    private func handleSignCovenantStep(parameters: [String: Any], context: NSExtensionContext, requestId: String?) {
+        logger.info("ADVANCEMENT - 📜 Swift: Handling covenant step signing...")
+        
+        guard let contractUuid = parameters["contractUuid"] as? String,
+              let stepId = parameters["stepId"] as? String,
+              let covenantUrl = parameters["covenantUrl"] as? String,
+              let timestamp = parameters["timestamp"] as? String else {
+            logger.error("ADVANCEMENT - ❌ Swift: Missing covenant parameters")
+            sendError(context: context, requestId: requestId, error: "Missing covenant parameters: contractUuid, stepId, covenantUrl, timestamp required")
+            return
+        }
+        
+        logger.info("ADVANCEMENT - 📜 Swift: Contract: \(contractUuid), Step: \(stepId), Service: \(covenantUrl)")
+        
+        Task {
+            do {
+                let result = try await signCovenantStep(
+                    contractUuid: contractUuid,
+                    stepId: stepId,
+                    covenantUrl: covenantUrl,
+                    timestamp: timestamp
+                )
+                
+                sendSuccess(context: context, requestId: requestId, data: result)
+                logger.info("ADVANCEMENT - ✅ Swift: Covenant step signed successfully")
+                
+            } catch {
+                logger.error("ADVANCEMENT - ❌ Swift: Covenant step signing failed: \(error)")
+                sendError(context: context, requestId: requestId, error: error.localizedDescription)
+            }
+        }
     }
     
     private func getSpellbooksComplete(baseUrl: String) async throws -> [String: Any] {
@@ -471,6 +507,99 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         return json
     }
     
+    private func signCovenantStep(contractUuid: String, stepId: String, covenantUrl: String, timestamp: String) async throws -> [String: Any] {
+        logger.info("ADVANCEMENT - 📜 Swift: Starting covenant step signing process")
+        
+        // 1. Ensure we have keys
+        if sessionless.getKeys() == nil {
+            logger.info("ADVANCEMENT - 🔑 Swift: No keys found, generating new keys...")
+            _ = sessionless.generateKeys()
+        }
+        
+        guard let keys = sessionless.getKeys() else {
+            throw NSError(domain: "CovenantError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to get sessionless keys"])
+        }
+        
+        logger.info("ADVANCEMENT - 🔑 Swift: Using public key: \(keys.publicKey)")
+        
+        // 2. Create authentication message: timestamp + userUUID + contractUUID + stepId
+        let userUUID = keys.address
+        let authMessage = timestamp + userUUID + contractUuid + stepId
+        
+        logger.info("ADVANCEMENT - 🔐 Swift: Auth message: \(authMessage)")
+        
+        // 3. Sign the authentication message
+        guard let signature = sessionless.sign(message: authMessage) else {
+            throw NSError(domain: "CovenantError", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to sign authentication message"])
+        }
+        
+        logger.info("ADVANCEMENT - ✍️ Swift: Generated signature: \(signature)")
+        
+        // 4. Prepare covenant API request
+        let requestPayload: [String: Any] = [
+            "signature": signature,
+            "timestamp": timestamp,
+            "userUUID": userUUID,
+            "pubKey": keys.publicKey
+        ]
+        
+        // 5. Make authenticated request to covenant service
+        let signUrl = "\(covenantUrl)/step/\(contractUuid)/\(stepId)/sign"
+        logger.info("ADVANCEMENT - 📡 Swift: POSTing to covenant service: \(signUrl)")
+        
+        guard let requestUrl = URL(string: signUrl) else {
+            throw NSError(domain: "CovenantError", code: 3, userInfo: [NSLocalizedDescriptionKey: "Invalid covenant URL: \(signUrl)"])
+        }
+        
+        var request = URLRequest(url: requestUrl)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("The-Advancement-Swift/1.0", forHTTPHeaderField: "User-Agent")
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestPayload)
+        } catch {
+            throw NSError(domain: "CovenantError", code: 4, userInfo: [NSLocalizedDescriptionKey: "Failed to serialize covenant request"])
+        }
+        
+        let (data, urlResponse) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = urlResponse as? HTTPURLResponse else {
+            throw NSError(domain: "CovenantError", code: 5, userInfo: [NSLocalizedDescriptionKey: "Invalid HTTP response"])
+        }
+        
+        logger.info("ADVANCEMENT - 📊 Swift: Covenant response status: \(httpResponse.statusCode)")
+        
+        if httpResponse.statusCode >= 400 {
+            let errorText = String(data: data, encoding: .utf8) ?? "Unknown error"
+            logger.error("ADVANCEMENT - ❌ Swift: Covenant service error: \(errorText)")
+            
+            // Try to parse error response
+            if let errorData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let errorMessage = errorData["error"] as? String {
+                throw NSError(domain: "CovenantError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorMessage])
+            } else {
+                throw NSError(domain: "CovenantError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "HTTP \(httpResponse.statusCode): \(errorText)"])
+            }
+        }
+        
+        // Parse successful response
+        guard let responseData = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "CovenantError", code: 6, userInfo: [NSLocalizedDescriptionKey: "Failed to parse covenant response"])
+        }
+        
+        logger.info("ADVANCEMENT - ✅ Swift: Covenant step signed successfully")
+        logger.info("ADVANCEMENT - 📋 Swift: Response data keys: \(responseData.keys.joined(separator: ", "))")
+        
+        return [
+            "success": true,
+            "stepCompleted": responseData["stepCompleted"] ?? false,
+            "contractUuid": contractUuid,
+            "stepId": stepId,
+            "userUUID": userUUID,
+            "response": responseData
+        ]
+    }
     
     private func sendSuccess(context: NSExtensionContext, requestId: String?, data: [String: Any]) {
         var response: [String: Any] = [

@@ -247,6 +247,279 @@ async function handleRegularSpell(message, spellInfo, sendResponse) {
     }
 }
 
+// Promise-based regular spell handler for mp: false spells
+async function handleRegularSpellPromise(message, spellInfo) {
+    console.log('💰 Background handling regular spell (mp: false):', spellInfo.name);
+    console.log('💰 Spell requires real money transaction, amount:', spellInfo.cost);
+    
+    try {
+        // For mp: false spells, we need to process real money payments
+        // 1. Get user's home base for Addie coordination
+        // 2. Create payment intent via Addie
+        // 3. Show Stripe payment overlay
+        // 4. Process payment and execute spell
+        
+        // Get user's home base
+        const homeBase = await getHomeBase();
+        if (!homeBase) {
+            throw new Error('Home base required for real money transactions');
+        }
+        
+        console.log(`💰 Using home base for payment: ${homeBase.name} (${homeBase.url})`);
+        
+        // Prepare payment request to Addie
+        const paymentRequest = {
+            amount: spellInfo.cost, // Amount in cents
+            currency: 'usd',
+            spellName: spellInfo.name,
+            resolver: spellInfo.resolver,
+            destinations: spellInfo.destinations,
+            homeBase: homeBase,
+            timestamp: Date.now()
+        };
+        
+        console.log('💰 Creating payment intent with Addie:', paymentRequest);
+        
+        // Send payment processing request to content script for Stripe overlay
+        return await createPaymentIntent(paymentRequest);
+        
+    } catch (error) {
+        console.error('❌ Background regular spell (mp: false) error:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+// Get user's home base from storage
+async function getHomeBase() {
+    return new Promise((resolve) => {
+        browser.storage.local.get('selectedHomeBase', (result) => {
+            resolve(result.selectedHomeBase || { env: 'dev', name: 'Dev Server', url: 'https://dev.allyabase.com' });
+        });
+    });
+}
+
+// Create payment intent and show Stripe overlay
+async function createPaymentIntent(paymentRequest) {
+    try {
+        console.log('💳 Creating payment intent via Addie...');
+        
+        // Get Addie URL from home base
+        const addieUrl = paymentRequest.homeBase.url.replace(/\/$/, '') + '/addie'; // Assuming Addie is at /addie endpoint
+        
+        // Create payment intent
+        const response = await fetch(`${addieUrl}/payment-intent`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                amount: paymentRequest.amount,
+                currency: paymentRequest.currency,
+                metadata: {
+                    spellName: paymentRequest.spellName,
+                    resolver: paymentRequest.resolver,
+                    timestamp: paymentRequest.timestamp
+                }
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Addie payment intent failed: ${response.status}`);
+        }
+        
+        const paymentIntent = await response.json();
+        console.log('✅ Payment intent created:', paymentIntent);
+        
+        // Return payment intent to trigger Stripe overlay
+        return {
+            success: true,
+            requiresPayment: true,
+            data: {
+                paymentIntent: paymentIntent,
+                paymentRequest: paymentRequest,
+                message: 'Payment required for spell execution'
+            }
+        };
+        
+    } catch (error) {
+        console.error('❌ Payment intent creation failed:', error);
+        return {
+            success: false,
+            error: `Payment processing failed: ${error.message}`
+        };
+    }
+}
+
+// Purchase spell handler for ninefy menu products
+async function handlePurchaseSpell(message, sender) {
+    console.log(`💰 [STEP 2/6] BACKGROUND: Processing purchase spell...`);
+    console.log(`💰 Spell components:`, message.spellComponents);
+    
+    try {
+        // Parse spell components for purchase details
+        let spellComponents;
+        try {
+            spellComponents = JSON.parse(message.spellComponents || '{}');
+        } catch (parseError) {
+            console.error('❌ Invalid purchase spell components:', parseError);
+            return {
+                success: false,
+                error: 'Invalid purchase spell components JSON'
+            };
+        }
+        
+        const { amount, productId, mp } = spellComponents;
+        
+        if (!amount || !productId || mp !== false) {
+            return {
+                success: false,
+                error: 'Purchase spell requires amount, productId, and mp: false'
+            };
+        }
+        
+        console.log(`💰 [STEP 2/6] BACKGROUND: Purchase details - amount: $${amount/100}, productId: ${productId}, mp: ${mp}`);
+        
+        // Get user's home base for Addie coordination
+        const homeBase = await getHomeBase();
+        if (!homeBase) {
+            throw new Error('Home base required for real money transactions');
+        }
+        
+        console.log(`💰 Using home base for payment: ${homeBase.name} (${homeBase.url})`);
+        
+        // Prepare payment request to Addie
+        const paymentRequest = {
+            amount: amount, // Amount in cents from spell components
+            currency: 'usd',
+            spellName: 'purchase',
+            productId: productId,
+            homeBase: homeBase,
+            timestamp: Date.now()
+        };
+        
+        console.log('💰 Creating payment intent for purchase:', paymentRequest);
+        
+        // Create payment intent via Addie
+        return await createPaymentIntent(paymentRequest);
+        
+    } catch (error) {
+        console.error(`❌ [STEP 2/6] BACKGROUND: Purchase spell exception:`, error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+// Covenant spell handler
+async function handleCovenantSpell(message, sender) {
+    console.log(`📜 [STEP 2/6] BACKGROUND: Processing covenant spell...`);
+    console.log(`📜 Contract components:`, message.spellComponents);
+    
+    try {
+        // Parse spell components for contract details
+        let spellComponents;
+        try {
+            spellComponents = JSON.parse(message.spellComponents || '{}');
+        } catch (parseError) {
+            console.error('❌ Invalid covenant spell components:', parseError);
+            return {
+                success: false,
+                error: 'Invalid spell components JSON'
+            };
+        }
+        
+        const { contractUuid, stepId, action = 'signStep' } = spellComponents;
+        
+        if (!contractUuid || !stepId) {
+            return {
+                success: false,
+                error: 'Covenant spell requires contractUuid and stepId'
+            };
+        }
+        
+        console.log(`📜 [STEP 2/6] BACKGROUND: Covenant action: ${action}, contract: ${contractUuid}, step: ${stepId}`);
+        
+        // Get home base for covenant service URL
+        const homeBase = await new Promise((resolve) => {
+            browser.storage.local.get('selectedHomeBase', (result) => {
+                resolve(result.selectedHomeBase || { env: 'dev' });
+            });
+        });
+        
+        // Determine covenant service URL based on environment
+        let covenantUrl;
+        if (homeBase.env === 'test') {
+            covenantUrl = 'http://127.0.0.1:5122';
+        } else if (homeBase.env === 'local') {
+            covenantUrl = 'http://127.0.0.1:3011';
+        } else {
+            covenantUrl = 'https://dev.covenant.allyabase.com';
+        }
+        
+        console.log(`🏠 [STEP 2/6] BACKGROUND: Using covenant service: ${covenantUrl}`);
+        
+        // Create covenant signing payload for Swift
+        const covenantPayload = {
+            action: 'signCovenantStep',
+            requestId: Date.now().toString(),
+            contractUuid: contractUuid,
+            stepId: stepId,
+            covenantUrl: covenantUrl,
+            timestamp: Date.now().toString()
+        };
+        
+        console.log(`📤 [STEP 3/6] BACKGROUND: Sending covenant payload to Swift:`, covenantPayload);
+        
+        // Send to Swift for authentication and covenant service call
+        return new Promise((resolve, reject) => {
+            browser.runtime.sendNativeMessage(
+                "com.planetnine.the-advancement.The-Advancement",
+                covenantPayload,
+                (response) => {
+                    console.log(`📥 [STEP 5/6] BACKGROUND: Received covenant response from Swift:`, response);
+                    
+                    if (browser.runtime.lastError) {
+                        console.error(`❌ [STEP 5/6] BACKGROUND: Native messaging error:`, browser.runtime.lastError);
+                        resolve({
+                            success: false,
+                            error: browser.runtime.lastError.message
+                        });
+                    } else if (response && response.success) {
+                        console.log(`✅ [STEP 5/6] BACKGROUND: Covenant step signed successfully`);
+                        resolve({
+                            success: true,
+                            data: {
+                                message: `Contract step signed successfully`,
+                                contractUuid: contractUuid,
+                                stepId: stepId,
+                                stepCompleted: response.data?.stepCompleted || false,
+                                timestamp: Date.now()
+                            }
+                        });
+                    } else {
+                        console.error(`❌ [STEP 5/6] BACKGROUND: Swift covenant error:`, response?.error);
+                        resolve({
+                            success: false,
+                            error: response?.error || 'Failed to sign covenant step'
+                        });
+                    }
+                }
+            );
+        });
+        
+    } catch (error) {
+        console.error(`❌ [STEP 2/6] BACKGROUND: Covenant spell exception:`, error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
 // Helper function to get or create fount user
 async function getFountUser() {
     try {
@@ -478,6 +751,16 @@ async function handleCastSpell(message, sender) {
     try {
         console.log(`📥 [STEP 2/6] BACKGROUND: Received castSpell message:`, message);
         console.log(`🪄 [STEP 2/6] BACKGROUND: Spell name: ${message.spellName}`);
+        
+        // Handle covenant spells specially
+        if (message.spellName === 'covenant') {
+            return await handleCovenantSpell(message, sender);
+        }
+        
+        // Handle purchase spells specially (mp: false with embedded amount)
+        if (message.spellName === 'purchase') {
+            return await handlePurchaseSpell(message, sender);
+        }
         
         try {
             // Get home base from storage or use default

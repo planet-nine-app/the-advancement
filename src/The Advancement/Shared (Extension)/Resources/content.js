@@ -759,12 +759,14 @@
             console.log('🔍 Manually scanning page for input fields and spells...');
             detector.detectFields();
             spellHandler.applySpellHandlers();
+            spellHandler.initializeCovenantAuthorization();
         },
 
         // Manual trigger for spell detection
         scanSpells: function() {
             console.log('🪄 Manually scanning page for spell elements...');
             spellHandler.applySpellHandlers();
+            spellHandler.initializeCovenantAuthorization();
         },
 
         // Spellbook access methods
@@ -852,6 +854,11 @@
                 spellComponents: spellComponents
             });
             
+            // Handle covenant spells specially
+            if (spellType === 'covenant') {
+                return await this.handleCovenantSpell(element, spellComponents);
+            }
+            
             try {
                 console.log(`📤 [STEP 1/6] CONTENT: Sending castSpell message to background...`);
                 
@@ -865,7 +872,10 @@
                     console.log('✅ [STEP 6/6] CONTENT: Spell cast successfully!');
                     
                     // Handle different response types
-                    if (response.data?.testServerResponse) {
+                    if (response.requiresPayment) {
+                        console.log('💳 [STEP 6/6] CONTENT: Payment required - showing Stripe overlay');
+                        await this.showStripePaymentOverlay(response.data.paymentIntent, response.data.paymentRequest, element);
+                    } else if (response.data?.testServerResponse) {
                         console.log('🎯 [STEP 6/6] CONTENT: Test server response received');
                         alert(`🧪 ${spellType} completed successfully!\n\nResponse: ${JSON.stringify(response.data.testServerResponse, null, 2)}`);
                     } else if (response.data?.navigation) {
@@ -1115,6 +1125,214 @@
             }
         }
 
+        async handleCovenantSpell(element, spellComponentsStr) {
+            console.log('📜 [STEP 1/6] CONTENT: Processing covenant spell...');
+            
+            try {
+                // Parse spell components for contract details
+                let spellComponents;
+                try {
+                    spellComponents = JSON.parse(spellComponentsStr || '{}');
+                } catch (parseError) {
+                    console.error('❌ Invalid covenant spell components:', parseError);
+                    alert('⚠️ Invalid covenant spell - malformed spell-components JSON');
+                    return;
+                }
+                
+                const { contractUuid, stepId, action = 'signStep' } = spellComponents;
+                
+                if (!contractUuid || !stepId) {
+                    alert('⚠️ Invalid covenant spell - missing contractUuid or stepId');
+                    return;
+                }
+                
+                console.log(`📜 [STEP 1/6] CONTENT: Covenant ${action}: contract ${contractUuid}, step ${stepId}`);
+                
+                // Check authorization by extracting participant pubKeys from SVG
+                const userPubKey = await this.getUserPublicKey();
+                if (!userPubKey) {
+                    alert('❌ Unable to get your public key - extension may not be properly authenticated');
+                    return;
+                }
+                
+                const isAuthorized = await this.checkCovenantAuthorization(contractUuid, userPubKey);
+                if (!isAuthorized) {
+                    alert('❌ Not Authorized: You are not a participant in this contract');
+                    return;
+                }
+                
+                // Confirm with user before signing
+                const confirmMessage = `📜 Sign Contract Step?\n\nContract: ${contractUuid.substring(0, 8)}...\nStep: ${stepId}\n\nThis will use your cryptographic identity to sign this contract step.`;
+                
+                if (!confirm(confirmMessage)) {
+                    console.log('📜 User cancelled covenant signing');
+                    return;
+                }
+                
+                console.log(`📤 [STEP 1/6] CONTENT: Sending covenant spell to background...`);
+                
+                // Send covenant spell request to background script
+                const response = await this.sendCovenantToBackground(contractUuid, stepId, action, element);
+                
+                console.log(`📥 [STEP 6/6] CONTENT: Received covenant response:`, response);
+                
+                if (response.success) {
+                    console.log('✅ [STEP 6/6] CONTENT: Covenant step signed successfully!');
+                    
+                    const stepCompleted = response.data?.stepCompleted ? ' (Step Completed!)' : ' (Awaiting other signatures)';
+                    alert(`📜 Contract step signed successfully!${stepCompleted}\n\nContract: ${contractUuid.substring(0, 8)}...\nStep: ${stepId}`);
+                    
+                    // Dispatch custom event for website to handle
+                    document.dispatchEvent(new CustomEvent('covenantStepSigned', {
+                        detail: {
+                            contractUuid: contractUuid,
+                            stepId: stepId,
+                            stepCompleted: response.data?.stepCompleted || false,
+                            userUUID: response.data?.userUUID,
+                            timestamp: response.data?.timestamp
+                        }
+                    }));
+                } else {
+                    console.warn(`⚠️ [STEP 6/6] CONTENT: Covenant signing failed: ${response.error}`);
+                    alert(`⚠️ Covenant signing failed: ${response.error}`);
+                }
+                
+            } catch (error) {
+                console.error('❌ [STEP 6/6] CONTENT: Covenant spell exception:', error);
+                alert(`❌ Covenant signing failed: ${error.message}`);
+            }
+        }
+        
+        /**
+         * Get current user's public key from extension
+         * @returns {Promise<string|null>} User's public key or null if not available
+         */
+        async getUserPublicKey() {
+            try {
+                // Use Bridge API if available (Safari Web Extensions)
+                if (this.bridge && this.bridge.getAddress) {
+                    const addressResponse = await this.bridge.getAddress();
+                    if (addressResponse && addressResponse.address) {
+                        return addressResponse.address;
+                    }
+                }
+                
+                // Fallback to browser.runtime for older Safari or other browsers
+                if (typeof browser !== 'undefined' && browser.runtime) {
+                    return new Promise((resolve) => {
+                        browser.runtime.sendMessage({
+                            type: 'sessionless-get-address'
+                        }, (response) => {
+                            if (response && response.success && response.data) {
+                                resolve(response.data.address);
+                            } else {
+                                resolve(null);
+                            }
+                        });
+                    });
+                }
+                
+                console.warn('❌ No method available to get user public key');
+                return null;
+                
+            } catch (error) {
+                console.error('❌ Error getting user public key:', error);
+                return null;
+            }
+        }
+        
+        /**
+         * Check if user is authorized to sign this covenant contract
+         * @param {string} contractUuid - Contract UUID to check authorization for
+         * @param {string} userPubKey - User's public key to check against participants
+         * @returns {Promise<boolean>} True if user is authorized, false otherwise
+         */
+        async checkCovenantAuthorization(contractUuid, userPubKey) {
+            try {
+                // Find SVG elements that might contain contract data
+                const svgElements = document.querySelectorAll('svg[data-contract-participants]');
+                
+                for (const svg of svgElements) {
+                    try {
+                        const participantsData = svg.getAttribute('data-contract-participants');
+                        if (participantsData) {
+                            const participantPubKeys = JSON.parse(participantsData);
+                            if (Array.isArray(participantPubKeys) && participantPubKeys.includes(userPubKey)) {
+                                console.log('✅ User authorized - pubKey found in contract participants');
+                                return true;
+                            }
+                        }
+                    } catch (parseError) {
+                        console.error('❌ Error parsing SVG participant data:', parseError);
+                    }
+                }
+                
+                console.warn('❌ User not authorized - pubKey not found in any contract participants');
+                return false;
+                
+            } catch (error) {
+                console.error('❌ Error checking covenant authorization:', error);
+                return false;
+            }
+        }
+
+        async sendCovenantToBackground(contractUuid, stepId, action, element) {
+            const elementInfo = {
+                tagName: element.tagName,
+                id: element.id,
+                className: element.className,
+                contractUuid: contractUuid,
+                stepId: stepId,
+                action: action
+            };
+
+            const spellComponents = JSON.stringify({
+                contractUuid: contractUuid,
+                stepId: stepId,
+                action: action
+            });
+
+            console.log(`🔄 [STEP 1/6] CONTENT: Preparing covenant message to background:`, {
+                type: 'castSpell',
+                spellName: 'covenant',
+                spellComponents: spellComponents,
+                elementInfo: elementInfo
+            });
+
+            if (typeof browser !== 'undefined' && browser.runtime) {
+                // Browser Extension API (Safari WebExtension)
+                console.log(`🌐 [STEP 1/6] CONTENT: Using browser runtime API for covenant`);
+                
+                const message = {
+                    type: 'castSpell',
+                    spellName: 'covenant',
+                    spellComponents: spellComponents,
+                    elementInfo: elementInfo
+                };
+                
+                console.log(`📤 [STEP 1/6] CONTENT: Sending covenant browser message:`, message);
+                
+                return new Promise((resolve, reject) => {
+                    browser.runtime.sendMessage(message, (response) => {
+                        console.log(`📥 [STEP 6/6] CONTENT: Received covenant browser response:`, response);
+                        
+                        if (browser.runtime.lastError) {
+                            console.error(`❌ [STEP 6/6] CONTENT: Covenant browser error:`, browser.runtime.lastError);
+                            reject(new Error(browser.runtime.lastError.message));
+                        } else if (response && response.success !== undefined) {
+                            resolve(response);
+                        } else {
+                            reject(new Error(response?.error || 'No response from background'));
+                        }
+                    });
+                });
+            } else {
+                // Fallback - no extension API
+                console.error(`❌ [STEP 1/6] CONTENT: No extension API available for covenant`);
+                return { success: false, error: 'No extension API available for covenant signing' };
+            }
+        }
+
         async getFountUser() {
             // Mock fount user for testing - in production this would be managed by the background script
             return {
@@ -1176,6 +1394,344 @@
                 window.NineumManager.addNineum(amount, source);
             }
         }
+        
+        /**
+         * Check and hide covenant buttons for unauthorized users
+         * This runs on page load to conditionally show/hide signing buttons
+         */
+        async initializeCovenantAuthorization() {
+            try {
+                const userPubKey = await this.getUserPublicKey();
+                if (!userPubKey) {
+                    console.log('📜 No user pubKey available - hiding all covenant buttons');
+                    this.hideAllCovenantButtons();
+                    return;
+                }
+                
+                console.log('📜 Checking covenant authorization with pubKey:', userPubKey.substring(0, 10) + '...');
+                
+                // Get all covenant buttons
+                const covenantButtons = document.querySelectorAll('[spell="covenant"]');
+                console.log(`📜 Found ${covenantButtons.length} covenant buttons to check`);
+                
+                for (const button of covenantButtons) {
+                    try {
+                        const spellComponents = button.getAttribute('spell-components');
+                        if (!spellComponents) continue;
+                        
+                        const { contractUuid } = JSON.parse(spellComponents);
+                        const isAuthorized = await this.checkCovenantAuthorization(contractUuid, userPubKey);
+                        
+                        if (!isAuthorized) {
+                            button.style.display = 'none';
+                            console.log(`📜 Hidden unauthorized covenant button for contract ${contractUuid.substring(0, 8)}...`);
+                        } else {
+                            console.log(`📜 Authorized covenant button for contract ${contractUuid.substring(0, 8)}...`);
+                        }
+                    } catch (error) {
+                        console.error('❌ Error checking covenant button authorization:', error);
+                        button.style.display = 'none'; // Hide on error
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error in initializeCovenantAuthorization:', error);
+            }
+        }
+        
+        /**
+         * Hide all covenant buttons (fallback when no user pubKey available)
+         */
+        hideAllCovenantButtons() {
+            const covenantButtons = document.querySelectorAll('[spell="covenant"]');
+            covenantButtons.forEach(button => {
+                button.style.display = 'none';
+            });
+            console.log(`📜 Hidden ${covenantButtons.length} covenant buttons (no user authorization)`);
+        }
+
+        // ========================================
+        // Payment Processing Methods
+        // ========================================
+
+        async showStripePaymentOverlay(paymentIntent, paymentRequest, element) {
+            console.log('💳 Showing Stripe payment overlay for spell:', paymentRequest.spellName);
+            
+            // Inject Stripe if not already loaded
+            await this.ensureStripeLoaded();
+            
+            // Create payment overlay
+            const overlay = this.createPaymentOverlay(paymentIntent, paymentRequest);
+            document.body.appendChild(overlay);
+            
+            // Initialize Stripe Elements
+            try {
+                await this.initializeStripePayment(paymentIntent, paymentRequest, overlay, element);
+            } catch (error) {
+                console.error('❌ Stripe payment initialization failed:', error);
+                overlay.remove();
+                alert(`💳 Payment setup failed: ${error.message}`);
+            }
+        }
+
+        async ensureStripeLoaded() {
+            if (typeof Stripe !== 'undefined') {
+                console.log('✅ Stripe already loaded');
+                return;
+            }
+            
+            console.log('📡 Injecting Stripe script...');
+            
+            return new Promise((resolve, reject) => {
+                const stripeScript = document.createElement('script');
+                stripeScript.src = 'https://js.stripe.com/v3/';
+                stripeScript.onload = () => {
+                    console.log('✅ Stripe script loaded successfully');
+                    resolve();
+                };
+                stripeScript.onerror = () => {
+                    console.error('❌ Failed to load Stripe script');
+                    reject(new Error('Failed to load Stripe script'));
+                };
+                document.head.appendChild(stripeScript);
+            });
+        }
+
+        createPaymentOverlay(paymentIntent, paymentRequest) {
+            console.log('🎨 Creating payment overlay for amount:', paymentRequest.amount / 100, 'USD');
+            
+            // Remove any existing overlay
+            const existingOverlay = document.getElementById('advancement-payment-overlay');
+            if (existingOverlay) {
+                existingOverlay.remove();
+            }
+            
+            // Create overlay container
+            const overlay = document.createElement('div');
+            overlay.id = 'advancement-payment-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 999999;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            `;
+            
+            // Create payment form
+            const paymentForm = document.createElement('div');
+            paymentForm.style.cssText = `
+                background: white;
+                border-radius: 12px;
+                padding: 32px;
+                max-width: 500px;
+                width: 90vw;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                position: relative;
+                animation: payment-appear 0.3s ease-out;
+            `;
+            
+            // Add CSS animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes payment-appear {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-20px) scale(0.95);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0) scale(1);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            paymentForm.innerHTML = `
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <div style="
+                        width: 60px;
+                        height: 60px;
+                        border-radius: 50%;
+                        background: linear-gradient(45deg, #667eea, #764ba2);
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-bottom: 16px;
+                        color: white;
+                        font-size: 24px;
+                    ">🪄</div>
+                    <h2 style="margin: 0 0 8px 0; color: #2c3e50;">Cast Spell: ${paymentRequest.spellName}</h2>
+                    <p style="margin: 0; color: #7f8c8d; font-size: 16px;">$${(paymentRequest.amount / 100).toFixed(2)} USD</p>
+                </div>
+                
+                <div id="stripe-payment-element" style="margin: 24px 0;"></div>
+                
+                <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
+                    <button id="cancel-payment-btn" style="
+                        background: rgba(244, 67, 54, 0.1);
+                        color: #f44336;
+                        border: 1px solid #f44336;
+                        border-radius: 8px;
+                        padding: 12px 24px;
+                        font-size: 14px;
+                        cursor: pointer;
+                        transition: background 0.2s;
+                    ">❌ Cancel</button>
+                    
+                    <button id="complete-payment-btn" style="
+                        background: linear-gradient(45deg, #667eea, #764ba2);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        padding: 12px 24px;
+                        font-size: 14px;
+                        cursor: pointer;
+                        transition: transform 0.2s;
+                        font-weight: 600;
+                    " disabled>💳 Processing...</button>
+                </div>
+                
+                <div id="payment-status" style="margin-top: 16px; text-align: center; font-size: 14px;"></div>
+            `;
+            
+            overlay.appendChild(paymentForm);
+            return overlay;
+        }
+
+        async initializeStripePayment(paymentIntent, paymentRequest, overlay, spellElement) {
+            console.log('🔧 Initializing Stripe payment form...');
+            
+            try {
+                // Initialize Stripe with test key (you'll provide real keys)
+                const stripe = Stripe('pk_test_TYooMQauvdEDq54NiTphI7jx'); // Test key - replace with real
+                
+                // Create Stripe Elements
+                const elements = stripe.elements({
+                    clientSecret: paymentIntent.client_secret
+                });
+                
+                // Create payment element
+                const paymentElement = elements.create('payment');
+                paymentElement.mount('#stripe-payment-element');
+                
+                console.log('✅ Stripe payment form initialized');
+                
+                // Enable payment button when ready
+                paymentElement.on('ready', () => {
+                    const payBtn = overlay.querySelector('#complete-payment-btn');
+                    payBtn.textContent = `💳 Pay $${(paymentRequest.amount / 100).toFixed(2)}`;
+                    payBtn.disabled = false;
+                });
+                
+                // Handle payment button click
+                const payBtn = overlay.querySelector('#complete-payment-btn');
+                payBtn.addEventListener('click', async () => {
+                    payBtn.disabled = true;
+                    payBtn.textContent = '💳 Processing...';
+                    
+                    try {
+                        // Confirm payment
+                        const { error: stripeError } = await stripe.confirmPayment({
+                            elements,
+                            confirmParams: {
+                                return_url: window.location.href
+                            },
+                            redirect: 'if_required'
+                        });
+                        
+                        if (stripeError) {
+                            throw new Error(stripeError.message);
+                        }
+                        
+                        console.log('✅ Payment completed successfully');
+                        
+                        // Execute the original spell now that payment is complete
+                        await this.executePostPaymentSpell(paymentRequest, spellElement);
+                        
+                        // Close overlay
+                        overlay.remove();
+                        
+                    } catch (error) {
+                        console.error('❌ Payment failed:', error);
+                        const statusDiv = overlay.querySelector('#payment-status');
+                        statusDiv.innerHTML = `<span style="color: #f44336;">❌ Payment failed: ${error.message}</span>`;
+                        payBtn.disabled = false;
+                        payBtn.textContent = `💳 Retry Payment`;
+                    }
+                });
+                
+                // Handle cancel button
+                const cancelBtn = overlay.querySelector('#cancel-payment-btn');
+                cancelBtn.addEventListener('click', () => {
+                    console.log('❌ Payment cancelled by user');
+                    overlay.remove();
+                });
+                
+                // Close on escape
+                const escapeHandler = (e) => {
+                    if (e.key === 'Escape') {
+                        overlay.remove();
+                        document.removeEventListener('keydown', escapeHandler);
+                    }
+                };
+                document.addEventListener('keydown', escapeHandler);
+                
+            } catch (error) {
+                console.error('❌ Stripe initialization failed:', error);
+                throw error;
+            }
+        }
+
+        async executePostPaymentSpell(paymentRequest, element) {
+            console.log('⚡ Executing spell after successful payment:', paymentRequest.spellName);
+            
+            try {
+                // Execute the spell at its destination after payment
+                if (paymentRequest.destinations && paymentRequest.destinations.length > 0) {
+                    const destination = paymentRequest.destinations[0]; // Use first destination
+                    const spellUrl = `${destination.stopURL}magic/spell/${paymentRequest.spellName}`;
+                    
+                    console.log(`🚀 Executing spell at: ${spellUrl}`);
+                    
+                    const response = await fetch(spellUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            spell: paymentRequest.spellName,
+                            paymentProcessed: true,
+                            timestamp: Date.now(),
+                            cost: paymentRequest.amount
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log('✅ Post-payment spell execution successful:', result);
+                        
+                        // Show success message
+                        alert(`✅ ${paymentRequest.spellName} completed successfully!\nPayment processed: $${(paymentRequest.amount / 100).toFixed(2)}`);
+                        
+                    } else {
+                        console.warn('⚠️ Post-payment spell execution failed:', response.status);
+                        alert(`⚠️ Payment succeeded but spell execution failed. Please contact support.`);
+                    }
+                } else {
+                    console.log('✅ Payment completed - no spell execution required');
+                    alert(`✅ Payment of $${(paymentRequest.amount / 100).toFixed(2)} completed successfully!`);
+                }
+                
+            } catch (error) {
+                console.error('❌ Post-payment spell execution failed:', error);
+                alert(`⚠️ Payment succeeded but spell execution failed: ${error.message}`);
+            }
+        }
     }
 
     // Initialize spell handler
@@ -1206,6 +1762,9 @@
                     
                     // Scan for spell elements
                     spellHandler.applySpellHandlers();
+                    
+                    // Check covenant authorization for new elements
+                    spellHandler.initializeCovenantAuthorization();
                     
                 }, 1500);
             }
@@ -1663,6 +2222,9 @@
             
             console.log('🪄 Running initial spell detection...');
             spellHandler.applySpellHandlers();
+            
+            console.log('📜 Running initial covenant authorization check...');
+            spellHandler.initializeCovenantAuthorization();
             
             // TODO: Initialize ad covering system
             // coverAdsWithFicus();
