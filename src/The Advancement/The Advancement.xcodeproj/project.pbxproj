@@ -120,6 +120,11 @@
 				Resources/ecs.js,
 				"Resources/entertainment-system.js",
 				Resources/ficus.jpg,
+				Resources/fonts.css,
+				"Resources/fonts/FFVI-Damage-v3-LC-BA.otf",
+				"Resources/fonts/FFVI-Damage-v3-LC-BO.otf",
+				"Resources/fonts/FFVI-Damage-v3-LC-BW.otf",
+				"Resources/fonts/FFVI-Damage-v3-LC-KO.otf",
 				Resources/images,
 				Resources/manifest.json,
 				Resources/popup.css,
@@ -142,6 +147,11 @@
 				Resources/ecs.js,
 				"Resources/entertainment-system.js",
 				Resources/ficus.jpg,
+				Resources/fonts.css,
+				"Resources/fonts/FFVI-Damage-v3-LC-BA.otf",
+				"Resources/fonts/FFVI-Damage-v3-LC-BO.otf",
+				"Resources/fonts/FFVI-Damage-v3-LC-BW.otf",
+				"Resources/fonts/FFVI-Damage-v3-LC-KO.otf",
 				Resources/images,
 				Resources/manifest.json,
 				Resources/popup.css,
@@ -157,6 +167,9 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Resources/crypto.js,
+				Resources/fonts.css,
+				"Resources/fonts/FFVI-Damage-v3-LC-BW.otf",
+				"Resources/fonts/FFVI-Damage-v3-LC-KO.otf",
 			);
 			target = CA54CAFD2E5A0A99007D062D /* The Advancement (iOS) */;
 		};
@@ -164,6 +177,9 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Resources/crypto.js,
+				Resources/fonts.css,
+				"Resources/fonts/FFVI-Damage-v3-LC-BW.otf",
+				"Resources/fonts/FFVI-Damage-v3-LC-KO.otf",
 			);
 			target = CA54CB0F2E5A0A99007D062D /* The Advancement (macOS) */;
 		};
@@ -658,6 +674,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "macOS (Extension)/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "The Advancement Extension";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -690,6 +707,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "macOS (Extension)/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = "The Advancement Extension";
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

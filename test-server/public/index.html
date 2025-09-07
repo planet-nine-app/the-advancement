@@ -155,6 +155,43 @@
                         </div>
                     </div>
                 </section>
+
+                <section class="magistack-test-section">
+                    <h3>🃏 Magistack Test Integration</h3>
+                    <p class="magistack-description">
+                        Test magistack navigation by entering a BDO pubKey. This will fetch the magistack data from BDO using <strong>The Advancement Safari extension</strong> for authenticated access and display the interactive cards for testing purchase flows.
+                    </p>
+                    <div class="magistack-requirements">
+                        <p><strong>Requirements:</strong> The Advancement Safari extension must be installed and enabled.</p>
+                    </div>
+                    <div class="magistack-test-container">
+                        <div class="magistack-input-section">
+                            <div class="input-group">
+                                <label for="bdo-pubkey-input">BDO Public Key:</label>
+                                <input 
+                                    type="text" 
+                                    id="bdo-pubkey-input" 
+                                    placeholder="Enter BDO pubKey (e.g., 02a3b4c5...)" 
+                                    class="bdo-pubkey-input"
+                                />
+                            </div>
+                            <button id="load-magistack-btn" class="load-magistack-btn">
+                                🃏 Load Magistack
+                            </button>
+                        </div>
+                        
+                        <div class="magistack-status" id="magistack-status">
+                            <div class="status-message" id="magistack-status-message">
+                                <span class="status-icon">📋</span>
+                                <p>Enter a BDO pubKey to load a magistack for testing</p>
+                            </div>
+                        </div>
+
+                        <div class="magistack-display" id="magistack-display">
+                            <!-- Magistack cards will be loaded here -->
+                        </div>
+                    </div>
+                </section>
             </div>
 
             <!-- Right Column: Teleported Product Feed -->

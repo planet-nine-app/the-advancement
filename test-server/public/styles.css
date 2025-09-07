@@ -921,3 +921,210 @@ body {
         max-width: 320px;
     }
 }
+
+/* Magistack Test Section */
+.magistack-test-section {
+    background: linear-gradient(135deg, rgba(241, 196, 15, 0.1), rgba(230, 126, 34, 0.1));
+    border: 2px solid var(--quaternary);
+    border-radius: 12px;
+    padding: var(--spacing-xl);
+    margin-top: var(--spacing-xl);
+}
+
+.magistack-test-section h3 {
+    color: var(--quaternary);
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+.magistack-description {
+    color: var(--text);
+    text-align: center;
+    margin-bottom: var(--spacing-md);
+    font-style: italic;
+}
+
+.magistack-requirements {
+    background: rgba(52, 152, 219, 0.1);
+    border: 1px solid #3498db;
+    border-radius: 8px;
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+    text-align: center;
+}
+
+.magistack-requirements p {
+    margin: 0;
+    color: #2980b9;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+}
+
+.magistack-test-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+}
+
+.magistack-input-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    width: 100%;
+    max-width: 400px;
+}
+
+.input-group label {
+    font-weight: 600;
+    color: var(--text);
+    text-align: center;
+}
+
+.bdo-pubkey-input {
+    width: 100%;
+    padding: var(--spacing-md);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: var(--font-size-sm);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.bdo-pubkey-input:focus {
+    outline: none;
+    border-color: var(--quaternary);
+    box-shadow: 0 0 0 3px rgba(241, 196, 15, 0.1);
+}
+
+.load-magistack-btn {
+    background: linear-gradient(135deg, var(--quaternary), #e67e22);
+    color: white;
+    border: none;
+    padding: var(--spacing-md) var(--spacing-xl);
+    border-radius: 8px;
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(241, 196, 15, 0.3);
+}
+
+.load-magistack-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(241, 196, 15, 0.4);
+}
+
+.load-magistack-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(241, 196, 15, 0.3);
+}
+
+.load-magistack-btn:disabled {
+    background: var(--inactive);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.magistack-status {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: var(--spacing-lg);
+    text-align: center;
+}
+
+.status-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.status-icon {
+    font-size: var(--font-size-lg);
+}
+
+.status-message p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
+.magistack-display {
+    min-height: 200px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+}
+
+.magistack-display.has-content {
+    border: 2px solid var(--quaternary);
+    background: rgba(241, 196, 15, 0.05);
+}
+
+.magistack-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: var(--spacing-lg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.magistack-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.magistack-card-title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+.magistack-card-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+}
+
+.magistack-card-content svg {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive design for magistack section */
+@media (max-width: 768px) {
+    .magistack-input-section {
+        align-items: stretch;
+    }
+    
+    .input-group {
+        max-width: none;
+    }
+    
+    .load-magistack-btn {
+        width: 100%;
+    }
+    
+    .magistack-card-content {
+        min-height: 200px;
+    }
+}

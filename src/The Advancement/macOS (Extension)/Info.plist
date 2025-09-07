@@ -9,5 +9,10 @@
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).SafariWebExtensionHandler</string>
 	</dict>
+	<key>UIAppFonts</key>
+	<array>
+		<string>FFVI-Damage-v3-LC-BW.otf</string>
+		<string>FFVI-Damage-v3-LC-KO.otf</string>
+	</array>
 </dict>
 </plist>

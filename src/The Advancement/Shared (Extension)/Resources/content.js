@@ -1889,11 +1889,58 @@
                     // Clean up this specific callback
                     delete window._spellCallbacks[requestId];
                 }
+            } else if (event.name === 'getBDOCard') {
+                // Handle getBDOCard requests from web pages
+                handleGetBDOCardRequest(event.message);
             }
         });
         
     } else {
         console.log('ℹ️ No extension API detected, running in standalone mode');
+    }
+
+    // Handle getBDOCard requests from web pages via Safari Legacy API
+    async function handleGetBDOCardRequest(request) {
+        console.log('🃏 Content script handling getBDOCard request from web page:', request);
+        
+        try {
+            const { requestId, bdoPubKey } = request;
+            
+            if (!bdoPubKey) {
+                throw new Error('bdoPubKey is required');
+            }
+            
+            console.log(`🔄 Content script forwarding getBDOCard to background for pubKey: ${bdoPubKey}`);
+            
+            // Forward the request to the background script via Web Extension API
+            const response = await browser.runtime.sendMessage({
+                type: 'getBDOCard',
+                bdoPubKey: bdoPubKey,
+                timestamp: Date.now()
+            });
+            
+            console.log('📥 Content script received response from background:', response);
+            
+            // Send response back to web page via Safari Legacy API
+            safari.extension.dispatchMessage('getBDOCardResponse', {
+                requestId: requestId,
+                success: response && response.success,
+                data: response ? response.data : null,
+                error: response ? response.error : 'No response from background script'
+            });
+            
+            console.log('✅ Content script sent response back to web page via Safari Legacy API');
+            
+        } catch (error) {
+            console.error('❌ Content script getBDOCard bridge error:', error);
+            
+            // Send error response back to web page
+            safari.extension.dispatchMessage('getBDOCardResponse', {
+                requestId: request.requestId,
+                success: false,
+                error: error.message
+            });
+        }
     }
 
     // Handle popup requests

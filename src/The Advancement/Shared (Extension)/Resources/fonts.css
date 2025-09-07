@@ -1,0 +1,35 @@
+/* Custom Fonts for The Advancement Safari Extension */
+
+@font-face {
+  font-family: 'FFVI-Damage';
+  src: url('FFVI-Damage-v3-LC-BW.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap; /* Optional: improves loading performance */
+}
+
+@font-face {
+  font-family: 'FFVI-Damage-Font';
+  src: url('FFVI-Damage-v3-LC-BW.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'FFVI-Damage-v3-LC-BW';
+  src: url('FFVI-Damage-v3-LC-BW.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Damage Node Styling */
+.damage-node {
+  font-family: 'FFVI-Damage', 'FFVI-Damage-v3-LC-BW', 'Courier New', Monaco, monospace;
+  font-weight: normal;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  color: #FFD700;
+  pointer-events: none;
+  user-select: none;
+}

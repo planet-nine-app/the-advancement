@@ -589,8 +589,9 @@ browser.runtime.sendNativeMessage(
 
 // Handle messages from popup and content scripts using Promise returns instead of sendResponse
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('📨 Background received message:', message);
-    console.log('📨 Message type:', message.type);
+    console.log('📨 Background received internal message:', message);
+    console.log('📨 Internal message type:', message.type);
+    console.log('📨 Sender:', sender);
     
     // Return Promises instead of using sendResponse callbacks
     if (message.type === 'castSpell') {
@@ -606,8 +607,24 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     } else if (message.type === 'magicSpell') {
         return handleMagicSpell(message);
     } else {
-        console.log('❌ Background: Unknown message type:', message.type);
+        console.log('❌ Background: Unknown internal message type:', message.type);
         return Promise.resolve({ success: false, error: `Unknown message type: ${message.type}` });
+    }
+});
+
+// Handle messages from external web pages (like the test server)
+browser.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+    console.log('📨 Background received external message:', message);
+    console.log('📨 External message type:', message.type);
+    console.log('📨 External sender:', sender);
+    
+    // Return Promises instead of using sendResponse callbacks
+    if (message.type === 'getBDOCard') {
+        console.log('🌐 Background handling external getBDOCard request');
+        return handleGetBDOCard(message, sender);
+    } else {
+        console.log('❌ Background: Unknown external message type:', message.type);
+        return Promise.resolve({ success: false, error: `Unknown external message type: ${message.type}` });
     }
 });
 
@@ -836,45 +853,70 @@ async function handleGetBDOCard(message, sender) {
             throw new Error('bdoPubKey is required');
         }
         
-        // Determine BDO URL based on environment
-        // For now, use dev environment - could be enhanced to detect user's selected base
-        const bdoUrl = 'https://dev.bdo.allyabase.com/';
+        // Try multiple BDO environments to find the magistack
+        const bdoEnvironments = [
+            'https://dev.bdo.allyabase.com/',
+            'http://127.0.0.1:5114/',
+            'http://localhost:3003/'
+        ];
         
-        console.log(`🔍 Background requesting card from BDO: ${bdoUrl} with pubKey: ${bdoPubKey}`);
+        let lastError;
         
-        // Send getBDOCard request to Swift for authenticated retrieval
-        const swiftResponse = await new Promise((resolve, reject) => {
-            browser.runtime.sendNativeMessage(
-                "com.planetnine.the-advancement.The-Advancement",
-                {
-                    action: 'getBDOCard',
-                    bdoPubKey: bdoPubKey,
-                    baseUrl: bdoUrl,
-                    requestId: Date.now().toString()
-                },
-                (response) => {
-                    if (browser.runtime.lastError) {
-                        reject(new Error(browser.runtime.lastError.message));
-                    } else {
-                        resolve(response);
-                    }
+        for (const bdoUrl of bdoEnvironments) {
+            try {
+                console.log(`🔍 Background trying BDO environment: ${bdoUrl} with pubKey: ${bdoPubKey}`);
+                
+                // Send getBDOCard request to Swift for authenticated retrieval
+                const swiftResponse = await new Promise((resolve, reject) => {
+                    browser.runtime.sendNativeMessage(
+                        "com.planetnine.the-advancement.The-Advancement",
+                        {
+                            action: 'getBDOCard',
+                            bdoPubKey: bdoPubKey,
+                            baseUrl: bdoUrl,
+                            requestId: Date.now().toString()
+                        },
+                        (response) => {
+                            if (browser.runtime.lastError) {
+                                reject(new Error(browser.runtime.lastError.message));
+                            } else {
+                                resolve(response);
+                            }
+                        }
+                    );
+                });
+                
+                console.log(`📡 Background received Swift BDO response from ${bdoUrl}:`, swiftResponse);
+                
+                if (swiftResponse && swiftResponse.success && swiftResponse.data) {
+                    console.log(`✅ Background found magistack at ${bdoUrl}`);
+                    return {
+                        success: true,
+                        data: swiftResponse.data
+                    };
+                } else if (swiftResponse?.error?.includes('404') || swiftResponse?.error?.includes('not found')) {
+                    console.log(`❌ Background magistack not found at ${bdoUrl} (404)`);
+                    lastError = new Error(`Magistack not found at ${bdoUrl}`);
+                    continue; // Try next environment
+                } else {
+                    console.log(`❌ Background BDO error at ${bdoUrl}:`, swiftResponse?.error);
+                    lastError = new Error(swiftResponse?.error || `BDO request failed at ${bdoUrl}`);
+                    continue; // Try next environment
                 }
-            );
-        });
-        
-        console.log('📡 Background received Swift BDO response:', swiftResponse);
-        
-        if (swiftResponse && swiftResponse.success && swiftResponse.data) {
-            return {
-                success: true,
-                data: swiftResponse.data
-            };
-        } else {
-            return {
-                success: false,
-                error: swiftResponse?.error || 'Failed to retrieve card from BDO'
-            };
+                
+            } catch (networkError) {
+                console.log(`🌐 Background network error for ${bdoUrl}:`, networkError.message);
+                lastError = networkError;
+                continue; // Try next environment
+            }
         }
+        
+        // If we get here, all environments failed
+        console.error('❌ Background: All BDO environments failed');
+        return {
+            success: false,
+            error: lastError?.message || 'Magistack not found in any BDO environment'
+        };
         
     } catch (error) {
         console.error('❌ Background BDO card retrieval error:', error);

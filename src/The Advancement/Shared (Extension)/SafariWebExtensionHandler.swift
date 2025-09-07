@@ -82,6 +82,14 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         case "signCovenantStep":
             handleSignCovenantStep(parameters: parameters, context: context, requestId: requestId)
             
+        case "getBDOCard":
+            guard let bdoPubKey = parameters["bdoPubKey"] as? String else {
+                sendError(context: context, requestId: requestId, error: "getBDOCard requires bdoPubKey parameter")
+                return
+            }
+            let baseUrl = parameters["baseUrl"] as? String ?? "https://dev.bdo.allyabase.com/"
+            handleGetBDOCard(bdoPubKey: bdoPubKey, baseUrl: baseUrl, context: context, requestId: requestId)
+            
         default:
             sendError(context: context, requestId: requestId, error: "Unknown action: \(action)")
         }
@@ -93,6 +101,50 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
                 let spellbooks = try await getSpellbooksComplete(baseUrl: baseUrl)
                 sendSuccess(context: context, requestId: requestId, data: spellbooks)
             } catch {
+                sendError(context: context, requestId: requestId, error: error.localizedDescription)
+            }
+        }
+    }
+    
+    private func handleGetBDOCard(bdoPubKey: String, baseUrl: String, context: NSExtensionContext, requestId: String?) {
+        logger.info("ADVANCEMENT - 🃏 Swift: Handling getBDOCard request for pubKey: \(bdoPubKey)")
+        logger.info("ADVANCEMENT - 🔗 Swift: Using base URL: \(baseUrl)")
+        
+        Task {
+            do {
+                // Try multiple BDO environments to find the magistack
+                let bdoEnvironments = [
+                    baseUrl,
+                    "https://dev.bdo.allyabase.com/",
+                    "http://127.0.0.1:5114/", 
+                    "http://localhost:3003/"
+                ]
+                
+                var lastError: Error?
+                
+                for bdoUrl in bdoEnvironments {
+                    do {
+                        logger.info("ADVANCEMENT - 🔍 Swift: Trying BDO environment: \(bdoUrl)")
+                        
+                        let magistackData = try await getBDOCardFromUrl(bdoPubKey: bdoPubKey, bdoUrl: bdoUrl)
+                        
+                        logger.info("ADVANCEMENT - ✅ Swift: Found magistack at \(bdoUrl)")
+                        sendSuccess(context: context, requestId: requestId, data: magistackData)
+                        return
+                        
+                    } catch {
+                        logger.info("ADVANCEMENT - ❌ Swift: Failed to get magistack from \(bdoUrl): \(error)")
+                        lastError = error
+                        continue
+                    }
+                }
+                
+                // If we get here, all environments failed
+                logger.error("ADVANCEMENT - ❌ Swift: All BDO environments failed for pubKey: \(bdoPubKey)")
+                sendError(context: context, requestId: requestId, error: lastError?.localizedDescription ?? "Magistack not found in any BDO environment")
+                
+            } catch {
+                logger.error("ADVANCEMENT - ❌ Swift: getBDOCard error: \(error)")
                 sendError(context: context, requestId: requestId, error: error.localizedDescription)
             }
         }
@@ -321,6 +373,36 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         return response
     }
     
+    private func getBDOCardFromUrl(bdoPubKey: String, bdoUrl: String) async throws -> [String: Any] {
+        // Ensure we have sessionless keys for authentication
+        if sessionless.getKeys() == nil {
+            logger.info("ADVANCEMENT - 🔑 Swift: No keys found, generating new keys for BDO access...")
+            _ = sessionless.generateKeys()
+        }
+        
+        // Create or get BDO user for authenticated access
+        let uuid = try await createBDOUser(baseUrl: bdoUrl)
+        logger.info("ADVANCEMENT - 👤 Swift: Using BDO user UUID: \(uuid) for magistack retrieval")
+        
+        // Create authenticated BDO request for the magistack
+        let timestamp = "".getTime()
+        let hash = "advancement-magistack"
+        let message = timestamp + uuid + hash
+        
+        guard let signature = sessionless.sign(message: message) else {
+            throw NSError(domain: "BDOCardError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to sign BDO card request"])
+        }
+        
+        // Construct authenticated magistack endpoint
+        let endpoint = "\(bdoUrl)\(bdoPubKey)?timestamp=\(timestamp)&hash=\(hash)&signature=\(signature)&uuid=\(uuid)"
+        logger.info("ADVANCEMENT - 📤 Swift→BDO: Getting magistack from \(endpoint)")
+        
+        let response = try await makeBDORequest(endpoint: endpoint, method: "GET", payload: nil)
+        logger.info("ADVANCEMENT - 📥 BDO→Swift: Magistack response received")
+        
+        return response
+    }
+    
     private func makeBDORequest(endpoint: String, method: String, payload: [String: Any]?) async throws -> [String: Any] {
         guard let url = URL(string: endpoint) else {
             throw NSError(domain: "SessionlessError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
@@ -523,7 +605,8 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         logger.info("ADVANCEMENT - 🔑 Swift: Using public key: \(keys.publicKey)")
         
         // 2. Create authentication message: timestamp + userUUID + contractUUID + stepId
-        let userUUID = keys.address
+        // Use public key as userUUID for covenant authentication (sessionless pattern)
+        let userUUID = keys.publicKey
         let authMessage = timestamp + userUUID + contractUuid + stepId
         
         logger.info("ADVANCEMENT - 🔐 Swift: Auth message: \(authMessage)")

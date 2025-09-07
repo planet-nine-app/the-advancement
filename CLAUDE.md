@@ -202,6 +202,7 @@ class EntertainmentSystem {
 - **Visual Polish**: Large, bold damage numbers with text shadows and smooth animations
 - **Event-Driven Architecture**: Custom events bridge content script isolation
 - **Performance Optimized**: Efficient DOM scanning and element management
+- **FFVI Font Integration**: Custom Final Fantasy VI-style damage font successfully loaded with Safari-compatible path resolution
 
 **Ad Detection Strings**:
 - `ads_`, `ad-`, `ads-`, `googlesyndication`, `pagead2`, `fixed-ad`
