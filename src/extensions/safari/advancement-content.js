@@ -672,6 +672,306 @@
     }
 
     // ========================================
+    // BDO Bridge - Content Script Bridge Pattern
+    // ========================================
+    
+    /**
+     * Bridge pattern: Website → Content Script → Background Script
+     * Since Safari Web Extensions may not support onMessageExternal reliably,
+     * we use the content script as a bridge for external website communication
+     */
+    
+    // Listen for messages from the website (via postMessage)
+    window.addEventListener('message', async (event) => {
+        // Only accept messages from the same origin (security)
+        if (event.origin !== window.location.origin) return;
+        
+        // Check if this is a BDO bridge request
+        if (event.data && event.data.type === 'BDO_BRIDGE_REQUEST') {
+            console.log('📥 Content script received BDO bridge request from website:', event.data);
+            
+            const { requestId, action, bdoPubKey } = event.data;
+            
+            try {
+                // Forward to background script using internal messaging
+                const response = await new Promise((resolve, reject) => {
+                    browser.runtime.sendMessage({
+                        type: 'getBDOCard',
+                        bdoPubKey: bdoPubKey
+                    }, (response) => {
+                        if (browser.runtime.lastError) {
+                            reject(new Error(browser.runtime.lastError.message));
+                        } else {
+                            resolve(response);
+                        }
+                    });
+                });
+                
+                console.log('📤 Content script forwarding response to website:', response);
+                
+                // Send response back to website
+                window.postMessage({
+                    type: 'BDO_BRIDGE_RESPONSE',
+                    requestId: requestId,
+                    success: response?.success || false,
+                    data: response?.data || null,
+                    error: response?.error || null
+                }, window.location.origin);
+                
+            } catch (error) {
+                console.error('❌ Content script bridge error:', error);
+                
+                // Send error response back to website
+                window.postMessage({
+                    type: 'BDO_BRIDGE_RESPONSE',
+                    requestId: requestId,
+                    success: false,
+                    error: error.message
+                }, window.location.origin);
+            }
+        }
+    });
+    
+    // Inject BDO bridge function into page context
+    const script = document.createElement('script');
+    script.textContent = \`
+        (function() {
+            console.log('🌉 Injecting BDO Bridge into page context via content script bridge...');
+            
+            window.castSpellBridge = async function(request) {
+                console.log('🌉 Page BDO Bridge called:', request);
+                
+                const { bdoPubKey, action } = request;
+                
+                if (action === 'getBDOCard') {
+                    return new Promise((resolve, reject) => {
+                        const requestId = 'getBDOCard_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                        
+                        // Listen for response from content script
+                        const responseHandler = function(event) {
+                            if (event.data && event.data.type === 'BDO_BRIDGE_RESPONSE' && event.data.requestId === requestId) {
+                                window.removeEventListener('message', responseHandler);
+                                
+                                if (event.data.success) {
+                                    console.log('✅ Page: BDO bridge success:', event.data);
+                                    resolve(event.data);
+                                } else {
+                                    console.warn('❌ Page: BDO bridge failed:', event.data.error);
+                                    reject(new Error(event.data.error || 'BDO bridge failed'));
+                                }
+                            }
+                        };
+                        
+                        window.addEventListener('message', responseHandler);
+                        
+                        // Send request to content script
+                        window.postMessage({
+                            type: 'BDO_BRIDGE_REQUEST',
+                            requestId: requestId,
+                            action: action,
+                            bdoPubKey: bdoPubKey
+                        }, window.location.origin);
+                        
+                        // Timeout after 10 seconds
+                        setTimeout(() => {
+                            window.removeEventListener('message', responseHandler);
+                            reject(new Error('BDO bridge timeout'));
+                        }, 10000);
+                    });
+                } else {
+                    throw new Error('Unsupported action: ' + action);
+                }
+            };
+            
+            console.log('✅ Page: BDO Bridge injected and ready');
+        })();
+    \`;
+    
+    (document.head || document.documentElement).appendChild(script);
+    script.remove();
+    
+    console.log('🌉 BDO Bridge: Content script bridge pattern initialized');
+
+    // ========================================
+    // Magistack Button Handler
+    // ========================================
+    
+    /**
+     * Handle magistack loading directly in the extension
+     * This avoids complex main.js communication and does everything within the extension
+     */
+    function setupMagistackHandler() {
+        // Wait for DOM to be ready
+        const checkForButton = () => {
+            const loadButton = document.getElementById('load-magistack-btn');
+            const inputField = document.getElementById('bdo-pubkey-input');
+            const statusElement = document.getElementById('magistack-status-message');
+            const displayElement = document.getElementById('magistack-display');
+            
+            if (loadButton && inputField) {
+                console.log('🃏 Extension taking over magistack loading functionality');
+                
+                // Remove any existing click handlers by cloning the button
+                const newButton = loadButton.cloneNode(true);
+                loadButton.parentNode.replaceChild(newButton, loadButton);
+                
+                // Add our extension handler
+                newButton.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    const bdoPubKey = inputField.value.trim();
+                    
+                    if (!bdoPubKey) {
+                        updateMagistackStatus('error', '❌', 'Please enter a BDO public key');
+                        return;
+                    }
+                    
+                    await loadMagistackViaExtension(bdoPubKey, newButton, statusElement, displayElement);
+                });
+                
+                // Also handle Enter key
+                inputField.addEventListener('keypress', (event) => {
+                    if (event.key === 'Enter') {
+                        newButton.click();
+                    }
+                });
+                
+                console.log('✅ Extension magistack handler setup complete');
+            } else {
+                // Try again in 100ms
+                setTimeout(checkForButton, 100);
+            }
+        };
+        
+        checkForButton();
+    }
+    
+    /**
+     * Load magistack directly via extension
+     */
+    async function loadMagistackViaExtension(bdoPubKey, button, statusElement, displayElement) {
+        console.log('🃏 Extension loading magistack:', bdoPubKey);
+        
+        const originalText = button.textContent;
+        
+        try {
+            // Update UI to loading state
+            button.disabled = true;
+            button.textContent = '⏳ Loading...';
+            updateMagistackStatus('loading', '⏳', 'Fetching magistack from BDO...');
+            
+            // Use the BDO bridge that's already working
+            if (window.castSpellBridge) {
+                console.log('🌉 Extension using BDO bridge for magistack');
+                
+                const response = await window.castSpellBridge({
+                    bdoPubKey: bdoPubKey,
+                    action: 'getBDOCard'
+                });
+                
+                console.log('📥 Extension BDO response:', response);
+                
+                if (response && response.success && response.data) {
+                    displayMagistackInExtension(response.data, displayElement);
+                    updateMagistackStatus('success', '✅', 'Magistack loaded successfully');
+                } else {
+                    updateMagistackStatus('error', '❌', 'No magistack data found for this pubKey');
+                }
+            } else {
+                updateMagistackStatus('error', '❌', 'BDO bridge not available - extension not ready');
+            }
+            
+        } catch (error) {
+            console.error('❌ Extension magistack loading failed:', error);
+            updateMagistackStatus('error', '❌', \`Failed to load: \${error.message}\`);
+        } finally {
+            // Reset button state
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+    
+    /**
+     * Display magistack data in the extension
+     */
+    function displayMagistackInExtension(magistackData, displayElement) {
+        if (!displayElement) {
+            console.error('❌ Display element not found');
+            return;
+        }
+        
+        // Clear previous content
+        displayElement.innerHTML = '';
+        displayElement.classList.add('has-content');
+        
+        console.log('📋 Extension displaying magistack data:', magistackData);
+        
+        const cardElement = document.createElement('div');
+        cardElement.className = 'magistack-card';
+        cardElement.style.cssText = \`
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        \`;
+        
+        if (magistackData.svgContent || magistackData.svg) {
+            const svgContent = magistackData.svgContent || magistackData.svg;
+            cardElement.innerHTML = \`
+                <div style="font-weight: bold; margin-bottom: 0.5rem; color: #333;">
+                    🃏 \${magistackData.name || 'Magistack Card'}
+                </div>
+                <div style="border: 1px solid #eee; padding: 0.5rem; border-radius: 4px;">
+                    \${svgContent}
+                </div>
+            \`;
+        } else {
+            cardElement.innerHTML = \`
+                <div style="font-weight: bold; margin-bottom: 0.5rem; color: #333;">
+                    📋 Magistack Data
+                </div>
+                <pre style="background: #f8f9fa; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 12px; margin: 0;">
+\${JSON.stringify(magistackData, null, 2)}
+                </pre>
+            \`;
+        }
+        
+        displayElement.appendChild(cardElement);
+    }
+    
+    /**
+     * Update magistack status message
+     */
+    function updateMagistackStatus(type, icon, message) {
+        const statusElement = document.getElementById('magistack-status-message');
+        
+        if (!statusElement) return;
+        
+        const iconElement = statusElement.querySelector('.status-icon');
+        const textElement = statusElement.querySelector('p');
+        
+        if (iconElement) iconElement.textContent = icon;
+        if (textElement) textElement.textContent = message;
+        
+        // Update colors
+        const colors = {
+            'loading': '#f39c12',
+            'success': '#27ae60', 
+            'error': '#e74c3c',
+            'info': '#3498db'
+        };
+        
+        const color = colors[type] || colors['info'];
+        statusElement.style.color = color;
+    }
+    
+    // Initialize magistack handler
+    setupMagistackHandler();
+
+    // ========================================
     // Main Extension Logic
     // ========================================
     

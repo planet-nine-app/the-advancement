@@ -176,8 +176,7 @@ class TestStoreApp {
         // Initialize nineum balance system
         await this.initializeNineumBalance();
         
-        // Initialize magistack testing functionality
-        this.initializeMagistackTesting();
+        // Magistack loading is now handled directly by The Advancement extension
         
         // Components are initialized by their own scripts:
         // - teleportationClient (teleportation-client.js)

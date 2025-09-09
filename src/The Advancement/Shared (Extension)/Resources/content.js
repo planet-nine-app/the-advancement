@@ -2396,6 +2396,182 @@
         }
     }
     
+    // ========================================
+    // Magistack Button Handler
+    // ========================================
+    
+    /**
+     * Handle magistack loading directly in the extension
+     * This avoids complex main.js communication and does everything within the extension
+     */
+    function setupMagistackHandler() {
+        // Wait for DOM to be ready
+        const checkForButton = () => {
+            const loadButton = document.getElementById('load-magistack-btn');
+            const inputField = document.getElementById('bdo-pubkey-input');
+            const statusElement = document.getElementById('magistack-status-message');
+            const displayElement = document.getElementById('magistack-display');
+            
+            if (loadButton && inputField) {
+                console.log('🃏 Extension taking over magistack loading functionality');
+                
+                // Remove any existing click handlers by cloning the button
+                const newButton = loadButton.cloneNode(true);
+                loadButton.parentNode.replaceChild(newButton, loadButton);
+                
+                // Add our extension handler
+                newButton.addEventListener('click', async (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    const bdoPubKey = inputField.value.trim();
+                    
+                    if (!bdoPubKey) {
+                        updateMagistackStatus('error', '❌', 'Please enter a BDO public key');
+                        return;
+                    }
+                    
+                    await loadMagistackViaExtension(bdoPubKey, newButton, statusElement, displayElement);
+                });
+                
+                // Also handle Enter key
+                inputField.addEventListener('keypress', (event) => {
+                    if (event.key === 'Enter') {
+                        newButton.click();
+                    }
+                });
+                
+                console.log('✅ Extension magistack handler setup complete');
+            } else {
+                // Try again in 100ms
+                setTimeout(checkForButton, 100);
+            }
+        };
+        
+        checkForButton();
+    }
+    
+    /**
+     * Load magistack directly via extension
+     */
+    async function loadMagistackViaExtension(bdoPubKey, button, statusElement, displayElement) {
+        console.log('🃏 Extension loading magistack:', bdoPubKey);
+        
+        const originalText = button.textContent;
+        
+        try {
+            // Update UI to loading state
+            button.disabled = true;
+            button.textContent = '⏳ Loading...';
+            updateMagistackStatus('loading', '⏳', 'Fetching magistack from BDO...');
+            
+            // Use the existing castSpellBridge
+            if (window.castSpellBridge) {
+                console.log('🌉 Extension using BDO bridge for magistack');
+                
+                const response = await window.castSpellBridge.getCardFromBDO(bdoPubKey);
+                
+                console.log('📥 Extension BDO response:', response);
+                
+                if (response && response.success && response.data) {
+                    displayMagistackInExtension(response.data, displayElement);
+                    updateMagistackStatus('success', '✅', 'Magistack loaded successfully');
+                } else {
+                    updateMagistackStatus('error', '❌', 'No magistack data found for this pubKey');
+                }
+            } else {
+                updateMagistackStatus('error', '❌', 'BDO bridge not available - extension not ready');
+            }
+            
+        } catch (error) {
+            console.error('❌ Extension magistack loading failed:', error);
+            updateMagistackStatus('error', '❌', `Failed to load: ${error.message}`);
+        } finally {
+            // Reset button state
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    }
+    
+    /**
+     * Display magistack data in the extension
+     */
+    function displayMagistackInExtension(magistackData, displayElement) {
+        if (!displayElement) {
+            console.error('❌ Display element not found');
+            return;
+        }
+        
+        // Clear previous content
+        displayElement.innerHTML = '';
+        displayElement.classList.add('has-content');
+        
+        console.log('📋 Extension displaying magistack data:', magistackData);
+        
+        const cardElement = document.createElement('div');
+        cardElement.className = 'magistack-card';
+        cardElement.style.cssText = `
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        `;
+        
+        if (magistackData.svgContent || magistackData.svg) {
+            const svgContent = magistackData.svgContent || magistackData.svg;
+            cardElement.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 0.5rem; color: #333;">
+                    🃏 ${magistackData.name || 'Magistack Card'}
+                </div>
+                <div style="border: 1px solid #eee; padding: 0.5rem; border-radius: 4px;">
+                    ${svgContent}
+                </div>
+            `;
+        } else {
+            cardElement.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 0.5rem; color: #333;">
+                    📋 Magistack Data
+                </div>
+                <pre style="background: #f8f9fa; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 12px; margin: 0;">
+${JSON.stringify(magistackData, null, 2)}
+                </pre>
+            `;
+        }
+        
+        displayElement.appendChild(cardElement);
+    }
+    
+    /**
+     * Update magistack status message
+     */
+    function updateMagistackStatus(type, icon, message) {
+        const statusElement = document.getElementById('magistack-status-message');
+        
+        if (!statusElement) return;
+        
+        const iconElement = statusElement.querySelector('.status-icon');
+        const textElement = statusElement.querySelector('p');
+        
+        if (iconElement) iconElement.textContent = icon;
+        if (textElement) textElement.textContent = message;
+        
+        // Update colors
+        const colors = {
+            'loading': '#f39c12',
+            'success': '#27ae60', 
+            'error': '#e74c3c',
+            'info': '#3498db'
+        };
+        
+        const color = colors[type] || colors['info'];
+        statusElement.style.color = color;
+    }
+    
+    // Initialize magistack handler
+    setupMagistackHandler();
+    
 })();
 
 // ========================================

@@ -1012,4 +1012,31 @@ async function handleMagicSpell(message) {
     };
 }
 
-console.log('✅ Background script ready for native messaging');
+// ========================================
+// Message Handler for Content Script Communication
+// ========================================
+
+browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    console.log('📨 Background received message:', request.type, 'from', sender.tab?.url);
+    
+    // Safari Web Extensions use Promise-based messaging
+    switch (request.type) {
+        case 'getBDOCard':
+            // Handle BDO card retrieval requests
+            console.log('📦 Background processing getBDOCard for:', request.bdoPubKey);
+            return handleGetBDOCard(request, sender); // Return Promise
+            
+        case 'castSpell':
+            // Handle spell casting requests
+            console.log('🪄 Background processing castSpell');
+            return handleCastSpell(request, sender); // Return Promise
+            
+        default:
+            console.log('❓ Unknown message type:', request.type);
+            return Promise.resolve({ success: false, error: 'Unknown message type' });
+    }
+});
+
+
+
+console.log('✅ Background script ready for native messaging and content script communication');

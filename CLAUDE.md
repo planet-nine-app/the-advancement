@@ -652,6 +652,14 @@ open http://localhost:3456
 - **Global Fount User Management**: Single fount user instance managed globally in test server to prevent scope issues
 - **Promise-Based Architecture**: Complete conversion to Promise-based messaging for Safari Web Extension compatibility
 
+#### ✅ **Background Script Messaging Consolidation (January 2025)**
+- **Unified Message Handlers**: Consolidated duplicate `handleGetBDOCard` and `handleCastSpell` functions that were causing parameter mismatches
+- **Promise-Based Returns**: All message handlers now return Promises directly instead of callback-based `sendResponse` patterns
+- **Function Signature Consistency**: Fixed external message handler to properly pass `sender` parameter to unified functions
+- **BDO Card Retrieval Fix**: Resolved "getBDOCard requires bdoPubKey parameter" error through proper parameter extraction from message objects
+- **Code Consolidation**: Removed duplicate functions causing confusion between internal/external message handling patterns
+- **Safari Compatibility**: Complete Safari Web Extension API compliance with consistent Promise-based messaging architecture
+
 ## Contributing
 
 The Advancement is part of the larger Planet Nine ecosystem. Areas for contribution:

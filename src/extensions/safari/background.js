@@ -8,24 +8,24 @@
 console.log('🚀 The Advancement background service worker starting...');
 
 // Extension lifecycle
-chrome.runtime.onInstalled.addListener((details) => {
+browser.runtime.onInstalled.addListener((details) => {
   console.log('✅ The Advancement extension installed:', details.reason);
   
   // Initialize extension storage
-  chrome.storage.local.set({
-    'advancement-version': chrome.runtime.getManifest().version,
+  browser.storage.local.set({
+    'advancement-version': browser.runtime.getManifest().version,
     'advancement-installed': Date.now(),
     'advancement-nineum-balance': 0
   });
 });
 
-chrome.runtime.onStartup.addListener(() => {
+browser.runtime.onStartup.addListener(() => {
   console.log('🔄 The Advancement extension startup');
 });
 
 // Message passing between content script and popup
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log('📨 Background received message:', request.type, 'from', sender.tab?.url || 'popup');
+browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('📨 Background received internal message:', request.type, 'from', sender.tab?.url || 'popup');
   
   switch (request.type) {
     case 'nineum-update':
@@ -48,7 +48,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({
         success: true,
         data: {
-          version: chrome.runtime.getManifest().version,
+          version: browser.runtime.getManifest().version,
           connected: true,
           features: ['sessionless', 'spellHandling', 'nineumRewards', 'homeBaseSelection']
         }
@@ -85,9 +85,33 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       handleNativeMessage(request.data, sendResponse);
       return true;
       
+    case 'getBDOCard':
+      // Handle BDO card retrieval requests
+      handleGetBDOCard(request.bdoPubKey, sendResponse);
+      return true;
+      
     default:
       console.log('❓ Unknown message type:', request.type);
       sendResponse({ success: false, error: 'Unknown message type' });
+      return false;
+  }
+});
+
+// External message passing (from websites)
+browser.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
+  console.log('📨 Background received EXTERNAL message:', request.type, 'from', sender.tab?.url || 'external');
+  console.log('📋 External message details:', request);
+  
+  switch (request.type) {
+    case 'getBDOCard':
+      // Handle BDO card retrieval requests from external websites
+      console.log('📦 External request: getBDOCard for', request.bdoPubKey);
+      handleGetBDOCard(request.bdoPubKey, sendResponse);
+      return true; // Keep message channel open
+      
+    default:
+      console.log('❓ Unknown external message type:', request.type);
+      sendResponse({ success: false, error: 'Unknown external message type' });
       return false;
   }
 });
@@ -98,12 +122,12 @@ async function handleNineumUpdate(data, sendResponse) {
     const { amount, source } = data;
     
     // Get current balance
-    const result = await chrome.storage.local.get('advancement-nineum-balance');
+    const result = await browser.storage.local.get('advancement-nineum-balance');
     const currentBalance = result['advancement-nineum-balance'] || 0;
     const newBalance = currentBalance + amount;
     
     // Save new balance
-    await chrome.storage.local.set({
+    await browser.storage.local.set({
       'advancement-nineum-balance': newBalance,
       'advancement-last-nineum-source': source,
       'advancement-last-nineum-time': Date.now()
@@ -145,7 +169,7 @@ async function handleSpellCast(data, sendResponse) {
     console.log(`🪄 Spell cast: ${spellName} (cost: ${cost}, rewards: ${rewards})`);
     
     // Store spell history
-    const spellHistory = await chrome.storage.local.get('advancement-spell-history') || {};
+    const spellHistory = await browser.storage.local.get('advancement-spell-history') || {};
     const history = spellHistory['advancement-spell-history'] || [];
     
     history.push({
@@ -160,7 +184,7 @@ async function handleSpellCast(data, sendResponse) {
       history.splice(0, history.length - 100);
     }
     
-    await chrome.storage.local.set({
+    await browser.storage.local.set({
       'advancement-spell-history': history,
       'advancement-last-spell': spellName,
       'advancement-last-spell-time': Date.now()
@@ -179,7 +203,7 @@ async function handleHomeBaseUpdate(data, sendResponse) {
   try {
     const { base } = data;
     
-    await chrome.storage.local.set({
+    await browser.storage.local.set({
       'advancement-home-base': JSON.stringify(base),
       'advancement-home-base-updated': Date.now()
     });
@@ -203,11 +227,11 @@ async function handleHomeBaseUpdate(data, sendResponse) {
 // Broadcast message to all tabs
 async function broadcastToTabs(message) {
   try {
-    const tabs = await chrome.tabs.query({});
+    const tabs = await browser.tabs.query({});
     
     for (const tab of tabs) {
       try {
-        await chrome.tabs.sendMessage(tab.id, message);
+        await browser.tabs.sendMessage(tab.id, message);
       } catch (error) {
         // Ignore tabs that can't receive messages (chrome:// pages, etc.)
       }
@@ -218,7 +242,7 @@ async function broadcastToTabs(message) {
 }
 
 // Tab management
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.url) {
     console.log('📄 Page loaded:', tab.url);
     
@@ -230,7 +254,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 });
 
 // Handle extension icon clicks
-chrome.action.onClicked.addListener((tab) => {
+browser.action.onClicked.addListener((tab) => {
   console.log('🖱️ Extension icon clicked, popup should open');
   // Popup will open automatically due to manifest configuration
 });
@@ -265,7 +289,7 @@ async function handleSessionlessGenerateKeys(data, sendResponse) {
 async function handleSessionlessHasKeys(sendResponse) {
   try {
     // Check extension storage for sessionless keys
-    const result = await chrome.storage.local.get('sessionless-keys');
+    const result = await browser.storage.local.get('sessionless-keys');
     const hasKeys = !!result['sessionless-keys'];
     
     console.log('🔍 Background: Keys check result:', hasKeys);
@@ -359,6 +383,83 @@ async function handleNativeMessage(data, sendResponse) {
       success: false,
       error: error.message
     });
+  }
+}
+
+// BDO Card Retrieval Handler
+async function handleGetBDOCard(bdoPubKey, sendResponse) {
+  try {
+    console.log(`📦 Background: Retrieving BDO card ${bdoPubKey}`);
+    
+    if (!bdoPubKey) {
+      const errorResponse = {
+        success: false,
+        error: 'bdoPubKey is required'
+      };
+      console.log('📤 Background: Sending error response (missing bdoPubKey):', errorResponse);
+      sendResponse(errorResponse);
+      return;
+    }
+    
+    // Use native messaging to handle BDO card retrieval via Swift
+    const nativeRequest = {
+      action: 'getBDOCard',
+      bdoPubKey: bdoPubKey
+    };
+    
+    // Check if we have Web Extension API
+    if (typeof browser !== 'undefined' && browser.runtime) {
+      console.log('📤 Background: Forwarding BDO card request to native app');
+      
+      try {
+        const response = await browser.runtime.sendNativeMessage(
+          'com.planetnine.the-advancement.safari',
+          nativeRequest
+        );
+        
+        console.log('📥 Background: Native app BDO response:', response);
+        
+        const finalResponse = {
+          success: response?.success || false,
+          data: response?.data || null,
+          error: response?.error || (response?.success ? null : 'Failed to retrieve card from BDO')
+        };
+        
+        console.log('📤 Background: Sending final response:', finalResponse);
+        sendResponse(finalResponse);
+        
+      } catch (nativeError) {
+        console.error('❌ Background: Native messaging error:', nativeError);
+        
+        const errorResponse = {
+          success: false,
+          error: `Native messaging failed: ${nativeError.message}`
+        };
+        console.log('📤 Background: Sending native error response:', errorResponse);
+        sendResponse(errorResponse);
+      }
+      
+    } else {
+      // Fallback for environments without native messaging
+      console.warn('⚠️ Native messaging not available, using fallback');
+      
+      const fallbackResponse = {
+        success: false,
+        error: 'BDO card retrieval not available in this environment - no native messaging'
+      };
+      console.log('📤 Background: Sending fallback response:', fallbackResponse);
+      sendResponse(fallbackResponse);
+    }
+    
+  } catch (error) {
+    console.error('❌ Background: BDO card retrieval error:', error);
+    
+    const errorResponse = {
+      success: false,
+      error: error.message || 'Unknown BDO retrieval error'
+    };
+    console.log('📤 Background: Sending catch error response:', errorResponse);
+    sendResponse(errorResponse);
   }
 }
 
