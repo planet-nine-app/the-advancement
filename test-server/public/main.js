@@ -826,6 +826,12 @@ class TestStoreApp {
         // If this is a menu/membership catalog, display it appropriately
         if (magistackData.title && (magistackData.type === 'menu' || magistackData.type === 'membership')) {
             this.displayMagistackCatalog(magistackData, displayElement);
+        } else if (magistackData.bdo && (magistackData.bdo.svgContent || magistackData.bdo.svg)) {
+            // BDO response with SVG content
+            this.displayMagistackSvgContent(magistackData, displayElement);
+        } else if (magistackData.successful && Array.isArray(magistackData.successful) && magistackData.successful[0]?.bdo && (magistackData.successful[0].bdo.svgContent || magistackData.successful[0].bdo.svg)) {
+            // Magistack with successful array containing bdo.svgContent or bdo.svg (fallback)
+            this.displayMagistackSvgContent(magistackData, displayElement);
         } else if (magistackData.cards && Array.isArray(magistackData.cards)) {
             // If it has cards array, display all cards
             this.displayMagistackCards(magistackData.cards, displayElement);
@@ -894,6 +900,55 @@ class TestStoreApp {
             </div>
             <div class="magistack-card-content">
                 ${cardData.svgContent || cardData.svg || '<p>No SVG content available</p>'}
+            </div>
+        `;
+        
+        container.appendChild(cardElement);
+    }
+    
+    displayMagistackSvgContent(magistackData, container) {
+        // Handle both data structures and both property names (svgContent and svg)
+        let svgContent;
+        if (magistackData.bdo) {
+            svgContent = magistackData.bdo.svgContent || magistackData.bdo.svg;
+        } else if (magistackData.successful && magistackData.successful[0]?.bdo) {
+            const firstCard = magistackData.successful[0].bdo;
+            svgContent = firstCard.svgContent || firstCard.svg;
+        } else {
+            console.error('❌ No SVG content found in magistack data');
+            return;
+        }
+        
+        if (!svgContent) {
+            console.error('❌ Neither svgContent nor svg property found');
+            return;
+        }
+        
+        // Parse/unescape the SVG content
+        try {
+            // Remove escaped quotes and newlines
+            svgContent = svgContent.replace(/\\"/g, '"').replace(/\\n/g, '\n').trim();
+            
+            // If it starts and ends with quotes, remove them
+            if (svgContent.startsWith('"') && svgContent.endsWith('"')) {
+                svgContent = svgContent.slice(1, -1);
+            }
+            
+            console.log('📋 Parsed SVG content length:', svgContent.length);
+            console.log('📋 SVG preview:', svgContent.substring(0, 100) + '...');
+        } catch (error) {
+            console.error('❌ Error parsing SVG content:', error);
+        }
+        
+        const cardElement = document.createElement('div');
+        cardElement.className = 'magistack-card';
+        
+        cardElement.innerHTML = `
+            <div class="magistack-card-title">
+                🃏 Magistack Card from BDO
+            </div>
+            <div class="magistack-card-content">
+                ${svgContent}
             </div>
         `;
         

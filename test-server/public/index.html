@@ -259,5 +259,48 @@
     <script src="/teleportation-client.js"></script>
     <script src="/purchase-flow.js"></script>
     <script src="/main.js"></script>
+    
+    <!-- Load Spell Systems -->
+    <script>
+        // Load castSpell.js from fount service
+        async function loadSpellSystems() {
+            try {
+                // Wait for main.js to load and provide getServiceUrl
+                let attempts = 0;
+                while (typeof getServiceUrl === 'undefined' && attempts < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
+                
+                if (typeof getServiceUrl === 'undefined') {
+                    console.warn('⚠️ getServiceUrl not available, cannot load spell systems');
+                    return;
+                }
+                
+                const fountUrl = getServiceUrl('fount');
+                console.log('🪄 Loading castSpell.js from:', fountUrl);
+                
+                const script = document.createElement('script');
+                script.src = `${fountUrl}/castSpell.js`;
+                script.onload = () => {
+                    console.log('✅ castSpell.js loaded successfully');
+                };
+                script.onerror = () => {
+                    console.warn('⚠️ Failed to load castSpell.js from fount');
+                };
+                document.head.appendChild(script);
+                
+            } catch (error) {
+                console.error('❌ Error loading spell systems:', error);
+            }
+        }
+        
+        // Load spell systems after DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadSpellSystems);
+        } else {
+            loadSpellSystems();
+        }
+    </script>
 </body>
 </html>

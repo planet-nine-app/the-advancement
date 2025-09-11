@@ -9,6 +9,14 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
     private let sessionless = Sessionless()
     private let logger = Logger(subsystem: "com.planetnine.the-advancement", category: "SafariExtension")
     
+    // Global constants for consistent BDO hash usage
+    private static let BDO_HASH = "advancement"
+    
+    // Singleton BDO user management - one user for all BDO environments
+    private var cachedBDOUser: String?
+    private var cachedBDOCreatedAt: Date?
+    private var bdoUserCreationInProgress: Bool = false
+    
     func beginRequest(with context: NSExtensionContext) {
         logger.info("ADVANCEMENT - 🔧 Safari Web Extension beginRequest called")
         
@@ -87,7 +95,7 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
                 sendError(context: context, requestId: requestId, error: "getBDOCard requires bdoPubKey parameter")
                 return
             }
-            let baseUrl = parameters["baseUrl"] as? String ?? "https://dev.bdo.allyabase.com/"
+            let baseUrl = parameters["baseUrl"] as? String ?? "http://127.0.0.1:5114/"
             handleGetBDOCard(bdoPubKey: bdoPubKey, baseUrl: baseUrl, context: context, requestId: requestId)
             
         default:
@@ -112,36 +120,13 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         
         Task {
             do {
-                // Try multiple BDO environments to find the magistack
-                let bdoEnvironments = [
-                    baseUrl,
-                    "https://dev.bdo.allyabase.com/",
-                    "http://127.0.0.1:5114/", 
-                    "http://localhost:3003/"
-                ]
+                // Use the single BDO URL provided by the background script
+                logger.info("ADVANCEMENT - 🔍 Swift: Using BDO environment: \(baseUrl)")
                 
-                var lastError: Error?
+                let magistackData = try await getBDOCardFromUrl(bdoPubKey: bdoPubKey, bdoUrl: baseUrl)
                 
-                for bdoUrl in bdoEnvironments {
-                    do {
-                        logger.info("ADVANCEMENT - 🔍 Swift: Trying BDO environment: \(bdoUrl)")
-                        
-                        let magistackData = try await getBDOCardFromUrl(bdoPubKey: bdoPubKey, bdoUrl: bdoUrl)
-                        
-                        logger.info("ADVANCEMENT - ✅ Swift: Found magistack at \(bdoUrl)")
-                        sendSuccess(context: context, requestId: requestId, data: magistackData)
-                        return
-                        
-                    } catch {
-                        logger.info("ADVANCEMENT - ❌ Swift: Failed to get magistack from \(bdoUrl): \(error)")
-                        lastError = error
-                        continue
-                    }
-                }
-                
-                // If we get here, all environments failed
-                logger.error("ADVANCEMENT - ❌ Swift: All BDO environments failed for pubKey: \(bdoPubKey)")
-                sendError(context: context, requestId: requestId, error: lastError?.localizedDescription ?? "Magistack not found in any BDO environment")
+                logger.info("ADVANCEMENT - ✅ Swift: Found magistack at \(baseUrl)")
+                sendSuccess(context: context, requestId: requestId, data: magistackData)
                 
             } catch {
                 logger.error("ADVANCEMENT - ❌ Swift: getBDOCard error: \(error)")
@@ -321,13 +306,40 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
     
     
     private func createBDOUser(baseUrl: String) async throws -> String {
+        // Check if we already have a cached BDO user (valid for 5 minutes)
+        if let cachedUUID = cachedBDOUser, 
+           let createdAt = cachedBDOCreatedAt,
+           Date().timeIntervalSince(createdAt) < 300 { // 5 minutes
+            logger.info("ADVANCEMENT - ♻️ Using cached BDO user: \(cachedUUID) (age: \(Int(Date().timeIntervalSince(createdAt)))s)")
+            return cachedUUID
+        }
+        
+        // Check if user creation is already in progress - wait for it
+        if bdoUserCreationInProgress {
+            logger.info("ADVANCEMENT - ⏳ BDO user creation already in progress, waiting...")
+            // Wait a bit and check again
+            try await Task.sleep(nanoseconds: 100_000_000) // 100ms
+            return try await createBDOUser(baseUrl: baseUrl)
+        }
+        
+        logger.info("ADVANCEMENT - 🆕 Creating new BDO user (cache expired or missing)")
+        bdoUserCreationInProgress = true
+        
+        // Ensure flag is cleared on any exit path
+        defer {
+            if bdoUserCreationInProgress {
+                bdoUserCreationInProgress = false
+                logger.info("ADVANCEMENT - 🔓 BDO user creation flag cleared")
+            }
+        }
+        
         guard let keys = sessionless.getKeys() else {
             throw NSError(domain: "SessionlessError", code: 3, userInfo: [NSLocalizedDescriptionKey: "No keys available"])
         }
         
         let publicKey = keys.publicKey
         let timestamp = "".getTime()
-        let hash = "advancement-popup"
+        let hash = Self.BDO_HASH
         let message = timestamp + publicKey + hash
         
         guard let signature = sessionless.sign(message: message) else {
@@ -338,7 +350,7 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             "timestamp": timestamp,
             "pubKey": publicKey,
             "hash": hash,
-            "bdo": ["client": "advancement-safari-popup", "created": timestamp],
+            "bdo": ["client": "advancement-safari-extension", "created": timestamp],
             "signature": signature
         ]
         
@@ -352,12 +364,20 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             throw NSError(domain: "SessionlessError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid message"])
         }
         
+        // Cache the BDO user for future use (5 minute expiry)
+        cachedBDOUser = userUUID
+        cachedBDOCreatedAt = Date()
+        logger.info("ADVANCEMENT - 💾 Cached BDO user \(userUUID) (expires in 5 minutes)")
+        
+        // Clear the flag before returning (defer will see this and skip clearing)
+        bdoUserCreationInProgress = false
+        
         return userUUID
     }
     
     private func getBDOSpellbooks(baseUrl: String, uuid: String) async throws -> [String: Any] {
         let timestamp = "".getTime()
-        let hash = "advancement-popup"
+        let hash = Self.BDO_HASH
         let message = timestamp + uuid + hash
         
         guard let signature = sessionless.sign(message: message) else {
@@ -386,7 +406,7 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         
         // Create authenticated BDO request for the magistack
         let timestamp = "".getTime()
-        let hash = "advancement-magistack"
+        let hash = Self.BDO_HASH
         let message = timestamp + uuid + hash
         
         guard let signature = sessionless.sign(message: message) else {
@@ -394,7 +414,7 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         }
         
         // Construct authenticated magistack endpoint
-        let endpoint = "\(bdoUrl)\(bdoPubKey)?timestamp=\(timestamp)&hash=\(hash)&signature=\(signature)&uuid=\(uuid)"
+        let endpoint = "\(bdoUrl)user/\(uuid)/bdo?timestamp=\(timestamp)&hash=\(hash)&signature=\(signature)&pubKey=\(bdoPubKey)"
         logger.info("ADVANCEMENT - 📤 Swift→BDO: Getting magistack from \(endpoint)")
         
         let response = try await makeBDORequest(endpoint: endpoint, method: "GET", payload: nil)

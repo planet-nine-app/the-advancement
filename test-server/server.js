@@ -8,14 +8,19 @@
  * - Addie payment processing at user's home base
  */
 
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const path = require('path');
-const crypto = require('crypto');
-const gateway = require('magic-gateway-js').default || require('magic-gateway-js');
-const sessionless = require('sessionless-node');
-const fount = require('fount-js').default || require('fount-js');
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import path from 'path';
+import crypto from 'crypto';
+import gateway from 'magic-gateway-js';
+import sessionless from 'sessionless-node';
+import fount from 'fount-js';
+import { fileURLToPath } from 'url';
+
+// ES module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3456;
@@ -887,4 +892,4 @@ app.listen(PORT, async () => {
     console.log(`\n🪄 MAGIC spellTest endpoint: http://localhost:${PORT}/spellTest`);
 });
 
-module.exports = app;
+export default app;

@@ -693,11 +693,22 @@
             const { requestId, action, bdoPubKey } = event.data;
             
             try {
+                // Get the home base to include baseUrl
+                const homeBase = await getHomeBaseForPopup();
+                let baseUrl = 'http://127.0.0.1:5114'; // Default fallback
+                
+                if (homeBase && homeBase.url) {
+                    baseUrl = homeBase.url;
+                }
+                
+                console.log('📦 Content script using baseUrl:', baseUrl);
+                
                 // Forward to background script using internal messaging
                 const response = await new Promise((resolve, reject) => {
                     browser.runtime.sendMessage({
                         type: 'getBDOCard',
-                        bdoPubKey: bdoPubKey
+                        bdoPubKey: bdoPubKey,
+                        baseUrl: baseUrl
                     }, (response) => {
                         if (browser.runtime.lastError) {
                             reject(new Error(browser.runtime.lastError.message));
@@ -918,11 +929,33 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         \`;
         
-        if (magistackData.svgContent || magistackData.svg) {
-            const svgContent = magistackData.svgContent || magistackData.svg;
+        // Check for BDO structure first, then fallback to direct properties
+        let svgContent = null;
+        if (magistackData.bdo && magistackData.bdo.svgContent) {
+            svgContent = magistackData.bdo.svgContent;
+        } else if (magistackData.svgContent || magistackData.svg) {
+            svgContent = magistackData.svgContent || magistackData.svg;
+        }
+        
+        if (svgContent) {
+            // Parse/unescape the SVG content
+            try {
+                // Remove escaped quotes and newlines
+                svgContent = svgContent.replace(/\\"/g, '"').replace(/\\n/g, '\n').trim();
+                
+                // If it starts and ends with quotes, remove them
+                if (svgContent.startsWith('"') && svgContent.endsWith('"')) {
+                    svgContent = svgContent.slice(1, -1);
+                }
+                
+                console.log('📋 Extension parsed SVG content length:', svgContent.length);
+            } catch (error) {
+                console.error('❌ Extension SVG parsing error:', error);
+            }
+            
             cardElement.innerHTML = \`
                 <div style="font-weight: bold; margin-bottom: 0.5rem; color: #333;">
-                    🃏 \${magistackData.name || 'Magistack Card'}
+                    🃏 \${magistackData.bdo?.cardName || magistackData.name || 'Magistack Card'}
                 </div>
                 <div style="border: 1px solid #eee; padding: 0.5rem; border-radius: 4px;">
                     \${svgContent}

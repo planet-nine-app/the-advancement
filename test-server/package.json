@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Test server for The Advancement teleportation and purchase flow",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",

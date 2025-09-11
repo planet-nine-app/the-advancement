@@ -87,7 +87,7 @@ browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
       
     case 'getBDOCard':
       // Handle BDO card retrieval requests
-      handleGetBDOCard(request.bdoPubKey, sendResponse);
+      handleGetBDOCard(request.bdoPubKey, request.baseUrl, sendResponse);
       return true;
       
     default:
@@ -106,7 +106,9 @@ browser.runtime.onMessageExternal.addListener((request, sender, sendResponse) =>
     case 'getBDOCard':
       // Handle BDO card retrieval requests from external websites
       console.log('📦 External request: getBDOCard for', request.bdoPubKey);
-      handleGetBDOCard(request.bdoPubKey, sendResponse);
+      // External requests should include baseUrl, fallback to test environment
+      const baseUrl = request.baseUrl || 'http://127.0.0.1:5114';
+      handleGetBDOCard(request.bdoPubKey, baseUrl, sendResponse);
       return true; // Keep message channel open
       
     default:
@@ -387,9 +389,9 @@ async function handleNativeMessage(data, sendResponse) {
 }
 
 // BDO Card Retrieval Handler
-async function handleGetBDOCard(bdoPubKey, sendResponse) {
+async function handleGetBDOCard(bdoPubKey, baseUrl, sendResponse) {
   try {
-    console.log(`📦 Background: Retrieving BDO card ${bdoPubKey}`);
+    console.log(`📦 Background: Retrieving BDO card ${bdoPubKey} from ${baseUrl}`);
     
     if (!bdoPubKey) {
       const errorResponse = {
@@ -401,10 +403,21 @@ async function handleGetBDOCard(bdoPubKey, sendResponse) {
       return;
     }
     
+    if (!baseUrl) {
+      const errorResponse = {
+        success: false,
+        error: 'baseUrl is required'
+      };
+      console.log('📤 Background: Sending error response (missing baseUrl):', errorResponse);
+      sendResponse(errorResponse);
+      return;
+    }
+    
     // Use native messaging to handle BDO card retrieval via Swift
     const nativeRequest = {
       action: 'getBDOCard',
-      bdoPubKey: bdoPubKey
+      bdoPubKey: bdoPubKey,
+      baseUrl: baseUrl
     };
     
     // Check if we have Web Extension API

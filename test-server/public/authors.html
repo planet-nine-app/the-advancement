@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Featured Authors - Planet Nine Showcase</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', 'SF Pro', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1a1d29 0%, #2d1b69 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            color: #a0a9c0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .authors-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .author-section {
+            margin-bottom: 60px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .author-profile {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+        
+        .author-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .author-info h2 {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+        
+        .author-info p {
+            color: #a0a9c0;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+        
+        .books-section h3 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            color: #ffffff;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+        
+        .books-carousel {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .books-carousel::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .books-carousel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        .books-carousel::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+        
+        .book-card {
+            min-width: 280px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+        }
+        
+        .book-cover {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            color: white;
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .book-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #ffffff;
+        }
+        
+        .book-description {
+            font-size: 0.9rem;
+            color: #a0a9c0;
+            line-height: 1.4;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .book-price {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #a0a9c0;
+            font-size: 1.1rem;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #ff6b6b;
+            font-size: 1.1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .author-profile {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .book-card {
+                min-width: 240px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Featured Authors</h1>
+        <p>Discover amazing books from talented authors in the Planet Nine ecosystem</p>
+    </div>
+    
+    <div class="authors-container" id="authorsContainer">
+        <div class="loading">Loading authors and books...</div>
+    </div>
+
+    <script src="authors.js"></script>
+</body>
+</html>

@@ -285,6 +285,7 @@ The Advancement includes a comprehensive test server demonstrating the complete 
 - **Home Base Coordination**: Payments routed through user's selected Planet Nine base
 - **MAGIC Protocol Gateway**: Full magic-gateway-js integration with spellTest support
 - **Spell Casting**: End-to-end spell casting from extension to test server via MAGIC protocol
+- **Author-Book Carousel**: Complete demonstration of Planet Nine ecosystem integration with PostWidget
 
 #### Quick Start Testing
 ```bash
@@ -305,6 +306,55 @@ open http://localhost:3456
 - **Multiple Bases**: DEV and LOCAL test bases
 - **Payment Methods**: Stripe test cards with full payment processing
 - **MAGIC Spells**: spellTest spell with proper MAGIC protocol structure and dual destinations
+
+### Author-Book Carousel Implementation (September 2025)
+
+The test server includes a complete author-book carousel demonstration showcasing Planet Nine ecosystem integration with prof, sanora, BDO, and dolores services.
+
+#### Features
+- **Author Profiles**: 3 mock authors (Sarah Mitchell, Marcus Chen, Isabella Rodriguez) with bios, locations, and genres
+- **Book Catalog**: 6 ebooks (2 per author) with descriptions, prices, and visual covers
+- **PostWidget Integration**: Uses dolores post-widget.js for consistent Planet Nine styling
+- **Two Implementations**: Custom carousel and PostWidget-integrated versions for comparison
+- **Responsive Design**: Mobile-friendly with horizontal scrolling book carousels
+
+#### Technical Architecture
+```
+test-server/public/
+├── authors.html + authors.js          # Custom implementation
+├── authors-widget.html + authors-widget.js  # PostWidget integration
+├── post-widget.js                     # From dolores (19KB)
+└── seed-authors-and-books.js         # Seeding script for real services
+```
+
+#### PostWidget Integration Pattern
+```javascript
+// Individual PostWidget instances for each author/book
+const postWidget = new window.PostWidget(postContainer, { debug: false });
+
+// Author customization
+postWidget.addElement('name', author.name);
+postWidget.addElement('description', author.bio);
+// + location 📍 and genres 🏷️ metadata
+
+// Book customization  
+postWidget.addElement('name', book.title);
+postWidget.addElement('description', book.description);
+// + visual covers with gradients, price 💰, genre 📚
+```
+
+#### Access Points
+- **Custom Carousel**: `http://localhost:3456/authors.html`
+- **PostWidget Version**: `http://localhost:3456/authors-widget.html`
+- **Main Test Site**: `http://localhost:3456/`
+
+#### Planet Nine Services Integration
+- **prof**: Author profiles with sessionless authentication
+- **sanora**: Ebook product hosting and marketplace
+- **BDO**: Associations mapping authors to their books  
+- **dolores**: PostWidget for consistent UI components
+
+This demonstrates the complete Planet Nine pattern: content creators (authors) → products (books) → associations (BDO) → presentation (PostWidget) → commerce (future purchasing integration).
 
 ### MAGIC Protocol Integration (August 2025)
 

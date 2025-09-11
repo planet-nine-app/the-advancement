@@ -855,9 +855,9 @@ async function handleGetBDOCard(message, sender) {
         
         // Try multiple BDO environments to find the magistack
         const bdoEnvironments = [
-            'https://dev.bdo.allyabase.com/',
+            //'https://dev.bdo.allyabase.com/',
             'http://127.0.0.1:5114/',
-            'http://localhost:3003/'
+            //'http://localhost:3003/'
         ];
         
         let lastError;

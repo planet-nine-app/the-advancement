@@ -854,9 +854,13 @@
                 spellComponents: spellComponents
             });
             
-            // Handle covenant spells specially
+            // Handle special spell types locally
             if (spellType === 'covenant') {
                 return await this.handleCovenantSpell(element, spellComponents);
+            }
+            
+            if (spellType === 'selection') {
+                return await this.handleSelectionSpell(element, spellComponents);
             }
             
             try {
@@ -1201,6 +1205,247 @@
                 console.error('❌ [STEP 6/6] CONTENT: Covenant spell exception:', error);
                 alert(`❌ Covenant signing failed: ${error.message}`);
             }
+        }
+
+        async handleSelectionSpell(element, spellComponentsStr) {
+            console.log('🎯 [CONTENT] Processing selection spell...');
+            
+            try {
+                // Parse spell components for selection details
+                let spellComponents;
+                try {
+                    spellComponents = JSON.parse(spellComponentsStr || '{}');
+                } catch (parseError) {
+                    console.error('❌ Invalid selection spell components:', parseError);
+                    alert('⚠️ Invalid selection spell - malformed spell-components JSON');
+                    return;
+                }
+                
+                console.log('📦 [CONTENT] Selection spell components:', spellComponents);
+                
+                // Add selection to magistack (in-memory storage for the page session)
+                this.addMagistackSelection(spellComponents);
+                
+                // Visual feedback - flash green to show selection was added
+                const originalFill = element.getAttribute('fill') || element.style.backgroundColor;
+                if (element.tagName === 'rect' || element.tagName === 'circle') {
+                    element.setAttribute('fill', '#27ae60');
+                } else {
+                    element.style.backgroundColor = '#27ae60';
+                }
+                
+                console.log('✅ [CONTENT] Selection added to magistack successfully');
+                
+                // Check if there's navigation data (bdoPubKey for next card)
+                if (spellComponents.bdoPubKey) {
+                    console.log(`🧭 [CONTENT] Selection includes navigation to: ${spellComponents.bdoPubKey}`);
+                    
+                    // Navigate to the next card using BDO bridge
+                    await this.navigateToCard(spellComponents.bdoPubKey, element);
+                } else {
+                    console.log('📦 [CONTENT] Selection completed without navigation (no bdoPubKey)');
+                    
+                    // Show selection confirmation
+                    alert(`✅ Added to Magistack!\n\nSelection: ${spellComponents.selection || 'Unknown'}\nTotal selections: ${this.getMagistackSelections().length}`);
+                }
+                
+                // Reset visual state after delay
+                setTimeout(() => {
+                    if (element.tagName === 'rect' || element.tagName === 'circle') {
+                        if (originalFill) {
+                            element.setAttribute('fill', originalFill);
+                        } else {
+                            element.removeAttribute('fill');
+                        }
+                    } else {
+                        element.style.backgroundColor = originalFill || '';
+                    }
+                }, 1000);
+                
+                console.log('✅ [CONTENT] Selection spell completed successfully');
+                
+            } catch (error) {
+                console.error('❌ [CONTENT] Selection spell exception:', error);
+                alert(`❌ Selection failed: ${error.message}`);
+            }
+        }
+
+        // Magistack selection storage (page-session only)
+        addMagistackSelection(selection) {
+            if (!window.magistackSelections) {
+                window.magistackSelections = [];
+            }
+            
+            const timestamp = new Date().toISOString();
+            const selectionEntry = {
+                ...selection,
+                timestamp: timestamp,
+                id: `selection_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            };
+            
+            window.magistackSelections.push(selectionEntry);
+            console.log('📦 [CONTENT] Added selection to magistack:', selectionEntry);
+            console.log('🎯 [CONTENT] Current magistack selections:', window.magistackSelections.length);
+            
+            return selectionEntry;
+        }
+
+        getMagistackSelections() {
+            return window.magistackSelections || [];
+        }
+
+        async navigateToCard(bdoPubKey, element) {
+            console.log(`🧭 [CONTENT] Navigating to card with BDO pubKey: ${bdoPubKey}`);
+            
+            // Visual feedback - flash blue for navigation
+            const originalFill = element.getAttribute('fill') || element.style.backgroundColor;
+            if (element.tagName === 'rect' || element.tagName === 'circle') {
+                element.setAttribute('fill', '#3498db');
+            } else {
+                element.style.backgroundColor = '#3498db';
+            }
+            
+            try {
+                // Use the BDO bridge to fetch the next card
+                if (window.castSpellBridge && typeof window.castSpellBridge.getCardFromBDO === 'function') {
+                    console.log(`🌉 [CONTENT] BDO bridge available, fetching card: ${bdoPubKey}`);
+                    
+                    const cardData = await window.castSpellBridge.getCardFromBDO(bdoPubKey);
+                    if (cardData && cardData.success) {
+                        console.log(`✅ [CONTENT] Card fetched successfully:`, cardData);
+                        
+                        // Update the magistack display with the new card
+                        this.updateMagistackDisplay(cardData.data);
+                        
+                        // Dispatch event for page to handle
+                        document.dispatchEvent(new CustomEvent('cardNavigationComplete', {
+                            detail: {
+                                bdoPubKey: bdoPubKey,
+                                cardData: cardData.data,
+                                timestamp: new Date().toISOString(),
+                                navigationSource: 'selection'
+                            }
+                        }));
+                        
+                        console.log('✅ [CONTENT] Card navigation completed successfully');
+                        return;
+                    } else {
+                        console.warn(`❌ [CONTENT] BDO bridge returned error:`, cardData);
+                        throw new Error(cardData.error || 'Failed to fetch card from BDO');
+                    }
+                } else {
+                    throw new Error('BDO bridge not available');
+                }
+            } catch (error) {
+                console.error('❌ [CONTENT] Card navigation failed:', error);
+                alert(`❌ Navigation failed: ${error.message}`);
+            } finally {
+                // Reset visual after delay
+                setTimeout(() => {
+                    if (element.tagName === 'rect' || element.tagName === 'circle') {
+                        if (originalFill) {
+                            element.setAttribute('fill', originalFill);
+                        } else {
+                            element.removeAttribute('fill');
+                        }
+                    } else {
+                        element.style.backgroundColor = originalFill || '';
+                    }
+                }, 1000);
+            }
+        }
+
+        updateMagistackDisplay(cardData) {
+            // Directly update the DOM with the new card data
+            const displayElement = document.getElementById('magistack-display');
+            if (!displayElement) {
+                console.warn('⚠️ [CONTENT] magistack-display element not found');
+                return;
+            }
+            
+            console.log('🔄 [CONTENT] Updating magistack display directly via DOM manipulation');
+            
+            // Clear previous content
+            displayElement.innerHTML = '';
+            displayElement.classList.add('has-content');
+            
+            // Check for BDO structure with SVG content (both svgContent and svg properties)
+            if (cardData.bdo && (cardData.bdo.svgContent || cardData.bdo.svg)) {
+                this.displayMagistackSvgContent(cardData, displayElement);
+            } else if (cardData.successful && Array.isArray(cardData.successful) && cardData.successful[0]?.bdo && (cardData.successful[0].bdo.svgContent || cardData.successful[0].bdo.svg)) {
+                this.displayMagistackSvgContent(cardData, displayElement);
+            } else {
+                // Generic display
+                this.displayGenericMagistackData(cardData, displayElement);
+            }
+            
+            console.log('✅ [CONTENT] Magistack display updated successfully');
+        }
+
+        displayMagistackSvgContent(magistackData, container) {
+            // Handle both data structures and both property names (svgContent and svg)
+            let svgContent;
+            if (magistackData.bdo) {
+                svgContent = magistackData.bdo.svgContent || magistackData.bdo.svg;
+            } else if (magistackData.successful && magistackData.successful[0]?.bdo) {
+                const firstCard = magistackData.successful[0].bdo;
+                svgContent = firstCard.svgContent || firstCard.svg;
+            } else {
+                console.error('❌ [CONTENT] No SVG content found in magistack data');
+                return;
+            }
+            
+            if (!svgContent) {
+                console.error('❌ [CONTENT] Neither svgContent nor svg property found');
+                return;
+            }
+            
+            // Parse/unescape the SVG content
+            try {
+                // Remove escaped quotes and newlines
+                svgContent = svgContent.replace(/\\"/g, '"').replace(/\\n/g, '\n').trim();
+                
+                // If it starts and ends with quotes, remove them
+                if (svgContent.startsWith('"') && svgContent.endsWith('"')) {
+                    svgContent = svgContent.slice(1, -1);
+                }
+                
+                console.log('📋 [CONTENT] Parsed SVG content length:', svgContent.length);
+            } catch (error) {
+                console.error('❌ [CONTENT] Error parsing SVG content:', error);
+            }
+            
+            const cardElement = document.createElement('div');
+            cardElement.className = 'magistack-card';
+            
+            cardElement.innerHTML = `
+                <div class="magistack-card-title">
+                    🃏 Magistack Card from BDO
+                </div>
+                <div class="magistack-card-content">
+                    ${svgContent}
+                </div>
+            `;
+            
+            container.appendChild(cardElement);
+        }
+
+        displayGenericMagistackData(data, container) {
+            const dataCard = document.createElement('div');
+            dataCard.className = 'magistack-card';
+            
+            dataCard.innerHTML = `
+                <div class="magistack-card-title">
+                    📋 Magistack Data
+                </div>
+                <div class="magistack-card-content">
+                    <pre style="white-space: pre-wrap; font-family: monospace; font-size: 12px;">
+                        ${JSON.stringify(data, null, 2)}
+                    </pre>
+                </div>
+            `;
+            
+            container.appendChild(dataCard);
         }
         
         /**
@@ -1780,6 +2025,21 @@
     document.addEventListener('click', async (event) => {
         const element = event.target;
         console.log('🖱️ Clicked element:', element);
+        
+        // Check if this is a spell element
+        if (element.hasAttribute && element.hasAttribute('spell')) {
+            console.log('🪄 Spell element clicked:', element.getAttribute('spell'));
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Call the global castSpell function
+            if (window.castSpell) {
+                await window.castSpell(element);
+            } else {
+                console.error('❌ castSpell function not available');
+            }
+            return;
+        }
         
         if (element.type === 'email') {
             element.focus();
@@ -2519,11 +2779,33 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         `;
         
-        if (magistackData.svgContent || magistackData.svg) {
-            const svgContent = magistackData.svgContent || magistackData.svg;
+        // Check for BDO structure first, then fallback to direct properties
+        let svgContent = null;
+        if (magistackData.bdo && (magistackData.bdo.svgContent || magistackData.bdo.svg)) {
+            svgContent = magistackData.bdo.svgContent || magistackData.bdo.svg;
+        } else if (magistackData.svgContent || magistackData.svg) {
+            svgContent = magistackData.svgContent || magistackData.svg;
+        }
+        
+        if (svgContent) {
+            // Parse/unescape the SVG content
+            try {
+                // Remove escaped quotes and newlines
+                svgContent = svgContent.replace(/\\"/g, '"').replace(/\\n/g, '\n').trim();
+                
+                // If it starts and ends with quotes, remove them
+                if (svgContent.startsWith('"') && svgContent.endsWith('"')) {
+                    svgContent = svgContent.slice(1, -1);
+                }
+                
+                console.log('📋 Extension parsed SVG content length:', svgContent.length);
+            } catch (error) {
+                console.error('❌ Extension SVG parsing error:', error);
+            }
+            
             cardElement.innerHTML = `
                 <div style="font-weight: bold; margin-bottom: 0.5rem; color: #333;">
-                    🃏 ${magistackData.name || 'Magistack Card'}
+                    🃏 ${magistackData.bdo?.cardName || magistackData.name || 'Magistack Card'}
                 </div>
                 <div style="border: 1px solid #eee; padding: 0.5rem; border-radius: 4px;">
                     ${svgContent}
