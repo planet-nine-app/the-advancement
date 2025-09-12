@@ -31,6 +31,7 @@ class AuthorsCarousel {
                 email: 'sarah@writersworld.com',
                 bio: 'Award-winning fantasy author with over 15 years of experience crafting immersive worlds and unforgettable characters.',
                 location: 'Portland, Oregon',
+                profileImage: '/images/sarah-mitchell.svg',
                 genres: ['Fantasy', 'Adventure', 'Young Adult']
             },
             {
@@ -39,6 +40,7 @@ class AuthorsCarousel {
                 email: 'marcus@techwriters.net',
                 bio: 'Technology journalist and sci-fi novelist exploring the intersection of humanity and artificial intelligence.',
                 location: 'San Francisco, California',
+                profileImage: '/images/marcus-chen.svg',
                 genres: ['Science Fiction', 'Thriller', 'Technology']
             },
             {
@@ -47,6 +49,7 @@ class AuthorsCarousel {
                 email: 'isabella@historicalfiction.org',
                 bio: 'Historian turned novelist, bringing forgotten stories from Latin American history to vivid life.',
                 location: 'Mexico City, Mexico',
+                profileImage: '/images/isabella-rodriguez.svg',
                 genres: ['Historical Fiction', 'Literary Fiction', 'Cultural Heritage']
             }
         ];
@@ -118,6 +121,11 @@ class AuthorsCarousel {
         // Clear loading state
         this.container.innerHTML = '';
 
+        // Add leading spacer so first author can center
+        const leadingSpacer = document.createElement('div');
+        leadingSpacer.className = 'author-spacer';
+        this.container.appendChild(leadingSpacer);
+
         authors.forEach(author => {
             // Find books for this author
             const authorBooks = books.filter(book => book.authorUUID === author.uuid);
@@ -126,6 +134,11 @@ class AuthorsCarousel {
             const authorSection = this.createAuthorSection(author, authorBooks);
             this.container.appendChild(authorSection);
         });
+
+        // Add trailing spacer so last author can center
+        const trailingSpacer = document.createElement('div');
+        trailingSpacer.className = 'author-spacer';
+        this.container.appendChild(trailingSpacer);
     }
 
     createAuthorSection(author, books) {
@@ -138,17 +151,41 @@ class AuthorsCarousel {
 
         const authorImage = document.createElement('div');
         authorImage.className = 'author-image';
-        authorImage.textContent = author.name.split(' ').map(n => n[0]).join('');
+        
+        if (author.profileImage) {
+            // Use profile image if available
+            const img = document.createElement('img');
+            img.src = author.profileImage;
+            img.alt = `${author.name} profile photo`;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '50%';
+            authorImage.appendChild(img);
+        } else {
+            // Fallback to initials
+            authorImage.textContent = author.name.split(' ').map(n => n[0]).join('');
+        }
 
-        const authorInfo = document.createElement('div');
-        authorInfo.className = 'author-info';
-        authorInfo.innerHTML = `
-            <h2>${author.name}</h2>
-            <p>${author.bio}</p>
-        `;
+        // Cap bio at 255 characters
+        const truncatedBio = author.bio.length > 255 ? author.bio.substring(0, 255) + '...' : author.bio;
+        
+        const authorName = document.createElement('div');
+        authorName.className = 'author-name';
+        authorName.textContent = author.name;
+        
+        const authorDetails = document.createElement('div');
+        authorDetails.className = 'author-details';
+        
+        const authorBio = document.createElement('div');
+        authorBio.className = 'author-bio';
+        authorBio.textContent = truncatedBio;
 
-        profile.appendChild(authorImage);
-        profile.appendChild(authorInfo);
+        authorDetails.appendChild(authorImage);
+        authorDetails.appendChild(authorBio);
+        
+        profile.appendChild(authorName);
+        profile.appendChild(authorDetails);
 
         // Books section
         const booksSection = document.createElement('div');
@@ -188,18 +225,8 @@ class AuthorsCarousel {
         title.className = 'book-title';
         title.textContent = book.title;
 
-        const description = document.createElement('div');
-        description.className = 'book-description';
-        description.textContent = book.description;
-
-        const price = document.createElement('div');
-        price.className = 'book-price';
-        price.textContent = `$${(book.price / 100).toFixed(2)}`;
-
         card.appendChild(cover);
         card.appendChild(title);
-        card.appendChild(description);
-        card.appendChild(price);
 
         // Add click handler for potential purchase
         card.addEventListener('click', () => {

@@ -924,6 +924,12 @@ class TestStoreApp {
             return;
         }
         
+        // Handle dark/light mode SVG object (NEW)
+        if (typeof svgContent === 'object' && svgContent.dark && svgContent.light) {
+            console.log('🎨 SVG object detected with dark/light modes, using dark mode');
+            svgContent = svgContent.dark; // Default to dark mode
+        }
+        
         // Parse/unescape the SVG content
         try {
             // Remove escaped quotes and newlines

@@ -27,6 +27,7 @@ const authors = [
     bio: 'Award-winning fantasy author with over 15 years of experience crafting immersive worlds and unforgettable characters.',
     location: 'Portland, Oregon',
     website: 'https://sarahmitchell.com',
+    profileImage: '/images/sarah-mitchell.svg',
     genres: ['Fantasy', 'Adventure', 'Young Adult'],
     awards: ['Hugo Award 2023', 'World Fantasy Award 2022']
   },
@@ -37,6 +38,7 @@ const authors = [
     bio: 'Technology journalist and sci-fi novelist exploring the intersection of humanity and artificial intelligence.',
     location: 'San Francisco, California', 
     website: 'https://marcuschen.dev',
+    profileImage: '/images/marcus-chen.svg',
     genres: ['Science Fiction', 'Thriller', 'Technology'],
     specialties: ['AI Ethics', 'Future Technology', 'Cyberpunk']
   },
@@ -47,6 +49,7 @@ const authors = [
     bio: 'Historian turned novelist, bringing forgotten stories from Latin American history to vivid life.',
     location: 'Mexico City, Mexico',
     website: 'https://isabellarodriguez.mx',
+    profileImage: '/images/isabella-rodriguez.svg',
     genres: ['Historical Fiction', 'Literary Fiction', 'Cultural Heritage'],
     languages: ['Spanish', 'English', 'Portuguese']
   }

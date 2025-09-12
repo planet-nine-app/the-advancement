@@ -66,6 +66,7 @@ class AuthorsPostWidgetCarousel {
                 email: 'sarah@writersworld.com',
                 bio: 'Award-winning fantasy author with over 15 years of experience crafting immersive worlds and unforgettable characters.',
                 location: 'Portland, Oregon',
+                profileImage: '/images/sarah-mitchell.svg',
                 genres: ['Fantasy', 'Adventure', 'Young Adult']
             },
             {
@@ -74,6 +75,7 @@ class AuthorsPostWidgetCarousel {
                 email: 'marcus@techwriters.net',
                 bio: 'Technology journalist and sci-fi novelist exploring the intersection of humanity and artificial intelligence.',
                 location: 'San Francisco, California',
+                profileImage: '/images/marcus-chen.svg',
                 genres: ['Science Fiction', 'Thriller', 'Technology']
             },
             {
@@ -82,6 +84,7 @@ class AuthorsPostWidgetCarousel {
                 email: 'isabella@historicalfiction.org',
                 bio: 'Historian turned novelist, bringing forgotten stories from Latin American history to vivid life.',
                 location: 'Mexico City, Mexico',
+                profileImage: '/images/isabella-rodriguez.svg',
                 genres: ['Historical Fiction', 'Literary Fiction', 'Cultural Heritage']
             }
         ];
@@ -209,6 +212,11 @@ class AuthorsPostWidgetCarousel {
             try {
                 // Create a PostWidget instance for this specific post
                 const postWidget = new window.PostWidget(postContainer, { debug: false });
+                
+                // Add author profile image if available
+                if (author.profileImage) {
+                    postWidget.addElement('image', author.profileImage, { alt: `${author.name} profile photo` });
+                }
                 
                 // Customize the PostWidget with author data
                 postWidget.addElement('name', author.name);

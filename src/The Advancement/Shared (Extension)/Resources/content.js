@@ -863,6 +863,14 @@
                 return await this.handleSelectionSpell(element, spellComponents);
             }
             
+            if (spellType === 'lookup') {
+                return await this.handleLookupSpell(element, spellComponents);
+            }
+            
+            if (spellType === 'purchase') {
+                return await this.handlePurchaseSpell(element, spellComponents);
+            }
+            
             try {
                 console.log(`📤 [STEP 1/6] CONTENT: Sending castSpell message to background...`);
                 
@@ -877,8 +885,8 @@
                     
                     // Handle different response types
                     if (response.requiresPayment) {
-                        console.log('💳 [STEP 6/6] CONTENT: Payment required - showing Stripe overlay');
-                        await this.showStripePaymentOverlay(response.data.paymentIntent, response.data.paymentRequest, element);
+                        console.log('💳 [STEP 6/6] CONTENT: Payment required - this should be handled by purchase spell');
+                        alert('💳 Payment required - please use purchase spell for payment processing');
                     } else if (response.data?.testServerResponse) {
                         console.log('🎯 [STEP 6/6] CONTENT: Test server response received');
                         alert(`🧪 ${spellType} completed successfully!\n\nResponse: ${JSON.stringify(response.data.testServerResponse, null, 2)}`);
@@ -1355,6 +1363,284 @@
             }
         }
 
+        async handleLookupSpell(element, spellComponentsStr) {
+            console.log('🔍 [CONTENT] Processing lookup spell...');
+            
+            try {
+                // Parse spell components for catalog and lookup details
+                let spellComponents;
+                try {
+                    spellComponents = JSON.parse(spellComponentsStr || '{}');
+                } catch (parseError) {
+                    console.error('❌ Invalid lookup spell components:', parseError);
+                    alert('⚠️ Invalid lookup spell - malformed spell-components JSON');
+                    return;
+                }
+                
+                console.log('📋 [CONTENT] Lookup spell components:', spellComponents);
+                
+                // Get current magistack selections
+                const selections = this.getMagistackSelections();
+                console.log('🎯 [CONTENT] Current magistack selections for lookup:', selections);
+                
+                if (!spellComponents.catalog) {
+                    console.error('❌ Lookup spell missing catalog data');
+                    alert('⚠️ Lookup spell error - no catalog data provided');
+                    return;
+                }
+                
+                // Navigate through catalog using magistack selections
+                let current = spellComponents.catalog;
+                const navigationPath = [];
+                
+                for (const selection of selections) {
+                    if (selection.selection && current[selection.selection]) {
+                        navigationPath.push(selection.selection);
+                        current = current[selection.selection];
+                        console.log(`🗂️ [CONTENT] Navigated to: ${selection.selection}`);
+                    } else {
+                        console.warn(`⚠️ [CONTENT] Selection "${selection.selection}" not found in catalog`);
+                    }
+                }
+                
+                console.log('🧭 [CONTENT] Lookup navigation path:', navigationPath);
+                console.log('🎯 [CONTENT] Final lookup result:', current);
+                
+                // Visual feedback - flash purple for lookup
+                const originalFill = element.getAttribute('fill') || element.style.backgroundColor;
+                if (element.tagName === 'rect' || element.tagName === 'circle') {
+                    element.setAttribute('fill', '#9b59b6');
+                } else {
+                    element.style.backgroundColor = '#9b59b6';
+                }
+                
+                // Check if we have a final product (has productId, bdoPubKey, price, name)
+                // First check if current itself is a product
+                let finalProduct = null;
+                if (current && typeof current === 'object' && current.productId && current.bdoPubKey) {
+                    finalProduct = current;
+                } else {
+                    // Search for nested product in the result
+                    finalProduct = this.findProductInNestedCatalog(current);
+                }
+                
+                if (finalProduct) {
+                    console.log('✅ [CONTENT] Lookup resolved to product:', {
+                        productId: finalProduct.productId,
+                        name: finalProduct.name,
+                        price: finalProduct.price,
+                        bdoPubKey: finalProduct.bdoPubKey
+                    });
+                    
+                    // Navigate to the product card
+                    if (finalProduct.bdoPubKey) {
+                        console.log(`🧭 [CONTENT] Navigating to product card: ${finalProduct.bdoPubKey}`);
+                        await this.navigateToCard(finalProduct.bdoPubKey, element);
+                    } else {
+                        alert(`✅ Product Found!\n\nName: ${finalProduct.name || 'Unknown'}\nPrice: ${finalProduct.price ? '$' + (finalProduct.price / 100).toFixed(2) : 'Free'}\nPath: ${navigationPath.join(' → ')}`);
+                    }
+                } else {
+                    // Lookup didn't resolve to final product
+                    console.warn('⚠️ [CONTENT] Lookup did not resolve to a final product');
+                    alert(`🔍 Lookup Result\n\nPath: ${navigationPath.join(' → ')}\nResult: ${typeof current === 'object' ? JSON.stringify(current, null, 2) : current}\n\nThis may require additional selections to reach a final product.`);
+                }
+                
+                // Reset visual state after delay
+                setTimeout(() => {
+                    if (element.tagName === 'rect' || element.tagName === 'circle') {
+                        if (originalFill) {
+                            element.setAttribute('fill', originalFill);
+                        } else {
+                            element.removeAttribute('fill');
+                        }
+                    } else {
+                        element.style.backgroundColor = originalFill || '';
+                    }
+                }, 1000);
+                
+                console.log('✅ [CONTENT] Lookup spell completed successfully');
+                
+            } catch (error) {
+                console.error('❌ [CONTENT] Lookup spell exception:', error);
+                alert(`❌ Lookup failed: ${error.message}`);
+            }
+        }
+
+        /**
+         * Recursively search for a product object in nested catalog structure
+         * @param {Object} obj - The object to search in
+         * @returns {Object|null} - The product object if found, null otherwise
+         */
+        findProductInNestedCatalog(obj) {
+            if (!obj || typeof obj !== 'object') {
+                return null;
+            }
+            
+            // Check if this object is a product (has the required properties)
+            if (obj.productId && obj.bdoPubKey && obj.name) {
+                return obj;
+            }
+            
+            // Recursively search in nested objects
+            for (const key in obj) {
+                if (obj.hasOwnProperty(key) && typeof obj[key] === 'object') {
+                    const result = this.findProductInNestedCatalog(obj[key]);
+                    if (result) {
+                        return result;
+                    }
+                }
+            }
+            
+            return null;
+        }
+
+        async handlePurchaseSpell(element, spellComponentsStr) {
+            console.log('💰 [CONTENT] Processing purchase spell via message passing...');
+            
+            try {
+                // Parse spell components for purchase details
+                let spellComponents;
+                try {
+                    spellComponents = JSON.parse(spellComponentsStr || '{}');
+                } catch (parseError) {
+                    console.error('❌ Invalid purchase spell components:', parseError);
+                    alert('⚠️ Invalid purchase spell - malformed spell-components JSON');
+                    return;
+                }
+                
+                // Extract purchase details
+                const { amount, productId, price, name } = spellComponents;
+                const purchaseAmount = amount || price;
+                
+                if (!purchaseAmount || !productId) {
+                    console.error('❌ Purchase spell missing required data');
+                    alert('⚠️ Purchase spell error - missing amount/price or productId');
+                    return;
+                }
+                
+                console.log(`💰 [CONTENT] Purchase request - $${purchaseAmount/100}, productId: ${productId}`);
+                
+                // Visual feedback - flash purple briefly
+                const originalFill = element.getAttribute('fill') || element.style.backgroundColor;
+                if (element.tagName === 'rect' || element.tagName === 'circle') {
+                    element.setAttribute('fill', '#9b59b6');
+                } else {
+                    element.style.backgroundColor = '#9b59b6';
+                }
+                
+                // Step 1: Get payment intent from Addie via extension
+                console.log('💳 [CONTENT] Step 1: Requesting payment intent from extension...');
+                const paymentIntentResult = await this.createAddiePaymentIntent(purchaseAmount, productId);
+                
+                if (!paymentIntentResult.success) {
+                    throw new Error(`Payment intent failed: ${paymentIntentResult.error}`);
+                }
+                
+                console.log('✅ [CONTENT] Step 1 complete: Payment intent received');
+                
+                // Step 2: Send payment intent to page for Stripe processing
+                console.log('💳 [CONTENT] Step 2: Sending payment intent to page for Stripe processing...');
+                
+                const purchaseEvent = new CustomEvent('advancement-payment-intent', {
+                    detail: {
+                        processor: 'stripe',
+                        paymentIntent: paymentIntentResult.data,
+                        purchaseData: {
+                            amount: purchaseAmount,
+                            productId: productId,
+                            name: name || productId,
+                            currency: 'usd'
+                        }
+                    }
+                });
+                
+                document.dispatchEvent(purchaseEvent);
+                console.log('✅ [CONTENT] Step 2 complete: Payment intent sent to page');
+                
+                // Reset visual state after delay
+                setTimeout(() => {
+                    if (element.tagName === 'rect' || element.tagName === 'circle') {
+                        if (originalFill) {
+                            element.setAttribute('fill', originalFill);
+                        } else {
+                            element.removeAttribute('fill');
+                        }
+                    } else {
+                        element.style.backgroundColor = originalFill || '';
+                    }
+                }, 1000);
+                
+                console.log('💰 [CONTENT] Purchase spell processing completed - page will handle Stripe');
+                
+            } catch (error) {
+                console.error('❌ [CONTENT] Purchase spell exception:', error);
+                alert(`❌ Purchase failed: ${error.message}`);
+            }
+        }
+
+        async createAddiePaymentIntent(amount, productId) {
+            console.log('💳 [CONTENT] Creating Addie payment intent...');
+            
+            try {
+                console.log(`💳 Creating Addie payment intent for $${amount/100} (${productId})`);
+                
+                // Determine Addie URL based on environment
+                // TODO: Use environment configuration to get correct Addie URL
+                const addieUrl = 'http://127.0.0.1:5116'; // Updated to test environment
+                
+                const response = await fetch(`${addieUrl}/payment-intent`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount: amount,
+                        currency: 'usd',
+                        metadata: {
+                            productId: productId,
+                            source: 'ninefy-menu-extension',
+                            timestamp: Date.now()
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    console.warn(`⚠️ Addie service not available (${response.status}), using fallback simulation`);
+                    return this.createSimulatedPaymentIntent(amount, productId);
+                }
+                
+                const data = await response.json();
+                console.log('✅ Addie payment intent created:', data);
+                
+                return {
+                    success: true,
+                    data: data
+                };
+                
+            } catch (error) {
+                console.warn('⚠️ Addie service not available, using fallback simulation:', error.message);
+                return this.createSimulatedPaymentIntent(amount, productId);
+            }
+        }
+
+        createSimulatedPaymentIntent(amount, productId) {
+            console.log('🧪 Creating simulated payment intent for testing...');
+            return {
+                success: true,
+                data: {
+                    id: `pi_simulation_${Date.now()}`,
+                    client_secret: `pi_simulation_${Date.now()}_secret_test`,
+                    amount: amount,
+                    currency: 'usd',
+                    metadata: {
+                        productId: productId,
+                        source: 'simulation'
+                    }
+                }
+            };
+        }
+
+
         updateMagistackDisplay(cardData) {
             // Directly update the DOM with the new card data
             const displayElement = document.getElementById('magistack-display');
@@ -1398,6 +1684,12 @@
             if (!svgContent) {
                 console.error('❌ [CONTENT] Neither svgContent nor svg property found');
                 return;
+            }
+            
+            // Handle dark/light mode SVG object (NEW)
+            if (typeof svgContent === 'object' && svgContent.dark && svgContent.light) {
+                console.log('🎨 [CONTENT] SVG object detected with dark/light modes, using dark mode');
+                svgContent = svgContent.dark; // Default to dark mode
             }
             
             // Parse/unescape the SVG content
@@ -1720,25 +2012,12 @@
 
         async ensureStripeLoaded() {
             if (typeof Stripe !== 'undefined') {
-                console.log('✅ Stripe already loaded');
+                console.log('✅ Stripe already loaded by page');
                 return;
             }
             
-            console.log('📡 Injecting Stripe script...');
-            
-            return new Promise((resolve, reject) => {
-                const stripeScript = document.createElement('script');
-                stripeScript.src = 'https://js.stripe.com/v3/';
-                stripeScript.onload = () => {
-                    console.log('✅ Stripe script loaded successfully');
-                    resolve();
-                };
-                stripeScript.onerror = () => {
-                    console.error('❌ Failed to load Stripe script');
-                    reject(new Error('Failed to load Stripe script'));
-                };
-                document.head.appendChild(stripeScript);
-            });
+            console.error('❌ Stripe not available - page should load Stripe script');
+            throw new Error('Stripe not available - page should include <script src="https://js.stripe.com/v3/"></script>');
         }
 
         createPaymentOverlay(paymentIntent, paymentRequest) {
@@ -2788,6 +3067,12 @@
         }
         
         if (svgContent) {
+            // Handle dark/light mode SVG object (NEW)
+            if (typeof svgContent === 'object' && svgContent.dark && svgContent.light) {
+                console.log('🎨 [CONTENT] SVG object detected with dark/light modes, using dark mode');
+                svgContent = svgContent.dark; // Default to dark mode
+            }
+            
             // Parse/unescape the SVG content
             try {
                 // Remove escaped quotes and newlines
