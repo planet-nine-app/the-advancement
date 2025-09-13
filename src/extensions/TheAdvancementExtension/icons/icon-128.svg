@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#9b59b6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#667eea;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="63" fill="url(#bgGradient)" stroke="none"/>
+  
+  <!-- The "A" for Advancement -->
+  <text x="64" y="64" text-anchor="middle" dominant-baseline="middle" 
+        fill="white" font-family="Arial, sans-serif" font-weight="bold" font-size="76">A</text>
+  
+  <!-- Magic sparkle -->
+  <text x="96" y="32" text-anchor="middle" dominant-baseline="middle" 
+        fill="#f1c40f" font-family="Arial, sans-serif" font-size="25">✨</text>
+</svg>

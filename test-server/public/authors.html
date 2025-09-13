@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Featured Authors - Planet Nine Showcase</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', 'SF Pro', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1a1d29 0%, #2d1b69 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px 0 20px 0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 0 20px;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            color: #a0a9c0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .authors-container {
+            width: 100%;
+            overflow-x: auto;
+            display: flex;
+            gap: 20px;
+            scroll-snap-type: x mandatory;
+            scroll-behavior: smooth;
+        }
+        
+        .authors-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .authors-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        .authors-container::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+        
+        .author-section {
+            min-width: 36%;
+            max-width: 36%;
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            scroll-snap-align: center;
+        }
+        
+        .author-spacer {
+            min-width: calc(50% - 18%);
+            max-width: calc(50% - 18%);
+            flex-shrink: 0;
+            scroll-snap-align: center;
+        }
+        
+        .author-profile {
+            margin-bottom: 30px;
+            height: 140px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .author-name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 15px;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .author-details {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+            align-items: flex-start;
+        }
+        
+        .author-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        .author-bio {
+            color: #a0a9c0;
+            line-height: 1.4;
+            font-size: 0.9rem;
+            flex: 1;
+            max-height: 80px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+        }
+        
+        .books-section h3 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            color: #ffffff;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+        
+        .books-carousel {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .books-carousel::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .books-carousel::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        .books-carousel::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+        
+        .book-card {
+            min-width: calc(50% - 10px);
+            max-width: calc(50% - 10px);
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+        }
+        
+        .book-cover {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            border-radius: 10px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            line-height: 1.2;
+            font-weight: 500;
+        }
+        
+        .book-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0;
+            color: #ffffff;
+            line-height: 1.3;
+            text-align: center;
+        }
+        
+        .book-description {
+            font-size: 0.75rem;
+            color: #a0a9c0;
+            line-height: 1.3;
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .book-price {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #a0a9c0;
+            font-size: 1.1rem;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #ff6b6b;
+            font-size: 1.1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .author-profile {
+                height: auto;
+            }
+            
+            .author-details {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .author-bio {
+                text-align: center;
+                max-height: none;
+                -webkit-line-clamp: 3;
+            }
+            
+            .author-section {
+                min-width: 90%;
+                max-width: 90%;
+            }
+            
+            .author-spacer {
+                min-width: calc(50% - 45%);
+                max-width: calc(50% - 45%);
+            }
+            
+            .book-card {
+                min-width: calc(80% - 10px);
+                max-width: calc(80% - 10px);
+            }
+        }
+        
+        /* Portrait orientation adjustments */
+        @media (orientation: portrait) {
+            .author-section {
+                min-width: 90%;
+                max-width: 90%;
+            }
+            
+            .author-spacer {
+                min-width: calc(50% - 45%);
+                max-width: calc(50% - 45%);
+            }
+        }
+        
+        /* Landscape orientation for wider screens */
+        @media (orientation: landscape) and (min-width: 1200px) {
+            .author-section {
+                min-width: 32%;
+                max-width: 32%;
+            }
+            
+            .author-spacer {
+                min-width: calc(50% - 16%);
+                max-width: calc(50% - 16%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Featured Authors</h1>
+    </div>
+    
+    <div class="authors-container" id="authorsContainer">
+        <div class="loading">Loading authors and books...</div>
+    </div>
+
+    <script src="authors.js"></script>
+</body>
+</html>

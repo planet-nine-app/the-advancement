@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planet Nine Test Store - The Advancement Demo</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">🌍</span>
+                    <h1>Planet Nine Test Store</h1>
+                </div>
+                <div class="header-status">
+                    <div class="advancement-status" id="advancement-status">
+                        <span class="status-indicator" id="status-indicator">⚪</span>
+                        <span class="status-text" id="status-text">Checking Advancement...</span>
+                    </div>
+                    <div class="nineum-balance" id="nineum-balance">
+                        <span class="nineum-icon">⭐</span>
+                        <span class="nineum-amount" id="nineum-amount">0</span>
+                        <span class="nineum-label">Nineum</span>
+                    </div>
+                    <div class="home-base-indicator" id="home-base-indicator">
+                        <span class="base-icon">🏠</span>
+                        <span class="base-name" id="home-base-name">No Home Base</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Left Column: Store Information -->
+            <div class="left-column">
+                <section class="store-info">
+                    <h2>Welcome to the Planet Nine Test Store</h2>
+                    <p class="store-description">
+                        This is a demonstration website for <strong>The Advancement</strong> browser extension. 
+                        It showcases the complete Planet Nine purchase flow including:
+                    </p>
+                    <ul class="features-list">
+                        <li>🔍 <strong>Teleported Product Feeds</strong> - Products discovered from your home base</li>
+                        <li>🔐 <strong>Multi-PubKey Authentication</strong> - Site owner, product creator, and base verification</li>
+                        <li>💳 <strong>Stripe Integration</strong> - Seamless payments via The Advancement extension</li>
+                        <li>🏠 <strong>Home Base Processing</strong> - Payments processed through your selected Planet Nine base</li>
+                    </ul>
+                </section>
+
+                <section class="how-it-works">
+                    <h3>How It Works</h3>
+                    <div class="steps">
+                        <div class="step">
+                            <span class="step-number">1</span>
+                            <div class="step-content">
+                                <h4>Install The Advancement</h4>
+                                <p>Install The Advancement Safari extension and select a home base</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <span class="step-number">2</span>
+                            <div class="step-content">
+                                <h4>Browse Teleported Products</h4>
+                                <p>Products from your home base appear in the right column</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <span class="step-number">3</span>
+                            <div class="step-content">
+                                <h4>Purchase Securely</h4>
+                                <p>Click any product to purchase using Sessionless authentication</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="pubkey-info">
+                    <h3>PubKey Information</h3>
+                    <div class="pubkey-grid">
+                        <div class="pubkey-card">
+                            <h4>🏪 Site Owner</h4>
+                            <p class="pubkey-label">Planet Nine Test Store</p>
+                            <code class="pubkey" id="site-pubkey">Loading...</code>
+                        </div>
+                        <div class="pubkey-card">
+                            <h4>🏠 Your Home Base</h4>
+                            <p class="pubkey-label" id="base-pubkey-label">Select a home base</p>
+                            <code class="pubkey" id="base-pubkey">Not selected</code>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="spell-test-section">
+                    <h3>🪄 Spell Test Integration</h3>
+                    <p class="spell-description">
+                        Test the complete spell flow: spell element detection → The Advancement spellbook validation → spell casting
+                    </p>
+                    <div class="spell-card-container">
+                        <!-- Embedded SpellTest Card -->
+                        <svg xmlns="http://www.w3.org/2000/svg" width="280" height="200" viewBox="0 0 280 200" class="spell-test-card">
+                            <!-- Gradient Definition for SpellTest Button -->
+                            <defs>
+                                <radialGradient id="spellTestGradient" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#9b59b6">
+                                        <animate attributeName="stop-color" values="#9b59b6;#e74c3c;#f39c12;#2ecc71;#3498db;#9b59b6" dur="3s" repeatCount="indefinite"/>
+                                    </stop>
+                                    <stop offset="100%" stop-color="#2c3e50">
+                                        <animate attributeName="stop-color" values="#2c3e50;#8e44ad;#e67e22;#27ae60;#2980b9;#2c3e50" dur="3s" repeatCount="indefinite"/>
+                                    </stop>
+                                </radialGradient>
+                            </defs>
+
+                            <!-- Card Background -->
+                            <rect x="0" y="0" width="280" height="200" fill="#2e2e40" stroke="#9b59b6" stroke-width="3" rx="15"/>
+                            
+                            <!-- Card Border -->
+                            <rect x="10" y="10" width="260" height="180" fill="none" stroke="#667eea" stroke-width="2" rx="10"/>
+                            
+                            <!-- Card Title Background -->
+                            <rect x="20" y="20" width="240" height="40" fill="#4B0082" rx="8"/>
+                            
+                            <!-- Card Title -->
+                            <text x="140" y="45" text-anchor="middle" fill="#FFD700" font-family="serif" font-size="16" font-weight="bold">
+                                🪄 SPELL TEST CARD 🪄
+                            </text>
+                            
+                            <!-- Main Spell Description -->
+                            <text x="140" y="85" text-anchor="middle" fill="#E0E6FF" font-family="serif" font-size="12">
+                                Click the spell button to test the complete flow:
+                            </text>
+                            <text x="140" y="105" text-anchor="middle" fill="#E0E6FF" font-family="serif" font-size="12">
+                                The Advancement detects spell → validates spellbook → casts spell
+                            </text>
+                            
+                            <!-- Spell Test Button - FLASHY! -->
+                            <rect spell="spellTest" x="90" y="130" width="100" height="40" fill="url(#spellTestGradient)" stroke="#FFD700" stroke-width="3" rx="8">
+                                <animate attributeName="stroke" values="#FFD700;#FF1493;#00BFFF;#32CD32;#9b59b6;#FFD700" dur="2s" repeatCount="indefinite"/>
+                            </rect>
+                            <text spell="spellTest" x="140" y="155" text-anchor="middle" fill="white" font-size="14" font-weight="bold">
+                                🪄 CAST SPELL 🪄
+                                <animate attributeName="fill" values="white;#FFD700;#FF1493;white" dur="1.5s" repeatCount="indefinite"/>
+                            </text>
+                        </svg>
+                        
+                        <div class="spell-info">
+                            <p><strong>Status:</strong> <span id="spell-status">Ready to cast</span></p>
+                            <p><strong>Spell Cost:</strong> 400 MP</p>
+                            <p><strong>Resolver:</strong> fount</p>
+                            <p><strong>Requirements:</strong> The Advancement extension + Spellbook loaded</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="magistack-test-section">
+                    <h3>🃏 Magistack Test Integration</h3>
+                    <p class="magistack-description">
+                        Test magistack navigation by entering a BDO pubKey. This will fetch the magistack data from BDO using <strong>The Advancement Safari extension</strong> for authenticated access and display the interactive cards for testing purchase flows.
+                    </p>
+                    <div class="magistack-requirements">
+                        <p><strong>Requirements:</strong> The Advancement Safari extension must be installed and enabled.</p>
+                    </div>
+                    <div class="magistack-test-container">
+                        <div class="magistack-input-section">
+                            <div class="input-group">
+                                <label for="bdo-pubkey-input">BDO Public Key:</label>
+                                <input 
+                                    type="text" 
+                                    id="bdo-pubkey-input" 
+                                    placeholder="Enter BDO pubKey (e.g., 02a3b4c5...)" 
+                                    class="bdo-pubkey-input"
+                                />
+                            </div>
+                            <button id="load-magistack-btn" class="load-magistack-btn">
+                                🃏 Load Magistack
+                            </button>
+                        </div>
+                        
+                        <div class="magistack-status" id="magistack-status">
+                            <div class="status-message" id="magistack-status-message">
+                                <span class="status-icon">📋</span>
+                                <p>Enter a BDO pubKey to load a magistack for testing</p>
+                            </div>
+                        </div>
+
+                        <div class="magistack-display" id="magistack-display">
+                            <!-- Magistack cards will be loaded here -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Column: Teleported Product Feed -->
+            <div class="right-column">
+                <section class="teleported-feed">
+                    <div class="feed-header">
+                        <h3>🔍 Teleported Products</h3>
+                        <button class="refresh-btn" id="refresh-feed" title="Refresh teleported content">
+                            <span class="refresh-icon">🔄</span>
+                        </button>
+                    </div>
+                    
+                    <div class="feed-status" id="feed-status">
+                        <div class="status-message" id="status-message">
+                            <span class="status-icon">⏳</span>
+                            <p>Loading teleported products from your home base...</p>
+                        </div>
+                    </div>
+
+                    <div class="products-grid" id="products-grid">
+                        <!-- Products will be loaded here via JavaScript -->
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Product Purchase Modal -->
+        <div class="modal" id="purchase-modal">
+            <div class="modal-overlay" id="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Complete Your Purchase</h3>
+                    <button class="modal-close" id="modal-close">✕</button>
+                </div>
+                
+                <div class="modal-body" id="modal-body">
+                    <!-- Product details will be inserted here -->
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancel-purchase">Cancel</button>
+                    <button class="btn btn-primary" id="complete-purchase" disabled>
+                        <span class="btn-icon">💳</span>
+                        Complete Purchase
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="loading-spinner">
+                <span class="spinner">⏳</span>
+                <p id="loading-message">Processing...</p>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toast-container"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/menu-utils.js"></script>
+    <script src="/menu-display.js"></script>
+    <script src="/teleportation-client.js"></script>
+    <script src="/purchase-flow.js"></script>
+    <script src="/main.js"></script>
+    
+    <!-- Load Spell Systems -->
+    <script>
+        // Load castSpell.js from fount service
+        async function loadSpellSystems() {
+            try {
+                // Wait for main.js to load and provide getServiceUrl
+                let attempts = 0;
+                while (typeof getServiceUrl === 'undefined' && attempts < 50) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
+                
+                if (typeof getServiceUrl === 'undefined') {
+                    console.warn('⚠️ getServiceUrl not available, cannot load spell systems');
+                    return;
+                }
+                
+                const fountUrl = getServiceUrl('fount');
+                console.log('🪄 Loading castSpell.js from:', fountUrl);
+                
+                const script = document.createElement('script');
+                script.src = `${fountUrl}/castSpell.js`;
+                script.onload = () => {
+                    console.log('✅ castSpell.js loaded successfully');
+                };
+                script.onerror = () => {
+                    console.warn('⚠️ Failed to load castSpell.js from fount');
+                };
+                document.head.appendChild(script);
+                
+            } catch (error) {
+                console.error('❌ Error loading spell systems:', error);
+            }
+        }
+        
+        // Load spell systems after DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadSpellSystems);
+        } else {
+            loadSpellSystems();
+        }
+    </script>
+</body>
+</html>
