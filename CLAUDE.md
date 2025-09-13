@@ -648,6 +648,22 @@ open http://localhost:3456
 
 ### Latest Updates (January 2025)
 
+#### ✅ **Complete Payment Flow Integration (January 2025)**
+- **Addie Integration**: Full integration with real Addie payment service for payment intent creation
+- **Message-Passing Architecture**: Clean separation between extension and web page via custom DOM events
+- **Stripe Elements**: Proper Stripe Elements implementation following Sanora pattern with real publishableKey from Addie
+- **Safari Web Extension Messaging**: Consolidated message handlers in background.js for reliable communication
+- **Payment Element Lifecycle**: Proper ready state management and element mounting for credit card forms
+- **Real Cryptography**: All payment intents created with sessionless signatures through Swift native messaging
+- **No Mock Data**: Complete removal of simulation/mock data in favor of real Addie service integration
+
+#### 🔧 **Technical Implementation Details**
+- **Content Script**: Handles purchase spells and sends payment requests to extension via `browser.runtime.sendMessage`
+- **Background Script**: Routes payment requests to Swift, consolidates message handlers to prevent conflicts
+- **Swift Integration**: Complete Addie user creation and signed payment intent requests via native messaging
+- **Web Page Integration**: Event-driven payment processing with proper Stripe Elements lifecycle management
+- **Error Handling**: Comprehensive error handling throughout the entire payment flow with user-friendly messaging
+
 #### ✅ **Enhanced Safari Extension (January 22, 2025)**
 - **Real Cryptography**: Implemented proper secp256k1 with compressed keys (02/03 prefix)
 - **Three-Environment Support**: Complete DEV, TEST, and LOCAL base discovery and management

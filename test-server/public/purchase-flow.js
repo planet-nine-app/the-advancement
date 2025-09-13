@@ -18,7 +18,7 @@ class PurchaseFlow {
         
         this.initializeElements();
         this.setupEventListeners();
-        this.initializeStripe();
+        // Stripe will be initialized when we get the publishable key from payment intent
     }
 
     initializeElements() {
@@ -62,13 +62,19 @@ class PurchaseFlow {
         });
     }
 
-    initializeStripe() {
-        // Initialize Stripe (in production, this would use real keys)
+    initializeStripe(publishableKey) {
+        if (!publishableKey) {
+            console.error('❌ No publishable key provided to initialize Stripe');
+            return false;
+        }
+        
         if (window.Stripe) {
-            this.stripe = Stripe('pk_test_TYooMQauvdEDq54NiTphI7jx'); // Test key
-            console.log('💳 Stripe initialized');
+            this.stripe = Stripe(publishableKey);
+            console.log('💳 Stripe initialized with key:', publishableKey);
+            return true;
         } else {
             console.warn('⚠️ Stripe not loaded');
+            return false;
         }
     }
 
@@ -285,20 +291,53 @@ class PurchaseFlow {
         }
 
         try {
-            console.log('💳 [NEW FLOW] Processing Stripe payment with intent:', paymentIntent.id);
+            console.log('💳 [NEW FLOW] Processing Stripe payment with intent:', paymentIntent);
             console.log('💰 [NEW FLOW] Purchase amount: $' + (purchaseData.amount / 100).toFixed(2));
             console.log('📦 [NEW FLOW] Product:', purchaseData.name);
+
+            // Debug: Log the exact structure we received
+            console.log('🔍 [NEW FLOW] Debug paymentIntent structure:', JSON.stringify(paymentIntent, null, 2));
+            
+            // Initialize Stripe with the publishable key from Addie response
+            if (paymentIntent.publishableKey) {
+                console.log('💳 [NEW FLOW] Initializing Stripe with publishable key from Addie');
+                if (!this.initializeStripe(paymentIntent.publishableKey)) {
+                    throw new Error('Failed to initialize Stripe with provided publishable key');
+                }
+            } else {
+                console.error('❌ [NEW FLOW] No publishableKey found in Addie response');
+                throw new Error('No publishable key provided by payment processor');
+            }
 
             // Show loading overlay
             this.showLoading('Processing Stripe payment...');
 
             // Initialize Stripe Elements with the payment intent
+            // Note: Addie returns paymentIntent string directly, not nested client_secret
+            let clientSecret;
+            if (typeof paymentIntent === 'string') {
+                clientSecret = paymentIntent;
+            } else if (paymentIntent.paymentIntent) {
+                clientSecret = paymentIntent.paymentIntent;
+            } else if (paymentIntent.client_secret) {
+                clientSecret = paymentIntent.client_secret;
+            } else {
+                console.error('❌ [NEW FLOW] Could not find client secret in:', paymentIntent);
+                throw new Error('Invalid payment intent format - no client secret found');
+            }
+            
+            console.log('🔑 [NEW FLOW] Using clientSecret:', clientSecret);
+            
             const elements = this.stripe.elements({
-                clientSecret: paymentIntent.client_secret
+                clientSecret: clientSecret
             });
 
             // Create payment element
             const paymentElement = elements.create('payment');
+            
+            // Store elements and paymentElement for later use
+            this.stripeElements = elements;
+            this.stripePaymentElement = paymentElement;
             
             // Create a simple payment form overlay
             this.showStripePaymentOverlay(paymentIntent, purchaseData, elements, paymentElement);
@@ -340,11 +379,12 @@ class PurchaseFlow {
         const paymentForm = document.createElement('div');
         paymentForm.style.cssText = `
             background: white;
-            padding: 30px;
+            padding: 40px;
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            width: 90%;
-            max-width: 500px;
+            width: 95%;
+            max-width: 600px;
+            min-height: 400px;
             position: relative;
         `;
 
@@ -365,7 +405,14 @@ class PurchaseFlow {
                 </div>
             </div>
             
-            <div id="payment-element" style="margin-bottom: 20px;">
+            <div id="payment-element" style="
+                margin: 30px 0; 
+                padding: 20px; 
+                border: 1px solid #e0e0e0; 
+                border-radius: 8px; 
+                background: #fafafa;
+                min-height: 120px;
+            ">
                 <!-- Stripe Elements will mount here -->
             </div>
             
@@ -400,17 +447,57 @@ class PurchaseFlow {
         overlay.appendChild(paymentForm);
         document.body.appendChild(overlay);
         
-        // Mount the Stripe payment element
-        paymentElement.mount('#payment-element');
+        // Mount the Stripe payment element immediately
+        console.log('💳 [NEW FLOW] Attempting to mount payment element...');
+        
+        // Verify the payment element div exists
+        const paymentElementDiv = document.getElementById('payment-element');
+        console.log('💳 [NEW FLOW] Payment element div found:', paymentElementDiv);
+        
+        if (!paymentElementDiv) {
+            console.error('❌ [NEW FLOW] #payment-element div not found in DOM');
+            return;
+        }
+        
+        try {
+            paymentElement.mount('#payment-element');
+            console.log('💳 [NEW FLOW] Payment element mount successful');
+        } catch (error) {
+            console.error('❌ [NEW FLOW] Payment element mount failed:', error);
+        }
+
+        // Wait for payment element to be ready before enabling the form
+        let isPaymentElementReady = false;
+        paymentElement.on('ready', () => {
+            console.log('💳 [NEW FLOW] Payment element ready');
+            isPaymentElementReady = true;
+            const submitBtn = overlay.querySelector('#submit-payment-btn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+            }
+        });
+
+        // Handle payment element changes for validation
+        paymentElement.on('change', (event) => {
+            console.log('💳 [NEW FLOW] Payment element changed:', event);
+        });
+
+        // Initially disable submit button until payment element is ready
+        const submitBtn = overlay.querySelector('#submit-payment-btn');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.6';
+        }
 
         // Hide the main loading overlay now that we have our payment form
         this.hideLoading();
 
         // Setup event handlers
-        this.setupStripePaymentHandlers(overlay, elements, paymentIntent, purchaseData);
+        this.setupStripePaymentHandlers(overlay, elements, paymentIntent, purchaseData, () => isPaymentElementReady);
     }
 
-    setupStripePaymentHandlers(overlay, elements, paymentIntent, purchaseData) {
+    setupStripePaymentHandlers(overlay, elements, paymentIntent, purchaseData, isReadyCallback) {
         const submitBtn = overlay.querySelector('#submit-payment-btn');
         const cancelBtn = overlay.querySelector('#cancel-stripe-btn');
         const messagesDiv = overlay.querySelector('#payment-messages');
@@ -424,6 +511,13 @@ class PurchaseFlow {
         // Submit handler
         submitBtn.addEventListener('click', async () => {
             console.log('💳 [NEW FLOW] Processing Stripe payment...');
+            
+            // Check if payment element is ready
+            if (!isReadyCallback || !isReadyCallback()) {
+                console.warn('💳 [NEW FLOW] Payment element not ready yet');
+                messagesDiv.innerHTML = '<span style="color: #f44336;">Please wait for the payment form to load completely.</span>';
+                return;
+            }
             
             submitBtn.disabled = true;
             submitBtn.textContent = 'Processing...';

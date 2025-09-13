@@ -589,9 +589,9 @@ browser.runtime.sendNativeMessage(
 
 // Handle messages from popup and content scripts using Promise returns instead of sendResponse
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('📨 Background received internal message:', message);
-    console.log('📨 Internal message type:', message.type);
-    console.log('📨 Sender:', sender);
+    console.log('📨 Background received message:', message);
+    console.log('📨 Message type:', message.type);
+    console.log('📨 Sender:', sender.tab?.url || 'popup/extension');
     
     // Return Promises instead of using sendResponse callbacks
     if (message.type === 'castSpell') {
@@ -606,8 +606,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return handleNativeMessage(message);
     } else if (message.type === 'magicSpell') {
         return handleMagicSpell(message);
+    } else if (message.type === 'createAddiePaymentIntent') {
+        console.log('💳 Background processing createAddiePaymentIntent');
+        return handleCreateAddiePaymentIntent(message, sender);
     } else {
-        console.log('❌ Background: Unknown internal message type:', message.type);
+        console.log('❌ Background: Unknown message type:', message.type);
         return Promise.resolve({ success: false, error: `Unknown message type: ${message.type}` });
     }
 });
@@ -927,6 +930,61 @@ async function handleGetBDOCard(message, sender) {
     }
 }
 
+async function handleCreateAddiePaymentIntent(message, sender) {
+    console.log('💳 Background handling createAddiePaymentIntent request:', message);
+    
+    try {
+        const { amount, currency, productId } = message;
+        
+        if (!amount || !currency || !productId) {
+            throw new Error('amount, currency, and productId are required');
+        }
+        
+        console.log(`💰 Background creating Addie payment intent for $${amount/100} ${currency}`);
+        
+        // Send createAddiePaymentIntent request to Swift
+        const swiftResponse = await new Promise((resolve, reject) => {
+            browser.runtime.sendNativeMessage(
+                "com.planetnine.the-advancement.The-Advancement",
+                {
+                    action: 'createAddiePaymentIntent',
+                    amount: amount,
+                    currency: currency,
+                    productId: productId,
+                    requestId: Date.now().toString()
+                },
+                (response) => {
+                    if (browser.runtime.lastError) {
+                        reject(new Error(browser.runtime.lastError.message));
+                    } else {
+                        resolve(response);
+                    }
+                }
+            );
+        });
+        
+        console.log('📡 Background received Swift Addie response:', swiftResponse);
+        
+        if (swiftResponse && swiftResponse.success && swiftResponse.data) {
+            console.log('✅ Background Addie payment intent created successfully');
+            return {
+                success: true,
+                data: swiftResponse.data
+            };
+        } else {
+            console.error('❌ Background Addie payment intent failed:', swiftResponse);
+            throw new Error(swiftResponse?.error || 'Payment intent creation failed');
+        }
+        
+    } catch (error) {
+        console.error('❌ Background Addie payment intent error:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
 async function handleGetSpellbook(message) {
     console.log('📚 Background handling getSpellbook request from popup');
     
@@ -1012,30 +1070,6 @@ async function handleMagicSpell(message) {
     };
 }
 
-// ========================================
-// Message Handler for Content Script Communication
-// ========================================
-
-browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    console.log('📨 Background received message:', request.type, 'from', sender.tab?.url);
-    
-    // Safari Web Extensions use Promise-based messaging
-    switch (request.type) {
-        case 'getBDOCard':
-            // Handle BDO card retrieval requests
-            console.log('📦 Background processing getBDOCard for:', request.bdoPubKey);
-            return handleGetBDOCard(request, sender); // Return Promise
-            
-        case 'castSpell':
-            // Handle spell casting requests
-            console.log('🪄 Background processing castSpell');
-            return handleCastSpell(request, sender); // Return Promise
-            
-        default:
-            console.log('❓ Unknown message type:', request.type);
-            return Promise.resolve({ success: false, error: 'Unknown message type' });
-    }
-});
 
 
 

@@ -1579,66 +1579,52 @@
         }
 
         async createAddiePaymentIntent(amount, productId) {
-            console.log('💳 [CONTENT] Creating Addie payment intent...');
+            console.log('💳 [CONTENT] Creating Addie payment intent via signed request...');
             
             try {
                 console.log(`💳 Creating Addie payment intent for $${amount/100} (${productId})`);
                 
-                // Determine Addie URL based on environment
-                // TODO: Use environment configuration to get correct Addie URL
-                const addieUrl = 'http://127.0.0.1:5116'; // Updated to test environment
+                // Create signed request via Swift (like BDO)
+                const message = {
+                    type: 'createAddiePaymentIntent',
+                    amount: amount,
+                    currency: 'usd',
+                    productId: productId
+                };
                 
-                const response = await fetch(`${addieUrl}/payment-intent`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        amount: amount,
-                        currency: 'usd',
-                        metadata: {
-                            productId: productId,
-                            source: 'ninefy-menu-extension',
-                            timestamp: Date.now()
-                        }
-                    })
-                });
+                let response;
                 
-                if (!response.ok) {
-                    console.warn(`⚠️ Addie service not available (${response.status}), using fallback simulation`);
-                    return this.createSimulatedPaymentIntent(amount, productId);
+                // Use Web Extension API (browser.runtime) for both Safari and Chrome
+                if (typeof browser !== 'undefined' && browser.runtime) {
+                    response = await new Promise((resolve) => {
+                        browser.runtime.sendMessage({
+                            type: 'createAddiePaymentIntent',
+                            ...message
+                        }, (response) => {
+                            resolve(response);
+                        });
+                    });
+                } else {
+                    throw new Error('Extension bridge not available');
                 }
                 
-                const data = await response.json();
-                console.log('✅ Addie payment intent created:', data);
+                console.log('✅ [CONTENT] Addie payment intent response:', response);
+                
+                if (!response || !response.success) {
+                    throw new Error(response?.error || 'Payment intent creation failed');
+                }
                 
                 return {
                     success: true,
-                    data: data
+                    data: response.data
                 };
                 
             } catch (error) {
-                console.warn('⚠️ Addie service not available, using fallback simulation:', error.message);
-                return this.createSimulatedPaymentIntent(amount, productId);
+                console.error('❌ Addie payment intent failed:', error.message);
+                throw new Error(`Payment processing unavailable: ${error.message}`);
             }
         }
 
-        createSimulatedPaymentIntent(amount, productId) {
-            console.log('🧪 Creating simulated payment intent for testing...');
-            return {
-                success: true,
-                data: {
-                    id: `pi_simulation_${Date.now()}`,
-                    client_secret: `pi_simulation_${Date.now()}_secret_test`,
-                    amount: amount,
-                    currency: 'usd',
-                    metadata: {
-                        productId: productId,
-                        source: 'simulation'
-                    }
-                }
-            };
-        }
 
 
         updateMagistackDisplay(cardData) {

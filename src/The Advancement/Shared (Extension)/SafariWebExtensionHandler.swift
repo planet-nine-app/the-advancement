@@ -98,6 +98,15 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             let baseUrl = parameters["baseUrl"] as? String ?? "http://127.0.0.1:5114/"
             handleGetBDOCard(bdoPubKey: bdoPubKey, baseUrl: baseUrl, context: context, requestId: requestId)
             
+        case "createAddiePaymentIntent":
+            guard let amount = parameters["amount"] as? Int,
+                  let currency = parameters["currency"] as? String,
+                  let productId = parameters["productId"] as? String else {
+                sendError(context: context, requestId: requestId, error: "createAddiePaymentIntent requires amount, currency, and productId parameters")
+                return
+            }
+            handleCreateAddiePaymentIntent(amount: amount, currency: currency, productId: productId, context: context, requestId: requestId)
+            
         default:
             sendError(context: context, requestId: requestId, error: "Unknown action: \(action)")
         }
@@ -496,7 +505,7 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         if let data = UserDefaults.standard.data(forKey: "fountUser"),
            let fountUser = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
            let uuid = fountUser["uuid"] as? String,
-           let ordinal = fountUser["ordinal"] as? Int {
+           let _ = fountUser["ordinal"] as? Int {
             logger.info("ADVANCEMENT - 🔍 Swift: Using stored fount user: \(uuid)")
             return fountUser
         }
@@ -704,6 +713,105 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         ]
     }
     
+    private func handleCreateAddiePaymentIntent(amount: Int, currency: String, productId: String, context: NSExtensionContext, requestId: String?) {
+        logger.info("ADVANCEMENT - 💳 Swift: Handling createAddiePaymentIntent request")
+        logger.info("ADVANCEMENT - 💰 Swift: Amount: \(amount), Currency: \(currency), Product: \(productId)")
+        
+        Task {
+            do {
+                let paymentIntentData = try await createAddiePaymentIntent(amount: amount, currency: currency, productId: productId)
+                
+                logger.info("ADVANCEMENT - ✅ Swift: Addie payment intent created successfully")
+                sendSuccess(context: context, requestId: requestId, data: paymentIntentData)
+                
+            } catch {
+                logger.error("ADVANCEMENT - ❌ Swift: createAddiePaymentIntent error: \(error)")
+                sendError(context: context, requestId: requestId, error: error.localizedDescription)
+            }
+        }
+    }
+    
+    private func createAddiePaymentIntent(amount: Int, currency: String, productId: String) async throws -> [String: Any] {
+        // Ensure we have sessionless keys for authentication
+        if sessionless.getKeys() == nil {
+            logger.info("ADVANCEMENT - 🔑 Swift: No keys found, generating new keys for Addie access...")
+            sessionless.generateKeys()
+        }
+        
+        // Create or get Addie user
+        let addieUser = try await getOrCreateAddieUser()
+        logger.info("ADVANCEMENT - 👤 Swift: Using Addie user UUID: \(addieUser)")
+        
+        // Create signed payment intent request
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let message = timestamp + addieUser + String(amount) + currency
+        
+        guard let signature = sessionless.sign(message: message) else {
+            throw NSError(domain: "AddieError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to sign Addie request"])
+        }
+        
+        let payload: [String: Any] = [
+            "timestamp": timestamp,
+            "amount": amount,
+            "currency": currency,
+            "uuid": addieUser,
+            "signature": signature
+        ]
+        
+        // Make request to Addie
+        let addieUrl = "http://127.0.0.1:5116/user/\(addieUser)/processor/stripe/intent-without-splits"
+        logger.info("ADVANCEMENT - 🔗 Swift: Making Addie request to: \(addieUrl)")
+        logger.info("ADVANCEMENT - 📦 Swift: Payload: \(payload)")
+        
+        let response = try await makeBDORequest(endpoint: addieUrl, method: "POST", payload: payload)
+        
+        logger.info("ADVANCEMENT - ✅ Swift: Addie response: \(response)")
+        return response
+    }
+    
+    private func getOrCreateAddieUser() async throws -> String {
+        // Check if we have stored Addie user
+        let addieUserKey = "addie_user_uuid"
+        if let existingUUID = UserDefaults.standard.string(forKey: addieUserKey) {
+            logger.info("ADVANCEMENT - 📱 Swift: Found existing Addie user: \(existingUUID)")
+            return existingUUID
+        }
+        
+        // Create new Addie user
+        guard let keys = sessionless.getKeys(),
+              let publicKey = keys.publicKey as? String else {
+            throw NSError(domain: "AddieError", code: 2, userInfo: [NSLocalizedDescriptionKey: "No sessionless keys available"])
+        }
+        
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let message = timestamp + publicKey
+        
+        guard let signature = sessionless.sign(message: message) else {
+            throw NSError(domain: "AddieError", code: 3, userInfo: [NSLocalizedDescriptionKey: "Failed to sign Addie user creation"])
+        }
+        
+        let payload: [String: Any] = [
+            "pubKey": publicKey,
+            "timestamp": timestamp,
+            "signature": signature
+        ]
+        
+        let createUserUrl = "http://127.0.0.1:5116/user/create"
+        logger.info("ADVANCEMENT - 👤 Swift: Creating Addie user at: \(createUserUrl)")
+        
+        let response = try await makeBDORequest(endpoint: createUserUrl, method: "PUT", payload: payload)
+        
+        guard let uuid = response["uuid"] as? String else {
+            throw NSError(domain: "AddieError", code: 4, userInfo: [NSLocalizedDescriptionKey: "Invalid user creation response"])
+        }
+        
+        // Store the UUID for future use
+        UserDefaults.standard.set(uuid, forKey: addieUserKey)
+        logger.info("ADVANCEMENT - ✅ Swift: Created and stored Addie user: \(uuid)")
+        
+        return uuid
+    }
+
     private func sendSuccess(context: NSExtensionContext, requestId: String?, data: [String: Any]) {
         var response: [String: Any] = [
             "success": true,
