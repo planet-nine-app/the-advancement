@@ -12,21 +12,18 @@ struct AdvanceWidgetControl: ControlWidget {
     let kind: String = "AdvanceWidgetControl"
 
     var body: some ControlWidgetConfiguration {
-        AppIntentControlConfiguration(
-            kind: kind,
-            intent: PlanetNineControlConfiguration.self
-        ) { configuration in
-            ControlWidgetButton(action: configuration.actionType == .foo ? createFooActionIntent() : createBarActionIntent()) {
+        StaticControlConfiguration(kind: kind) {
+            ControlWidgetButton(action: FooActionIntent()) {
                 VStack(spacing: 2) {
                     Circle()
-                        .fill(colorForActionType(configuration.actionType))
+                        .fill(Color.blue.opacity(0.3))
                         .frame(width: 30, height: 30)
                         .overlay(
-                            Text(iconForActionType(configuration.actionType))
+                            Text("🌊")
                                 .font(.system(size: 16))
                         )
 
-                    Text(configuration.actionType.rawValue)
+                    Text("foo")
                         .font(.caption2)
                         .fontWeight(.medium)
                         .foregroundColor(.white)
@@ -49,33 +46,51 @@ struct AdvanceWidgetControl: ControlWidget {
                 .cornerRadius(8)
             }
         }
-        .displayName("Planet Nine")
-        .description("Quick actions for Planet Nine spells")
+        .displayName("Planet Nine - Foo")
+        .description("Trigger foo action with sessionless signature")
     }
+}
 
-    private func createFooActionIntent() -> FooActionIntent {
-        return FooActionIntent()
-    }
+struct AdvanceWidgetBarControl: ControlWidget {
+    let kind: String = "AdvanceWidgetBarControl"
 
-    private func createBarActionIntent() -> BarActionIntent {
-        return BarActionIntent()
-    }
+    var body: some ControlWidgetConfiguration {
+        StaticControlConfiguration(kind: kind) {
+            ControlWidgetButton(action: BarActionIntent()) {
+                VStack(spacing: 2) {
+                    Circle()
+                        .fill(Color.green.opacity(0.3))
+                        .frame(width: 30, height: 30)
+                        .overlay(
+                            Text("🌱")
+                                .font(.system(size: 16))
+                        )
 
-    private func colorForActionType(_ actionType: ActionType) -> Color {
-        switch actionType {
-        case .foo:
-            return Color.blue.opacity(0.3)
-        case .bar:
-            return Color.green.opacity(0.3)
+                    Text("bar")
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+
+                    Text("Planet Nine")
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                .padding(8)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color(red: 0.4, green: 0.49, blue: 0.91),  // #667eea
+                            Color(red: 0.46, green: 0.29, blue: 0.64)   // #764ba2
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .cornerRadius(8)
+            }
         }
+        .displayName("Planet Nine - Bar")
+        .description("Trigger bar action with sessionless signature")
     }
 
-    private func iconForActionType(_ actionType: ActionType) -> String {
-        switch actionType {
-        case .foo:
-            return "🌊"
-        case .bar:
-            return "🌱"
-        }
-    }
 }

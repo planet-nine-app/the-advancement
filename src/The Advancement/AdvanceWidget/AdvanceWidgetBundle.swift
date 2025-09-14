@@ -13,6 +13,7 @@ struct AdvanceWidgetBundle: WidgetBundle {
     var body: some Widget {
         AdvanceWidget()
         AdvanceWidgetControl()
+        AdvanceWidgetBarControl()
         AdvanceWidgetLiveActivity()
     }
 }

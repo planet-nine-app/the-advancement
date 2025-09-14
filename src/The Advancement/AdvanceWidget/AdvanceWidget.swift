@@ -136,7 +136,7 @@ struct AdvanceWidgetEntryView: View {
 
                             // Show real pubKey from BDO card
                             Text("\(entry.cardData?.pubKey.prefix(16) ?? "Loading")...")
-                                .font(.system(size: 8, family: .monospaced))
+                                .font(.system(size: 8, design: .monospaced))
                                 .foregroundColor(.white.opacity(0.8))
                                 .lineLimit(1)
 
@@ -184,13 +184,13 @@ struct AdvanceWidget: Widget {
 extension ConfigurationAppIntent {
     fileprivate static var smiley: ConfigurationAppIntent {
         let intent = ConfigurationAppIntent()
-        intent.favoriteEmoji = "😀"
+        intent.cardPubKey = "03617dbf0a03ce5f39cd5f6766afc82a8a26a4f6f84a08a47cf91903a2570ce27a"
         return intent
     }
     
     fileprivate static var starEyes: ConfigurationAppIntent {
         let intent = ConfigurationAppIntent()
-        intent.favoriteEmoji = "🤩"
+        intent.cardPubKey = "03617dbf0a03ce5f39cd5f6766afc82a8a26a4f6f84a08a47cf91903a2570ce27a"
         return intent
     }
 }

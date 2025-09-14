@@ -36,6 +36,101 @@ The Advancement supports multiple browsers with consistent functionality:
 - **Graceful Degradation**: Fallback functionality when bridge methods unavailable
 - **Production Ready**: Real secp256k1 cryptography with compressed key format (02/03 prefix)
 
+#### **iOS Extensions** (`src/The Advancement/`)
+- **Advancekey**: Custom keyboard extension with 4-tab Planet Nine interface and real BDO integration
+- **AdvanceLook**: QuickLook preview extension for .magicard files with Planet Nine branding
+- **AdvanceWidget**: Complete widget system with main widget, control buttons, and live activities
+- **Real Cryptography**: All extensions use actual `Sessionless().sign()` for signature generation
+- **BDO Integration**: Keyboard and widget fetch real magistack cards from BDO service
+- **Live Activities**: Widget controls trigger live activities with real signatures and color changes
+- **No Mock Data**: Complete removal of placeholder/demo data in favor of real Planet Nine services
+
+### iOS Extension Details
+
+#### **Advancekey - Planet Nine Keyboard** ✅
+**Location**: `src/The Advancement/Advancekey/`
+
+A comprehensive iOS keyboard extension providing Planet Nine functionality directly within the keyboard interface:
+
+**Features**:
+- **4-Tab Interface**: Cards, Auth, Tools, Info tabs with Planet Nine gradient styling
+- **BDO Card Display**: Fetches and displays real magistack cards using working BDO URL
+- **Real Cryptography**: Uses sessionless authentication for all operations
+- **WebKit Integration**: WKWebView for rendering SVG card content
+- **Planet Nine Branding**: Complete visual integration with ecosystem styling
+
+**Technical Implementation**:
+```swift
+// Real BDO integration (same URL as browser extensions)
+let bdoURL = "http://127.0.0.1:5114/user/.../bdo?timestamp=...&signature=...&pubKey=..."
+
+// Parse response like other extensions
+if let jsonObject = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+   let bdoObject = jsonObject["bdo"] as? [String: Any],
+   let cardData = bdoObject["svgContent"] as? String {
+    // Display real SVG content in WebView
+}
+```
+
+#### **AdvanceLook - QuickLook Preview** ✅
+**Location**: `src/The Advancement/AdvanceLook/`
+
+QuickLook preview extension that displays Planet Nine branded previews for .magicard files:
+
+**Features**:
+- **File Type Registration**: Handles .magicard files for preview
+- **Planet Nine UI**: Gradient backgrounds and branded preview interface
+- **Multiple Formats**: Supports JSON cards, BDO references, and debug text files
+- **Rich HTML Preview**: Generates comprehensive HTML with card metadata
+- **Cross-Platform Sharing**: Works with Messages, AirDrop, and other sharing methods
+
+**File Format Support**:
+- **JSON Cards**: Full `MagiCardData` structure with SVG content
+- **BDO References**: Files containing `bdopubkey:` for server lookup
+- **Debug Files**: Text files for testing extension functionality
+
+#### **AdvanceWidget - Widget System** ✅
+**Location**: `src/The Advancement/AdvanceWidget/`
+
+Complete iOS widget system with main widget, control buttons, and live activities:
+
+**Components**:
+1. **Main Widget (`AdvanceWidget.swift`)**:
+   - **BDO Integration**: Fetches real magistack cards using same URL as keyboard
+   - **Card Display**: Shows pubKey, load status, and Planet Nine branding
+   - **Timeline Updates**: Refreshes every hour with real card data
+   - **Error Handling**: Graceful fallback when BDO unavailable
+
+2. **Control Widgets**:
+   - **`AdvanceWidgetControl`**: Blue 🌊 "foo" action control
+   - **`AdvanceWidgetBarControl`**: Green 🌱 "bar" action control
+   - **Static Configuration**: Each control has dedicated function
+   - **Real Signatures**: Uses `Sessionless().sign()` for message signing
+
+3. **Live Activities (`AdvanceWidgetLiveActivity.swift`)**:
+   - **Real Signature Display**: Shows actual cryptographic signatures
+   - **Dynamic Colors**: Changes color based on action (blue/green)
+   - **Dynamic Island**: Full support for iPhone 14 Pro+ Dynamic Island
+   - **Lock Screen**: Rich notifications with signature and timestamp
+
+**Technical Flow**:
+```swift
+// Real signature generation (no mocks)
+func perform() async throws -> some IntentResult {
+    guard let signature = try await sessionless.sign(message: "foo") else {
+        throw NSError(domain: "SessionlessError", code: 1, userInfo: [...])
+    }
+    await updateLiveActivity(message: "foo", signature: signature, color: .blue)
+    return .result()
+}
+```
+
+**User Experience**:
+- **Control Center**: Add two separate controls (foo/bar) to Control Center
+- **Widget Gallery**: Main widget shows real BDO card with status
+- **Live Activities**: Real-time signature display with color coding
+- **Keychain Integration**: Secure key storage shared with other extensions
+
 ### Core Components
 
 #### 1. **InputDetector Class**

@@ -13,7 +13,7 @@
         
         body {
             font-family: 'Inter', 'SF Pro', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #1a1d29 0%, #2d1b69 100%);
+            background: linear-gradient(135deg, #1a2644 0%, #2f5597 50%, #3d6bb5 100%);
             color: #ffffff;
             height: 100vh;
             padding: 0;
@@ -46,48 +46,69 @@
         .author-hero {
             width: 100%;
             height: 50vh;
-            padding: 60px 20px 20px 20px;
+            padding: 30px 20px 20px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             text-align: center;
             max-width: 1200px;
             margin: 0 auto;
             box-sizing: border-box;
+            overflow: auto;
+        }
+        
+        .author-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 30px;
+            width: 100%;
+            max-width: 1000px;
+            margin-top: 20px;
+        }
+        
+        .author-details {
+            flex: 1;
+            text-align: left;
         }
         
         .author-image-large {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 240px;
+            height: 300px;
+            background: linear-gradient(135deg, #2f5597 0%, #c8a882 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 4rem;
             font-weight: bold;
             color: white;
-            margin-bottom: 30px;
-            box-shadow: 0 20px 50px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 20px 50px rgba(47, 85, 151, 0.3);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        .author-image-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
         
         .author-name-large {
-            font-size: 3rem;
+            font-size: 3.5rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2f5597 0%, #c8a882 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 20px;
+            margin-bottom: 0;
+            text-align: center;
         }
         
         .author-bio-large {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: #a0a9c0;
             line-height: 1.6;
-            max-width: 800px;
-            margin-bottom: 50px;
+            margin: 0;
         }
         
         .books-section {
@@ -99,7 +120,7 @@
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: auto;
         }
         
         .books-grid {
@@ -145,8 +166,8 @@
         
         .book-card-large:hover {
             transform: translateY(-10px);
-            box-shadow: 0 25px 50px rgba(102, 126, 234, 0.3);
-            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 0 25px 50px rgba(47, 85, 151, 0.3);
+            border-color: rgba(200, 168, 130, 0.5);
         }
         
         .book-cover-large {
@@ -217,7 +238,7 @@
         }
         
         .purchase-link {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2f5597 0%, #c8a882 100%);
             color: white;
             padding: 8px 12px;
             border-radius: 20px;
@@ -230,7 +251,7 @@
         
         .purchase-link:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 25px rgba(47, 85, 151, 0.4);
         }
         
         .purchase-link.secondary {
@@ -244,22 +265,22 @@
         
         .more-links {
             background: transparent;
-            color: #667eea;
-            border: 1px solid #667eea;
+            color: #2f5597;
+            border: 1px solid #2f5597;
             font-size: 0.9rem;
         }
         
         .more-links:hover {
-            background: #667eea;
+            background: #2f5597;
             color: white;
         }
         
         .section-title {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: #ffffff;
             text-align: center;
-            margin-bottom: 5px;
+            margin-bottom: 20px;
         }
         
         .section-subtitle {
@@ -280,21 +301,30 @@
                 padding: 40px 15px 15px 15px;
             }
             
-            .author-image-large {
-                width: 120px;
-                height: 120px;
+            .author-name-large {
                 font-size: 2.5rem;
                 margin-bottom: 20px;
             }
             
-            .author-name-large {
-                font-size: 2rem;
-                margin-bottom: 15px;
+            .author-content {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: 20px;
+            }
+            
+            .author-image-large {
+                width: 180px;
+                height: 220px;
+                font-size: 2.5rem;
+            }
+            
+            .author-details {
+                text-align: center;
             }
             
             .author-bio-large {
                 font-size: 1rem;
-                margin-bottom: 20px;
             }
             
             .books-section {
@@ -382,17 +412,19 @@
     </style>
 </head>
 <body>
-    <a href="authors.html" class="back-button">← Back to Authors</a>
     
     <div class="author-hero">
-        <div class="author-image-large" id="authorImage">DS</div>
         <h1 class="author-name-large">Delores Sullivan</h1>
-        <p class="author-bio-large">Delores "Deedee" Swigert grew up in rural Missouri during the 1950s and 1960s, an era marked by significant race and gender inequality. Her powerful memoir chronicles her journey from adversity to international modeling and adoption reform activism.</p>
+        <div class="author-content">
+            <div class="author-image-large" id="authorImage">DS</div>
+            <div class="author-details">
+                <p class="author-bio-large">Delores "Deedee" Swigert grew up in rural Missouri during the 1950s and 1960s, an era marked by significant race and gender inequality. Her powerful memoir chronicles her journey from adversity to international modeling and adoption reform activism.</p>
+            </div>
+        </div>
     </div>
     
     <div class="books-section">
         <h2 class="section-title">Books by Delores Sullivan</h2>
-        <p class="section-subtitle">A powerful memoir of resilience and triumph</p>
         
         <div class="books-grid" id="booksGrid">
             <!-- Books will be dynamically loaded -->

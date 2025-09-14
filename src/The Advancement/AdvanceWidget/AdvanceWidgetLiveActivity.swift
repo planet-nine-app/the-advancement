@@ -59,7 +59,7 @@ struct AdvanceWidgetLiveActivity: Widget {
 
                     ScrollView(.horizontal, showsIndicators: false) {
                         Text(context.state.signature.prefix(32) + "...")
-                            .font(.system(size: 8, family: .monospaced))
+                            .font(.system(size: 8, design: .monospaced))
                             .foregroundColor(.white.opacity(0.9))
                             .padding(.horizontal, 8)
                     }
@@ -121,7 +121,7 @@ struct AdvanceWidgetLiveActivity: Widget {
                             .multilineTextAlignment(.center)
 
                         Text("Signature: \(context.state.signature.prefix(20))...")
-                            .font(.system(size: 10, family: .monospaced))
+                            .font(.system(size: 10, design: .monospaced))
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                     }
