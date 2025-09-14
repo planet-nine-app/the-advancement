@@ -4,10 +4,25 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
-		<key>The Advancement (iOS).xcscheme_^#shared#^_</key>
+		<key>AdvanceLook.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>4</integer>
+		</dict>
+		<key>AdvanceWidgetExtension.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>5</integer>
+		</dict>
+		<key>Advancekey.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>2</integer>
+		</dict>
+		<key>The Advancement (iOS).xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
 		</dict>
 		<key>The Advancement (macOS).xcscheme_^#shared#^_</key>
 		<dict>
@@ -22,12 +37,22 @@
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
+		<key>CA54CAFD2E5A0A99007D062D</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
 		<key>CA54CB0F2E5A0A99007D062D</key>
 		<dict>
 			<key>primary</key>
 			<true/>
 		</dict>
 		<key>CA54CB252E5A0A99007D062D</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>CAD800F22E7536CA006FB128</key>
 		<dict>
 			<key>primary</key>
 			<true/>

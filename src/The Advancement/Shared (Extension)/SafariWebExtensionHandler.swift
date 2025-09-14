@@ -778,10 +778,11 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         }
         
         // Create new Addie user
-        guard let keys = sessionless.getKeys(),
-              let publicKey = keys.publicKey as? String else {
+        guard let keys = sessionless.getKeys() else {
             throw NSError(domain: "AddieError", code: 2, userInfo: [NSLocalizedDescriptionKey: "No sessionless keys available"])
         }
+
+        let publicKey = keys.publicKey
         
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
         let message = timestamp + publicKey

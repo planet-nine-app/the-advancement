@@ -31,6 +31,8 @@ const authors = [
     genres: ['Fantasy', 'Adventure', 'Young Adult'],
     awards: ['Hugo Award 2023', 'World Fantasy Award 2022']
   },
+  {uuid: sessionless.generateUUID(),
+  "name":"Delores Swigert Sullivan","email":"deloressullivan2@gmail.com","bio":"Delores “Deedee” Swigert grew up in rural Missouri during the 1950s and 1960s, an era marked by significant race and gender inequality. Her mixed-race parents are in the music business, managing to assimilate by entertaining the local community. \\n\\nHer mother encourages ambition and breaking free of constraints, while her father attempts to repress her curiosity and deny her Mexican heritage. The complex characters within her family and hometown shape her self-understanding and create a strong desire to thrive.  \\n\\nTold through the voice of young Deedee, she encounters and pushes through adversity in the aftermath of her family's disintegration. She is required to raise herself, and is challenged to overcome child abuse, marginalized education, inadequate healthcare, and a teen pregnancy, evolving from a young girl into a woman. \\n\\nShe resists small-town conventions about female sexuality throughout her precocious sexual development, daring to think differently. Loss and suffering as a result of an unplanned pregnancy test her will to survive. \\n\\nHer ability to envision a broader future led to an international modeling career among the fashion world's elite.  Her adoption reform activism puts her at odds with a conservative justice on the US Supreme Court. \\n\\nHer story reflects the modern-day struggles of all women who yearn for freedom in a patriarchal society. \\"A Good Place to Live\\" is told with humor, frankness, and vulnerability, with rich historical detail, accompanied by the musical backdrop of the times. She chronicles a life marked by courage, optimism, perseverance, and emotional resilience. \\n\\n \\n\\nDelores (Teller) Sullivan has worked in the fashion industry as a model, model agent, and model scout for Ford Models New York. She is the former President of the American Adoption Congress in Washington, D.C., a nonprofit organization dedicated to adoption education and legislative advocacy. Her life story and adoption reform activism were featured in Rolling Stone Magazine. She holds a master’s degree in clinical social work and is a psychotherapist. She is married to author Randall Sullivan, whom she met when he interviewed her for Rolling Stone. They live on the Oregon Coast.","location":"Oregon","profileImage":"/images/delores-sullivan.png","genres":["Memoir"]},
   {
     uuid: sessionless.generateUUID(),
     name: 'Marcus Chen',
@@ -87,6 +89,24 @@ const books = [
     published: '2024-08-22',
     rating: 4.9,
     coverImage: 'https://via.placeholder.com/300x450/6a4c93/ffffff?text=Shadows+of+the+Forgotten+Realm'
+  },
+  // Delores Sullivan's books
+  {
+    id: 'a-good-place-to-live',
+    title: 'A Good Place To Live',
+    subTitle: 'A Girl Comes of Age in the Rural Midwest',
+    author: 'Delores Sullivan',
+    authorUUID: authors[1].uuid,
+    description: `"A Good Place to Live" chronicles a mixed-race girl growing up in rural Missouri during the 1950s/60s. As her family disintegrates, DeeDee is forced to raise herself with the help of kind townspeople. She emerges from the trauma of a teen pregnancy and the surrender of her child for adoption to join the international elite of the fashion world. But the lingering wound from the loss of her son spurs her first to a search for him, and then to social activism, as she becomes the face of the adoption reform movement.
+Delores Sullivan has a master's degree in social work. She is married to author Randall Sullivan, and they live on the Oregon Coast.`,
+    price: PRICE, // $12.99 in cents
+    category: 'ebook',
+    genres: ['Memoir'],
+    pages: PAGES,
+    isbn: '979-8-9860138-9-3',
+    published: '2025-09-15',
+    rating: 100,
+    coverImage: '/images/a-good-place-to-live.png'
   },
   // Marcus Chen's books
   {

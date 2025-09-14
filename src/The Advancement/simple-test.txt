@@ -1,0 +1,5 @@
+This is a simple text file to test QuickLook extension loading.
+
+If you see this in a custom Planet Nine preview instead of the default iOS text preview, then our extension is working but there's an issue with .magicard file type recognition.
+
+This would help isolate the problem.

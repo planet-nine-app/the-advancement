@@ -10,6 +10,12 @@
 		CA54CB1D2E5A0A99007D062D /* The Advancement Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA54CB1C2E5A0A99007D062D /* The Advancement Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CA54CB272E5A0A99007D062D /* The Advancement Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA54CB262E5A0A99007D062D /* The Advancement Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CA54CBC22E5A53E6007D062D /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA54CBC12E5A53E6007D062D /* JavaScriptCore.framework */; };
+		CAD800FA2E7536CA006FB128 /* Advancekey.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CAD800F32E7536CA006FB128 /* Advancekey.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CAD801052E760E6B006FB128 /* QuickLook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CAD801042E760E6B006FB128 /* QuickLook.framework */; };
+		CAD801112E760E6B006FB128 /* AdvanceLook.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CAD801032E760E6B006FB128 /* AdvanceLook.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		CAD801202E762F88006FB128 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CAD8011F2E762F88006FB128 /* WidgetKit.framework */; };
+		CAD801222E762F88006FB128 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CAD801212E762F88006FB128 /* SwiftUI.framework */; };
+		CAD801332E762F8A006FB128 /* AdvanceWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CAD8011E2E762F88006FB128 /* AdvanceWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -27,6 +33,27 @@
 			remoteGlobalIDString = CA54CB252E5A0A99007D062D;
 			remoteInfo = "The Advancement Extension (macOS)";
 		};
+		CAD800F82E7536CA006FB128 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CA54CAE22E5A0A98007D062D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CAD800F22E7536CA006FB128;
+			remoteInfo = Advancekey;
+		};
+		CAD8010F2E760E6B006FB128 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CA54CAE22E5A0A98007D062D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CAD801022E760E6B006FB128;
+			remoteInfo = AdvanceLook;
+		};
+		CAD801312E762F8A006FB128 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CA54CAE22E5A0A98007D062D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CAD8011D2E762F88006FB128;
+			remoteInfo = AdvanceWidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -36,7 +63,10 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
+				CAD801112E760E6B006FB128 /* AdvanceLook.appex in Embed Foundation Extensions */,
 				CA54CB1D2E5A0A99007D062D /* The Advancement Extension.appex in Embed Foundation Extensions */,
+				CAD800FA2E7536CA006FB128 /* Advancekey.appex in Embed Foundation Extensions */,
+				CAD801332E762F8A006FB128 /* AdvanceWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -61,6 +91,12 @@
 		CA54CB262E5A0A99007D062D /* The Advancement Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "The Advancement Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA54CBC12E5A53E6007D062D /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/JavaScriptCore.framework; sourceTree = DEVELOPER_DIR; };
 		CA54CBC62E5A9E8D007D062D /* The-Advancement--macOS--Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "The-Advancement--macOS--Info.plist"; sourceTree = "<group>"; };
+		CAD800F32E7536CA006FB128 /* Advancekey.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = Advancekey.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		CAD801032E760E6B006FB128 /* AdvanceLook.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AdvanceLook.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		CAD801042E760E6B006FB128 /* QuickLook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLook.framework; path = System/Library/Frameworks/QuickLook.framework; sourceTree = SDKROOT; };
+		CAD8011E2E762F88006FB128 /* AdvanceWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AdvanceWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		CAD8011F2E762F88006FB128 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		CAD801212E762F88006FB128 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -183,6 +219,51 @@
 			);
 			target = CA54CB0F2E5A0A99007D062D /* The Advancement (macOS) */;
 		};
+		CAD800FE2E7536CA006FB128 /* Exceptions for "Advancekey" folder in "Advancekey" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = CAD800F22E7536CA006FB128 /* Advancekey */;
+		};
+		CAD801152E760E6B006FB128 /* Exceptions for "AdvanceLook" folder in "AdvanceLook" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = CAD801022E760E6B006FB128 /* AdvanceLook */;
+		};
+		CAD801372E762F8A006FB128 /* Exceptions for "AdvanceWidget" folder in "AdvanceWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = CAD8011D2E762F88006FB128 /* AdvanceWidgetExtension */;
+		};
+		CAD8013B2E763384006FB128 /* Exceptions for "Shared (Extension)" folder in "Advancekey" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Resources/crypto.js,
+				Sessionless.swift,
+			);
+			target = CAD800F22E7536CA006FB128 /* Advancekey */;
+		};
+		CAD8013C2E763384006FB128 /* Exceptions for "Shared (Extension)" folder in "AdvanceLook" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Resources/crypto.js,
+				Sessionless.swift,
+			);
+			target = CAD801022E760E6B006FB128 /* AdvanceLook */;
+		};
+		CAD8013D2E763384006FB128 /* Exceptions for "Shared (Extension)" folder in "AdvanceWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Resources/crypto.js,
+				Sessionless.swift,
+			);
+			target = CAD8011D2E762F88006FB128 /* AdvanceWidgetExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -202,6 +283,9 @@
 				CA54CBBA2E5A2BC6007D062D /* Exceptions for "Shared (Extension)" folder in "The Advancement (macOS)" target */,
 				CA54CB5E2E5A0A99007D062D /* Exceptions for "Shared (Extension)" folder in "The Advancement Extension (iOS)" target */,
 				CA54CB5F2E5A0A99007D062D /* Exceptions for "Shared (Extension)" folder in "The Advancement Extension (macOS)" target */,
+				CAD8013B2E763384006FB128 /* Exceptions for "Shared (Extension)" folder in "Advancekey" target */,
+				CAD8013C2E763384006FB128 /* Exceptions for "Shared (Extension)" folder in "AdvanceLook" target */,
+				CAD8013D2E763384006FB128 /* Exceptions for "Shared (Extension)" folder in "AdvanceWidgetExtension" target */,
 			);
 			explicitFolders = (
 				Resources/_locales,
@@ -239,6 +323,30 @@
 			path = "macOS (Extension)";
 			sourceTree = "<group>";
 		};
+		CAD800F42E7536CA006FB128 /* Advancekey */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CAD800FE2E7536CA006FB128 /* Exceptions for "Advancekey" folder in "Advancekey" target */,
+			);
+			path = Advancekey;
+			sourceTree = "<group>";
+		};
+		CAD801062E760E6B006FB128 /* AdvanceLook */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CAD801152E760E6B006FB128 /* Exceptions for "AdvanceLook" folder in "AdvanceLook" target */,
+			);
+			path = AdvanceLook;
+			sourceTree = "<group>";
+		};
+		CAD801232E762F88006FB128 /* AdvanceWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CAD801372E762F8A006FB128 /* Exceptions for "AdvanceWidget" folder in "AdvanceWidgetExtension" target */,
+			);
+			path = AdvanceWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -271,6 +379,30 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CAD800F02E7536CA006FB128 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CAD801002E760E6B006FB128 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CAD801052E760E6B006FB128 /* QuickLook.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CAD8011B2E762F88006FB128 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CAD801222E762F88006FB128 /* SwiftUI.framework in Frameworks */,
+				CAD801202E762F88006FB128 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -284,6 +416,9 @@
 				CA54CB112E5A0A99007D062D /* macOS (App) */,
 				CA54CB202E5A0A99007D062D /* iOS (Extension) */,
 				CA54CB2A2E5A0A99007D062D /* macOS (Extension) */,
+				CAD800F42E7536CA006FB128 /* Advancekey */,
+				CAD801062E760E6B006FB128 /* AdvanceLook */,
+				CAD801232E762F88006FB128 /* AdvanceWidget */,
 				CA54CBC02E5A53E6007D062D /* Frameworks */,
 				CA54CAFF2E5A0A99007D062D /* Products */,
 			);
@@ -296,6 +431,9 @@
 				CA54CB102E5A0A99007D062D /* The Advancement.app */,
 				CA54CB1C2E5A0A99007D062D /* The Advancement Extension.appex */,
 				CA54CB262E5A0A99007D062D /* The Advancement Extension.appex */,
+				CAD800F32E7536CA006FB128 /* Advancekey.appex */,
+				CAD801032E760E6B006FB128 /* AdvanceLook.appex */,
+				CAD8011E2E762F88006FB128 /* AdvanceWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -304,6 +442,9 @@
 			isa = PBXGroup;
 			children = (
 				CA54CBC12E5A53E6007D062D /* JavaScriptCore.framework */,
+				CAD801042E760E6B006FB128 /* QuickLook.framework */,
+				CAD8011F2E762F88006FB128 /* WidgetKit.framework */,
+				CAD801212E762F88006FB128 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -324,6 +465,9 @@
 			);
 			dependencies = (
 				CA54CB1F2E5A0A99007D062D /* PBXTargetDependency */,
+				CAD800F92E7536CA006FB128 /* PBXTargetDependency */,
+				CAD801102E760E6B006FB128 /* PBXTargetDependency */,
+				CAD801322E762F8A006FB128 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				CA54CB002E5A0A99007D062D /* iOS (App) */,
@@ -403,6 +547,72 @@
 			productReference = CA54CB262E5A0A99007D062D /* The Advancement Extension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		CAD800F22E7536CA006FB128 /* Advancekey */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CAD800FD2E7536CA006FB128 /* Build configuration list for PBXNativeTarget "Advancekey" */;
+			buildPhases = (
+				CAD800EF2E7536CA006FB128 /* Sources */,
+				CAD800F02E7536CA006FB128 /* Frameworks */,
+				CAD800F12E7536CA006FB128 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				CAD800F42E7536CA006FB128 /* Advancekey */,
+			);
+			name = Advancekey;
+			packageProductDependencies = (
+			);
+			productName = Advancekey;
+			productReference = CAD800F32E7536CA006FB128 /* Advancekey.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		CAD801022E760E6B006FB128 /* AdvanceLook */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CAD801122E760E6B006FB128 /* Build configuration list for PBXNativeTarget "AdvanceLook" */;
+			buildPhases = (
+				CAD800FF2E760E6B006FB128 /* Sources */,
+				CAD801002E760E6B006FB128 /* Frameworks */,
+				CAD801012E760E6B006FB128 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				CAD801062E760E6B006FB128 /* AdvanceLook */,
+			);
+			name = AdvanceLook;
+			packageProductDependencies = (
+			);
+			productName = AdvanceLook;
+			productReference = CAD801032E760E6B006FB128 /* AdvanceLook.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		CAD8011D2E762F88006FB128 /* AdvanceWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CAD801342E762F8A006FB128 /* Build configuration list for PBXNativeTarget "AdvanceWidgetExtension" */;
+			buildPhases = (
+				CAD8011A2E762F88006FB128 /* Sources */,
+				CAD8011B2E762F88006FB128 /* Frameworks */,
+				CAD8011C2E762F88006FB128 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				CAD801232E762F88006FB128 /* AdvanceWidget */,
+			);
+			name = AdvanceWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = AdvanceWidgetExtension;
+			productReference = CAD8011E2E762F88006FB128 /* AdvanceWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -425,6 +635,15 @@
 					CA54CB252E5A0A99007D062D = {
 						CreatedOnToolsVersion = 16.4;
 					};
+					CAD800F22E7536CA006FB128 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					CAD801022E760E6B006FB128 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					CAD8011D2E762F88006FB128 = {
+						CreatedOnToolsVersion = 16.4;
+					};
 				};
 			};
 			buildConfigurationList = CA54CAE52E5A0A98007D062D /* Build configuration list for PBXProject "The Advancement" */;
@@ -445,6 +664,9 @@
 				CA54CB0F2E5A0A99007D062D /* The Advancement (macOS) */,
 				CA54CB1B2E5A0A99007D062D /* The Advancement Extension (iOS) */,
 				CA54CB252E5A0A99007D062D /* The Advancement Extension (macOS) */,
+				CAD800F22E7536CA006FB128 /* Advancekey */,
+				CAD801022E760E6B006FB128 /* AdvanceLook */,
+				CAD8011D2E762F88006FB128 /* AdvanceWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -472,6 +694,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		CA54CB242E5A0A99007D062D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CAD800F12E7536CA006FB128 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CAD801012E760E6B006FB128 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CAD8011C2E762F88006FB128 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -509,6 +752,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CAD800EF2E7536CA006FB128 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CAD800FF2E760E6B006FB128 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CAD8011A2E762F88006FB128 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -521,6 +785,21 @@
 			isa = PBXTargetDependency;
 			target = CA54CB252E5A0A99007D062D /* The Advancement Extension (macOS) */;
 			targetProxy = CA54CB282E5A0A99007D062D /* PBXContainerItemProxy */;
+		};
+		CAD800F92E7536CA006FB128 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CAD800F22E7536CA006FB128 /* Advancekey */;
+			targetProxy = CAD800F82E7536CA006FB128 /* PBXContainerItemProxy */;
+		};
+		CAD801102E760E6B006FB128 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CAD801022E760E6B006FB128 /* AdvanceLook */;
+			targetProxy = CAD8010F2E760E6B006FB128 /* PBXContainerItemProxy */;
+		};
+		CAD801322E762F8A006FB128 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CAD8011D2E762F88006FB128 /* AdvanceWidgetExtension */;
+			targetProxy = CAD801312E762F8A006FB128 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -919,6 +1198,175 @@
 			};
 			name = Release;
 		};
+		CAD800FB2E7536CA006FB128 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RLJ2FY35FD;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Advancekey/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Advancekey;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.planetnine.the-advancement.The-Advancement.Advancekey";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CAD800FC2E7536CA006FB128 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RLJ2FY35FD;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Advancekey/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Advancekey;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.planetnine.the-advancement.The-Advancement.Advancekey";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		CAD801132E760E6B006FB128 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RLJ2FY35FD;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AdvanceLook/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AdvanceLook;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.planetnine.the-advancement.The-Advancement.AdvanceLook";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CAD801142E760E6B006FB128 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RLJ2FY35FD;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AdvanceLook/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AdvanceLook;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.planetnine.the-advancement.The-Advancement.AdvanceLook";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		CAD801352E762F8A006FB128 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RLJ2FY35FD;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AdvanceWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AdvanceWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.planetnine.the-advancement.The-Advancement.AdvanceWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CAD801362E762F8A006FB128 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RLJ2FY35FD;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AdvanceWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AdvanceWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.planetnine.the-advancement.The-Advancement.AdvanceWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -963,6 +1411,33 @@
 			buildConfigurations = (
 				CA54CB5C2E5A0A99007D062D /* Debug */,
 				CA54CB5D2E5A0A99007D062D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CAD800FD2E7536CA006FB128 /* Build configuration list for PBXNativeTarget "Advancekey" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CAD800FB2E7536CA006FB128 /* Debug */,
+				CAD800FC2E7536CA006FB128 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CAD801122E760E6B006FB128 /* Build configuration list for PBXNativeTarget "AdvanceLook" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CAD801132E760E6B006FB128 /* Debug */,
+				CAD801142E760E6B006FB128 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CAD801342E762F8A006FB128 /* Build configuration list for PBXNativeTarget "AdvanceWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CAD801352E762F8A006FB128 /* Debug */,
+				CAD801362E762F8A006FB128 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

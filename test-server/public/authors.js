@@ -51,6 +51,15 @@ class AuthorsCarousel {
                 location: 'Mexico City, Mexico',
                 profileImage: '/images/isabella-rodriguez.svg',
                 genres: ['Historical Fiction', 'Literary Fiction', 'Cultural Heritage']
+            },
+            {
+                uuid: 'author-uuid-4',
+                name: 'Delores Sullivan',
+                email: 'deloressullivan2@gmail.com',
+                bio: 'Delores "Deedee" Swigert grew up in rural Missouri during the 1950s and 1960s, an era marked by significant race and gender inequality. Her story reflects the modern-day struggles of all women who yearn for freedom in a patriarchal society.',
+                location: 'Oregon',
+                profileImage: '/images/delores-sullivan.jpg',
+                genres: ['Memoir']
             }
         ];
 
@@ -63,7 +72,8 @@ class AuthorsCarousel {
                 description: 'In a world where magic flows through ancient crystals, young Lyra must unite the scattered kingdoms before darkness consumes everything she holds dear.',
                 price: 1299,
                 genre: 'Fantasy',
-                coverColor: '#4a90e2'
+                coverColor: '#4a90e2',
+                coverImage: '/images/crystal-prophecy-cover.jpg'
             },
             {
                 id: 'shadows-realm-002',
@@ -72,7 +82,8 @@ class AuthorsCarousel {
                 description: 'The epic sequel to The Crystal Prophecy. Lyra faces her greatest challenge yet as she ventures into the Forgotten Realm to save her world.',
                 price: 1399,
                 genre: 'Fantasy',
-                coverColor: '#6a4c93'
+                coverColor: '#6a4c93',
+                coverImage: '/images/shadows-realm-cover.jpg'
             },
             // Marcus Chen's books
             {
@@ -82,7 +93,8 @@ class AuthorsCarousel {
                 description: 'When AI achieves true consciousness, the line between human and machine blurs. A thrilling exploration of what it means to be alive.',
                 price: 1499,
                 genre: 'Science Fiction',
-                coverColor: '#e74c3c'
+                coverColor: '#e74c3c',
+                coverImage: '/images/digital-consciousness-cover.jpg'
             },
             {
                 id: 'quantum-paradox-004',
@@ -91,7 +103,8 @@ class AuthorsCarousel {
                 description: 'A quantum physicist discovers that reality itself is programmable, leading to a race against time to prevent digital apocalypse.',
                 price: 1599,
                 genre: 'Science Fiction', 
-                coverColor: '#f39c12'
+                coverColor: '#f39c12',
+                coverImage: '/images/quantum-paradox-cover.jpg'
             },
             // Isabella Rodriguez's books
             {
@@ -101,7 +114,8 @@ class AuthorsCarousel {
                 description: 'Follow the untold story of Itzel, a young Aztec woman who becomes a bridge between two worlds during the Spanish conquest.',
                 price: 1199,
                 genre: 'Historical Fiction',
-                coverColor: '#27ae60'
+                coverColor: '#27ae60',
+                coverImage: '/images/aztec-dreams-cover.jpg'
             },
             {
                 id: 'colonial-echoes-006',
@@ -110,7 +124,19 @@ class AuthorsCarousel {
                 description: 'A sweeping saga of three generations of women fighting to preserve their heritage during the colonial period in New Spain.',
                 price: 1299,
                 genre: 'Historical Fiction',
-                coverColor: '#8e44ad'
+                coverColor: '#8e44ad',
+                coverImage: '/images/colonial-echoes-cover.jpg'
+            },
+            // Delores Sullivan's book
+            {
+                id: 'a-good-place-to-live',
+                title: 'A Good Place To Live',
+                authorUUID: 'author-uuid-4',
+                description: '"A Good Place to Live" chronicles a mixed-race girl growing up in rural Missouri during the 1950s/60s. A compelling memoir of resilience, family, and the courage to overcome adversity.',
+                price: 1299,
+                genre: 'Memoir',
+                coverColor: '#d4a574',
+                coverImage: '/images/a-good-place-to-live.png'
             }
         ];
 
@@ -144,6 +170,14 @@ class AuthorsCarousel {
     createAuthorSection(author, books) {
         const section = document.createElement('div');
         section.className = 'author-section';
+        
+        // Make author section clickable
+        section.style.cursor = 'pointer';
+        section.addEventListener('click', () => {
+            // Convert author name to hyphenated filename
+            const authorFileName = author.name.toLowerCase().replace(/\s+/g, '-') + '.html';
+            window.location.href = authorFileName;
+        });
 
         // Author profile
         const profile = document.createElement('div');
@@ -216,17 +250,50 @@ class AuthorsCarousel {
         const card = document.createElement('div');
         card.className = 'book-card';
 
+        // Book cover (image or fallback to gradient)
         const cover = document.createElement('div');
         cover.className = 'book-cover';
-        cover.style.background = `linear-gradient(135deg, ${book.coverColor} 0%, ${this.darkenColor(book.coverColor)} 100%)`;
-        cover.textContent = book.title;
+        
+        if (book.coverImage) {
+            // Try to use the cover image
+            const img = document.createElement('img');
+            img.src = book.coverImage;
+            img.alt = `${book.title} cover`;
+            img.onerror = () => {
+                // Fallback to gradient background with title text
+                cover.style.background = `linear-gradient(135deg, ${book.coverColor} 0%, ${this.darkenColor(book.coverColor)} 100%)`;
+                cover.textContent = book.title;
+                img.remove();
+            };
+            cover.appendChild(img);
+        } else {
+            // Fallback to gradient with title text
+            cover.style.background = `linear-gradient(135deg, ${book.coverColor} 0%, ${this.darkenColor(book.coverColor)} 100%)`;
+            cover.textContent = book.title;
+        }
+
+        // Book info container
+        const info = document.createElement('div');
+        info.className = 'book-info';
 
         const title = document.createElement('div');
         title.className = 'book-title';
         title.textContent = book.title;
 
+        const description = document.createElement('div');
+        description.className = 'book-description';
+        description.textContent = book.description;
+
+        const price = document.createElement('div');
+        price.className = 'book-price';
+        price.textContent = `$${(book.price / 100).toFixed(2)}`;
+
+        info.appendChild(title);
+        info.appendChild(description);
+        info.appendChild(price);
+
         card.appendChild(cover);
-        card.appendChild(title);
+        card.appendChild(info);
 
         // Add click handler for potential purchase
         card.addEventListener('click', () => {

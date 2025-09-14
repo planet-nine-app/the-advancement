@@ -1,0 +1,12 @@
+{
+  "type": "magicard",
+  "version": "1.0",
+  "pubKey": "03617dbf0a03ce5f39cd5f6766afc82a8a26a4f6f84a08a47cf91903a2570ce27a",
+  "svgContent": "<svg width=\"300\" height=\"200\" viewBox=\"0 0 300 200\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"testGrad\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"100%\"><stop offset=\"0%\" style=\"stop-color:#667eea;stop-opacity:1\" /><stop offset=\"100%\" style=\"stop-color:#764ba2;stop-opacity:1\" /></linearGradient></defs><rect width=\"300\" height=\"200\" fill=\"url(#testGrad)\" rx=\"16\"/><circle cx=\"150\" cy=\"100\" r=\"30\" fill=\"rgba(255,255,255,0.3)\"/><text x=\"150\" y=\"110\" text-anchor=\"middle\" fill=\"white\" font-size=\"24\">🎴</text><text x=\"150\" y=\"150\" text-anchor=\"middle\" fill=\"white\" font-size=\"16\" font-weight=\"bold\">QuickLook Test Card</text><text x=\"150\" y=\"170\" text-anchor=\"middle\" fill=\"rgba(255,255,255,0.8)\" font-size=\"12\">This should show in Messages preview</text></svg>",
+  "metadata": {
+    "title": "QuickLook Test Card",
+    "description": "Testing Messages app QuickLook integration",
+    "spells": ["debug"],
+    "signature": "test123"
+  }
+}
