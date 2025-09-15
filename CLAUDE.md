@@ -40,8 +40,9 @@ The Advancement supports multiple browsers with consistent functionality:
 - **Advancekey**: Custom keyboard extension with 4-tab Planet Nine interface and real BDO integration
 - **AdvanceLook**: QuickLook preview extension for .magicard files with Planet Nine branding
 - **AdvanceWidget**: Complete widget system with main widget, control buttons, and live activities
+- **AdvanceAction**: macOS Action Extension for displaying Planet Nine cards from selected text containing bdoPubKeys
 - **Real Cryptography**: All extensions use actual `Sessionless().sign()` for signature generation
-- **BDO Integration**: Keyboard and widget fetch real magistack cards from BDO service
+- **BDO Integration**: Keyboard, widget, and action extensions fetch real magistack cards from BDO service
 - **Live Activities**: Widget controls trigger live activities with real signatures and color changes
 - **No Mock Data**: Complete removal of placeholder/demo data in favor of real Planet Nine services
 
@@ -130,6 +131,55 @@ func perform() async throws -> some IntentResult {
 - **Widget Gallery**: Main widget shows real BDO card with status
 - **Live Activities**: Real-time signature display with color coding
 - **Keychain Integration**: Secure key storage shared with other extensions
+
+#### **AdvanceAction - macOS Action Extension** ✅
+**Location**: `src/The Advancement/AdvanceAction/`
+
+A macOS Action Extension that detects bdoPubKeys in selected text and displays corresponding Planet Nine cards:
+
+**Features**:
+- **Text Selection Detection**: Automatically detects when text containing bdoPubKeys is selected
+- **Share Menu Integration**: Appears in the macOS Share menu when compatible text is selected
+- **BDO Integration**: Fetches real magistack cards using same BDO URL as other extensions
+- **WebKit Card Display**: Renders SVG card content with Planet Nine styling
+- **Smart pubKey Detection**: Validates 66-character hex strings with 02/03 prefix
+- **Pattern Extraction**: Can extract pubKeys from formatted text (e.g., "pubKey: 03abc...")
+
+**Technical Implementation**:
+```swift
+// Action Extension configuration for text selection
+<key>NSExtensionActivationRule</key>
+<dict>
+    <key>NSExtensionActivationSupportsText</key>
+    <true/>
+    <key>NSExtensionActivationSupportsWebPageWithMaxCount</key>
+    <integer>1</integer>
+</dict>
+
+// pubKey validation
+private func isBDOPubKey(_ text: String) -> Bool {
+    let cleanText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard cleanText.count == 66 else { return false }
+    guard cleanText.hasPrefix("02") || cleanText.hasPrefix("03") else { return false }
+    let hexCharacters = CharacterSet(charactersIn: "0123456789abcdefABCDEF")
+    return cleanText.unicodeScalars.allSatisfy { hexCharacters.contains($0) }
+}
+
+// Same BDO URL pattern as other extensions
+let bdoURL = "http://127.0.0.1:5114/user/3129c121-e443-4581-82c4-516fb0a2cc64/bdo?..."
+```
+
+**Configuration Details**:
+- **Extension Point**: `com.apple.ui-services` for proper Action Extension registration
+- **Service Integration**: Also configures traditional NSServices for broader compatibility
+- **Touch Bar Support**: Includes Touch Bar integration attributes
+- **Finder Integration**: Supports Finder preview items with NSActionTemplate icon
+
+**User Experience**:
+- **Share Menu**: Select text containing bdoPubKey → Share button → "Show Planet Nine Card"
+- **Card Display**: 500x400 window with Planet Nine gradient styling and SVG card rendering
+- **Error Handling**: Clear feedback for invalid text or connection issues
+- **Immediate Feedback**: Shows "Action Extension is working!" message on load
 
 ### Core Components
 

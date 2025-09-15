@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.Storyboard.XIB" version="3.0" toolsVersion="21701" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" initialViewController="B8D-0N-5wS">
+    <dependencies>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="21701"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--Action View Controller-->
+        <scene sceneID="uQo-RZ-WhF">
+            <objects>
+                <viewController id="B8D-0N-5wS" customClass="ActionViewController" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" identifier="M5A-MZ-Fq0" id="ndF-FT-vvE">
+                        <rect key="frame" x="0.0" y="0.0" width="500" height="400"/>
+                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
+                        <subviews>
+                            <customView translatesAutoresizingMaskIntoConstraints="NO" id="bQd-aN-8hF">
+                                <rect key="frame" x="20" y="80" width="460" height="280"/>
+                            </customView>
+                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ryd-ZK-6Z7">
+                                <rect key="frame" x="18" y="370" width="464" height="16"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="🎴 Loading Planet Nine card..." id="tCy-hA-7AX">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="4SB-c0-tQy">
+                                <rect key="frame" x="18" y="340" width="464" height="16"/>
+                                <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="" id="7gp-C1-vIy">
+                                    <font key="font" metaFont="system"/>
+                                    <color key="textColor" name="systemRedColor" catalog="System" colorSpace="catalog"/>
+                                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                </textFieldCell>
+                            </textField>
+                            <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="hQd-oO-8iI">
+                                <rect key="frame" x="415" y="13" width="71" height="32"/>
+                                <buttonCell key="cell" type="push" title="Done" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="YdS-8b-DoM">
+                                    <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                    <font key="font" metaFont="system"/>
+                                    <string key="keyEquivalent" base64-UTF8="YES">
+DQ
+</string>
+                                </buttonCell>
+                                <connections>
+                                    <action selector="done:" target="B8D-0N-5wS" id="Oc4-Dk-FoY"/>
+                                </connections>
+                            </button>
+                        </subviews>
+                        <constraints>
+                            <constraint firstItem="ryd-ZK-6Z7" firstAttribute="top" secondItem="ndF-FT-vvE" secondAttribute="top" constant="14" id="8bC-Xf-vxc"/>
+                            <constraint firstItem="4SB-c0-tQy" firstAttribute="leading" secondItem="ndF-FT-vvE" secondAttribute="leading" constant="20" symbolic="YES" id="9Pq-wP-W2P"/>
+                            <constraint firstAttribute="trailing" secondItem="4SB-c0-tQy" secondAttribute="trailing" constant="20" symbolic="YES" id="Ddp-jV-hwj"/>
+                            <constraint firstAttribute="bottom" secondItem="hQd-oO-8iI" secondAttribute="bottom" constant="20" symbolic="YES" id="JQp-Dp-btD"/>
+                            <constraint firstAttribute="trailing" secondItem="ryd-ZK-6Z7" secondAttribute="trailing" constant="20" symbolic="YES" id="Kd2-53-nGd"/>
+                            <constraint firstItem="bQd-aN-8hF" firstAttribute="leading" secondItem="ndF-FT-vvE" secondAttribute="leading" constant="20" symbolic="YES" id="N1h-Bc-sbx"/>
+                            <constraint firstItem="4SB-c0-tQy" firstAttribute="top" secondItem="ryd-ZK-6Z7" secondAttribute="bottom" constant="14" symbolic="YES" id="OcB-nb-11V"/>
+                            <constraint firstAttribute="trailing" secondItem="bQd-aN-8hF" secondAttribute="trailing" constant="20" symbolic="YES" id="aHu-Ya-d5v"/>
+                            <constraint firstAttribute="trailing" secondItem="hQd-oO-8iI" secondAttribute="trailing" constant="20" symbolic="YES" id="fQF-4Z-0ia"/>
+                            <constraint firstItem="bQd-aN-8hF" firstAttribute="top" secondItem="4SB-c0-tQy" secondAttribute="bottom" constant="20" symbolic="YES" id="jcV-AT-z6d"/>
+                            <constraint firstItem="ryd-ZK-6Z7" firstAttribute="leading" secondItem="ndF-FT-vvE" secondAttribute="leading" constant="20" symbolic="YES" id="lSM-uS-VYm"/>
+                            <constraint firstItem="hQd-oO-8iI" firstAttribute="top" secondItem="bQd-aN-8hF" secondAttribute="bottom" constant="20" symbolic="YES" id="oIH-gY-cub"/>
+                        </constraints>
+                    </view>
+                    <connections>
+                        <outlet property="containerView" destination="bQd-aN-8hF" id="NOA-rT-cGc"/>
+                        <outlet property="errorLabel" destination="4SB-c0-tQy" id="MY4-vx-cqm"/>
+                        <outlet property="loadingLabel" destination="ryd-ZK-6Z7" id="Akp-RH-15o"/>
+                    </connections>
+                </viewController>
+                <customObject id="Oky-zY-oP4" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="75" y="250"/>
+        </scene>
+    </scenes>
+</document>
