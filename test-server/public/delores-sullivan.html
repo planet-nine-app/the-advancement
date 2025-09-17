@@ -299,11 +299,19 @@
             overflow: hidden;
         }
         
-        .book-price-large {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #667eea;
+        .book-pricing-container {
             margin-bottom: 12px;
+        }
+
+        .book-price-large {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 6px;
+        }
+
+        .book-price-large:last-child {
+            margin-bottom: 0;
         }
         
         .purchase-links {
@@ -311,6 +319,28 @@
             flex-direction: column;
             gap: 8px;
             width: 100%;
+        }
+
+        .buy-buttons-section {
+            width: 120px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .buy-buttons-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .buy-buttons-group h4 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0 0 8px 0;
+            text-align: center;
         }
         
         .purchase-link {
@@ -509,23 +539,34 @@
                 -webkit-line-clamp: 2;
             }
             
-            .book-price-large {
-                font-size: 1rem;
-                text-align: left;
+            .book-pricing-container {
                 margin-bottom: 8px;
             }
-            
-            .purchase-links {
-                flex-direction: row;
-                gap: 6px;
-                flex-wrap: wrap;
+
+            .book-price-large {
+                font-size: 0.9rem;
+                text-align: left;
+                margin-bottom: 4px;
             }
             
-            .purchase-link {
-                padding: 6px 10px;
+            .buy-buttons-section {
+                width: 100px;
+                gap: 8px;
+            }
+
+            .buy-buttons-group {
+                gap: 4px;
+            }
+
+            .buy-buttons-group h4 {
                 font-size: 0.75rem;
-                flex: 1;
-                min-width: 80px;
+                margin-bottom: 4px;
+            }
+
+            .purchase-link {
+                padding: 4px 8px;
+                font-size: 0.7rem;
+                text-align: center;
             }
             
             .section-title {
@@ -584,7 +625,10 @@
                 subtitle: 'A Girl Comes of Age in the Rural Midwest',
                 authorUUID: 'author-uuid-4',
                 description: '"A Good Place to Live" chronicles a mixed-race girl growing up in rural Missouri during the 1950s/60s. As her family disintegrates, DeeDee is forced to raise herself, emerging from trauma to join the international elite of the fashion world.',
-                price: "PRICE",
+                pricing: {
+                    print: 2000,  // $20.00 in cents
+                    ebook: 1500   // $15.00 in cents
+                },
                 genre: 'Memoir',
                 coverColor: '#d4a574',
                 coverImage: '/images/a-good-place-to-live.png',
@@ -601,11 +645,9 @@
                     }
                 ],
                 purchaseLinks: [
-                //    { name: 'Amazon Kindle', url: 'https://amazon.com/dp/a-good-place-to-live', primary: true },
-                //    { name: 'Apple Books', url: 'https://books.apple.com/a-good-place-to-live', primary: true },
-                //    { name: 'Barnes & Noble', url: 'https://barnesandnoble.com/a-good-place-to-live' },
-                //    { name: 'Kobo', url: 'https://kobo.com/a-good-place-to-live' },
-                //    { name: 'Google Play', url: 'https://play.google.com/a-good-place-to-live' }
+                    { name: 'Print - Amazon', url: 'https://a.co/d/4xz7Wcm', type: 'print', primary: true },
+                    { name: 'Print - F-Stop Books', url: 'https://windfall1.wixsite.com/f-stop-books', type: 'print', primary: true },
+                    { name: 'eBook - Peace Love & Redistribution', url: 'https://peaceloveandredistribution.com/a-good-place-to-live', type: 'ebook', primary: true }
                 ]
             }
         ];
@@ -728,58 +770,70 @@
                 });
             }
 
-            // Book price
-            const price = document.createElement('div');
-            price.className = 'book-price-large';
-            price.textContent = `$${(book.price / 100).toFixed(2)}`;
+            // Book pricing
+            const pricingContainer = document.createElement('div');
+            pricingContainer.className = 'book-pricing-container';
 
-            // Purchase links
-            const purchaseLinks = document.createElement('div');
-            purchaseLinks.className = 'purchase-links';
+            const printPrice = document.createElement('div');
+            printPrice.className = 'book-price-large';
+            printPrice.innerHTML = `<strong>Print:</strong> $${(book.pricing.print / 100).toFixed(2)}`;
 
-            // Add primary links (first 2)
-            const primaryLinks = book.purchaseLinks.filter(link => link.primary).slice(0, 2);
-            primaryLinks.forEach(link => {
+            const ebookPrice = document.createElement('div');
+            ebookPrice.className = 'book-price-large';
+            ebookPrice.innerHTML = `<strong>eBook:</strong> $${(book.pricing.ebook / 100).toFixed(2)}`;
+
+            pricingContainer.appendChild(printPrice);
+            pricingContainer.appendChild(ebookPrice);
+
+            // Create buy buttons section
+            const buyButtonsSection = document.createElement('div');
+            buyButtonsSection.className = 'buy-buttons-section';
+
+            // Print books group
+            const printGroup = document.createElement('div');
+            printGroup.className = 'buy-buttons-group';
+            const printTitle = document.createElement('h4');
+            printTitle.textContent = `Print - $${(book.pricing.print / 100).toFixed(2)}`;
+            printGroup.appendChild(printTitle);
+
+            const printLinks = book.purchaseLinks.filter(link => link.type === 'print');
+            printLinks.forEach(link => {
                 const linkEl = document.createElement('a');
                 linkEl.href = link.url;
                 linkEl.className = 'purchase-link';
-                linkEl.textContent = link.name;
+                linkEl.textContent = link.name.replace('Print - ', '');
                 linkEl.target = '_blank';
                 linkEl.rel = 'noopener';
-                purchaseLinks.appendChild(linkEl);
+                printGroup.appendChild(linkEl);
             });
 
-            // Add "More" button if there are additional links
-            const additionalLinks = book.purchaseLinks.slice(2);
-            if (additionalLinks.length > 0) {
-                const moreButton = document.createElement('button');
-                moreButton.className = 'purchase-link more-links';
-                moreButton.textContent = `+ ${additionalLinks.length} More`;
-                
-                moreButton.addEventListener('click', () => {
-                    // Replace "More" button with additional links
-                    moreButton.remove();
-                    additionalLinks.forEach(link => {
-                        const linkEl = document.createElement('a');
-                        linkEl.href = link.url;
-                        linkEl.className = 'purchase-link secondary';
-                        linkEl.textContent = link.name;
-                        linkEl.target = '_blank';
-                        linkEl.rel = 'noopener';
-                        purchaseLinks.appendChild(linkEl);
-                    });
-                });
-                
-                purchaseLinks.appendChild(moreButton);
-            }
+            // eBook group
+            const ebookGroup = document.createElement('div');
+            ebookGroup.className = 'buy-buttons-group';
+            const ebookTitle = document.createElement('h4');
+            ebookTitle.textContent = `eBook - $${(book.pricing.ebook / 100).toFixed(2)}`;
+            ebookGroup.appendChild(ebookTitle);
+
+            const ebookLinks = book.purchaseLinks.filter(link => link.type === 'ebook');
+            ebookLinks.forEach(link => {
+                const linkEl = document.createElement('a');
+                linkEl.href = link.url;
+                linkEl.className = 'purchase-link';
+                linkEl.textContent = link.name.replace('eBook - ', '');
+                linkEl.target = '_blank';
+                linkEl.rel = 'noopener';
+                ebookGroup.appendChild(linkEl);
+            });
+
+            buyButtonsSection.appendChild(printGroup);
+            buyButtonsSection.appendChild(ebookGroup);
 
             // Assemble the book info
             bookInfo.appendChild(title);
             bookInfo.appendChild(description);
             bookInfo.appendChild(blurbPreview);
             bookInfo.appendChild(blurbsContainer);
-            bookInfo.appendChild(price);
-            bookInfo.appendChild(purchaseLinks);
+            bookInfo.appendChild(pricingContainer);
             
             // Add click handler for expand/collapse
             card.addEventListener('click', () => {
@@ -812,6 +866,7 @@
             // Add elements to card
             card.appendChild(cover);
             card.appendChild(bookInfo);
+            card.appendChild(buyButtonsSection);
 
             return card;
         }

@@ -408,10 +408,32 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Signature verification demo page
+app.get('/signature-demo', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'signature-demo.html'));
+});
+
 // Serve favicon
 app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(__dirname, 'favicon.png'));
 });
+
+// API: Sign function with arity 2
+app.post('/api/sign', (req, res) => {
+    const { keys, message } = req.body;
+
+    const signature = sign(keys, message);
+
+    res.json({
+        success: true,
+        signature: signature
+    });
+});
+
+// Sign function that takes two arguments: keys and message, returns "SIGNATURE"
+function sign(keys, message) {
+    return "SIGNATURE";
+}
 
 // API: Get website owner info (for The Advancement)
 app.get('/api/site-owner', (req, res) => {

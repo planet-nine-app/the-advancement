@@ -5,7 +5,7 @@
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner" customClass="ActionViewController" customModuleProvider="target">
+        <customObject id="-2" userLabel="File's Owner" customClass="ActionViewController" customModule="AdvanceAction2" customModuleProvider="target">
             <connections>
                 <outlet property="myTextView" destination="doM-dO-ckO" id="nty-cj-djg"/>
                 <outlet property="view" destination="1" id="2"/>

@@ -13,6 +13,10 @@ class KeyboardViewController: UIInputViewController {
     @IBOutlet var nextKeyboardButton: UIButton!
     private var webView: WKWebView!
 
+    // UIKit Context Display
+    private var contextButton: UIButton!
+    private var contextLabel: UILabel!
+
     override func updateViewConstraints() {
         super.updateViewConstraints()
 
@@ -35,6 +39,7 @@ class KeyboardViewController: UIInputViewController {
 
         setupSVGKeyboard()
         setupNextKeyboardButton()
+        setupContextDisplay()
     }
 
     private func setupSVGKeyboard() {
@@ -51,9 +56,9 @@ class KeyboardViewController: UIInputViewController {
 
         self.view.addSubview(webView)
 
-        // Layout WebView
+        // Layout WebView - leave space at top for context label
         NSLayoutConstraint.activate([
-            webView.topAnchor.constraint(equalTo: self.view.topAnchor),
+            webView.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 40),
             webView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
             webView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
             webView.heightAnchor.constraint(equalToConstant: 160)
@@ -78,6 +83,109 @@ class KeyboardViewController: UIInputViewController {
             nextKeyboardButton.widthAnchor.constraint(equalToConstant: 40),
             nextKeyboardButton.heightAnchor.constraint(equalToConstant: 30)
         ])
+    }
+
+    private func setupContextDisplay() {
+        // Create Context Analysis Button
+        contextButton = UIButton(type: .system)
+        contextButton.setTitle("🔍 Context", for: .normal)
+        contextButton.setTitleColor(.white, for: .normal)
+        contextButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .medium)
+        contextButton.backgroundColor = UIColor(red: 0.4, green: 0.47, blue: 0.92, alpha: 0.8) // Planet Nine gradient color
+        contextButton.layer.cornerRadius = 6
+        contextButton.translatesAutoresizingMaskIntoConstraints = false
+        contextButton.addTarget(self, action: #selector(contextButtonTapped), for: .touchUpInside)
+
+        // Create Context Display Label
+        contextLabel = UILabel()
+        contextLabel.numberOfLines = 0
+        contextLabel.font = UIFont.monospacedSystemFont(ofSize: 10, weight: .regular)
+        contextLabel.textColor = .white
+        contextLabel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
+        contextLabel.layer.cornerRadius = 4
+        contextLabel.layer.masksToBounds = true
+        contextLabel.textAlignment = .left
+        contextLabel.text = "Tap 🔍 Context to analyze"
+        contextLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        // Add padding to label
+        contextLabel.layer.borderWidth = 1
+        contextLabel.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
+
+        self.view.addSubview(contextButton)
+        self.view.addSubview(contextLabel)
+
+        NSLayoutConstraint.activate([
+            // Context button - top right
+            contextButton.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -10),
+            contextButton.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: -10),
+            contextButton.widthAnchor.constraint(equalToConstant: 80),
+            contextButton.heightAnchor.constraint(equalToConstant: 30),
+
+            // Context label - in the top 40px space
+            contextLabel.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 10),
+            contextLabel.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -10),
+            contextLabel.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 5),
+            contextLabel.heightAnchor.constraint(equalToConstant: 30)
+        ])
+    }
+
+    @objc private func contextButtonTapped() {
+        contextButton.setTitle("TAPPER", for: .normal)
+        analyzeContextForUIKit()
+        contextButton.backgroundColor = .orange
+    }
+
+    private func analyzeContextForUIKit() {
+        let proxy = self.textDocumentProxy
+
+        // Get text around cursor (iOS provides limited context for privacy)
+        let beforeText = proxy.documentContextBeforeInput ?? "bef"
+        let afterText = proxy.documentContextAfterInput ?? "aft"
+        let selectedText = proxy.selectedText ?? "sel"
+
+        // Combine all available text
+        let fullContext = beforeText + selectedText + afterText
+
+        // Analyze for Planet Nine content
+        let detectedPubKey = extractPubKey(from: fullContext)
+
+        // Create display strings
+        let firstChars = fullContext.count >= 16 ?
+            String(fullContext.prefix(16)) : fullContext
+        let lastChars = fullContext.count >= 16 ?
+            String(fullContext.suffix(16)) : ""
+
+        let pubKeyStatus = detectedPubKey != nil ? "✅ Contains pubKey" : "❌ No pubKey"
+
+        // Format the display text
+        let displayText = """
+        First: \(firstChars.isEmpty ? "(empty)" : firstChars)
+        Last: \(lastChars.isEmpty ? "(same)" : lastChars)
+        \(pubKeyStatus)
+        """
+
+        // Update the UIKit label
+        DispatchQueue.main.async {
+            self.contextLabel.text = displayText
+
+            // Provide haptic feedback
+            //let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+            //impactFeedback.impactOccurred()
+
+            // Print debug info
+            print("🔍 UIKit Context Analysis:")
+            print("   Full context length: \(fullContext.count)")
+            print("   First 16: '\(firstChars)'")
+            print("   Last 16: '\(lastChars)'")
+            print("   Contains pubKey: \(detectedPubKey != nil)")
+            if let pubKey = detectedPubKey {
+                print("   Detected pubKey: \(pubKey)")
+            }
+        }
+
+        // Also trigger the WebView context analysis which will switch to context screen
+        analyzeCurrentContext()
     }
 
     private func loadSVGKeyboard() {
@@ -322,6 +430,7 @@ class KeyboardViewController: UIInputViewController {
                     <button class="tab active" data-screen="cards">🎴 Cards</button>
                     <button class="tab" data-screen="auth">🔑 Auth</button>
                     <button class="tab" data-screen="tools">⚡ Tools</button>
+                    <button class="tab" data-screen="context">🔍 Context</button>
                     <button class="tab" data-screen="info">📊 Info</button>
                 </div>
 
@@ -371,6 +480,39 @@ class KeyboardViewController: UIInputViewController {
                         <div class="controls">
                             <button class="btn btn-success" id="autoFillBtn">🤖 Auto-Fill</button>
                             <button class="btn btn-warning" id="clearDataBtn">🗑️ Clear</button>
+                        </div>
+                    </div>
+
+                    <!-- Context Screen -->
+                    <div id="contextScreen" class="screen">
+                        <div class="quick-actions">
+                            <button class="quick-btn" id="refreshContextBtn">🔄 Refresh</button>
+                            <button class="quick-btn" id="analyzeBtn">🔍 Analyze</button>
+                        </div>
+                        <div class="card-content" id="contextDisplay">
+                            🔍 Context Analysis<br>
+                            <small>Detecting Planet Nine content around cursor</small>
+                        </div>
+                        <div id="detectedContent" style="display: none;">
+                            <div id="pubkeySection" style="display: none;">
+                                <strong>🎴 Detected pubKey:</strong><br>
+                                <div id="detectedPubkey" style="font-family: monospace; font-size: 10px; word-break: break-all; margin: 4px 0; background: rgba(255,255,255,0.1); padding: 4px; border-radius: 4px;"></div>
+                                <div class="controls">
+                                    <button class="btn btn-primary" id="fetchCardBtn">🎴 Fetch Card</button>
+                                    <button class="btn btn-success" id="respondBtn">💬 Respond</button>
+                                </div>
+                            </div>
+                            <div id="signatureSection" style="display: none;">
+                                <strong>🔐 Detected Signature:</strong><br>
+                                <div id="detectedSignature" style="font-family: monospace; font-size: 10px; word-break: break-all; margin: 4px 0; background: rgba(255,255,255,0.1); padding: 4px; border-radius: 4px;"></div>
+                                <div class="controls">
+                                    <button class="btn btn-warning" id="verifyBtn">✅ Verify</button>
+                                </div>
+                            </div>
+                            <div id="contextPreviewSection" style="margin-top: 8px;">
+                                <strong>📄 Context:</strong><br>
+                                <div id="contextPreview" style="font-size: 10px; max-height: 40px; overflow-y: auto; background: rgba(255,255,255,0.1); padding: 4px; border-radius: 4px; margin: 4px 0;"></div>
+                            </div>
                         </div>
                     </div>
 
@@ -433,6 +575,21 @@ class KeyboardViewController: UIInputViewController {
                 const autoFillBtn = document.getElementById('autoFillBtn');
                 const clearDataBtn = document.getElementById('clearDataBtn');
 
+                // UI Elements - Context Screen
+                const contextDisplay = document.getElementById('contextDisplay');
+                const refreshContextBtn = document.getElementById('refreshContextBtn');
+                const analyzeBtn = document.getElementById('analyzeBtn');
+                const detectedContent = document.getElementById('detectedContent');
+                const pubkeySection = document.getElementById('pubkeySection');
+                const signatureSection = document.getElementById('signatureSection');
+                const contextPreviewSection = document.getElementById('contextPreviewSection');
+                const detectedPubkey = document.getElementById('detectedPubkey');
+                const detectedSignature = document.getElementById('detectedSignature');
+                const contextPreview = document.getElementById('contextPreview');
+                const fetchCardBtn = document.getElementById('fetchCardBtn');
+                const respondBtn = document.getElementById('respondBtn');
+                const verifyBtn = document.getElementById('verifyBtn');
+
                 // UI Elements - Info Screen
                 const networkStatus = document.getElementById('networkStatus');
                 const baseStatus = document.getElementById('baseStatus');
@@ -463,6 +620,8 @@ class KeyboardViewController: UIInputViewController {
                     // Screen-specific initialization
                     if (screenName === 'info') {
                         updateInfoDisplay();
+                    } else if (screenName === 'context') {
+                        analyzeContext();
                     }
                 }
 
@@ -578,6 +737,91 @@ class KeyboardViewController: UIInputViewController {
                         spellsCastCount = 0;
                     }
                 });
+
+                // Context Screen Event Handlers
+                refreshContextBtn.addEventListener('click', () => {
+                    analyzeContext();
+                });
+
+                analyzeBtn.addEventListener('click', () => {
+                    window.webkit.messageHandlers.keyboardAction.postMessage({
+                        action: 'analyzeContext'
+                    });
+                });
+
+                fetchCardBtn.addEventListener('click', () => {
+                    if (window.detectedPubKey) {
+                        window.webkit.messageHandlers.keyboardAction.postMessage({
+                            action: 'fetchCard',
+                            pubKey: window.detectedPubKey
+                        });
+                    }
+                });
+
+                respondBtn.addEventListener('click', () => {
+                    if (window.detectedPubKey) {
+                        window.webkit.messageHandlers.keyboardAction.postMessage({
+                            action: 'respondToPubKey',
+                            pubKey: window.detectedPubKey
+                        });
+                    }
+                });
+
+                verifyBtn.addEventListener('click', () => {
+                    if (window.detectedSignature) {
+                        window.webkit.messageHandlers.keyboardAction.postMessage({
+                            action: 'verifySignature',
+                            signature: window.detectedSignature
+                        });
+                    }
+                });
+
+                // Context analysis function
+                function analyzeContext() {
+                    contextDisplay.innerHTML = '🔍 Analyzing context...<br><small>Checking surrounding text</small>';
+                    console.log('🔍 Context analysis triggered');
+                    window.webkit.messageHandlers.keyboardAction.postMessage({
+                        action: 'getContext'
+                    });
+                }
+
+                // Handle context analysis results
+                window.handleContextResponse = function(contextData) {
+                    if (currentScreen !== 'context') return;
+
+                    const { beforeText, afterText, selectedText } = contextData;
+                    const fullContext = (beforeText || '') + (selectedText || '') + (afterText || '');
+
+                    // Show context preview
+                    contextPreview.textContent = fullContext.length > 100 ?
+                        fullContext.substring(0, 100) + '...' : fullContext;
+
+                    if (contextData.detectedPubKey) {
+                        // Show detected pubKey
+                        window.detectedPubKey = contextData.detectedPubKey;
+                        detectedPubkey.textContent = contextData.detectedPubKey;
+                        pubkeySection.style.display = 'block';
+                        detectedContent.style.display = 'block';
+                        contextDisplay.innerHTML = '🎴 Planet Nine pubKey detected!<br><small>Ready for card fetch or response</small>';
+                    } else if (contextData.detectedSignature) {
+                        // Show detected signature
+                        window.detectedSignature = contextData.detectedSignature;
+                        detectedSignature.textContent = contextData.detectedSignature;
+                        signatureSection.style.display = 'block';
+                        detectedContent.style.display = 'block';
+                        contextDisplay.innerHTML = '🔐 Signature detected!<br><small>Ready for verification</small>';
+                    } else if (fullContext.length > 0) {
+                        // Show context but no Planet Nine content
+                        detectedContent.style.display = 'block';
+                        pubkeySection.style.display = 'none';
+                        signatureSection.style.display = 'none';
+                        contextDisplay.innerHTML = '📄 Text context detected<br><small>No Planet Nine content found</small>';
+                    } else {
+                        // No context
+                        detectedContent.style.display = 'none';
+                        contextDisplay.innerHTML = '🔍 No context available<br><small>Move cursor or try different field</small>';
+                    }
+                };
 
                 // Info Screen Event Handlers
                 refreshBtn.addEventListener('click', () => {
@@ -820,6 +1064,24 @@ extension KeyboardViewController: WKScriptMessageHandler {
         case "refreshStatus":
             refreshNetworkStatus()
 
+        // Context Actions
+        case "getContext":
+            analyzeCurrentContext()
+        case "analyzeContext":
+            analyzeCurrentContext()
+        case "fetchCard":
+            if let pubKey = body["pubKey"] as? String {
+                loadCardFromBDO(bdoPubKey: pubKey)
+            }
+        case "respondToPubKey":
+            if let pubKey = body["pubKey"] as? String {
+                generateResponseToPubKey(pubKey)
+            }
+        case "verifySignature":
+            if let signature = body["signature"] as? String {
+                verifyContextSignature(signature)
+            }
+
         default:
             break
         }
@@ -992,6 +1254,283 @@ extension KeyboardViewController: WKScriptMessageHandler {
                 if let error = error {
                     print("Error refreshing status: \\(error)")
                 }
+            }
+        }
+    }
+
+    // MARK: - Context Analysis Features
+    private func analyzeCurrentContext() {
+        // First, switch to the context screen in the WebView so the response will be processed
+        let switchToContextScript = "showScreen('context');"
+        webView.evaluateJavaScript(switchToContextScript) { result, error in
+            if let error = error {
+                print("❌ Keyboard: Error switching to context screen: \(error)")
+            } else {
+                print("✅ Keyboard: Switched to context screen")
+
+                // Small delay to ensure screen switch completes, then trigger analysis
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    self.performContextAnalysis()
+                }
+            }
+        }
+    }
+
+    private func performContextAnalysis() {
+        let proxy = self.textDocumentProxy
+
+        // Get text around cursor (iOS provides limited context for privacy)
+        let beforeText = proxy.documentContextBeforeInput ?? ""
+        let afterText = proxy.documentContextAfterInput ?? ""
+        let selectedText = proxy.selectedText ?? ""
+
+        print("🔍 Keyboard: Analyzing context - before: '\(beforeText)', after: '\(afterText)', selected: '\(selectedText)'")
+
+        // Combine all available text
+        let fullContext = beforeText + selectedText + afterText
+
+        // Analyze for Planet Nine content
+        let detectedPubKey = extractPubKey(from: fullContext)
+        let detectedSignature = extractSignature(from: fullContext)
+
+        print("🔍 Keyboard: Detected pubKey: \(detectedPubKey ?? "none"), signature: \(detectedSignature ?? "none")")
+
+        // Automatically verify signature if detected
+        if let signature = detectedSignature {
+            print("🔍 Auto-verifying detected signature...")
+            verifyContextSignature(signature)
+        }
+
+        // Send results back to JavaScript
+        let contextData: [String: Any?] = [
+            "beforeText": beforeText,
+            "afterText": afterText,
+            "selectedText": selectedText,
+            "detectedPubKey": detectedPubKey,
+            "detectedSignature": detectedSignature,
+            "fullContext": fullContext
+        ]
+
+        let script = "window.handleContextResponse(\(jsonString(from: contextData.compactMapValues { $0 })));"
+        webView.evaluateJavaScript(script) { result, error in
+            if let error = error {
+                print("❌ Keyboard: Error sending context response: \(error)")
+            } else {
+                print("✅ Keyboard: Context analysis sent to UI")
+            }
+        }
+    }
+
+    private func extractPubKey(from text: String) -> String? {
+        // Same logic as Action Extension - look for 66-character hex starting with 02/03
+        let patterns = [
+            #"pubKey[:\s]*([023][0-9a-fA-F]{64})"#,
+            #"pubkey[:\s]*([023][0-9a-fA-F]{64})"#,
+            #"publicKey[:\s]*([023][0-9a-fA-F]{64})"#,
+            #"([023][0-9a-fA-F]{64})"# // Just find any 66-char hex starting with 02/03
+        ]
+
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
+                let range = NSRange(location: 0, length: text.count)
+                if let match = regex.firstMatch(in: text, options: [], range: range) {
+                    let matchRange = match.range(at: 1)
+                    if matchRange.location != NSNotFound,
+                       let range = Range(matchRange, in: text) {
+                        let pubKey = String(text[range])
+                        if isValidBDOPubKey(pubKey) {
+                            print("🎴 Keyboard: Found valid pubKey: \(pubKey)")
+                            return pubKey
+                        }
+                    }
+                }
+            }
+        }
+        return nil
+    }
+
+    private func extractSignature(from text: String) -> String? {
+        // Look for hex signatures (typically 128 characters for secp256k1)
+        let patterns = [
+            #"signature[:\s]*([0-9a-fA-F]{128})"#,
+            #"sig[:\s]*([0-9a-fA-F]{128})"#,
+            #"([0-9a-fA-F]{128})"# // Just find any 128-char hex
+        ]
+
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
+                let range = NSRange(location: 0, length: text.count)
+                if let match = regex.firstMatch(in: text, options: [], range: range) {
+                    let matchRange = match.range(at: 1)
+                    if matchRange.location != NSNotFound,
+                       let range = Range(matchRange, in: text) {
+                        let signature = String(text[range])
+                        print("🔐 Keyboard: Found potential signature: \(signature.prefix(20))...")
+                        return signature
+                    }
+                }
+            }
+        }
+        return nil
+    }
+
+    private func isValidBDOPubKey(_ pubKey: String) -> Bool {
+        // Check if it's a 66-character hex string starting with 02 or 03 (compressed pubkey)
+        let cleanPubKey = pubKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard cleanPubKey.count == 66 else { return false }
+        guard cleanPubKey.hasPrefix("02") || cleanPubKey.hasPrefix("03") else { return false }
+
+        let hexCharacters = CharacterSet(charactersIn: "0123456789abcdefABCDEF")
+        return cleanPubKey.unicodeScalars.allSatisfy { hexCharacters.contains($0) }
+    }
+
+    private func generateResponseToPubKey(_ pubKey: String) {
+        print("💬 Keyboard: Generating response to pubKey: \(pubKey)")
+
+        // Generate a signed response message
+        let message = "Response to \(pubKey.prefix(20))... from Planet Nine Keyboard"
+        let signature = generateMockSignature()
+        let response = "Signed response: \(message)\nSignature: \(signature)"
+
+        // Insert the response into the text field
+        textDocumentProxy.insertText(response)
+
+        // Provide haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
+    }
+
+    private func verifyContextSignature(_ signature: String) {
+        print("✅ Keyboard: Verifying signature: \(signature.prefix(20))...")
+
+        // Alice's public key for verification (configured for demo)
+        let ALICE_PUBLIC_KEY = "027f68e0f4dfa964ebca3b9f90a15b8ffde8e91ebb0e2e36907fb0cc7aec48448e"
+
+        // Get the message from context to verify against
+        let proxy = self.textDocumentProxy
+        let beforeText = proxy.documentContextBeforeInput ?? ""
+        let afterText = proxy.documentContextAfterInput ?? ""
+        let selectedText = proxy.selectedText ?? ""
+        let fullContext = beforeText + selectedText + afterText
+
+        // Extract message from context (look for patterns like "Message: ...")
+        let message = extractMessageFromContext(fullContext) ?? "Demo verification message"
+
+        // Verify signature using Alice's demo verification logic
+        let isValid = verifySignatureForAlice(signature: signature, message: message)
+
+        // Create red/green light feedback
+        let statusEmoji = isValid ? "🟢" : "🔴"
+        let result = isValid ? "✅ VALID (Alice)" : "❌ INVALID"
+        let lightStatus = isValid ? "GREEN LIGHT" : "RED LIGHT"
+
+        let feedback = "\(statusEmoji) \(lightStatus)\n\(result)\nSignature: \(signature.prefix(40))..."
+
+        // Insert verification result
+        textDocumentProxy.insertText(feedback)
+
+        // Provide strong haptic feedback for red/green result
+        let impactFeedback = UIImpactFeedbackGenerator(style: isValid ? .heavy : .medium)
+        impactFeedback.impactOccurred()
+
+        // Additional feedback for invalid signatures
+        if !isValid {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                let secondFeedback = UIImpactFeedbackGenerator(style: .light)
+                secondFeedback.impactOccurred()
+            }
+        }
+
+        // Update context screen with red/green visual feedback
+        updateContextScreenWithVerificationResult(isValid: isValid, signature: signature)
+    }
+
+    private func extractMessageFromContext(_ context: String) -> String? {
+        // Look for message patterns in the context
+        let patterns = [
+            #"Message:\s*"([^"]+)""#,
+            #"message\s+(\d+)\s+at\s+(\d+)"#,
+            #"Demo message\s+(\d+)\s+at\s+(\d+)"#
+        ]
+
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
+                let range = NSRange(location: 0, length: context.count)
+                if let match = regex.firstMatch(in: context, options: [], range: range) {
+                    let fullMatchRange = match.range(at: 0)
+                    if fullMatchRange.location != NSNotFound,
+                       let range = Range(fullMatchRange, in: context) {
+                        let extractedMessage = String(context[range])
+                        print("📝 Extracted message: \(extractedMessage)")
+                        return extractedMessage
+                    }
+                }
+            }
+        }
+
+        return nil
+    }
+
+    private func verifySignatureForAlice(signature: String, message: String) -> Bool {
+        // Alice's private key for signature generation (demo purposes only)
+        let ALICE_PRIVATE_KEY = "574102268f66ae19bda4c4fb08fa4fe705381b68e608f17516e70ce20f60e66d"
+
+        // Generate what Alice's signature should be for this message
+        let expectedSignature = generateDemoSignature(privateKey: ALICE_PRIVATE_KEY, message: message)
+
+        print("🔍 Expected signature: \(expectedSignature.prefix(20))...")
+        print("🔍 Received signature: \(signature.prefix(20))...")
+
+        // Check if signatures match
+        let isValid = signature == expectedSignature
+        print("✅ Signature validation: \(isValid ? "VALID" : "INVALID")")
+
+        return isValid
+    }
+
+    private func generateDemoSignature(privateKey: String, message: String) -> String {
+        // Demo signature generation matching the browser implementation
+//        let combinedInput = privateKey + message
+//
+//        var hash = 0
+//        for char in combinedInput {
+//            let charValue = Int(char.asciiValue ?? 0)
+//            hash = ((hash << 5) - hash) + charValue
+//            hash = hash & hash // Convert to 32-bit
+//        }
+//
+//        let baseSignature = String(format: "%08x", abs(hash))
+//        let messageHex = message.compactMap { String(format: "%02x", $0.asciiValue ?? 0) }.joined()
+//
+//        let signature = (baseSignature + privateKey.prefix(56) + baseSignature + messageHex.prefix(32))
+//            .prefix(128)
+//            .padding(toLength: 128, withPad: "0", startingAt: 0)
+
+        let signature = "here is where the signature goes"
+        return String(signature)
+    }
+
+    private func updateContextScreenWithVerificationResult(isValid: Bool, signature: String) {
+        let statusColor = isValid ? "green" : "red"
+        let statusText = isValid ? "VALID ✅" : "INVALID ❌"
+        let lightEmoji = isValid ? "🟢" : "🔴"
+
+        let script = """
+        if (currentScreen === 'context') {
+            const contextDisplay = document.getElementById('contextDisplay');
+            if (contextDisplay) {
+                contextDisplay.innerHTML = '\(lightEmoji) Signature \(statusText)<br><small>\(signature.prefix(40))...</small>';
+                contextDisplay.style.backgroundColor = 'rgba(\(isValid ? "40, 167, 69" : "220, 53, 69"), 0.3)';
+                contextDisplay.style.borderColor = 'rgba(\(isValid ? "40, 167, 69" : "220, 53, 69"), 0.5)';
+            }
+        }
+        """
+
+        webView.evaluateJavaScript(script) { result, error in
+            if let error = error {
+                print("❌ Error updating context screen: \(error)")
+            } else {
+                print("✅ Context screen updated with \(isValid ? "green" : "red") status")
             }
         }
     }
