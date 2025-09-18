@@ -51,27 +51,51 @@ The Advancement supports multiple browsers with consistent functionality:
 #### **Advancekey - Planet Nine Keyboard** ✅
 **Location**: `src/The Advancement/Advancekey/`
 
-A comprehensive iOS keyboard extension providing Planet Nine functionality directly within the keyboard interface:
+A simplified iOS keyboard extension focused on cryptographic signature verification with a clean, minimal interface:
 
-**Features**:
-- **4-Tab Interface**: Cards, Auth, Tools, Info tabs with Planet Nine gradient styling
-- **BDO Card Display**: Fetches and displays real magistack cards using working BDO URL
-- **Real Cryptography**: Uses sessionless authentication for all operations
-- **WebKit Integration**: WKWebView for rendering SVG card content
-- **Planet Nine Branding**: Complete visual integration with ecosystem styling
+**Features** (September 2025 Simplified Version):
+- **Simple Verification Button**: Single purple "TAP TO VERIFY" button interface
+- **Real Sessionless Cryptography**: Uses actual sessionless signature verification
+- **Manual Context Grabbing**: Tap button to analyze text context from input fields
+- **Visual Feedback**: Green "VERIFIED" or red "DON'T TRUST THIS!" results
+- **Alice's Public Key Configured**: Hardcoded with Alice's test public key for demo
 
 **Technical Implementation**:
 ```swift
-// Real BDO integration (same URL as browser extensions)
-let bdoURL = "http://127.0.0.1:5114/user/.../bdo?timestamp=...&signature=...&pubKey=..."
+// Simple verification button setup
+private var verificationButton: UIButton!
 
-// Parse response like other extensions
-if let jsonObject = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-   let bdoObject = jsonObject["bdo"] as? [String: Any],
-   let cardData = bdoObject["svgContent"] as? String {
-    // Display real SVG content in WebView
+private func setupVerificationButton() {
+    verificationButton = UIButton(type: .system)
+    verificationButton.setTitle("TAP TO VERIFY", for: .normal)
+    verificationButton.backgroundColor = UIColor.systemPurple
+    verificationButton.addTarget(self, action: #selector(verificationButtonTapped), for: .touchUpInside)
+}
+
+// Manual context analysis and verification
+@objc private func verificationButtonTapped() {
+    let proxy = self.textDocumentProxy
+    let fullContext = (proxy.documentContextBeforeInput ?? "") +
+                     (proxy.selectedText ?? "") +
+                     (proxy.documentContextAfterInput ?? "")
+
+    let alicePubKey = "027f68e0f4dfa964ebca3b9f90a15b8ffde8e91ebb0e2e36907fb0cc7aec48448e"
+    let isValid = try sessionless.verifySignature(signature: fullContext,
+                                                message: "foobar",
+                                                publicKey: alicePubKey)
+
+    // Update button appearance based on result
+    if isValid {
+        verificationButton.setTitle("VERIFIED", for: .normal)
+        verificationButton.backgroundColor = UIColor.systemGreen
+    } else {
+        verificationButton.setTitle("DON'T TRUST THIS!", for: .normal)
+        verificationButton.backgroundColor = UIColor.systemRed
+    }
 }
 ```
+
+**Use Case**: Perfect for testing signature verification in the signature demo at `http://localhost:3456/signature-demo`. Users can highlight signatures, bring up the keyboard in input fields, and tap to verify cryptographic signatures against Alice's known public key.
 
 #### **AdvanceLook - QuickLook Preview** ✅
 **Location**: `src/The Advancement/AdvanceLook/`
@@ -451,6 +475,111 @@ open http://localhost:3456
 - **Multiple Bases**: DEV and LOCAL test bases
 - **Payment Methods**: Stripe test cards with full payment processing
 - **MAGIC Spells**: spellTest spell with proper MAGIC protocol structure and dual destinations
+
+### Signature Verification Demo (September 2025)
+
+The test server includes a comprehensive signature verification demo for testing the Planet Nine keyboard extension's cryptographic verification capabilities.
+
+**Location**: `test-server/public/signature-demo.html`
+**Access**: `http://localhost:3456/signature-demo`
+
+#### Features
+- **Real Sessionless Signatures**: Server-side signature generation using sessionless-node
+- **Two Test Identities**: Bob and Alice with predefined cryptographic key pairs
+- **Interactive Interface**: Generate, highlight, and verify signatures in real-time
+- **Keyboard Extension Testing**: Input fields to trigger iOS Planet Nine keyboard
+- **Visual Feedback**: Clear success/failure indicators for verification results
+
+#### Test Flow
+1. **Generate Signatures**: Click "New Message & Sign" to create signatures for Bob and Alice
+2. **Server-Side Signing**: Uses `/api/sign` endpoint with real sessionless cryptography
+3. **Highlight Text**: Select generated signatures in dashed text boxes
+4. **Trigger Keyboard**: Tap input fields to bring up Planet Nine keyboard extension
+5. **Manual Verification**: Tap verification button in keyboard to test signature
+
+#### Technical Implementation
+
+**Server-Side Signing** (`server.js`):
+```javascript
+// Sign function with arity 2: takes keys and message, returns sessionless signature
+async function sign(keys, message) {
+    await sessionless.generateKeys(() => {}, () => keys);
+    sessionless.getKeys = () => keys;
+    const signature = await sessionless.sign('foobar');
+    return signature;
+}
+
+// API endpoint for browser signature requests
+app.post('/api/sign', async (req, res) => {
+    const { keys, message } = req.body;
+    const signature = await sign(keys, message);
+    res.json({ success: true, signature: signature });
+});
+```
+
+**Client-Side Integration** (`signature-demo.html`):
+```javascript
+// Function to call server sign method with arity 2
+async function callServerSign(keys, message) {
+    const response = await fetch('/api/sign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ keys: keys, message: message })
+    });
+    const result = await response.json();
+    return result.signature;
+}
+```
+
+**Keyboard Extension Integration** (`KeyboardViewController.swift`):
+```swift
+// Simple verification button with manual context grabbing
+private var verificationButton: UIButton!
+
+@objc private func verificationButtonTapped() {
+    verifyContextText()
+}
+
+private func verifyContextText() {
+    let proxy = self.textDocumentProxy
+    let fullContext = (proxy.documentContextBeforeInput ?? "") +
+                     (proxy.selectedText ?? "") +
+                     (proxy.documentContextAfterInput ?? "")
+
+    let alicePubKey = "027f68e0f4dfa964ebca3b9f90a15b8ffde8e91ebb0e2e36907fb0cc7aec48448e"
+    let message = "foobar"
+
+    let isValid = try sessionless.verifySignature(signature: fullContext,
+                                                message: message,
+                                                publicKey: alicePubKey)
+
+    // Update button appearance based on verification result
+    DispatchQueue.main.async {
+        if isValid {
+            self.verificationButton.setTitle("VERIFIED", for: .normal)
+            self.verificationButton.backgroundColor = UIColor.systemGreen
+        } else {
+            self.verificationButton.setTitle("DON'T TRUST THIS!", for: .normal)
+            self.verificationButton.backgroundColor = UIColor.systemRed
+        }
+    }
+}
+```
+
+#### Key Pairs Used
+- **Alice** (Valid signatures with keyboard):
+  - Private: `574102268f66ae19bda4c4fb08fa4fe705381b68e608f17516e70ce20f60e66d`
+  - Public: `027f68e0f4dfa964ebca3b9f90a15b8ffde8e91ebb0e2e36907fb0cc7aec48448e`
+
+- **Bob** (Invalid signatures with keyboard):
+  - Private: `c40daae8754f2401bcac69d2b8620a743d6af132b2db7abcda5fe61396870979`
+  - Public: `035084ff6af66fe4c6e1525021994dbdd8069037ad1e80e8d7e553b322d61c4549`
+
+#### Expected Results
+- **Alice's signatures** → Keyboard shows **GREEN** "VERIFIED" (valid)
+- **Bob's signatures** → Keyboard shows **RED** "DON'T TRUST THIS!" (invalid)
+
+This demo validates the complete signature verification pipeline between browser-generated signatures and keyboard extension verification using real sessionless cryptography.
 
 ### Author-Book Carousel Implementation (September 2025)
 

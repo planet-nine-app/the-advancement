@@ -1,0 +1,49 @@
+
+> advancement-test-server@1.0.0 start
+> node server.js
+
+🔑 MAGIC: Saving keys for test environment
+🔐 MAGIC: Test server keys initialized
+🚀 The Advancement Test Server running on port 3456
+🌐 Website: http://localhost:3456
+📡 API: http://localhost:3456/api/*
+
+🎯 Features:
+   - Teleported product feeds from Planet Nine bases
+   - Multi-pubKey system (site, creator, base)
+   - Stripe payment processing via The Advancement
+   - Addie coordination at user's home base
+   - MAGIC protocol support with spellTest
+
+🔧 Test this with The Advancement Safari extension!
+⚡ MAGIC: Creating fount user for gateway initialization...
+🔑 MAGIC: Retrieving keys for test environment
+🔑 MAGIC: Retrieving keys for test environment
+⚡ MAGIC: Fount user created - 84f263bc-d8d8-452e-a823-64664a13b42c
+🪄 MAGIC: Initializing gateway...
+✅ MAGIC: Gateway initialized successfully
+🔮 MAGIC routes added to Express app
+
+🪄 MAGIC spellTest endpoint: http://localhost:3456/spellTest
+📝 Attempting to fetch authors from prof...
+📝 Using 4 real author UUIDs from prof
+📝 Attempting to fetch profile for UUID: e74c9ca3-639a-44b2-8429-fc5004e5e104
+✅ Found profile for Sarah Mitchell
+📝 Attempting to fetch profile for UUID: bb75ce7d-6230-4ae5-9b7c-06943840b5b8
+✅ Found profile for Delores Swigert Sullivan
+📝 Attempting to fetch profile for UUID: 0e5b42c6-89a5-4b70-80b9-f788561f96c2
+✅ Found profile for Marcus Chen
+📝 Attempting to fetch profile for UUID: 426e73ed-9f6e-43ca-ad4c-002e17732455
+✅ Found profile for Isabella Rodriguez
+✅ Successfully fetched 4 author profiles from prof
+📝 Attempting to fetch authors from prof...
+📝 Using 4 real author UUIDs from prof
+📝 Attempting to fetch profile for UUID: e74c9ca3-639a-44b2-8429-fc5004e5e104
+✅ Found profile for Sarah Mitchell
+📝 Attempting to fetch profile for UUID: bb75ce7d-6230-4ae5-9b7c-06943840b5b8
+✅ Found profile for Delores Swigert Sullivan
+📝 Attempting to fetch profile for UUID: 0e5b42c6-89a5-4b70-80b9-f788561f96c2
+✅ Found profile for Marcus Chen
+📝 Attempting to fetch profile for UUID: 426e73ed-9f6e-43ca-ad4c-002e17732455
+✅ Found profile for Isabella Rodriguez
+✅ Successfully fetched 4 author profiles from prof

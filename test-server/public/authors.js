@@ -15,11 +15,78 @@ class AuthorsCarousel {
 
     async init() {
         try {
-            // For now, let's use mock data until we get the seeding working
-            await this.renderMockData();
+            // Fetch live data from API endpoints
+            await this.renderLiveData();
         } catch (error) {
-            this.showError('Failed to load authors and books: ' + error.message);
+            console.error('Failed to load from API, falling back to mock data:', error);
+            await this.renderMockData();
         }
+    }
+
+    async renderLiveData() {
+        console.log('🚀 Loading live data from Prof and Sanora services...');
+
+        // Fetch authors and books from our API endpoints
+        const [authorsResponse, booksResponse] = await Promise.all([
+            fetch('/api/authors'),
+            fetch('/api/books')
+        ]);
+
+        const authorsData = await authorsResponse.json();
+        const booksData = await booksResponse.json();
+
+        if (!authorsData.success || !booksData.success) {
+            throw new Error('Failed to fetch data from services');
+        }
+
+        console.log('📝 Authors source:', authorsData.source);
+        console.log('📚 Books source:', booksData.source);
+        console.log('📊 Data:', {
+            authors: authorsData.data.length,
+            books: booksData.data.length
+        });
+
+        // Transform books data to associate with authors
+        const booksByAuthor = this.groupBooksByAuthor(booksData.data);
+
+        // Render the carousel with live data
+        this.renderCarousel(authorsData.data, booksByAuthor);
+    }
+
+    groupBooksByAuthor(books) {
+        const grouped = {};
+        books.forEach(book => {
+            const authorId = book.authorUUID || book.uuid;
+            if (!grouped[authorId]) {
+                grouped[authorId] = [];
+            }
+            grouped[authorId].push(book);
+        });
+        return grouped;
+    }
+
+    renderCarousel(authors, booksByAuthor) {
+        // Clear loading state
+        this.container.innerHTML = '';
+
+        // Add leading spacer for center alignment
+        const leadingSpacer = document.createElement('div');
+        leadingSpacer.className = 'author-spacer';
+        this.container.appendChild(leadingSpacer);
+
+        // Render authors with their books
+        authors.forEach(author => {
+            const authorBooks = booksByAuthor[author.uuid] || [];
+
+            // Create author section
+            const authorSection = this.createAuthorSection(author, authorBooks);
+            this.container.appendChild(authorSection);
+        });
+
+        // Add trailing spacer so last author can center
+        const trailingSpacer = document.createElement('div');
+        trailingSpacer.className = 'author-spacer';
+        this.container.appendChild(trailingSpacer);
     }
 
     async renderMockData() {

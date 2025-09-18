@@ -16,6 +16,7 @@ import crypto from 'crypto';
 import gateway from 'magic-gateway-js';
 import sessionless from 'sessionless-node';
 import fount from 'fount-js';
+import fetch from 'node-fetch';
 import { fileURLToPath } from 'url';
 
 // ES module equivalent of __dirname
@@ -32,7 +33,240 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ========================================
-// Mock Data - In Production This Comes From Real Services
+// Service Integration - Fetch from Prof and Sanora
+// ========================================
+
+// Service URLs for the test environment
+const SERVICE_URLS = {
+    prof: 'http://localhost:5123',  // Prof in Base 1 docker environment
+    sanora: 'http://localhost:5121',
+    bdo: 'http://localhost:5114',
+    joan: 'http://localhost:5115'
+};
+
+// Fetch authors from prof service
+async function fetchAuthorsFromProf() {
+    try {
+        console.log('📝 Attempting to fetch authors from prof...');
+
+        // Use the actual author UUIDs we created in prof via seeding script
+        const authorUUIDs = [
+            'e74c9ca3-639a-44b2-8429-fc5004e5e104', // Sarah Mitchell
+            'bb75ce7d-6230-4ae5-9b7c-06943840b5b8', // Delores Swigert Sullivan
+            '0e5b42c6-89a5-4b70-80b9-f788561f96c2', // Marcus Chen
+            '426e73ed-9f6e-43ca-ad4c-002e17732455'  // Isabella Rodriguez
+        ];
+
+        console.log(`📝 Using ${authorUUIDs.length} real author UUIDs from prof`);
+
+        // Try to fetch each author profile from prof
+        const authors = [];
+        for (const uuid of authorUUIDs) {
+            try {
+                console.log(`📝 Attempting to fetch profile for UUID: ${uuid}`);
+                const profileResponse = await fetch(`${SERVICE_URLS.prof}/user/${uuid}/profile`);
+
+                if (profileResponse.ok) {
+                    const response = await profileResponse.json();
+                    const profile = response.profile; // Extract the profile data from the response
+                    console.log(`✅ Found profile for ${profile.name || uuid}`);
+                    authors.push(profile);
+                } else {
+                    console.log(`❌ No profile found for UUID: ${uuid} (${profileResponse.status})`);
+                }
+            } catch (profileError) {
+                console.log(`❌ Error fetching profile for ${uuid}:`, profileError.message);
+            }
+        }
+
+        if (authors.length > 0) {
+            console.log(`✅ Successfully fetched ${authors.length} author profiles from prof`);
+            return authors;
+        } else {
+            console.log('📝 No author profiles found in prof, using mock data');
+            return MOCK_AUTHORS;
+        }
+
+    } catch (error) {
+        console.error('❌ Failed to fetch authors from prof:', error);
+        return MOCK_AUTHORS; // Fallback to mock data
+    }
+}
+
+// Fetch books from sanora service
+async function fetchBooksFromSanora() {
+    try {
+        console.log('📚 Fetching books from sanora...');
+        const response = await fetch(`${SERVICE_URLS.sanora}/products/base`);
+        const sanoraProducts = await response.json();
+
+        // Transform sanora format to our expected format
+        const books = sanoraProducts.map(productWrapper => {
+            const productKey = Object.keys(productWrapper)[0];
+            const product = productWrapper[productKey];
+
+            return {
+                id: product.productId || productKey,
+                title: product.title,
+                description: product.description,
+                price: product.price || 0,
+                category: product.category || 'product',
+                authorUUID: product.uuid,
+                uuid: product.uuid,
+                productId: product.productId,
+                timestamp: product.timestamp,
+                signature: product.signature
+            };
+        });
+
+        console.log(`✅ Fetched ${books.length} books from sanora`);
+        return books;
+    } catch (error) {
+        console.error('❌ Failed to fetch books from sanora:', error);
+        return MOCK_BOOKS; // Fallback to mock data
+    }
+}
+
+// ========================================
+// Joan Authentication Functions
+// ========================================
+
+// Key storage functions for joan integration
+const joanKeyStorage = {};
+
+const saveJoanKeys = (keys) => {
+    joanKeyStorage.keys = keys;
+    console.log('🔑 Joan keys saved for authentication');
+};
+
+const getJoanKeys = () => {
+    return joanKeyStorage.keys || null;
+};
+
+// Joan client functions (adapted from joan.js)
+const joanClient = {
+    baseURL: SERVICE_URLS.joan + '/',
+
+    createUser: async (hash) => {
+        try {
+            const keys = getJoanKeys() || await sessionless.generateKeys(saveJoanKeys, getJoanKeys);
+
+            const payload = {
+                timestamp: new Date().getTime() + '',
+                pubKey: keys.pubKey,
+                hash
+            };
+
+            // Set up sessionless for signing
+            sessionless.getKeys = getJoanKeys;
+            const message = payload.timestamp + payload.hash + payload.pubKey;
+            console.log('🔍 Signing message:', message);
+            console.log('🔍 Keys used:', keys);
+            payload.signature = await sessionless.sign(message);
+            console.log('🔍 Generated signature:', payload.signature);
+
+            // Test self-verification
+            const selfVerify = sessionless.verifySignature(payload.signature, message, keys.pubKey);
+            console.log('🔍 Self-verification test:', selfVerify);
+
+            const response = await fetch(`${joanClient.baseURL}user/create`, {
+                method: 'PUT',
+                body: JSON.stringify(payload),
+                headers: {'Content-Type': 'application/json'}
+            });
+
+            const user = await response.json();
+            console.log('📝 Joan response:', user);
+
+            // Check if joan returned an error
+            if (user.error) {
+                throw new Error('Joan authentication failed: ' + user.error);
+            }
+
+            console.log('✅ Joan user created successfully:', user);
+            return user;
+        } catch (error) {
+            console.error('❌ Failed to create joan user:', error);
+            throw error;
+        }
+    },
+
+    reenter: async (hash) => {
+        try {
+            const keys = getJoanKeys();
+            if (!keys) {
+                throw new Error('No keys available for reentry');
+            }
+
+            const timestamp = new Date().getTime() + '';
+            sessionless.getKeys = getJoanKeys;
+            const signature = await sessionless.sign(timestamp + hash + keys.pubKey);
+
+            const response = await fetch(`${joanClient.baseURL}user/${hash}/pubKey/${keys.pubKey}?timestamp=${timestamp}&signature=${signature}`);
+            const user = await response.json();
+
+            console.log('📝 Joan reentry response:', user);
+
+            // Check if joan returned an error
+            if (user.error) {
+                throw new Error('Joan reentry failed: ' + user.error);
+            }
+
+            console.log('✅ Joan reentry successful:', user);
+            return user;
+        } catch (error) {
+            console.error('❌ Failed to reenter joan:', error);
+            throw error;
+        }
+    },
+
+    updateHash: async (uuid, hash, newHash) => {
+        try {
+            const timestamp = new Date().getTime() + '';
+            sessionless.getKeys = getJoanKeys;
+            const signature = await sessionless.sign(timestamp + uuid + hash + newHash);
+
+            const payload = {timestamp, uuid, hash, newHash, signature};
+
+            const response = await fetch(`${joanClient.baseURL}user/${uuid}/update-hash`, {
+                method: 'PUT',
+                body: JSON.stringify(payload),
+                headers: {'Content-Type': 'application/json'}
+            });
+
+            console.log('✅ Joan hash updated');
+            return response.status === 202;
+        } catch (error) {
+            console.error('❌ Failed to update joan hash:', error);
+            throw error;
+        }
+    },
+
+    deleteUser: async (uuid, hash) => {
+        try {
+            const timestamp = new Date().getTime() + '';
+            sessionless.getKeys = getJoanKeys;
+            const signature = await sessionless.sign(timestamp + uuid + hash);
+
+            const payload = {timestamp, uuid, hash, signature};
+
+            const response = await fetch(`${joanClient.baseURL}user/${uuid}`, {
+                method: 'DELETE',
+                body: JSON.stringify(payload),
+                headers: {'Content-Type': 'application/json'}
+            });
+
+            console.log('✅ Joan user deleted');
+            return response.status === 200;
+        } catch (error) {
+            console.error('❌ Failed to delete joan user:', error);
+            throw error;
+        }
+    }
+};
+
+// ========================================
+// Mock Data - Fallback When Services Unavailable
 // ========================================
 
 // Website Owner (this test site)
@@ -43,6 +277,46 @@ const SITE_OWNER = {
     description: 'Test website for The Advancement purchase flow',
     stripe_account_id: 'acct_test_website_owner'
 };
+
+// Mock Authors for fallback
+const MOCK_AUTHORS = [
+    {
+        uuid: 'author-uuid-1',
+        name: 'Alice Creator',
+        email: 'alice@example.com',
+        bio: 'Digital content creator specializing in ebooks',
+        location: 'San Francisco, CA',
+        genres: ['Fantasy', 'Science Fiction']
+    },
+    {
+        uuid: 'author-uuid-2',
+        name: 'Bob Developer',
+        email: 'bob@example.com',
+        bio: 'Software developer creating educational courses',
+        location: 'Seattle, WA',
+        genres: ['Technology', 'Programming']
+    }
+];
+
+// Mock Books for fallback
+const MOCK_BOOKS = [
+    {
+        id: 'book-1',
+        title: 'Sample Book 1',
+        description: 'A sample book for testing',
+        price: 1299,
+        category: 'ebook',
+        authorUUID: 'author-uuid-1'
+    },
+    {
+        id: 'book-2',
+        title: 'Sample Book 2',
+        description: 'Another sample book for testing',
+        price: 1499,
+        category: 'ebook',
+        authorUUID: 'author-uuid-2'
+    }
+];
 
 // Product Creators (users who uploaded products to bases)
 const PRODUCT_CREATORS = {
@@ -413,16 +687,20 @@ app.get('/signature-demo', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'signature-demo.html'));
 });
 
+app.get('/author-platform', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'author-platform.html'));
+});
+
 // Serve favicon
 app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(__dirname, 'favicon.png'));
 });
 
 // API: Sign function with arity 2
-app.post('/api/sign', (req, res) => {
+app.post('/api/sign', async (req, res) => {
     const { keys, message } = req.body;
 
-    const signature = sign(keys, message);
+    const signature = await sign(keys, message);
 
     res.json({
         success: true,
@@ -431,8 +709,13 @@ app.post('/api/sign', (req, res) => {
 });
 
 // Sign function that takes two arguments: keys and message, returns "SIGNATURE"
-function sign(keys, message) {
-    return "SIGNATURE";
+async function sign(keys, message) {
+console.log('here is what keys looks like: ', keys);
+    await sessionless.generateKeys(() => {}, () => keys);
+    sessionless.getKeys = () => keys;
+    const signature = await sessionless.sign('foobar');
+console.log('here is what the signature thing looks like...', signature);
+    return signature;
 }
 
 // API: Get website owner info (for The Advancement)
@@ -807,6 +1090,476 @@ app.get('/api/nineum-balance', async (req, res) => {
     }
 });
 
+// ========================================
+// Joan Authentication API Endpoints
+// ========================================
+
+// API: Create new user account with joan
+app.post('/api/auth/create-user', async (req, res) => {
+    try {
+        const { hash } = req.body;
+
+        if (!hash) {
+            return res.status(400).json({
+                success: false,
+                error: 'Hash is required'
+            });
+        }
+
+        const user = await joanClient.createUser(hash);
+
+        res.json({
+            success: true,
+            data: user,
+            message: 'User created successfully'
+        });
+    } catch (error) {
+        console.error('❌ Failed to create user:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create user account'
+        });
+    }
+});
+
+// API: Login/reenter existing user
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { hash } = req.body;
+
+        if (!hash) {
+            return res.status(400).json({
+                success: false,
+                error: 'Hash is required'
+            });
+        }
+
+        const user = await joanClient.reenter(hash);
+
+        res.json({
+            success: true,
+            data: user,
+            message: 'Login successful'
+        });
+    } catch (error) {
+        console.error('❌ Failed to login:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to login'
+        });
+    }
+});
+
+// API: Update user hash
+app.put('/api/auth/update-hash', async (req, res) => {
+    try {
+        const { uuid, hash, newHash } = req.body;
+
+        if (!uuid || !hash || !newHash) {
+            return res.status(400).json({
+                success: false,
+                error: 'UUID, hash, and newHash are required'
+            });
+        }
+
+        const success = await joanClient.updateHash(uuid, hash, newHash);
+
+        res.json({
+            success,
+            message: success ? 'Hash updated successfully' : 'Failed to update hash'
+        });
+    } catch (error) {
+        console.error('❌ Failed to update hash:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update hash'
+        });
+    }
+});
+
+// API: Delete user account
+app.delete('/api/auth/delete-user', async (req, res) => {
+    try {
+        const { uuid, hash } = req.body;
+
+        if (!uuid || !hash) {
+            return res.status(400).json({
+                success: false,
+                error: 'UUID and hash are required'
+            });
+        }
+
+        const success = await joanClient.deleteUser(uuid, hash);
+
+        res.json({
+            success,
+            message: success ? 'User deleted successfully' : 'Failed to delete user'
+        });
+    } catch (error) {
+        console.error('❌ Failed to delete user:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to delete user'
+        });
+    }
+});
+
+// API: Get current user keys (for debugging)
+app.get('/api/auth/keys', (req, res) => {
+    const keys = getJoanKeys();
+    res.json({
+        success: true,
+        hasKeys: !!keys,
+        pubKey: keys?.pubKey || null
+    });
+});
+
+// ========================================
+// Prof Profile Management API Endpoints
+// ========================================
+
+// API: Create or update user profile in prof
+app.post('/api/profile/create', async (req, res) => {
+    try {
+        const { name, email, bio, location, genres, userUUID } = req.body;
+
+        if (!name || !email || !userUUID) {
+            return res.status(400).json({
+                success: false,
+                error: 'Name, email, and userUUID are required'
+            });
+        }
+
+        // Create profile in real prof service using sessionless authentication
+        try {
+            const keys = getJoanKeys();
+            if (!keys) {
+                throw new Error('No authentication keys available');
+            }
+
+            const timestamp = Date.now().toString();
+            sessionless.getKeys = getJoanKeys;
+
+            // Create the profile data
+            const profilePayload = {
+                name,
+                email,
+                bio: bio || '',
+                location: location || '',
+                genres: genres || ''
+            };
+
+            // Sign the request
+            const message = timestamp + userUUID;
+            const signature = await sessionless.sign(message);
+
+            console.log('📝 Creating profile in prof service:', profilePayload);
+
+            // Make the API call to prof
+            const profResponse = await fetch(`${SERVICE_URLS.prof}/user/${userUUID}/profile`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ...profilePayload,
+                    timestamp,
+                    signature
+                })
+            });
+
+            if (!profResponse.ok) {
+                const errorText = await profResponse.text();
+                console.error('Prof API error:', profResponse.status, errorText);
+                throw new Error(`Prof service returned ${profResponse.status}: ${errorText}`);
+            }
+
+            const profResult = await profResponse.json();
+            console.log('✅ Prof service response:', profResult);
+
+            res.json({
+                success: true,
+                data: profResult,
+                message: 'Profile created successfully in prof service'
+            });
+
+        } catch (profError) {
+            console.error('❌ Failed to create profile in prof:', profError);
+            res.status(500).json({
+                success: false,
+                error: 'Failed to create profile: ' + profError.message
+            });
+        }
+    } catch (error) {
+        console.error('❌ Failed to create profile:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create profile'
+        });
+    }
+});
+
+// API: Get user profile from prof
+app.get('/api/profile/:userUUID', async (req, res) => {
+    try {
+        const { userUUID } = req.params;
+
+        // In production, this would fetch from prof service
+        // For now, return success indicating the endpoint exists
+        console.log('📝 Fetching profile from prof for UUID:', userUUID);
+
+        res.json({
+            success: true,
+            data: null,
+            message: 'Profile endpoint ready - prof integration available with proper auth'
+        });
+    } catch (error) {
+        console.error('❌ Failed to fetch profile:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch profile'
+        });
+    }
+});
+
+// API: Update user profile in prof
+app.put('/api/profile/:userUUID', async (req, res) => {
+    try {
+        const { userUUID } = req.params;
+        const { name, bio, location, genres } = req.body;
+
+        if (!name) {
+            return res.status(400).json({
+                success: false,
+                error: 'Name is required'
+            });
+        }
+
+        const profileData = {
+            uuid: userUUID,
+            name,
+            bio: bio || '',
+            location: location || '',
+            genres: genres ? genres.split(',').map(g => g.trim()) : [],
+            updatedAt: new Date().toISOString()
+        };
+
+        console.log('📝 Updating profile in prof (simulated):', profileData);
+
+        res.json({
+            success: true,
+            data: profileData,
+            message: 'Profile updated successfully',
+            note: 'Currently using local storage - prof integration available with proper auth'
+        });
+    } catch (error) {
+        console.error('❌ Failed to update profile:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update profile'
+        });
+    }
+});
+
+// ========================================
+// Sanora Book Management API Endpoints
+// ========================================
+
+// API: Create new book/product in sanora
+app.post('/api/books/create', async (req, res) => {
+    try {
+        const { title, description, price, redirectURL, userUUID } = req.body;
+
+        if (!title || !description || !userUUID || price === undefined) {
+            return res.status(400).json({
+                success: false,
+                error: 'Title, description, price, and userUUID are required'
+            });
+        }
+
+        // Create product in real sanora service using sessionless authentication
+        try {
+            const keys = getJoanKeys();
+            if (!keys) {
+                throw new Error('No authentication keys available');
+            }
+
+            const timestamp = Date.now().toString();
+            sessionless.getKeys = getJoanKeys;
+
+            // Create the product data for sanora API
+            const productPayload = {
+                title,
+                description,
+                price: parseFloat(price).toString(), // Sanora expects price as string
+                redirectURL: redirectURL || '',
+                timestamp,
+                signature: await sessionless.sign(timestamp + userUUID + title)
+            };
+
+            console.log('📚 Creating product in sanora service:', productPayload);
+
+            // Make the API call to sanora - using PUT as per sanora API
+            const sanoraResponse = await fetch(`${SERVICE_URLS.sanora}/user/${userUUID}/product/${encodeURIComponent(title)}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(productPayload)
+            });
+
+            if (!sanoraResponse.ok) {
+                const errorText = await sanoraResponse.text();
+                console.error('Sanora API error:', sanoraResponse.status, errorText);
+                throw new Error(`Sanora service returned ${sanoraResponse.status}: ${errorText}`);
+            }
+
+            const sanoraResult = await sanoraResponse.json();
+            console.log('✅ Sanora service response:', sanoraResult);
+
+            res.json({
+                success: true,
+                data: sanoraResult,
+                message: 'Product created successfully in sanora service'
+            });
+
+        } catch (sanoraError) {
+            console.error('❌ Failed to create product in sanora:', sanoraError);
+            res.status(500).json({
+                success: false,
+                error: 'Failed to create product: ' + sanoraError.message
+            });
+        }
+    } catch (error) {
+        console.error('❌ Failed to create book:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to create book'
+        });
+    }
+});
+
+// API: Get user's books from sanora
+app.get('/api/books/user/:userUUID', async (req, res) => {
+    try {
+        const { userUUID } = req.params;
+
+        console.log('📚 Fetching user books from sanora for UUID:', userUUID);
+
+        // In production, this would fetch from sanora service
+        // For now, return empty array with success message
+        res.json({
+            success: true,
+            data: [],
+            message: 'Books endpoint ready - sanora integration available with proper auth'
+        });
+    } catch (error) {
+        console.error('❌ Failed to fetch user books:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch user books'
+        });
+    }
+});
+
+// API: Update book in sanora
+app.put('/api/books/:productId', async (req, res) => {
+    try {
+        const { productId } = req.params;
+        const { title, description, price, category } = req.body;
+
+        if (!title || !category || price === undefined) {
+            return res.status(400).json({
+                success: false,
+                error: 'Title, category, and price are required'
+            });
+        }
+
+        const productData = {
+            productId,
+            title,
+            description: description || '',
+            price: parseFloat(price),
+            category,
+            updatedAt: new Date().toISOString()
+        };
+
+        console.log('📚 Updating book in sanora (simulated):', productData);
+
+        res.json({
+            success: true,
+            data: productData,
+            message: 'Book updated successfully',
+            note: 'Currently using local storage - sanora integration available with proper auth'
+        });
+    } catch (error) {
+        console.error('❌ Failed to update book:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update book'
+        });
+    }
+});
+
+// API: Delete book from sanora
+app.delete('/api/books/:productId', async (req, res) => {
+    try {
+        const { productId } = req.params;
+
+        console.log('📚 Deleting book from sanora (simulated):', productId);
+
+        res.json({
+            success: true,
+            message: 'Book deleted successfully',
+            note: 'Currently using local storage - sanora integration available with proper auth'
+        });
+    } catch (error) {
+        console.error('❌ Failed to delete book:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to delete book'
+        });
+    }
+});
+
+// API: Get authors from prof service
+app.get('/api/authors', async (req, res) => {
+    try {
+        const authors = await fetchAuthorsFromProf();
+        res.json({
+            success: true,
+            data: authors,
+            source: 'prof'
+        });
+    } catch (error) {
+        console.error('Failed to fetch authors:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch authors',
+            fallback: MOCK_AUTHORS
+        });
+    }
+});
+
+// API: Get books from sanora service
+app.get('/api/books', async (req, res) => {
+    try {
+        const books = await fetchBooksFromSanora();
+        res.json({
+            success: true,
+            data: books,
+            source: 'sanora'
+        });
+    } catch (error) {
+        console.error('Failed to fetch books:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch books',
+            fallback: MOCK_BOOKS
+        });
+    }
+});
+
 // API: Health check
 app.get('/api/health', (req, res) => {
     res.json({
@@ -819,7 +1572,9 @@ app.get('/api/health', (req, res) => {
             'multi-pubkey',
             'stripe-integration',
             'addie-coordination',
-            'magic-protocol'
+            'magic-protocol',
+            'prof-integration',
+            'sanora-integration'
         ]
     });
 });

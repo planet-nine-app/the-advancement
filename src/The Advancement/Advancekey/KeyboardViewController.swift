@@ -13,9 +13,10 @@ class KeyboardViewController: UIInputViewController {
     @IBOutlet var nextKeyboardButton: UIButton!
     private var webView: WKWebView!
 
-    // UIKit Context Display
-    private var contextButton: UIButton!
-    private var contextLabel: UILabel!
+    // Simple verification button
+    private var verificationButton: UIButton!
+    
+    let sessionless = Sessionless()
 
     override func updateViewConstraints() {
         super.updateViewConstraints()
@@ -37,9 +38,9 @@ class KeyboardViewController: UIInputViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        setupSVGKeyboard()
+        //setupSVGKeyboard()
         setupNextKeyboardButton()
-        setupContextDisplay()
+        setupVerificationButton()
     }
 
     private func setupSVGKeyboard() {
@@ -85,107 +86,30 @@ class KeyboardViewController: UIInputViewController {
         ])
     }
 
-    private func setupContextDisplay() {
-        // Create Context Analysis Button
-        contextButton = UIButton(type: .system)
-        contextButton.setTitle("🔍 Context", for: .normal)
-        contextButton.setTitleColor(.white, for: .normal)
-        contextButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .medium)
-        contextButton.backgroundColor = UIColor(red: 0.4, green: 0.47, blue: 0.92, alpha: 0.8) // Planet Nine gradient color
-        contextButton.layer.cornerRadius = 6
-        contextButton.translatesAutoresizingMaskIntoConstraints = false
-        contextButton.addTarget(self, action: #selector(contextButtonTapped), for: .touchUpInside)
+    private func setupVerificationButton() {
+        // Create simple verification button
+        verificationButton = UIButton(type: .system)
+        verificationButton.setTitle("TAP TO VERIFY", for: .normal)
+        verificationButton.setTitleColor(.white, for: .normal)
+        verificationButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .bold)
+        verificationButton.backgroundColor = UIColor.systemPurple
+        verificationButton.layer.cornerRadius = 8
+        verificationButton.layer.masksToBounds = true
+        verificationButton.translatesAutoresizingMaskIntoConstraints = false
+        verificationButton.addTarget(self, action: #selector(verificationButtonTapped), for: .touchUpInside)
 
-        // Create Context Display Label
-        contextLabel = UILabel()
-        contextLabel.numberOfLines = 0
-        contextLabel.font = UIFont.monospacedSystemFont(ofSize: 10, weight: .regular)
-        contextLabel.textColor = .white
-        contextLabel.backgroundColor = UIColor.black.withAlphaComponent(0.7)
-        contextLabel.layer.cornerRadius = 4
-        contextLabel.layer.masksToBounds = true
-        contextLabel.textAlignment = .left
-        contextLabel.text = "Tap 🔍 Context to analyze"
-        contextLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        // Add padding to label
-        contextLabel.layer.borderWidth = 1
-        contextLabel.layer.borderColor = UIColor.white.withAlphaComponent(0.3).cgColor
-
-        self.view.addSubview(contextButton)
-        self.view.addSubview(contextLabel)
+        self.view.addSubview(verificationButton)
 
         NSLayoutConstraint.activate([
-            // Context button - top right
-            contextButton.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -10),
-            contextButton.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: -10),
-            contextButton.widthAnchor.constraint(equalToConstant: 80),
-            contextButton.heightAnchor.constraint(equalToConstant: 30),
-
-            // Context label - in the top 40px space
-            contextLabel.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 10),
-            contextLabel.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -10),
-            contextLabel.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 5),
-            contextLabel.heightAnchor.constraint(equalToConstant: 30)
+            verificationButton.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+            verificationButton.centerYAnchor.constraint(equalTo: self.view.centerYAnchor),
+            verificationButton.widthAnchor.constraint(equalToConstant: 280),
+            verificationButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
 
-    @objc private func contextButtonTapped() {
-        contextButton.setTitle("TAPPER", for: .normal)
-        analyzeContextForUIKit()
-        contextButton.backgroundColor = .orange
-    }
-
-    private func analyzeContextForUIKit() {
-        let proxy = self.textDocumentProxy
-
-        // Get text around cursor (iOS provides limited context for privacy)
-        let beforeText = proxy.documentContextBeforeInput ?? "bef"
-        let afterText = proxy.documentContextAfterInput ?? "aft"
-        let selectedText = proxy.selectedText ?? "sel"
-
-        // Combine all available text
-        let fullContext = beforeText + selectedText + afterText
-
-        // Analyze for Planet Nine content
-        let detectedPubKey = extractPubKey(from: fullContext)
-
-        // Create display strings
-        let firstChars = fullContext.count >= 16 ?
-            String(fullContext.prefix(16)) : fullContext
-        let lastChars = fullContext.count >= 16 ?
-            String(fullContext.suffix(16)) : ""
-
-        let pubKeyStatus = detectedPubKey != nil ? "✅ Contains pubKey" : "❌ No pubKey"
-
-        // Format the display text
-        let displayText = """
-        First: \(firstChars.isEmpty ? "(empty)" : firstChars)
-        Last: \(lastChars.isEmpty ? "(same)" : lastChars)
-        \(pubKeyStatus)
-        """
-
-        // Update the UIKit label
-        DispatchQueue.main.async {
-            self.contextLabel.text = displayText
-
-            // Provide haptic feedback
-            //let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-            //impactFeedback.impactOccurred()
-
-            // Print debug info
-            print("🔍 UIKit Context Analysis:")
-            print("   Full context length: \(fullContext.count)")
-            print("   First 16: '\(firstChars)'")
-            print("   Last 16: '\(lastChars)'")
-            print("   Contains pubKey: \(detectedPubKey != nil)")
-            if let pubKey = detectedPubKey {
-                print("   Detected pubKey: \(pubKey)")
-            }
-        }
-
-        // Also trigger the WebView context analysis which will switch to context screen
-        analyzeCurrentContext()
+    @objc private func verificationButtonTapped() {
+        verifyContextText()
     }
 
     private func loadSVGKeyboard() {
@@ -994,6 +918,42 @@ class KeyboardViewController: UIInputViewController {
     override func textDidChange(_ textInput: UITextInput?) {
         // The app has just changed the document's contents, the document context has been updated.
         updateAppearance()
+    }
+
+    private func verifyContextText() {
+        let proxy = self.textDocumentProxy
+
+        // Get all available text context
+        let beforeText = proxy.documentContextBeforeInput ?? ""
+        let afterText = proxy.documentContextAfterInput ?? ""
+        let selectedText = proxy.selectedText ?? ""
+
+        // Combine all text to search for signature
+        let fullContext = beforeText + selectedText + afterText
+
+        // Alice's public key and message
+        let alicePubKey = "027f68e0f4dfa964ebca3b9f90a15b8ffde8e91ebb0e2e36907fb0cc7aec48448e"
+        let message = "foobar"
+
+        // Try to verify using sessionless
+        do {
+            let isValid = try sessionless.verifySignature(signature: fullContext, message: message, publicKey: alicePubKey)
+
+            DispatchQueue.main.async {
+                if isValid {
+                    self.verificationButton.setTitle("VERIFIED", for: .normal)
+                    self.verificationButton.backgroundColor = UIColor.systemGreen
+                } else {
+                    self.verificationButton.setTitle("DON'T TRUST THIS!", for: .normal)
+                    self.verificationButton.backgroundColor = UIColor.systemRed
+                }
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.verificationButton.setTitle("DON'T TRUST THIS!", for: .normal)
+                self.verificationButton.backgroundColor = UIColor.systemRed
+            }
+        }
     }
 
     private func updateAppearance() {

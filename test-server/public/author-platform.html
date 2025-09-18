@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Author Platform - Planet Nine</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .author-platform {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .auth-section {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            color: white;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 15px;
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            color: white;
+            border-bottom: 3px solid #4CAF50;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+            background: rgba(255,255,255,0.15);
+        }
+
+        .form-group input::placeholder, .form-group textarea::placeholder {
+            color: rgba(255,255,255,0.6);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Collapsible auth section */
+        .auth-section {
+            transition: all 0.5s ease;
+            overflow: hidden;
+        }
+
+        .auth-section.collapsed {
+            max-height: 60px;
+            padding: 15px 30px;
+        }
+
+        .auth-section.collapsed .auth-tabs,
+        .auth-section.collapsed .auth-form,
+        .auth-section.collapsed .loading {
+            display: none !important;
+        }
+
+        .auth-section.collapsed h3 {
+            margin: 0;
+            font-size: 18px;
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Logged in user info */
+        .logged-in-info {
+            display: none;
+        }
+
+        .auth-section.collapsed .logged-in-info {
+            display: block;
+        }
+
+        /* Main content area */
+        .main-content {
+            display: none;
+        }
+
+        .main-content.show {
+            display: block;
+        }
+
+        /* Responsive layout */
+        .content-columns {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Two-column layout when width > height */
+        @media screen and (orientation: landscape) {
+            .content-columns {
+                flex-direction: row;
+            }
+
+            .profile-section, .books-section {
+                flex: 1;
+                margin-bottom: 0;
+            }
+        }
+
+        .profile-section, .books-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .section-header h2 {
+            color: #333;
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .current-user-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .user-status {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .user-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .user-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .user-status.loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            animation: pulse 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { opacity: 0.8; }
+            to { opacity: 1; }
+        }
+
+        .book-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .book-item h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container author-platform">
+        <header class="hero-section">
+            <h1>🌟 Author Platform</h1>
+            <p>Create, manage, and publish your books on Planet Nine</p>
+        </header>
+
+        <!-- Authentication Section -->
+        <div class="auth-section" id="auth-section">
+            <!-- Logged in user info (shown when collapsed) -->
+            <div class="logged-in-info">
+                <h3>✅ Logged in as <span id="logged-in-user">User</span></h3>
+                <button onclick="logout()" class="btn" style="background: rgba(255,255,255,0.2); padding: 8px 16px; font-size: 14px;">Logout</button>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchTab('login')">Login</button>
+                <button class="auth-tab" onclick="switchTab('register')">Create Account</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form" class="auth-form active">
+                <h3>Welcome Back</h3>
+                <p>Enter your account credentials to access your author dashboard.</p>
+
+                <form onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="login-hash">Account Hash</label>
+                        <input type="text" id="login-hash" placeholder="Enter your account hash" required>
+                    </div>
+                    <button type="submit" class="btn" id="login-btn">Login</button>
+                </form>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" class="auth-form">
+                <h3>Create Your Author Account</h3>
+                <p>Join Planet Nine's decentralized author platform using sessionless authentication.</p>
+
+                <form onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label for="register-hash">Account Hash</label>
+                        <input type="text" id="register-hash" placeholder="Create a unique hash for your account" required>
+                        <small style="color: rgba(255,255,255,0.7);">This will be your unique identifier. Keep it safe!</small>
+                    </div>
+                    <button type="submit" class="btn" id="register-btn">Create Account</button>
+                </form>
+            </div>
+
+            <!-- Loading -->
+            <div id="auth-loading" class="loading">
+                <div class="spinner"></div>
+                <p>Processing...</p>
+            </div>
+
+            <!-- User Status -->
+            <div id="user-status"></div>
+        </div>
+
+        <!-- Main Content (Profile and Books) -->
+        <div class="main-content" id="main-content">
+            <div class="content-columns">
+                <!-- Profile Management Section -->
+                <div id="profile-section" class="profile-section">
+                    <div class="section-header">
+                        <h2>📝 Profile Management</h2>
+                    </div>
+
+                    <div class="current-user-info">
+                        <h4>Current User</h4>
+                        <p id="current-user-details">Not logged in</p>
+                    </div>
+
+                    <!-- Profile form will be replaced with idothis form widget -->
+                    <div id="profile-form-container">
+                        <form onsubmit="handleProfileUpdate(event)">
+                            <div class="form-group">
+                                <label for="author-name">Author Name</label>
+                                <input type="text" id="author-name" placeholder="Your author name" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="author-bio">Bio</label>
+                                <textarea id="author-bio" rows="4" placeholder="Tell readers about yourself"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="author-location">Location</label>
+                                <input type="text" id="author-location" placeholder="Your location">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="author-genres">Genres</label>
+                                <input type="text" id="author-genres" placeholder="Fiction, Mystery, Romance (comma-separated)">
+                            </div>
+
+                            <button type="submit" class="btn">Update Profile</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Product Management Section -->
+                <div id="books-section" class="books-section">
+                    <div class="section-header">
+                        <h2>📦 Product Management</h2>
+                    </div>
+
+                    <h3>Add New Product</h3>
+                    <!-- Book form will be replaced with ninefy ebook form -->
+                    <div id="book-form-container">
+                        <form onsubmit="handleBookUpload(event)">
+                            <div class="form-group">
+                                <label for="book-title">Title</label>
+                                <input type="text" id="book-title" placeholder="Book title" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="book-description">Description</label>
+                                <textarea id="book-description" rows="4" placeholder="Book description"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="book-price">Price ($)</label>
+                                <input type="number" id="book-price" placeholder="15.99" step="0.01" min="0" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="book-category">Category</label>
+                                <input type="text" id="book-category" placeholder="ebook, audiobook, print" required>
+                            </div>
+
+                            <button type="submit" class="btn">Add Book</button>
+                        </form>
+                    </div>
+
+                    <h3>Your Products</h3>
+                    <div id="user-books">
+                        <p>No products yet. Add your first product above!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="form-widget.js"></script>
+    <script src="author-platform.js"></script>
+</body>
+</html>
