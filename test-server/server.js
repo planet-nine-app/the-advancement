@@ -49,47 +49,33 @@ async function fetchAuthorsFromProf() {
     try {
         console.log('📝 Attempting to fetch authors from prof...');
 
-        // Use the actual author UUIDs we created in prof via seeding script
-        const authorUUIDs = [
-            'e74c9ca3-639a-44b2-8429-fc5004e5e104', // Sarah Mitchell
-            'bb75ce7d-6230-4ae5-9b7c-06943840b5b8', // Delores Swigert Sullivan
-            '0e5b42c6-89a5-4b70-80b9-f788561f96c2', // Marcus Chen
-            '426e73ed-9f6e-43ca-ad4c-002e17732455'  // Isabella Rodriguez
-        ];
+        // Use the new /profiles endpoint to get author profiles (filter by author tag)
+        const profilesResponse = await fetch(`${SERVICE_URLS.prof}/profiles?tags=author`);
 
-        console.log(`📝 Using ${authorUUIDs.length} real author UUIDs from prof`);
-
-        // Try to fetch each author profile from prof
-        const authors = [];
-        for (const uuid of authorUUIDs) {
-            try {
-                console.log(`📝 Attempting to fetch profile for UUID: ${uuid}`);
-                const profileResponse = await fetch(`${SERVICE_URLS.prof}/user/${uuid}/profile`);
-
-                if (profileResponse.ok) {
-                    const response = await profileResponse.json();
-                    const profile = response.profile; // Extract the profile data from the response
-                    console.log(`✅ Found profile for ${profile.name || uuid}`);
-                    authors.push(profile);
-                } else {
-                    console.log(`❌ No profile found for UUID: ${uuid} (${profileResponse.status})`);
-                }
-            } catch (profileError) {
-                console.log(`❌ Error fetching profile for ${uuid}:`, profileError.message);
-            }
+        if (!profilesResponse.ok) {
+            console.log(`❌ Failed to fetch profiles from prof (${profilesResponse.status})`);
+            return [];
         }
 
-        if (authors.length > 0) {
-            console.log(`✅ Successfully fetched ${authors.length} author profiles from prof`);
-            return authors;
-        } else {
-            console.log('📝 No author profiles found in prof, using mock data');
-            return MOCK_AUTHORS;
+        const profilesData = await profilesResponse.json();
+
+        if (!profilesData.success) {
+            console.log(`❌ Prof returned error: ${profilesData.error || 'Unknown error'}`);
+            return [];
         }
+
+        const profiles = profilesData.profiles || [];
+        console.log(`✅ Successfully fetched ${profiles.length} author profiles from prof`);
+
+        // Return profiles with uuid field added for compatibility
+        return profiles.map(profile => ({
+            ...profile,
+            uuid: profile.uuid || profile.id // Ensure uuid field exists
+        }));
 
     } catch (error) {
-        console.error('❌ Failed to fetch authors from prof:', error);
-        return MOCK_AUTHORS; // Fallback to mock data
+        console.error('❌ Failed to fetch authors from prof:', error.message);
+        return []; // Return empty array instead of mock data
     }
 }
 
@@ -101,25 +87,30 @@ async function fetchBooksFromSanora() {
         const sanoraProducts = await response.json();
 
         // Transform sanora format to our expected format
-        const books = sanoraProducts.map(productWrapper => {
-            const productKey = Object.keys(productWrapper)[0];
-            const product = productWrapper[productKey];
+        // sanoraProducts is an array of objects where each object has book title as key
+        const books = [];
 
-            return {
-                id: product.productId || productKey,
+        for (const bookObject of sanoraProducts) {
+            // Each bookObject has one key (the book title) with the book data as value
+            const bookTitle = Object.keys(bookObject)[0];
+            const product = bookObject[bookTitle];
+
+            books.push({
+                id: product.productId || bookTitle,
                 title: product.title,
                 description: product.description,
                 price: product.price || 0,
                 category: product.category || 'product',
-                authorUUID: product.uuid,
+                authorUUID: product.authorUUID,
                 uuid: product.uuid,
                 productId: product.productId,
                 timestamp: product.timestamp,
                 signature: product.signature
-            };
-        });
+            });
+        }
 
         console.log(`✅ Fetched ${books.length} books from sanora`);
+        console.log('📖 Book authorUUIDs:', books.map(book => ({ title: book.title, authorUUID: book.authorUUID })));
         return books;
     } catch (error) {
         console.error('❌ Failed to fetch books from sanora:', error);
@@ -691,6 +682,149 @@ app.get('/author-platform', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'author-platform.html'));
 });
 
+// Fetch author books via BDO association
+async function fetchAuthorBooksViaBDO(authorUUID) {
+    try {
+        // Use the correct BDO pubKey generated during seeding
+        const bdoPubKey = 'b3e94d16-fa54-4535-b295-639ec33faa32';
+
+        console.log(`🔍 Fetching BDO association for author ${authorUUID}...`);
+        const response = await fetch(`${SERVICE_URLS.bdo}/user/${bdoPubKey}/bdo`);
+
+        if (!response.ok) {
+            console.log(`❌ Failed to fetch BDO: ${response.status}`);
+            return [];
+        }
+
+        const bdoData = await response.json();
+        console.log(`✅ Retrieved BDO data:`, bdoData);
+
+        // Extract book UUIDs for this author
+        if (bdoData.authorUUID === authorUUID && bdoData.bookUUIDs) {
+            console.log(`📚 Found ${bdoData.bookUUIDs.length} books for author`);
+
+            // Now fetch the actual book details from sanora
+            const books = await fetchBooksFromSanora();
+            const authorBooks = books.filter(book =>
+                bdoData.bookUUIDs.includes(book.id) ||
+                bdoData.bookUUIDs.includes(book.uuid) ||
+                bdoData.bookUUIDs.includes(book.productId)
+            );
+
+            console.log(`✅ Matched ${authorBooks.length} books from sanora`);
+            return authorBooks;
+        }
+
+        return [];
+    } catch (error) {
+        console.error('❌ Error fetching author books via BDO:', error.message);
+        return [];
+    }
+}
+
+// Dynamic author pages (e.g., /alice-developer.html)
+app.get('/:authorSlug.html', async (req, res) => {
+    const authorSlug = req.params.authorSlug;
+
+    try {
+        // Fetch authors
+        const authors = await fetchAuthorsFromProf();
+
+        // Find the author by converting name to slug
+        const author = authors.find(a =>
+            a.name.toLowerCase().replace(/\s+/g, '-') === authorSlug
+        );
+
+        if (!author) {
+            return res.status(404).send('Author not found');
+        }
+
+        // Try to find books via BDO association first, fallback to direct lookup
+        let authorBooks = await fetchAuthorBooksViaBDO(author.uuid);
+
+        if (authorBooks.length === 0) {
+            console.log('📚 No books found via BDO, trying direct lookup...');
+            const allBooks = await fetchBooksFromSanora();
+            console.log(`🔍 Looking for books with authorUUID: "${author.uuid}"`);
+            console.log('🔍 Available books:', allBooks.map(book => ({
+                title: book.title,
+                authorUUID: book.authorUUID,
+                match: book.authorUUID === author.uuid
+            })));
+            authorBooks = allBooks.filter(book => book.authorUUID === author.uuid);
+            console.log(`✅ Found ${authorBooks.length} matching books after filter`);
+        }
+
+        // Read the template
+        const fs = await import('fs');
+        const templatePath = path.join(__dirname, 'templates', 'author.html');
+        let template = fs.readFileSync(templatePath, 'utf8');
+
+        // Generate author initials
+        const initials = author.name.split(' ').map(n => n[0]).join('');
+
+        // Generate author tags HTML
+        const tagsArray = author.tags || author.genres || [];
+        const tagsHtml = tagsArray.map(tag =>
+            `<span class="tag">${tag}</span>`
+        ).join('');
+
+        // Generate books HTML
+        let booksHtml;
+        if (authorBooks.length === 0) {
+            booksHtml = `
+                <div class="no-books">
+                    <h3>📚 No books yet</h3>
+                    <p>This author hasn't published any books yet. Check back later!</p>
+                </div>
+            `;
+        } else {
+            booksHtml = `
+                <div class="books-grid">
+                    ${authorBooks.map(book => `
+                        <div class="book-card">
+                            <div class="book-cover" style="background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);">
+                                ${book.title}
+                            </div>
+                            <div class="book-info">
+                                <h3 class="book-title">${book.title}</h3>
+                                <p class="book-description">${book.description}</p>
+                                <div class="book-meta">
+                                    <span class="book-price">$${(book.price / 100).toFixed(2)}</span>
+                                    <span class="book-category">${book.category}</span>
+                                </div>
+                                <div class="book-tags">
+                                    ${(book.tags || []).map(tag =>
+                                        `<span class="book-tag">${tag}</span>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Replace template variables
+        template = template
+            .replace(/{{AUTHOR_NAME}}/g, author.name)
+            .replace(/{{AUTHOR_EMAIL}}/g, author.email || 'Contact not available')
+            .replace(/{{AUTHOR_LOCATION}}/g, author.location || 'Location not specified')
+            .replace(/{{AUTHOR_BIO}}/g, author.bio || 'No bio available')
+            .replace(/{{AUTHOR_INITIALS}}/g, initials)
+            .replace(/{{AUTHOR_TAGS}}/g, tagsHtml)
+            .replace(/{{BOOKS_COUNT}}/g, authorBooks.length)
+            .replace(/{{BOOKS_COUNT_LABEL}}/g, authorBooks.length === 1 ? 'book' : 'books')
+            .replace(/{{BOOKS_CONTENT}}/g, booksHtml);
+
+        res.send(template);
+
+    } catch (error) {
+        console.error('Error generating author page:', error);
+        res.status(500).send('Error generating author page');
+    }
+});
+
 // Serve favicon
 app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(__dirname, 'favicon.png'));
@@ -1240,13 +1374,16 @@ app.post('/api/profile/create', async (req, res) => {
             const timestamp = Date.now().toString();
             sessionless.getKeys = getJoanKeys;
 
-            // Create the profile data
+            // Create the profile data (prof service expects profileData property)
             const profilePayload = {
-                name,
-                email,
-                bio: bio || '',
-                location: location || '',
-                genres: genres || ''
+                profileData: {
+                    name,
+                    email,
+                    bio: bio || '',
+                    location: location || '',
+                    genres: genres || '',
+                    tags: ['author'] // Add author tag so profiles appear in author filtering
+                }
             };
 
             // Sign the request
@@ -1262,7 +1399,7 @@ app.post('/api/profile/create', async (req, res) => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    ...profilePayload,
+                    profileData: profilePayload.profileData,
                     timestamp,
                     signature
                 })

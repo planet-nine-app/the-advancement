@@ -69,6 +69,20 @@ class AuthorsCarousel {
         // Clear loading state
         this.container.innerHTML = '';
 
+        // Handle empty author state
+        if (!authors || authors.length === 0) {
+            const emptyState = document.createElement('div');
+            emptyState.className = 'empty-state';
+            emptyState.innerHTML = `
+                <div class="empty-message">
+                    <h3>📦 No Authors Yet</h3>
+                    <p>Authors will appear here when profiles are added to the marketplace.</p>
+                </div>
+            `;
+            this.container.appendChild(emptyState);
+            return;
+        }
+
         // Add leading spacer for center alignment
         const leadingSpacer = document.createElement('div');
         leadingSpacer.className = 'author-spacer';

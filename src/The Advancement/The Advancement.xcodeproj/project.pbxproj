@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CA52695E2E79AA9800593855 /* AdvanceAction2.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA5269482E79268400593855 /* AdvanceAction2.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CA54CB1D2E5A0A99007D062D /* The Advancement Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA54CB1C2E5A0A99007D062D /* The Advancement Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CA54CB272E5A0A99007D062D /* The Advancement Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA54CB262E5A0A99007D062D /* The Advancement Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CA54CBC22E5A53E6007D062D /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA54CBC12E5A53E6007D062D /* JavaScriptCore.framework */; };
@@ -20,12 +19,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		CA5269552E79268500593855 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = CA54CAE22E5A0A98007D062D /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = CA5269472E79268400593855;
-			remoteInfo = AdvanceAction2;
 		};
 		CA54CB1E2E5A0A99007D062D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -85,7 +81,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				CA52695E2E79AA9800593855 /* AdvanceAction2.appex in Embed Foundation Extensions */,
 				CA54CB272E5A0A99007D062D /* The Advancement Extension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
@@ -94,7 +89,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		CA5269482E79268400593855 /* AdvanceAction2.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AdvanceAction2.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA54CAFE2E5A0A99007D062D /* The Advancement.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "The Advancement.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA54CB102E5A0A99007D062D /* The Advancement.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "The Advancement.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA54CB1C2E5A0A99007D062D /* The Advancement Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "The Advancement Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -110,12 +104,10 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		CA52695B2E79268500593855 /* Exceptions for "AdvanceAction2" folder in "AdvanceAction2" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = CA5269472E79268400593855 /* AdvanceAction2 */;
 		};
 		CA54CB4B2E5A0A99007D062D /* Exceptions for "Shared (App)" folder in "The Advancement (iOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
@@ -284,12 +276,9 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		CA5269492E79268500593855 /* AdvanceAction2 */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				CA52695B2E79268500593855 /* Exceptions for "AdvanceAction2" folder in "AdvanceAction2" target */,
 			);
-			path = AdvanceAction2;
 			sourceTree = "<group>";
 		};
 		CA54CAE62E5A0A98007D062D /* Shared (App) */ = {
@@ -375,7 +364,6 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		CA5269452E79268400593855 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -451,7 +439,6 @@
 				CAD800F42E7536CA006FB128 /* Advancekey */,
 				CAD801062E760E6B006FB128 /* AdvanceLook */,
 				CAD801232E762F88006FB128 /* AdvanceWidget */,
-				CA5269492E79268500593855 /* AdvanceAction2 */,
 				CA54CBC02E5A53E6007D062D /* Frameworks */,
 				CA54CAFF2E5A0A99007D062D /* Products */,
 			);
@@ -467,7 +454,6 @@
 				CAD800F32E7536CA006FB128 /* Advancekey.appex */,
 				CAD801032E760E6B006FB128 /* AdvanceLook.appex */,
 				CAD8011E2E762F88006FB128 /* AdvanceWidgetExtension.appex */,
-				CA5269482E79268400593855 /* AdvanceAction2.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -486,26 +472,17 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		CA5269472E79268400593855 /* AdvanceAction2 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CA5269582E79268500593855 /* Build configuration list for PBXNativeTarget "AdvanceAction2" */;
 			buildPhases = (
-				CA5269442E79268400593855 /* Sources */,
-				CA5269452E79268400593855 /* Frameworks */,
-				CA5269462E79268400593855 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				CA5269492E79268500593855 /* AdvanceAction2 */,
 			);
-			name = AdvanceAction2;
 			packageProductDependencies = (
 			);
-			productName = AdvanceAction2;
-			productReference = CA5269482E79268400593855 /* AdvanceAction2.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 		CA54CAFD2E5A0A99007D062D /* The Advancement (iOS) */ = {
@@ -548,7 +525,6 @@
 			);
 			dependencies = (
 				CA54CB292E5A0A99007D062D /* PBXTargetDependency */,
-				CA5269562E79268500593855 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				CA54CB112E5A0A99007D062D /* macOS (App) */,
@@ -680,7 +656,6 @@
 				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1640;
 				TargetAttributes = {
-					CA5269472E79268400593855 = {
 						CreatedOnToolsVersion = 16.4;
 					};
 					CA54CAFD2E5A0A99007D062D = {
@@ -727,13 +702,11 @@
 				CAD800F22E7536CA006FB128 /* Advancekey */,
 				CAD801022E760E6B006FB128 /* AdvanceLook */,
 				CAD8011D2E762F88006FB128 /* AdvanceWidgetExtension */,
-				CA5269472E79268400593855 /* AdvanceAction2 */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		CA5269462E79268400593855 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -792,7 +765,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		CA5269442E79268400593855 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -851,10 +823,7 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		CA5269562E79268500593855 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = CA5269472E79268400593855 /* AdvanceAction2 */;
-			targetProxy = CA5269552E79268500593855 /* PBXContainerItemProxy */;
 		};
 		CA54CB1F2E5A0A99007D062D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -884,18 +853,14 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		CA5269592E79268500593855 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = AdvanceAction2/AdvanceAction2.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RLJ2FY35FD;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = AdvanceAction2/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = AdvanceAction2;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -904,7 +869,6 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.planetnine.the-advancement.The-Advancement.AdvanceAction2";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -913,18 +877,14 @@
 			};
 			name = Debug;
 		};
-		CA52695A2E79268500593855 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = AdvanceAction2/AdvanceAction2.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RLJ2FY35FD;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = AdvanceAction2/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = AdvanceAction2;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -933,7 +893,6 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.5;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.planetnine.the-advancement.The-Advancement.AdvanceAction2";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SKIP_INSTALL = YES;
@@ -1508,11 +1467,8 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		CA5269582E79268500593855 /* Build configuration list for PBXNativeTarget "AdvanceAction2" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				CA5269592E79268500593855 /* Debug */,
-				CA52695A2E79268500593855 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
