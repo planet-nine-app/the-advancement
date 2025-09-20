@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Methods</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+        }
+
+        .payment-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .product-summary {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .product-summary h2 {
+            margin: 0 0 10px 0;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .product-summary .price {
+            font-size: 24px;
+            font-weight: 700;
+            color: #FF6B6B;
+            margin: 10px 0;
+        }
+
+        .product-summary .description {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .payment-methods {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .payment-method {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .payment-method:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .payment-method.selected {
+            border: 2px solid #4ECDC4;
+            background: linear-gradient(45deg, #fff, #f8ffff);
+        }
+
+        .payment-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .payment-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: white;
+        }
+
+        .visa-icon { background: linear-gradient(45deg, #1a1f71, #0f3460); }
+        .mastercard-icon { background: linear-gradient(45deg, #eb001b, #f79e1b); }
+        .amex-icon { background: linear-gradient(45deg, #006fcf, #00a4d6); }
+        .default-icon { background: linear-gradient(45deg, #666, #999); }
+
+        .payment-details {
+            flex: 1;
+        }
+
+        .payment-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .payment-last4 {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .select-indicator {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .payment-method.selected .select-indicator {
+            border-color: #4ECDC4;
+            background: #4ECDC4;
+        }
+
+        .payment-method.selected .select-indicator::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4ECDC4, #44A08D);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #44A08D, #3d8b7a);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #666;
+            border: 2px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #ccc;
+        }
+
+        .add-payment {
+            background: white;
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 25px;
+        }
+
+        .add-payment:hover {
+            border-color: #4ECDC4;
+            background: #f8ffff;
+        }
+
+        .add-payment .icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #4ECDC4;
+        }
+
+        .add-payment .text {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+        }
+
+        .empty-state h2 {
+            margin: 0 0 20px 0;
+            font-size: 24px;
+            opacity: 0.9;
+        }
+
+        .empty-state p {
+            margin: 0 0 30px 0;
+            opacity: 0.7;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-container">
+        <div class="header">
+            <h1>💳 Complete Purchase</h1>
+            <p>Select your payment method</p>
+        </div>
+
+        {{PRODUCT_SUMMARY}}
+
+        {{ADD_PAYMENT_OPTION}}
+
+        <div class="payment-methods">
+            {{PAYMENT_METHODS_HTML}}
+        </div>
+
+        {{EMPTY_STATE}}
+
+        <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="cancelPayment()">
+                Cancel
+            </button>
+            <button class="btn btn-primary" onclick="completePayment()" id="payButton" disabled>
+                Pay Now
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let selectedPaymentMethod = null;
+
+        function selectPaymentMethod(methodId, methodData) {
+            console.log('Payment method selected:', methodId, methodData);
+
+            // Remove previous selection
+            document.querySelectorAll('.payment-method').forEach(method => {
+                method.classList.remove('selected');
+            });
+
+            // Select new method
+            const methodElement = document.getElementById(methodId);
+            if (methodElement) {
+                methodElement.classList.add('selected');
+                selectedPaymentMethod = {id: methodId, ...methodData};
+
+                // Enable pay button
+                document.getElementById('payButton').disabled = false;
+            }
+
+            // Send selection to native Swift code
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.keyboardAction) {
+                window.webkit.messageHandlers.keyboardAction.postMessage({
+                    action: 'selectPaymentMethod',
+                    methodId: methodId,
+                    methodData: methodData
+                });
+            }
+        }
+
+        function addPaymentMethod() {
+            console.log('Add payment method requested');
+
+            // Send message to native Swift code
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.keyboardAction) {
+                window.webkit.messageHandlers.keyboardAction.postMessage({
+                    action: 'addPaymentMethod'
+                });
+            } else {
+                console.log('Native bridge not available - would add payment method');
+            }
+        }
+
+        function completePayment() {
+            if (!selectedPaymentMethod) {
+                alert('Please select a payment method');
+                return;
+            }
+
+            console.log('Complete payment with:', selectedPaymentMethod);
+
+            // Send payment completion to native Swift code
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.keyboardAction) {
+                window.webkit.messageHandlers.keyboardAction.postMessage({
+                    action: 'completePayment',
+                    paymentMethod: selectedPaymentMethod
+                });
+            } else {
+                console.log('Native bridge not available - would complete payment');
+            }
+        }
+
+        function cancelPayment() {
+            console.log('Cancel payment');
+
+            // Send cancellation to native Swift code
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.keyboardAction) {
+                window.webkit.messageHandlers.keyboardAction.postMessage({
+                    action: 'cancelPayment'
+                });
+            } else {
+                console.log('Native bridge not available - would cancel payment');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Payment WebView loaded and ready');
+        });
+    </script>
+</body>
+</html>

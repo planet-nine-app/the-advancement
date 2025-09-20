@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdvanceKey WebView</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 10px;
+            background-color: #f0f0f0;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        #svgContainer {
+            width: 100%;
+            height: 200px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .interactive-rect {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .interactive-rect:hover {
+            opacity: 0.8;
+        }
+
+        .rect-text {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="svgContainer">
+        <svg width="100%" height="100%" viewBox="0 0 400 200">
+            <!-- Payment Method 1 -->
+            <rect
+                id="payment1"
+                class="interactive-rect"
+                x="20"
+                y="30"
+                width="160"
+                height="60"
+                fill="#007AFF"
+                rx="8"
+                onclick="selectPaymentMethod('payment1', 'Visa ending in 1234')"
+            />
+            <text
+                class="rect-text"
+                x="100"
+                y="50"
+                fill="white"
+            >
+                Visa ••••1234
+            </text>
+            <text
+                class="rect-text"
+                x="100"
+                y="70"
+                fill="white"
+                font-size="12"
+            >
+                Tap to Select
+            </text>
+
+            <!-- Payment Method 2 -->
+            <rect
+                id="payment2"
+                class="interactive-rect"
+                x="220"
+                y="30"
+                width="160"
+                height="60"
+                fill="#34C759"
+                rx="8"
+                onclick="selectPaymentMethod('payment2', 'Mastercard ending in 5678')"
+            />
+            <text
+                class="rect-text"
+                x="300"
+                y="50"
+                fill="white"
+            >
+                MC ••••5678
+            </text>
+            <text
+                class="rect-text"
+                x="300"
+                y="70"
+                fill="white"
+                font-size="12"
+            >
+                Tap to Select
+            </text>
+
+            <!-- Status indicator -->
+            <text
+                id="statusText"
+                x="200"
+                y="130"
+                text-anchor="middle"
+                font-family="-apple-system, BlinkMacSystemFont, sans-serif"
+                font-size="14"
+                fill="#666"
+            >
+                Select a payment method
+            </text>
+
+            <!-- Additional actions -->
+            <rect
+                id="addPayment"
+                class="interactive-rect"
+                x="20"
+                y="150"
+                width="120"
+                height="30"
+                fill="#FF9500"
+                rx="4"
+                onclick="addPaymentMethod()"
+            />
+            <text
+                class="rect-text"
+                x="80"
+                y="165"
+                fill="white"
+                font-size="12"
+            >
+                Add Payment
+            </text>
+
+            <rect
+                id="closeKeyboard"
+                class="interactive-rect"
+                x="260"
+                y="150"
+                width="120"
+                height="30"
+                fill="#FF3B30"
+                rx="4"
+                onclick="closeKeyboard()"
+            />
+            <text
+                class="rect-text"
+                x="320"
+                y="165"
+                fill="white"
+                font-size="12"
+            >
+                Close
+            </text>
+        </svg>
+    </div>
+
+    <script>
+        // Communication bridge to native Swift code
+        function selectPaymentMethod(paymentId, paymentDescription) {
+            console.log('Payment method selected:', paymentId, paymentDescription);
+
+            // Update UI feedback
+            updateStatus('Selected: ' + paymentDescription);
+            highlightSelection(paymentId);
+
+            // Send message to native Swift code
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.keyboardAction) {
+                window.webkit.messageHandlers.keyboardAction.postMessage({
+                    action: 'selectPayment',
+                    paymentId: paymentId,
+                    description: paymentDescription
+                });
+            } else {
+                console.log('Native bridge not available - would select:', paymentDescription);
+            }
+        }
+
+        function addPaymentMethod() {
+            console.log('Add payment method requested');
+            updateStatus('Opening payment method setup...');
+
+            // Send message to native Swift code
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.keyboardAction) {
+                window.webkit.messageHandlers.keyboardAction.postMessage({
+                    action: 'addPayment'
+                });
+            } else {
+                console.log('Native bridge not available - would add payment method');
+            }
+        }
+
+        function closeKeyboard() {
+            console.log('Close keyboard requested');
+            updateStatus('Closing keyboard...');
+
+            // Send message to native Swift code
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.keyboardAction) {
+                window.webkit.messageHandlers.keyboardAction.postMessage({
+                    action: 'close'
+                });
+            } else {
+                console.log('Native bridge not available - would close keyboard');
+            }
+        }
+
+        function updateStatus(message) {
+            const statusText = document.getElementById('statusText');
+            if (statusText) {
+                statusText.textContent = message;
+            }
+        }
+
+        function highlightSelection(selectedId) {
+            // Reset all payment methods
+            document.getElementById('payment1').setAttribute('stroke', 'none');
+            document.getElementById('payment2').setAttribute('stroke', 'none');
+
+            // Highlight selected payment method
+            const selectedElement = document.getElementById(selectedId);
+            if (selectedElement) {
+                selectedElement.setAttribute('stroke', '#FFD60A');
+                selectedElement.setAttribute('stroke-width', '3');
+            }
+        }
+
+        // Optional: Function to receive data from native Swift
+        function updatePaymentMethods(paymentData) {
+            console.log('Received payment data from native:', paymentData);
+            // This could be called by Swift to update the UI with real payment data
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('WebView loaded and ready for communication');
+        });
+    </script>
+</body>
+</html>

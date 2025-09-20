@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanora Products</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+        }
+
+        .products-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.2);
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(45deg, #007AFF, #34C759);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .product-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .product-description {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 10px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-uuid {
+            color: #888;
+            font-size: 11px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            margin-bottom: 15px;
+            padding: 4px 8px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 4px;
+            word-break: break-all;
+        }
+
+        .product-price {
+            font-size: 24px;
+            font-weight: 700;
+            color: #007AFF;
+            margin-bottom: 15px;
+        }
+
+        .buy-button {
+            width: 100%;
+            background: linear-gradient(45deg, #007AFF, #5856D6);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .buy-button:hover {
+            background: linear-gradient(45deg, #0056CC, #4B40CC);
+            transform: translateY(-1px);
+        }
+
+        .buy-button:active {
+            transform: translateY(0);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: white;
+            padding: 40px 20px;
+        }
+
+        .empty-state h2 {
+            margin: 0 0 10px 0;
+            font-size: 24px;
+            opacity: 0.9;
+        }
+
+        .empty-state p {
+            margin: 0;
+            opacity: 0.7;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Planet Nine Marketplace</h1>
+        <p>Discover amazing products powered by Sanora</p>
+    </div>
+
+    <div class="products-container">
+        {{PRODUCTS_HTML}}
+    </div>
+
+    {{EMPTY_STATE}}
+
+    <script>
+        function buyProduct(productId, title, price, description, uuid) {
+            console.log('Buy product clicked:', {productId, title, price, description, uuid});
+
+            // Send purchase request to native Swift code
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.keyboardAction) {
+                window.webkit.messageHandlers.keyboardAction.postMessage({
+                    action: 'buyProduct',
+                    productId: productId,
+                    title: title,
+                    price: price,
+                    description: description,
+                    uuid: uuid
+                });
+            } else {
+                console.log('Native bridge not available - would buy:', title);
+            }
+        }
+
+        function viewProduct(productId, title, description, uuid) {
+            console.log('View product:', {productId, title, description, uuid});
+
+            // Optional: send view event to native code
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.keyboardAction) {
+                window.webkit.messageHandlers.keyboardAction.postMessage({
+                    action: 'viewProduct',
+                    productId: productId,
+                    title: title,
+                    description: description,
+                    uuid: uuid
+                });
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Products WebView loaded and ready');
+        });
+    </script>
+</body>
+</html>
