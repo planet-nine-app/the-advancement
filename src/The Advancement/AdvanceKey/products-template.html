@@ -155,9 +155,54 @@
             opacity: 0.7;
             font-size: 16px;
         }
+
+        /* Debug log overlay */
+        .debug-log {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 33vh;
+            background: rgba(0, 0, 0, 0.95);
+            color: #00ff00;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+            font-size: 10px;
+            padding: 8px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 9999;
+            border-bottom: 2px solid #333;
+            box-sizing: border-box;
+        }
+
+        .debug-log .log-entry {
+            margin: 2px 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .debug-log .log-error {
+            color: #ff4444;
+        }
+
+        .debug-log .log-success {
+            color: #44ff44;
+        }
+
+        .debug-log .log-info {
+            color: #4444ff;
+        }
+
+        /* Push content below debug log */
+        .header {
+            margin-top: calc(33vh + 10px);
+        }
     </style>
 </head>
 <body>
+    <!-- Debug log overlay -->
+    <div id="debugLog" class="debug-log"></div>
+
     <div class="header">
         <h1>🚀 Planet Nine Marketplace</h1>
         <p>Discover amazing products powered by Sanora</p>
@@ -170,6 +215,110 @@
     {{EMPTY_STATE}}
 
     <script>
+        // Debug logging functions
+        let debugLogContainer = null;
+        let originalConsoleLog = console.log;
+
+        function initDebugLog() {
+            debugLogContainer = document.getElementById('debugLog');
+            if (debugLogContainer) {
+                debugLog('🚀 Debug logging initialized');
+            }
+        }
+
+        function debugLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logMessage = `[${timestamp}] ${message}`;
+
+            // Log to original console
+            originalConsoleLog(logMessage);
+
+            // Log to overlay
+            if (debugLogContainer) {
+                const entry = document.createElement('div');
+                entry.className = `log-entry log-${type}`;
+                entry.textContent = logMessage;
+                debugLogContainer.appendChild(entry);
+                debugLogContainer.scrollTop = debugLogContainer.scrollHeight;
+
+                // Keep only last 100 entries (more room now)
+                while (debugLogContainer.children.length > 100) {
+                    debugLogContainer.removeChild(debugLogContainer.firstChild);
+                }
+
+                // Ensure we're scrolled to bottom to see latest logs
+                setTimeout(() => {
+                    debugLogContainer.scrollTop = debugLogContainer.scrollHeight;
+                }, 10);
+            }
+        }
+
+        // Override console.log to use our debug log
+        console.log = function(...args) {
+            debugLog(args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' '));
+        };
+
+        console.error = function(...args) {
+            debugLog(args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' '), 'error');
+        };
+
+        // Embedded emojicoding functionality
+        {{EMOJICODING_JS}}
+
+        // Explicitly ensure emojicoding functions are available on window
+        console.log('🔍 SETUP: Checking if window.Emojicoding exists...');
+        console.log('🔍 SETUP: typeof window.Emojicoding:', typeof window.Emojicoding);
+
+        if (typeof window.Emojicoding === 'undefined') {
+            console.log('🔧 SETUP: Emojicoding not auto-attached to window, manually creating...');
+
+            // Check what functions are available
+            console.log('🔍 SETUP: typeof encodeHexToEmoji:', typeof encodeHexToEmoji);
+            console.log('🔍 SETUP: typeof decodeEmojiToHex:', typeof decodeEmojiToHex);
+            console.log('🔍 SETUP: typeof quickEncodeHex:', typeof quickEncodeHex);
+            console.log('🔍 SETUP: typeof simpleEncodeHex:', typeof simpleEncodeHex);
+            console.log('🔍 SETUP: typeof simpleDecodeEmoji:', typeof simpleDecodeEmoji);
+
+            // Create the window.Emojicoding object manually
+            window.Emojicoding = {
+                encodeHexToEmoji: (typeof encodeHexToEmoji !== 'undefined') ? encodeHexToEmoji : null,
+                decodeEmojiToHex: (typeof decodeEmojiToHex !== 'undefined') ? decodeEmojiToHex : null,
+                quickEncodeHex: (typeof quickEncodeHex !== 'undefined') ? quickEncodeHex : null,
+                quickDecodeEmoji: (typeof quickDecodeEmoji !== 'undefined') ? quickDecodeEmoji : null,
+                simpleEncodeHex: (typeof simpleEncodeHex !== 'undefined') ? simpleEncodeHex : null,
+                simpleDecodeEmoji: (typeof simpleDecodeEmoji !== 'undefined') ? simpleDecodeEmoji : null,
+                setEmojiBase: (typeof setEmojiBase !== 'undefined') ? setEmojiBase : null,
+                setMagicMode: (typeof setMagicMode !== 'undefined') ? setMagicMode : null,
+                EmojicodingConfig: (typeof EmojicodingConfig !== 'undefined') ? EmojicodingConfig : null,
+                EMOJI_SET_64: (typeof EMOJI_SET_64 !== 'undefined') ? EMOJI_SET_64 : null,
+                EMOJI_SET_128: (typeof EMOJI_SET_128 !== 'undefined') ? EMOJI_SET_128 : null,
+                MAGIC_DELIMITERS: (typeof MAGIC_DELIMITERS !== 'undefined') ? MAGIC_DELIMITERS : null
+            };
+
+            console.log('✅ SETUP: Manually created window.Emojicoding with functions:', Object.keys(window.Emojicoding));
+        } else {
+            console.log('✅ SETUP: window.Emojicoding already available:', Object.keys(window.Emojicoding));
+        }
+
+        console.log('🔍 SETUP: Final check - window.Emojicoding.decodeEmojiToHex type:', typeof window.Emojicoding.decodeEmojiToHex);
+        console.log('🔍 SETUP: Final check - window.Emojicoding.simpleDecodeEmoji type:', typeof window.Emojicoding.simpleDecodeEmoji);
+
+        // Fallback: if simple functions aren't available, add them manually
+        if (!window.Emojicoding.simpleDecodeEmoji && typeof simpleDecodeEmoji !== 'undefined') {
+            console.log('🔧 SETUP: Adding simpleDecodeEmoji manually');
+            window.Emojicoding.simpleDecodeEmoji = simpleDecodeEmoji;
+        }
+        if (!window.Emojicoding.simpleEncodeHex && typeof simpleEncodeHex !== 'undefined') {
+            console.log('🔧 SETUP: Adding simpleEncodeHex manually');
+            window.Emojicoding.simpleEncodeHex = simpleEncodeHex;
+        }
+
+        // Simple test function for debugging
+        function testFunction() {
+            debugLog('🧪 TEST: testFunction called successfully!', 'success');
+            return { success: true, message: 'Test function works!' };
+        }
+
         function buyProduct(productId, title, price, description, uuid) {
             console.log('Buy product clicked:', {productId, title, price, description, uuid});
 
@@ -191,21 +340,125 @@
         function viewProduct(productId, title, description, uuid) {
             console.log('View product:', {productId, title, description, uuid});
 
-            // Optional: send view event to native code
-            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.keyboardAction) {
-                window.webkit.messageHandlers.keyboardAction.postMessage({
-                    action: 'viewProduct',
-                    productId: productId,
-                    title: title,
-                    description: description,
-                    uuid: uuid
-                });
+            // Copy emojicoded UUID to input field
+            if (window.Emojicoding && uuid) {
+                try {
+                    // Remove dashes from UUID for encoding
+                    const cleanUUID = uuid.replace(/-/g, '');
+                    const emojiUUID = window.Emojicoding.quickEncodeHex(cleanUUID);
+
+                    // Send emojicoded UUID to Swift to insert into text field
+                    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.keyboardAction) {
+                        window.webkit.messageHandlers.keyboardAction.postMessage({
+                            action: 'copyEmojiUUID',
+                            emojiUUID: emojiUUID,
+                            originalUUID: uuid,
+                            productTitle: title
+                        });
+
+                        console.log('✅ Copied emojicoded UUID:', emojiUUID);
+                    }
+                } catch (error) {
+                    console.error('❌ Failed to emojicode UUID for copying:', error);
+
+                    // Send error to Swift
+                    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.keyboardAction) {
+                        window.webkit.messageHandlers.keyboardAction.postMessage({
+                            action: 'copyError',
+                            error: `Emojicoding failed: ${error.message}`,
+                            originalUUID: uuid
+                        });
+                    }
+                }
+            } else {
+                console.error('❌ Cannot copy UUID - Emojicoding not available or UUID missing');
+
+                // Send error to Swift
+                if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.keyboardAction) {
+                    window.webkit.messageHandlers.keyboardAction.postMessage({
+                        action: 'copyError',
+                        error: 'Emojicoding not available',
+                        originalUUID: uuid || 'N/A'
+                    });
+                }
             }
         }
 
-        // Initialize
+        // Bridge function for Swift to call for decoding
+        function bridgeDecodeEmojiToHex(emojiString) {
+            debugLog('🔍 BRIDGE: Bridge function called with: ' + emojiString, 'info');
+            debugLog('🔍 BRIDGE: Input length: ' + emojiString.length, 'info');
+
+            // Check if Emojicoding is available
+            if (!window.Emojicoding || !window.Emojicoding.decodeEmojiToHex) {
+                debugLog('❌ BRIDGE: window.Emojicoding.decodeEmojiToHex not available', 'error');
+                debugLog('❌ BRIDGE: window.Emojicoding: ' + JSON.stringify(window.Emojicoding), 'error');
+                return { success: false, error: 'Emojicoding decodeEmojiToHex function not available' };
+            }
+
+            debugLog('✅ BRIDGE: window.Emojicoding.decodeEmojiToHex is available', 'success');
+
+            try {
+                debugLog('🔍 BRIDGE: Calling window.Emojicoding.simpleDecodeEmoji...', 'info');
+                const result = window.Emojicoding.simpleDecodeEmoji(emojiString);
+                debugLog('🔍 BRIDGE: Got result: ' + JSON.stringify(result), 'info');
+
+                if (result && result.hex) {
+                    debugLog('✅ BRIDGE: Success! Hex: ' + result.hex, 'success');
+                    const bridgeResult = {
+                        success: true,
+                        hex: result.hex,
+                        detectedMagic: result.detectedMagic || null,
+                        strippedInput: result.strippedInput || null
+                    };
+                    debugLog('🔍 BRIDGE: Returning: ' + JSON.stringify(bridgeResult), 'info');
+                    return bridgeResult;
+                } else {
+                    debugLog('❌ BRIDGE: Invalid result: ' + JSON.stringify(result), 'error');
+                    return { success: false, error: 'No hex in result: ' + JSON.stringify(result) };
+                }
+            } catch (error) {
+                debugLog('❌ BRIDGE: Exception: ' + error.message, 'error');
+                debugLog('❌ BRIDGE: Stack: ' + error.stack, 'error');
+                return { success: false, error: 'Decode exception: ' + error.message };
+            }
+        }
+
+        // Initialize and emojicode UUIDs
         document.addEventListener('DOMContentLoaded', function() {
+            initDebugLog();
             console.log('Products WebView loaded and ready');
+
+            // Convert all UUID displays to emoji - NO FALLBACKS
+            const uuidElements = document.querySelectorAll('.product-uuid');
+            uuidElements.forEach(element => {
+                const text = element.textContent;
+                const uuidMatch = text.match(/UUID: ([a-f0-9-]+)/i);
+                if (uuidMatch) {
+                    if (!window.Emojicoding) {
+                        // FAIL CLEARLY - emojicoding not available
+                        element.innerHTML = `<span style="color: red; font-weight: bold;">❌ Emojicoding Error: JavaScript not loaded</span>`;
+                        console.error('❌ Emojicoding not available - window.Emojicoding undefined');
+                        return;
+                    }
+
+                    try {
+                        // Remove dashes from UUID for encoding
+                        const cleanUUID = uuidMatch[1].replace(/-/g, '');
+                        console.log('🔍 ENCODING: Original UUID:', uuidMatch[1]);
+                        console.log('🔍 ENCODING: Clean UUID (no dashes):', cleanUUID, 'length:', cleanUUID.length);
+
+                        const emojiUUID = window.Emojicoding.quickEncodeHex(cleanUUID);
+                        console.log('🔍 ENCODING: Emoji result:', emojiUUID);
+
+                        element.innerHTML = `UUID: <span style="font-family: inherit;">${emojiUUID}</span>`;
+                    } catch (error) {
+                        // FAIL CLEARLY - encoding failed
+                        element.innerHTML = `<span style="color: red; font-weight: bold;">❌ Emojicoding Error: ${error.message}</span>`;
+                        console.error('❌ Failed to encode UUID:', error);
+                    }
+                }
+            });
         });
     </script>
 </body>

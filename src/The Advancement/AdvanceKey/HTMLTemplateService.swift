@@ -40,10 +40,12 @@ public class HTMLTemplateService {
         }.joined(separator: "\n")
 
         let emptyStateHTML = products.isEmpty ? generateProductsEmptyState() : ""
+        let emojicodingJS = try loadEmojicodingJS()
 
         return template
             .replacingOccurrences(of: "{{PRODUCTS_HTML}}", with: productsHTML)
             .replacingOccurrences(of: "{{EMPTY_STATE}}", with: emptyStateHTML)
+            .replacingOccurrences(of: "{{EMOJICODING_JS}}", with: emojicodingJS)
     }
 
     private static func generateProductCardHTML(product: SanoraService.Product) -> String {
@@ -185,6 +187,18 @@ public class HTMLTemplateService {
             .replacingOccurrences(of: ">", with: "&gt;")
             .replacingOccurrences(of: "\"", with: "&quot;")
             .replacingOccurrences(of: "'", with: "&#x27;")
+    }
+
+    internal static func loadEmojicodingJS() throws -> String {
+        guard let jsPath = Bundle(for: HTMLTemplateService.self).path(forResource: "emojicoding", ofType: "js") else {
+            throw TemplateError.templateNotFound("emojicoding.js not found in bundle")
+        }
+
+        guard let jsContent = try? String(contentsOfFile: jsPath) else {
+            throw TemplateError.templateLoadFailed("Failed to load emojicoding.js from \(jsPath)")
+        }
+
+        return jsContent
     }
 
 }

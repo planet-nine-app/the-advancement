@@ -96,6 +96,38 @@ public class SanoraService {
         return products
     }
 
+    /// Fetches a single product by UUID from Sanora
+    public func fetchProductByUUID(_ uuid: String) async throws -> Product {
+        let url = URL(string: "\(baseURL)/product/\(uuid)")!
+
+        print("🔍 Fetching product by UUID from: \(url)")
+
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw SanoraError.invalidResponse
+        }
+
+        print("📡 Response status: \(httpResponse.statusCode)")
+
+        guard httpResponse.statusCode == 200 else {
+            if httpResponse.statusCode == 404 {
+                throw SanoraError.productNotFound(uuid)
+            }
+            throw SanoraError.httpError(httpResponse.statusCode)
+        }
+
+        // Single product response should be a dictionary
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            print("❌ Failed to parse JSON response - expected product object")
+            throw SanoraError.invalidJSON
+        }
+
+        print("✅ Retrieved product for UUID: \(uuid)")
+
+        return Product(from: json)
+    }
+
     // MARK: - Authenticated User Operations
 
     /// Creates a user in Sanora using sessionless authentication
@@ -227,6 +259,7 @@ public enum SanoraError: Error, LocalizedError {
     case httpError(Int)
     case invalidJSON
     case networkError(Error)
+    case productNotFound(String)
 
     public var errorDescription: String? {
         switch self {
@@ -242,6 +275,8 @@ public enum SanoraError: Error, LocalizedError {
             return "Invalid JSON response"
         case .networkError(let error):
             return "Network error: \(error.localizedDescription)"
+        case .productNotFound(let uuid):
+            return "Product not found for UUID: \(uuid)"
         }
     }
 }
