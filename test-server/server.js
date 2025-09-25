@@ -64,19 +64,47 @@ const PRODUCT_CREATORS = {
 
 // Planet Nine Bases (where products are hosted)
 const PLANET_NINE_BASES = {
-    'dev': {
-        name: 'DEV',
-        description: 'Development Planet Nine base',
+    'base1': {
+        name: 'BASE1',
+        description: 'Planet Nine test base 1',
         pubKey: '0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321',
         address: '0xfedcba0987654321fedcba09',
         dns: {
-            bdo: 'dev.bdo.allyabase.com',
-            sanora: 'dev.sanora.allyabase.com',
-            dolores: 'dev.dolores.allyabase.com',
-            fount: 'dev.fount.allyabase.com',
-            addie: 'dev.addie.allyabase.com'
+            bdo: 'localhost:5114',
+            sanora: 'localhost:5121',
+            dolores: 'localhost:5118',
+            fount: 'localhost:5117',
+            addie: 'localhost:5115'
         },
-        stripe_account_id: 'acct_test_base_dev'
+        stripe_account_id: 'acct_test_base1'
+    },
+    'base2': {
+        name: 'BASE2',
+        description: 'Planet Nine test base 2',
+        pubKey: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+        address: '0x1234567890abcdef12345678',
+        dns: {
+            bdo: 'localhost:5214',
+            sanora: 'localhost:5221',
+            dolores: 'localhost:5218',
+            fount: 'localhost:5217',
+            addie: 'localhost:5215'
+        },
+        stripe_account_id: 'acct_test_base2'
+    },
+    'base3': {
+        name: 'BASE3',
+        description: 'Planet Nine test base 3',
+        pubKey: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+        address: '0xabcdef1234567890abcdef12',
+        dns: {
+            bdo: 'localhost:5314',
+            sanora: 'localhost:5321',
+            dolores: 'localhost:5318',
+            fount: 'localhost:5317',
+            addie: 'localhost:5315'
+        },
+        stripe_account_id: 'acct_test_base3'
     },
     'local': {
         name: 'LOCAL',
@@ -86,7 +114,8 @@ const PLANET_NINE_BASES = {
         dns: {
             bdo: 'localhost:3003',
             sanora: 'localhost:7243',
-            dolores: 'localhost:3007'
+            dolores: 'localhost:3007',
+            fount: 'localhost:3002'
         },
         stripe_account_id: 'acct_test_base_local'
     }
@@ -102,7 +131,7 @@ const TELEPORTED_PRODUCTS = [
         currency: 'usd',
         type: 'ebook',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         image_url: '/images/ebook-planet-nine.jpg',
         preview_url: '/previews/planet-nine-preview.pdf',
         metadata: {
@@ -122,7 +151,7 @@ const TELEPORTED_PRODUCTS = [
         currency: 'usd',
         type: 'course',
         creator: 'creator2',
-        base: 'dev',
+        base: 'base2',
         image_url: '/images/course-sessionless.jpg',
         preview_url: '/previews/sessionless-preview.mp4',
         metadata: {
@@ -143,7 +172,7 @@ const TELEPORTED_PRODUCTS = [
         currency: 'usd',
         type: 'physical',
         creator: 'creator1',
-        base: 'local',
+        base: 'base3',
         image_url: '/images/stickers-planet-nine.jpg',
         metadata: {
             quantity: 12,
@@ -168,7 +197,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_structure',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             isMenuStructure: true,
@@ -208,7 +237,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'beverages',
@@ -224,7 +253,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'beverages',
@@ -240,7 +269,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'beverages',
@@ -256,7 +285,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'beverages',
@@ -272,7 +301,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'breakfast',
@@ -288,7 +317,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'breakfast',
@@ -304,7 +333,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'lunch',
@@ -320,7 +349,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'lunch',
@@ -354,8 +383,8 @@ sessionless.generateKeys(saveKeys, getKeys).then(() => {
     console.log('🔐 MAGIC: Using existing keys or creating new ones');
 });
 
-// Configure fount for test environment
-fount.baseURL = 'http://127.0.0.1:5117/'; // Test environment fount
+// Configure fount for test environment (Base 1)
+fount.baseURL = 'http://127.0.0.1:5117/'; // Test environment fount (Base 1)
 
 // Global fount user for MAGIC protocol (will be created in initializeGateway)
 global.fountUser = null;
@@ -640,7 +669,7 @@ app.post('/api/purchase/intent', async (req, res) => {
 
         const creator = PRODUCT_CREATORS[product.creator];
         const base = PLANET_NINE_BASES[product.base];
-        const userBase = PLANET_NINE_BASES[homeBase] || PLANET_NINE_BASES['dev'];
+        const userBase = PLANET_NINE_BASES[homeBase] || PLANET_NINE_BASES['base1'];
 
         // Calculate payment splits (Planet Nine pattern)
         const totalAmount = product.price;
