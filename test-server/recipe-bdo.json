@@ -1,0 +1,81 @@
+{
+  "bdoPubKey": "02a3b4c5d6e7f8910111213141516171819202122232425262728293031323334",
+  "emojicoded": "✨😀😄🐶🍕💙😅🚗🐸👇🍎☁️❤️😆💛😉💙😅😃💜💕😅🔑☀️👎😉😄😆⭐😉🎁❤️❄️😍⭐👈🐶😘💙😀🔑😎⚡😎🏠✨",
+  "title": "Grandma's Secret Chocolate Chip Cookies Recipe",
+  "svgContent": "<svg width=\"320\" height=\"60\" viewBox=\"0 0 320 60\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"320\" height=\"60\" fill=\"#f8f9fa\" stroke=\"#e9ecef\" stroke-width=\"1\" rx=\"8\"/><rect spell=\"share\" x=\"10\" y=\"10\" width=\"90\" height=\"40\" fill=\"#27ae60\" stroke=\"#219a52\" stroke-width=\"2\" rx=\"6\"><title>Share this recipe</title></rect><text spell=\"share\" x=\"55\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">📤 SHARE</text><rect spell=\"collect\" x=\"115\" y=\"10\" width=\"90\" height=\"40\" fill=\"#9b59b6\" stroke=\"#8e44ad\" stroke-width=\"2\" rx=\"6\"><title>Save to your collection</title></rect><text spell=\"collect\" x=\"160\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">💾 SAVE</text><rect spell=\"magic\" x=\"220\" y=\"10\" width=\"90\" height=\"40\" fill=\"#e91e63\" stroke=\"#c2185b\" stroke-width=\"2\" rx=\"6\"><title>Cast kitchen magic</title></rect><text spell=\"magic\" x=\"265\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">🪄 MAGIC</text></svg>",
+  "description": "A family recipe passed down through generations, featuring the perfect balance of crispy edges and chewy centers.",
+  "type": "recipe",
+  "category": "dessert",
+  "cuisine": "american",
+  "difficulty": "easy",
+  "prepTime": 15,
+  "cookTime": 10,
+  "servings": 36,
+  "author": {
+    "name": "Sarah Mitchell",
+    "bio": "Home baker and food blogger sharing family recipes",
+    "location": "Portland, Oregon"
+  },
+  "payees": [
+    "a1b2c3d4e5f6789012345678901234567890abcd",
+    "b2c3d4e5f6789012345678901234567890abcdef12",
+    "c3d4e5f6789012345678901234567890abcdef1234"
+  ],
+  "ingredients": [
+    {
+      "item": "all-purpose flour",
+      "amount": "2¼ cups"
+    },
+    {
+      "item": "unsalted butter, softened",
+      "amount": "1 cup (2 sticks)"
+    },
+    {
+      "item": "granulated sugar",
+      "amount": "¾ cup"
+    },
+    {
+      "item": "packed brown sugar",
+      "amount": "¾ cup"
+    },
+    {
+      "item": "large eggs",
+      "amount": "2"
+    },
+    {
+      "item": "pure vanilla extract",
+      "amount": "2 teaspoons"
+    },
+    {
+      "item": "baking soda",
+      "amount": "1 teaspoon"
+    },
+    {
+      "item": "salt",
+      "amount": "1 teaspoon"
+    },
+    {
+      "item": "semi-sweet chocolate chips",
+      "amount": "2 cups"
+    }
+  ],
+  "instructions": [
+    "Preheat your oven to 375°F (190°C). Line two baking sheets with parchment paper.",
+    "In a medium bowl, whisk together flour, baking soda, and salt. Set aside.",
+    "In a large bowl, cream together the softened butter, granulated sugar, and brown sugar until light and fluffy (about 3-4 minutes with an electric mixer).",
+    "Beat in eggs one at a time, then add vanilla extract. Mix until well combined.",
+    "Gradually blend in the flour mixture until just combined. Don't overmix! Fold in chocolate chips gently.",
+    "Drop rounded tablespoons of dough onto prepared baking sheets, spacing them about 2 inches apart.",
+    "Bake for 9-11 minutes, or until edges are golden brown but centers still look slightly underdone. Cool on baking sheet for 5 minutes before transferring to wire rack."
+  ],
+  "tags": ["cookies", "chocolate-chip", "dessert", "baking", "family-recipe", "comfort-food"],
+  "nutrition": {
+    "calories": 180,
+    "fat": "8g",
+    "carbs": "26g",
+    "protein": "2g",
+    "sugar": "18g"
+  },
+  "created": "2024-10-15T14:30:00Z",
+  "updated": "2024-10-15T14:30:00Z"
+}

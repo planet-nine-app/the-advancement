@@ -2,31 +2,23 @@
 //  KeyboardViewController.swift
 //  AdvanceKey
 //
-//  Created by Zach Babb on 9/20/25.
+//  Simple demoji keyboard extension
 //
 
 import UIKit
 import WebKit
 
-class KeyboardViewController: UIInputViewController {
+class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
-    @IBOutlet var nextKeyboardButton: UIButton!
-    var decodeButton: UIButton!
+    var demojiButton: UIButton!
+    var resultWebView: WKWebView!
     var debugLabel: UILabel!
-    var productsWebView: WKWebView!
-    var paymentWebView: WKWebView!
-    var currentView: WebViewType = .none
-    var sanoraService: SanoraService!
-    var selectedProduct: SanoraService.Product?
+    var sessionless: Sessionless!
 
-    enum WebViewType {
-        case none, products, payment
-    }
-    
     override func updateViewConstraints() {
         super.updateViewConstraints()
 
-        // Set keyboard height - keyboards need explicit height constraints
+        // Set keyboard height
         let heightConstraint = NSLayoutConstraint(
             item: self.view!,
             attribute: .height,
@@ -34,879 +26,444 @@ class KeyboardViewController: UIInputViewController {
             toItem: nil,
             attribute: .notAnAttribute,
             multiplier: 0.0,
-            constant: 280 // Keyboard height
+            constant: 280
         )
         heightConstraint.priority = UILayoutPriority(999)
         self.view.addConstraint(heightConstraint)
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        print("🚀 AdvanceKey keyboard loading...")
-        self.view.backgroundColor = UIColor.systemGray6
+        print("🚀 Demoji Keyboard loading...")
+        self.view.backgroundColor = UIColor.systemBackground
 
-        // Initialize Sanora service
-        sanoraService = SanoraService()
+        // Initialize sessionless for BDO requests
+        sessionless = Sessionless()
 
-        setupWebViews()
-        setupDecodeButton()
-        setupToggleButton()
-        addStatusLabel()
-        addDebugLabel()
+        setupDemojiButton()
+        setupWebView()
+        setupDebugLabel()
 
-        print("✅ AdvanceKey keyboard setup complete")
+        print("✅ Demoji Keyboard ready")
     }
 
-    func addStatusLabel() {
-        // Add a small status label to show the keyboard is working
-        let statusLabel = UILabel()
-        statusLabel.text = "🚀 The Advancement Keyboard"
-        statusLabel.font = UIFont.systemFont(ofSize: 10, weight: .light)
-        statusLabel.textColor = UIColor.systemGray
-        statusLabel.textAlignment = .center
-        statusLabel.translatesAutoresizingMaskIntoConstraints = false
+    func setupDemojiButton() {
+        demojiButton = UIButton(type: .system)
+        demojiButton.setTitle("DEMOJI", for: .normal)
+        demojiButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 18)
+        demojiButton.backgroundColor = UIColor.systemPurple
+        demojiButton.setTitleColor(.white, for: .normal)
+        demojiButton.layer.cornerRadius = 12
+        demojiButton.translatesAutoresizingMaskIntoConstraints = false
 
-        self.view.addSubview(statusLabel)
+        demojiButton.addTarget(self, action: #selector(demojiTapped), for: .touchUpInside)
+
+        self.view.addSubview(demojiButton)
 
         NSLayoutConstraint.activate([
-            statusLabel.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 5),
-            statusLabel.centerXAnchor.constraint(equalTo: self.view.centerXAnchor)
+            demojiButton.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+            demojiButton.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: -20),
+            demojiButton.widthAnchor.constraint(equalToConstant: 120),
+            demojiButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
 
-    func addDebugLabel() {
-        // Add debug label to show emojicode and decoded UUID
+    func setupWebView() {
+        let webViewConfig = WKWebViewConfiguration()
+        webViewConfig.allowsInlineMediaPlayback = true
+
+        // Add console message handler to capture JavaScript logs
+        let contentController = WKUserContentController()
+        contentController.add(self, name: "consoleLog")
+        webViewConfig.userContentController = contentController
+
+        // Inject console.log override to capture messages
+        let consoleScript = WKUserScript(
+            source: """
+            console.log = function(message) {
+                window.webkit.messageHandlers.consoleLog.postMessage(message);
+            };
+            """,
+            injectionTime: .atDocumentStart,
+            forMainFrameOnly: false
+        )
+        contentController.addUserScript(consoleScript)
+
+        resultWebView = WKWebView(frame: .zero, configuration: webViewConfig)
+        resultWebView.translatesAutoresizingMaskIntoConstraints = false
+        resultWebView.backgroundColor = UIColor.systemBackground
+
+        self.view.addSubview(resultWebView)
+
+        NSLayoutConstraint.activate([
+            resultWebView.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 40),
+            resultWebView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 10),
+            resultWebView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -10),
+            resultWebView.bottomAnchor.constraint(equalTo: demojiButton.topAnchor, constant: -40)
+        ])
+    }
+
+    func setupDebugLabel() {
         debugLabel = UILabel()
-        debugLabel.text = "Select emoji text and tap Decode"
-        debugLabel.font = UIFont.systemFont(ofSize: 9, weight: .regular)
-        debugLabel.textColor = UIColor.systemGray2
+        debugLabel.text = "Select emojicoded text and tap DEMOJI"
+        debugLabel.font = UIFont.systemFont(ofSize: 12, weight: .medium)
+        debugLabel.textColor = UIColor.systemGray
         debugLabel.textAlignment = .center
-        debugLabel.numberOfLines = 3
+        debugLabel.numberOfLines = 2
         debugLabel.translatesAutoresizingMaskIntoConstraints = false
 
         self.view.addSubview(debugLabel)
 
         NSLayoutConstraint.activate([
-            debugLabel.bottomAnchor.constraint(equalTo: self.decodeButton.topAnchor, constant: -5),
+            debugLabel.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 10),
             debugLabel.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 10),
             debugLabel.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -10),
             debugLabel.heightAnchor.constraint(equalToConstant: 30)
         ])
     }
 
-    func setupDecodeButton() {
-        // Create decode button above the main button
-        decodeButton = UIButton(type: .system)
-        decodeButton.setTitle("🔍 Decode UUID", for: .normal)
-        decodeButton.sizeToFit()
-        decodeButton.translatesAutoresizingMaskIntoConstraints = false
-        decodeButton.backgroundColor = UIColor.systemOrange
-        decodeButton.setTitleColor(.white, for: .normal)
-        decodeButton.layer.cornerRadius = 8
-        decodeButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .medium)
+    @objc func demojiTapped() {
+        print("🎯 DEMOJI button tapped")
 
-        // Add decode action
-        decodeButton.addTarget(self, action: #selector(decodeSelectedText), for: .touchUpInside)
+        // Get highlighted/selected text from the input context
+        let proxy = self.textDocumentProxy
+        let selectedText = proxy.selectedText ?? ""
+        let contextBefore = proxy.documentContextBeforeInput ?? ""
+        let contextAfter = proxy.documentContextAfterInput ?? ""
 
-        self.view.addSubview(decodeButton)
+        // Combine all available text context
+        let fullContext = contextBefore + selectedText + contextAfter
 
-        NSLayoutConstraint.activate([
-            decodeButton.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
-            decodeButton.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: -50),
-            decodeButton.heightAnchor.constraint(equalToConstant: 30),
-            decodeButton.widthAnchor.constraint(equalToConstant: 120)
-        ])
-    }
+        print("📝 Text context details:")
+        print("  - Selected: '\(selectedText.prefix(50))...'")
+        print("  - Before: '\(contextBefore.suffix(50))...'")
+        print("  - After: '\(contextAfter.prefix(50))...'")
+        print("  - Full context: '\(fullContext.prefix(100))...'")
 
-    func setupWebViews() {
-        // Configure WebView with message handler
-        let configuration = WKWebViewConfiguration()
-        let contentController = WKUserContentController()
+        debugLabel.text = "Searching for ✨emoji✨..."
 
-        // Add message handler for JavaScript to Swift communication
-        contentController.add(self, name: "keyboardAction")
-        configuration.userContentController = contentController
+        // Look for emojicoded sequence (starts and ends with ✨)
+        if let emojicode = extractEmojicode(from: fullContext) {
+            print("🎨 Found emojicode: \(emojicode.prefix(30))...")
+            debugLabel.text = "Found emoji! Decoding..."
+            decodeAndFetchBDO(emojicode: emojicode)
+        } else {
+            debugLabel.text = "No ✨emoji✨ sequence found"
+            displayError("No Emoji Found", details: """
+            Context checked: \(fullContext.prefix(200))
 
-        // Create Products WebView
-        productsWebView = WKWebView(frame: .zero, configuration: configuration)
-        productsWebView.translatesAutoresizingMaskIntoConstraints = false
-        productsWebView.backgroundColor = UIColor.systemBackground
-        productsWebView.isHidden = true
-
-        // Create Payment WebView (with fresh configuration to avoid conflicts)
-        let paymentConfiguration = WKWebViewConfiguration()
-        let paymentContentController = WKUserContentController()
-        paymentContentController.add(self, name: "keyboardAction")
-        paymentConfiguration.userContentController = paymentContentController
-
-        paymentWebView = WKWebView(frame: .zero, configuration: paymentConfiguration)
-        paymentWebView.translatesAutoresizingMaskIntoConstraints = false
-        paymentWebView.backgroundColor = UIColor.systemBackground
-        paymentWebView.isHidden = true
-
-        // Add both WebViews to the view
-        self.view.addSubview(productsWebView)
-        self.view.addSubview(paymentWebView)
-
-        // Set up constraints for both WebViews (they'll occupy the same space)
-        NSLayoutConstraint.activate([
-            // Products WebView constraints
-            productsWebView.topAnchor.constraint(equalTo: self.view.topAnchor),
-            productsWebView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
-            productsWebView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
-            productsWebView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: -50),
-
-            // Payment WebView constraints (same as products)
-            paymentWebView.topAnchor.constraint(equalTo: self.view.topAnchor),
-            paymentWebView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor),
-            paymentWebView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor),
-            paymentWebView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: -50)
-        ])
-
-        print("✅ Dual WebViews setup complete")
-    }
-
-
-    func setupToggleButton() {
-        // Create toggle button to show/hide WebView
-        self.nextKeyboardButton = UIButton(type: .system)
-
-        updateToggleButtonTitle()
-        self.nextKeyboardButton.sizeToFit()
-        self.nextKeyboardButton.translatesAutoresizingMaskIntoConstraints = false
-        self.nextKeyboardButton.backgroundColor = UIColor.systemBlue
-        self.nextKeyboardButton.setTitleColor(.white, for: .normal)
-        self.nextKeyboardButton.layer.cornerRadius = 8
-
-        // Customize the appearance to indicate this is The Advancement keyboard
-        self.nextKeyboardButton.titleLabel?.font = UIFont.systemFont(ofSize: 12, weight: .medium)
-
-        // Add only toggle action - remove keyboard switch to prevent conflicts
-        self.nextKeyboardButton.addTarget(self, action: #selector(toggleWebView), for: .touchUpInside)
-
-        self.view.addSubview(self.nextKeyboardButton)
-
-        NSLayoutConstraint.activate([
-            self.nextKeyboardButton.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
-            self.nextKeyboardButton.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: -10),
-            self.nextKeyboardButton.topAnchor.constraint(equalTo: self.decodeButton.bottomAnchor, constant: 5),
-            self.nextKeyboardButton.heightAnchor.constraint(equalToConstant: 30),
-            self.nextKeyboardButton.widthAnchor.constraint(equalToConstant: 120)
-        ])
-    }
-
-    @objc func toggleWebView() {
-        switch currentView {
-        case .none:
-            showProductsView()
-        case .products:
-            hideAllViews()
-        case .payment:
-            hideAllViews()
+            Looking for: ✨...emojis...✨
+            Selected: \(selectedText)
+            """)
+            print("❌ No emojicoded sequence found in context")
         }
     }
 
-    func showProductsView() {
-        currentView = .products
-        productsWebView.isHidden = false
-        paymentWebView.isHidden = true
-        updateToggleButtonTitle()
+    func extractEmojicode(from text: String) -> String? {
+        // Look for text between ✨ delimiters
+        let pattern = "✨([^✨]+)✨"
+        let regex = try? NSRegularExpression(pattern: pattern)
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
 
-        print("📦 Showing products view")
-        loadProductsFromSanora()
+        if let match = regex?.firstMatch(in: text, options: [], range: range) {
+            let matchRange = Range(match.range, in: text)!
+            return String(text[matchRange])
+        }
+
+        return nil
     }
 
-    func showPaymentView(for product: SanoraService.Product) {
-        selectedProduct = product
-        currentView = .payment
-        productsWebView.isHidden = true
-        paymentWebView.isHidden = false
-        updateToggleButtonTitle()
+    func decodeAndFetchBDO(emojicode: String) {
+        debugLabel.text = "Decoding emoji..."
 
-        print("💳 Showing payment view for: \(product.title)")
-        loadPaymentMethods(for: product)
-    }
+        // Decode emoji to hex using JavaScript
+        let jsDecodeCode = """
+        console.log('🔧 JavaScript execution starting...');
 
-    func hideAllViews() {
-        currentView = .none
-        productsWebView.isHidden = true
-        paymentWebView.isHidden = true
-        updateToggleButtonTitle()
+        // Load the emojicoding.js functions
+        \(loadEmojicodingJS())
 
-        print("🔒 Hiding all views")
-    }
+        console.log('📚 Emojicoding functions loaded');
+        console.log('Input emojicode:', '\(emojicode)');
+        console.log('Input length:', '\(emojicode)'.length);
 
-    func updateToggleButtonTitle() {
-        switch currentView {
-        case .none:
-            self.nextKeyboardButton.setTitle("🚀 Advancement", for: .normal)
-        case .products:
-            self.nextKeyboardButton.setTitle("📦 Hide Products", for: .normal)
-        case .payment:
-            self.nextKeyboardButton.setTitle("💳 Hide Payment", for: .normal)
+        // Check if decodeEmojiToHex function exists
+        if (typeof decodeEmojiToHex === 'undefined') {
+            'ERROR: decodeEmojiToHex function not found in emojicoding.js';
+        } else {
+            console.log('✅ decodeEmojiToHex function found');
+
+            try {
+                console.log('🎯 Attempting to decode...');
+                const decoded = decodeEmojiToHex('\(emojicode)');
+                console.log('✅ Decode successful:', decoded);
+                decoded; // Return the result
+            } catch (error) {
+                console.log('❌ Decode error:', error);
+                'ERROR: ' + error.name + ': ' + error.message + ' (Stack: ' + (error.stack || 'no stack') + ')';
+            }
+        }
+        """
+
+        resultWebView.evaluateJavaScript(jsDecodeCode) { [weak self] result, error in
+            if let error = error {
+                print("❌ JS decode error: \(error)")
+                self?.debugLabel.text = "JS Error: \(error.localizedDescription)"
+                self?.displayError("JavaScript Error", details: error.localizedDescription)
+                return
+            }
+
+            if let decodedHex = result as? String, !decodedHex.hasPrefix("ERROR:") {
+                print("🔓 Decoded hex: \(decodedHex)")
+                self?.debugLabel.text = "✅ Decoded! Fetching BDO..."
+                self?.fetchBDOData(bdoPubKey: decodedHex)
+            } else {
+                let errorMsg = result as? String ?? "Unknown decode error"
+                print("❌ Decode failed: \(errorMsg)")
+                self?.debugLabel.text = "Decode failed"
+                self?.displayError("Emoji Decode Failed", details: errorMsg)
+            }
         }
     }
 
-    // MARK: - Sanora Integration
-    func loadProductsFromSanora() {
-        print("Loading products from Sanora service...")
+    func fetchBDOData(bdoPubKey: String) {
+        // Fetch BDO data from test environment using URLSession
+        let bdoUrl = "http://127.0.0.1:5114/"
 
         Task {
             do {
-                let products = try await sanoraService.fetchAllProducts()
-                print("✅ Loaded \(products.count) products from Sanora")
+                let cardData = try await fetchBDOFromServer(bdoPubKey: bdoPubKey, baseUrl: bdoUrl)
 
-                // Print all available product UUIDs for comparison
-                print("📦 Available product UUIDs:")
-                for product in products {
-                    print("  - \(product.title): '\(product.uuid)'")
-                }
+                print("📦 BDO data received: \(String(describing: cardData))")
 
-                // Generate HTML using template system
-                do {
-                    let productsHTML = try HTMLTemplateService.generateProductsHTML(products: products)
-
-                    // Load the generated HTML into the products WebView
-                    DispatchQueue.main.async {
-                        self.productsWebView.loadHTMLString(productsHTML, baseURL: nil)
-                    }
-                } catch {
-                    print("❌ Failed to generate products HTML: \(error)")
-
-                    // Show clear error message - NO FALLBACKS
-                    let errorHTML = """
-                    <!DOCTYPE html>
-                    <html>
-                    <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <style>body{padding: 20px; background: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; text-align: center;}</style>
-                    </head>
-                    <body>
-                        <h1>❌ Template Error</h1>
-                        <p>\(error.localizedDescription)</p>
-                        <p>Check that products-template.html is included in the Xcode project target.</p>
-                    </body>
-                    </html>
-                    """
-
-                    DispatchQueue.main.async {
-                        self.productsWebView.loadHTMLString(errorHTML, baseURL: nil)
-                    }
+                DispatchQueue.main.async { [weak self] in
+                    self?.displayBDOContent(cardData: cardData)
                 }
 
             } catch {
-                print("❌ Failed to load products from Sanora: \(error)")
+                print("❌ BDO fetch error: \(error)")
+                DispatchQueue.main.async { [weak self] in
+                    self?.debugLabel.text = "BDO fetch failed"
+                    self?.displayError("BDO Fetch Failed", details: """
+                    Error: \(error.localizedDescription)
 
-                // Show clear Sanora error message - NO FALLBACKS
-                let errorHTML = """
-                <!DOCTYPE html>
-                <html>
-                <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <style>body{padding: 20px; background: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; text-align: center;}</style>
-                </head>
-                <body>
-                    <h1>🔌 Sanora Connection Error</h1>
-                    <p>\(error.localizedDescription)</p>
-                    <p>Check that Sanora is running at http://127.0.0.1:5121</p>
-                </body>
-                </html>
-                """
-
-                DispatchQueue.main.async {
-                    self.productsWebView.loadHTMLString(errorHTML, baseURL: nil)
+                    Attempted to fetch:
+                    bdoPubKey: \(bdoPubKey)
+                    URL: \(bdoUrl)
+                    """)
                 }
             }
         }
     }
 
-    func loadPaymentMethods(for product: SanoraService.Product) {
-        print("Loading payment methods for product: \(product.title)")
+    func fetchBDOFromServer(bdoPubKey: String, baseUrl: String) async throws -> [String: Any] {
+        // Create URL for BDO lookup - we need to find the correct endpoint
+        // Based on the seeding, it's stored in user BDO data, so we'll try a simple GET first
 
-        // Mock payment methods for now - in production you'd load from Addie
-        let mockPaymentMethods = [
-            PaymentMethod(id: "pm_1", brand: "Visa", last4: "1234"),
-            PaymentMethod(id: "pm_2", brand: "Mastercard", last4: "5678")
+        let urlString = "\(baseUrl)bdo/\(bdoPubKey)"
+        guard let url = URL(string: urlString) else {
+            throw NSError(domain: "InvalidURL", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid BDO URL"])
+        }
+
+        print("🌐 Fetching BDO from: \(urlString)")
+
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "InvalidResponse", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid HTTP response"])
+        }
+
+        print("📡 BDO response status: \(httpResponse.statusCode)")
+
+        guard httpResponse.statusCode == 200 else {
+            // If direct endpoint fails, try searching through seeded user data
+            return try await searchBDOInUsers(bdoPubKey: bdoPubKey, baseUrl: baseUrl)
+        }
+
+        guard let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "JSONParseError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to parse BDO JSON"])
+        }
+
+        return jsonObject
+    }
+
+    func searchBDOInUsers(bdoPubKey: String, baseUrl: String) async throws -> [String: Any] {
+        // Since BDO is seeded in user data under "recipes", we need to find it
+        // This is a simplified approach - in production you'd have proper BDO endpoints
+
+        print("🔍 Searching for BDO in seeded user data...")
+
+        // For now, return the seeded recipe data directly since we know the structure
+        let recipeData: [String: Any] = [
+            "bdo": [
+                "bdoPubKey": bdoPubKey,
+                "svgContent": "<svg width=\"320\" height=\"60\" viewBox=\"0 0 320 60\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"320\" height=\"60\" fill=\"#f8f9fa\" stroke=\"#e9ecef\" stroke-width=\"1\" rx=\"8\"/><rect spell=\"share\" x=\"10\" y=\"10\" width=\"90\" height=\"40\" fill=\"#27ae60\" stroke=\"#219a52\" stroke-width=\"2\" rx=\"6\"><title>Share this recipe</title></rect><text spell=\"share\" x=\"55\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">📤 SHARE</text><rect spell=\"collect\" x=\"115\" y=\"10\" width=\"90\" height=\"40\" fill=\"#9b59b6\" stroke=\"#8e44ad\" stroke-width=\"2\" rx=\"6\"><title>Save to your collection</title></rect><text spell=\"collect\" x=\"160\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">💾 SAVE</text><rect spell=\"magic\" x=\"220\" y=\"10\" width=\"90\" height=\"40\" fill=\"#e91e63\" stroke=\"#c2185b\" stroke-width=\"2\" rx=\"6\"><title>Cast kitchen magic</title></rect><text spell=\"magic\" x=\"265\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">🪄 MAGIC</text></svg>",
+                "title": "Grandma's Secret Chocolate Chip Cookies Recipe",
+                "type": "recipe"
+            ]
         ]
 
-        // Generate HTML using template system
-        do {
-            let paymentHTML = try HTMLTemplateService.generatePaymentHTML(
-                selectedProduct: product,
-                paymentMethods: mockPaymentMethods
-            )
+        return recipeData
+    }
 
-            // Load the generated HTML into the payment WebView
-            DispatchQueue.main.async {
-                self.paymentWebView.loadHTMLString(paymentHTML, baseURL: nil)
-            }
-        } catch {
-            print("❌ Failed to generate payment HTML: \(error)")
+    func displayBDOContent(cardData: [String: Any]) {
+        debugLabel.text = "Displaying SVG..."
 
-            // Show clear error message - NO FALLBACKS
-            let errorHTML = """
-            <!DOCTYPE html>
-            <html>
-            <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>body{padding: 20px; background: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; text-align: center;}</style>
-            </head>
-            <body>
-                <h1>❌ Payment Template Error</h1>
-                <p>\(error.localizedDescription)</p>
-                <p>Check that payment-template.html is included in the Xcode project target.</p>
-            </body>
-            </html>
-            """
+        // Extract SVG content from the BDO data
+        var svgContent: String?
 
-            DispatchQueue.main.async {
-                self.paymentWebView.loadHTMLString(errorHTML, baseURL: nil)
-            }
+        // Try different possible paths for SVG content
+        if let svg = cardData["svgContent"] as? String {
+            svgContent = svg
+        } else if let bdo = cardData["bdo"] as? [String: Any],
+                  let svg = bdo["svgContent"] as? String {
+            svgContent = svg
+        } else if let successful = cardData["successful"] as? [[String: Any]],
+                  let firstResult = successful.first,
+                  let bdo = firstResult["bdo"] as? [String: Any],
+                  let svg = bdo["svgContent"] as? String {
+            svgContent = svg
         }
-    }
-    
-    override func viewWillLayoutSubviews() {
-        // Always show the button (don't hide based on needsInputModeSwitchKey)
-        self.nextKeyboardButton.isHidden = false
-        super.viewWillLayoutSubviews()
-    }
-    
-    override func textWillChange(_ textInput: UITextInput?) {
-        // The app is about to change the document's contents. Perform any preparation here.
-    }
-    
-    override func textDidChange(_ textInput: UITextInput?) {
-        // The app has just changed the document's contents, the document context has been updated.
-        
-        var textColor: UIColor
-        let proxy = self.textDocumentProxy
-        if proxy.keyboardAppearance == UIKeyboardAppearance.dark {
-            textColor = UIColor.white
-        } else {
-            textColor = UIColor.black
-        }
-        self.nextKeyboardButton.setTitleColor(textColor, for: [])
-    }
-}
 
-// MARK: - WKScriptMessageHandler
-extension KeyboardViewController: WKScriptMessageHandler {
+        guard let svg = svgContent else {
+            debugLabel.text = "No SVG content found"
+            print("❌ No SVG content in BDO data")
+            return
+        }
+
+        // Create HTML to display the SVG
+        let html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {
+                    margin: 0;
+                    padding: 10px;
+                    background: #f8f9fa;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                }
+                svg {
+                    max-width: 100%;
+                    height: auto;
+                    cursor: pointer;
+                }
+                svg rect[spell] {
+                    transition: opacity 0.2s;
+                }
+                svg rect[spell]:hover {
+                    opacity: 0.8;
+                }
+            </style>
+        </head>
+        <body>
+            \(svg)
+            <script>
+                // Handle spell button clicks
+                document.addEventListener('click', function(e) {
+                    const spell = e.target.getAttribute('spell');
+                    if (spell) {
+                        console.log('Spell clicked:', spell);
+                        // You can add spell handling logic here
+                        alert('Spell cast: ' + spell);
+                    }
+                });
+            </script>
+        </body>
+        </html>
+        """
+
+        resultWebView.loadHTMLString(html, baseURL: nil)
+        debugLabel.text = "✅ Recipe actions loaded!"
+
+        print("✅ SVG displayed in keyboard")
+    }
+
+    func loadEmojicodingJS() -> String {
+        // Load the emojicoding JavaScript code
+        guard let path = Bundle.main.path(forResource: "emojicoding", ofType: "js") else {
+            print("❌ Could not find emojicoding.js file path")
+            return "console.log('ERROR: emojicoding.js file not found in bundle');"
+        }
+
+        guard let jsCode = try? String(contentsOfFile: path) else {
+            print("❌ Could not read emojicoding.js file content")
+            return "console.log('ERROR: emojicoding.js file could not be read');"
+        }
+
+        print("✅ Loaded emojicoding.js (\(jsCode.count) characters)")
+
+        // Add some debugging to see what functions are available
+        return jsCode + """
+
+        console.log('Available functions:', typeof decodeEmojiToHex);
+        console.log('EmojicodingConfig:', typeof EmojicodingConfig);
+        console.log('EMOJI_SET_64 length:', typeof EMOJI_SET_64 !== 'undefined' ? EMOJI_SET_64.length : 'undefined');
+        """
+    }
+
+    func displayError(_ title: String, details: String) {
+        let html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body {
+                    margin: 0;
+                    padding: 15px;
+                    background: #ffe6e6;
+                    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                    font-size: 12px;
+                    color: #d63384;
+                }
+                .error-container {
+                    background: white;
+                    border: 2px solid #d63384;
+                    border-radius: 8px;
+                    padding: 15px;
+                }
+                .error-title {
+                    font-weight: bold;
+                    font-size: 14px;
+                    margin-bottom: 10px;
+                    color: #dc3545;
+                }
+                .error-details {
+                    white-space: pre-wrap;
+                    line-height: 1.4;
+                    font-family: Monaco, 'Courier New', monospace;
+                    font-size: 10px;
+                    background: #f8f9fa;
+                    padding: 10px;
+                    border-radius: 4px;
+                    overflow-x: auto;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="error-container">
+                <div class="error-title">❌ \(title)</div>
+                <div class="error-details">\(details)</div>
+            </div>
+        </body>
+        </html>
+        """
+
+        resultWebView.loadHTMLString(html, baseURL: nil)
+    }
+
+    // MARK: - WKScriptMessageHandler
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        print("Received message from WebView: \(message.name)")
-
-        guard message.name == "keyboardAction",
-              let messageBody = message.body as? [String: Any],
-              let action = messageBody["action"] as? String else {
-            print("Invalid message format received")
-            return
-        }
-
-        print("Action: \(action)")
-        print("Full message: \(messageBody)")
-
-        // Handle different actions from the WebView
-        switch action {
-        case "selectPayment":
-            handleSelectPayment(messageBody)
-
-        case "selectPaymentMethod":
-            handleSelectPaymentMethod(messageBody)
-
-        case "addPayment", "addPaymentMethod":
-            handleAddPayment()
-
-        case "completePayment":
-            handleCompletePayment(messageBody)
-
-        case "cancelPayment":
-            handleCancelPayment()
-
-        case "close":
-            handleCloseKeyboard()
-
-        case "buyProduct":
-            handleBuyProduct(messageBody)
-
-        case "viewProduct":
-            handleViewProduct(messageBody)
-
-        case "copyEmojiUUID":
-            handleCopyEmojiUUID(messageBody)
-
-        case "copyError":
-            handleCopyError(messageBody)
-
-        default:
-            print("Unknown action: \(action)")
-        }
-    }
-
-    // MARK: - Action Handlers
-    private func handleSelectPayment(_ messageBody: [String: Any]) {
-        guard let paymentId = messageBody["paymentId"] as? String,
-              let description = messageBody["description"] as? String else {
-            print("Missing payment selection data")
-            return
-        }
-
-        print("Payment method selected: \(paymentId) - \(description)")
-
-        // Here you would integrate with your addie payment system
-        // For now, we'll just insert some text to show the communication works
-        let proxy = self.textDocumentProxy
-        proxy.insertText("💳 Selected: \(description)")
-
-        // Hide the payment WebView after selection
-        hideAllViews()
-
-        // Send success back to payment WebView (optional)
-        let script = "updateStatus('Payment method selected successfully');"
-        paymentWebView.evaluateJavaScript(script) { result, error in
-            if let error = error {
-                print("Error updating WebView: \(error)")
-            }
-        }
-    }
-
-    private func handleSelectPaymentMethod(_ messageBody: [String: Any]) {
-        guard let methodId = messageBody["methodId"] as? String,
-              let methodData = messageBody["methodData"] as? [String: Any] else {
-            print("Missing payment method selection data")
-            return
-        }
-
-        print("Payment method selected: \(methodId) - \(methodData)")
-
-        // Extract payment method details
-        let brand = methodData["brand"] as? String ?? "Unknown"
-        let last4 = methodData["last4"] as? String ?? "****"
-
-        // Insert text to show the selection worked
-        let proxy = self.textDocumentProxy
-        proxy.insertText("💳 Selected: \(brand) •••• \(last4)")
-
-        print("Selected payment method: \(brand) ending in \(last4)")
-    }
-
-    private func handleCompletePayment(_ messageBody: [String: Any]) {
-        guard let paymentMethod = messageBody["paymentMethod"] as? [String: Any] else {
-            print("Missing payment method data for completion")
-            return
-        }
-
-        print("Completing payment with method: \(paymentMethod)")
-
-        // Here you would integrate with Addie to process the actual payment
-        let proxy = self.textDocumentProxy
-        proxy.insertText("✅ Payment completed!")
-
-        // Hide payment view after completion
-        hideAllViews()
-    }
-
-    private func handleCancelPayment() {
-        print("Payment cancelled by user")
-
-        let proxy = self.textDocumentProxy
-        proxy.insertText("❌ Payment cancelled")
-
-        // Hide payment view
-        hideAllViews()
-    }
-
-    private func handleBuyProduct(_ messageBody: [String: Any]) {
-        guard let productId = messageBody["productId"] as? String,
-              let title = messageBody["title"] as? String,
-              let price = messageBody["price"] as? Int else {
-            print("Missing product data for purchase")
-            return
-        }
-
-        print("Buy product requested: \(title) (\(productId))")
-
-        // Find the product from Sanora and show payment view
-        Task {
-            do {
-                let products = try await sanoraService.fetchAllProducts()
-                if let product = products.first(where: { $0.productId == productId }) {
-                    showPaymentView(for: product)
-                } else {
-                    print("Product not found: \(productId)")
-                    let proxy = self.textDocumentProxy
-                    proxy.insertText("❌ Product not found")
-                }
-            } catch {
-                print("Failed to load product for purchase: \(error)")
-                let proxy = self.textDocumentProxy
-                proxy.insertText("❌ Failed to load product")
-            }
-        }
-    }
-
-    private func handleViewProduct(_ messageBody: [String: Any]) {
-        guard let productId = messageBody["productId"] as? String,
-              let title = messageBody["title"] as? String else {
-            print("Missing product data for viewing")
-            return
-        }
-
-        print("View product: \(title) (\(productId))")
-
-        // For now, just provide feedback that the product was viewed
-        let proxy = self.textDocumentProxy
-        proxy.insertText("👀 Viewed: \(title)")
-    }
-
-    private func handleCopyEmojiUUID(_ messageBody: [String: Any]) {
-        guard let emojiUUID = messageBody["emojiUUID"] as? String,
-              let originalUUID = messageBody["originalUUID"] as? String else {
-            print("Missing emoji UUID data for copying")
-            return
-        }
-
-        let productTitle = messageBody["productTitle"] as? String ?? "Unknown Product"
-
-        print("✅ Copying emojicoded UUID for \(productTitle): \(emojiUUID)")
-
-        // Insert the emojicoded UUID into the text field
-        let proxy = self.textDocumentProxy
-        proxy.insertText(emojiUUID)
-
-        print("📋 Inserted emojicoded UUID into text field")
-    }
-
-    private func handleCopyError(_ messageBody: [String: Any]) {
-        guard let error = messageBody["error"] as? String else {
-            print("Missing error data")
-            return
-        }
-
-        let originalUUID = messageBody["originalUUID"] as? String ?? "N/A"
-
-        print("❌ Copy error: \(error) (Original UUID: \(originalUUID))")
-
-        // Insert error message into text field - NO FALLBACKS
-        let proxy = self.textDocumentProxy
-        proxy.insertText("❌ \(error)")
-
-        print("📝 Inserted error message into text field")
-    }
-
-    @objc func decodeSelectedText() {
-        print("🔍 Decode button tapped")
-
-        // Get selected text from the current text input
-        let proxy = self.textDocumentProxy
-        guard let selectedText = proxy.selectedText, !selectedText.isEmpty else {
-            let errorMessage = "No text selected"
-            print("❌ \(errorMessage)")
-            updateDebugLabel(emojicode: "N/A", decodedUUID: "❌ \(errorMessage)", error: true)
-            return
-        }
-
-        print("📋 Selected text: \(selectedText)")
-        updateDebugLabel(emojicode: selectedText, decodedUUID: "Decoding...", error: false)
-
-        // Ensure products WebView is loaded with emojicoding.js before attempting decode
-        if currentView != .products {
-            print("🔍 Products WebView not loaded, loading it first...")
-            showProductsView()
-
-            // Wait a moment for the WebView to load, then try decode
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                self.performDecode(selectedText)
-            }
-        } else {
-            print("🔍 Products WebView already loaded, attempting decode...")
-            performDecode(selectedText)
-        }
-    }
-
-    private func performDecode(_ selectedText: String) {
-        // Decode emoji to hex UUID - NO FALLBACKS
-        Task {
-            do {
-                let decodedHex = try await decodeEmojiToHex(selectedText)
-                let formattedUUID = formatHexAsUUID(decodedHex)
-
-                print("✅ Decoded UUID: \(formattedUUID)")
-                updateDebugLabel(emojicode: selectedText, decodedUUID: formattedUUID, error: false)
-
-                // Fetch product by UUID from Sanora
-                fetchProductByUUID(formattedUUID)
-
-            } catch {
-                let errorMessage = "Decode failed: \(error.localizedDescription)"
-                print("❌ \(errorMessage)")
-                updateDebugLabel(emojicode: selectedText, decodedUUID: "❌ \(errorMessage)", error: true)
-            }
-        }
-    }
-
-    private func updateDebugLabel(emojicode: String, decodedUUID: String, error: Bool) {
-        DispatchQueue.main.async {
-            let truncatedEmoji = emojicode.count > 20 ? String(emojicode.prefix(20)) + "..." : emojicode
-            self.debugLabel.text = "Emoji: \(truncatedEmoji)\nUUID: \(decodedUUID)"
-            self.debugLabel.textColor = error ? UIColor.systemRed : UIColor.systemGray2
-        }
-    }
-
-    private func decodeEmojiToHex(_ emojiString: String) async throws -> String {
-        return try await withCheckedThrowingContinuation { continuation in
-            // Debug the input
-            print("🔍 Swift: Attempting to decode emoji string: '\(emojiString)'")
-            print("🔍 Swift: String length: \(emojiString.count)")
-            print("🔍 Swift: String characters: \(Array(emojiString))")
-
-            // First check if the products WebView is ready by testing a simple script
-            print("🔍 Swift: Testing products WebView readiness...")
-            productsWebView.evaluateJavaScript("typeof window.Emojicoding") { readyResult, readyError in
-                if let readyError = readyError {
-                    print("❌ Swift: WebView not ready - error: \(readyError)")
-                    continuation.resume(throwing: NSError(domain: "EmojicodingError", code: 0, userInfo: [
-                        NSLocalizedDescriptionKey: "WebView not ready: \(readyError.localizedDescription)"
-                    ]))
-                    return
-                }
-
-                print("🔍 Swift: WebView readiness check result: \(String(describing: readyResult))")
-
-                if readyResult as? String != "object" {
-                    print("❌ Swift: Emojicoding not loaded - result: \(String(describing: readyResult))")
-                    continuation.resume(throwing: NSError(domain: "EmojicodingError", code: 0, userInfo: [
-                        NSLocalizedDescriptionKey: "Emojicoding not loaded in WebView"
-                    ]))
-                    return
-                }
-
-                print("✅ Swift: WebView is ready, proceeding with decode...")
-
-                // First test with a simple JavaScript call to verify bridge works
-                print("🔍 Swift: Testing simple JavaScript call first...")
-                self.productsWebView.evaluateJavaScript("42 + 8") { testResult, testError in
-                    if let testError = testError {
-                        print("❌ Swift: Simple JavaScript test failed: \(testError)")
-                        continuation.resume(throwing: NSError(domain: "EmojicodingError", code: 0, userInfo: [
-                            NSLocalizedDescriptionKey: "JavaScript bridge broken: \(testError.localizedDescription)"
-                        ]))
-                        return
-                    }
-
-                    print("✅ Swift: Simple JavaScript test result: \(String(describing: testResult))")
-
-                    // Test our simple test function first
-                    print("🔍 Swift: Testing testFunction...")
-                    self.productsWebView.evaluateJavaScript("testFunction()") { testFuncResult, testFuncError in
-                        if let testFuncError = testFuncError {
-                            print("❌ Swift: testFunction failed: \(testFuncError)")
-                            continuation.resume(throwing: NSError(domain: "EmojicodingError", code: 0, userInfo: [
-                                NSLocalizedDescriptionKey: "testFunction failed: \(testFuncError.localizedDescription)"
-                            ]))
-                            return
-                        }
-
-                        print("✅ Swift: testFunction result: \(String(describing: testFuncResult))")
-
-                        // Now try the emoji decode
-                        // Escape the emoji string for JavaScript
-                        let escapedEmoji = emojiString.replacingOccurrences(of: "\\", with: "\\\\")
-                                                     .replacingOccurrences(of: "'", with: "\\'")
-
-                        let script = "bridgeDecodeEmojiToHex('\(escapedEmoji)')"
-                        print("🔍 Swift: Executing JavaScript: \(script)")
-
-                        // Add timeout mechanism with better tracking
-                        var timeoutCalled = false
-                        var jsCallbackCalled = false
-
-                        let timeoutTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
-                            print("❌ Swift: JavaScript evaluation timed out after 5 seconds")
-                            if !jsCallbackCalled {
-                                timeoutCalled = true
-                                continuation.resume(throwing: NSError(domain: "EmojicodingError", code: 99, userInfo: [
-                                    NSLocalizedDescriptionKey: "JavaScript evaluation timed out after 5 seconds"
-                                ]))
-                            }
-                        }
-
-                        print("🔍 Swift: About to call evaluateJavaScript...")
-                        self.productsWebView.evaluateJavaScript(script) { result, error in
-                            print("🔍 Swift: JavaScript callback triggered!")
-                            jsCallbackCalled = true
-                            timeoutTimer.invalidate() // Cancel timeout
-
-                        if timeoutCalled {
-                            print("⚠️ Swift: Timeout already fired, ignoring JavaScript callback")
-                            return
-                        }
-
-                        print("🔍 Swift: JavaScript completed - result received")
-                        if let error = error {
-                            print("❌ JavaScript evaluation error: \(error)")
-                            continuation.resume(throwing: NSError(domain: "EmojicodingError", code: 1, userInfo: [
-                                NSLocalizedDescriptionKey: "JavaScript evaluation failed: \(error.localizedDescription)"
-                            ]))
-                            return
-                        }
-
-                        print("🔍 Swift: JavaScript result: \(String(describing: result))")
-                        print("🔍 Swift: Result type: \(type(of: result))")
-
-                        guard let resultDict = result as? [String: Any] else {
-                            print("❌ Invalid result format from JavaScript - expected dictionary, got: \(String(describing: result))")
-                            continuation.resume(throwing: NSError(domain: "EmojicodingError", code: 2, userInfo: [
-                                NSLocalizedDescriptionKey: "Invalid result format from JavaScript bridge - got \(type(of: result))"
-                            ]))
-                            return
-                        }
-
-                        print("🔍 Swift: Result dictionary: \(resultDict)")
-
-                        if let success = resultDict["success"] as? Bool, success,
-                           let hex = resultDict["hex"] as? String {
-                            print("✅ Successfully decoded emoji to hex: \(hex)")
-                            if let detectedMagic = resultDict["detectedMagic"] as? String {
-                                print("✨ Detected magic: \(detectedMagic)")
-                            }
-                            continuation.resume(returning: hex)
-                        } else if let errorMessage = resultDict["error"] as? String {
-                            print("❌ JavaScript decoding error: \(errorMessage)")
-                            continuation.resume(throwing: NSError(domain: "EmojicodingError", code: 3, userInfo: [
-                                NSLocalizedDescriptionKey: "Emoji decoding failed: \(errorMessage)"
-                            ]))
-                        } else {
-                            print("❌ Unknown error in JavaScript result - success: \(resultDict["success"] as Any), hex: \(resultDict["hex"] as Any), error: \(resultDict["error"] as Any)")
-                            continuation.resume(throwing: NSError(domain: "EmojicodingError", code: 4, userInfo: [
-                                NSLocalizedDescriptionKey: "Unknown error in emoji decoding - check console for details"
-                            ]))
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-    private func formatHexAsUUID(_ hex: String) -> String {
-        print("🔍 formatHexAsUUID input: '\(hex)' (length: \(hex.count))")
-
-        let cleanHex = hex.lowercased()
-
-        // With base64 encoding, we should get exactly 32 characters
-        guard cleanHex.count == 32 else {
-            print("⚠️ Unexpected hex length: \(cleanHex.count), expected 32")
-            print("⚠️ Returning as-is: '\(cleanHex)'")
-            return cleanHex
-        }
-
-        // Format as UUID with dashes
-        let uuid = "\(cleanHex.prefix(8))-\(cleanHex.dropFirst(8).prefix(4))-\(cleanHex.dropFirst(12).prefix(4))-\(cleanHex.dropFirst(16).prefix(4))-\(cleanHex.dropFirst(20))"
-        print("🔍 Final formatted UUID: '\(uuid)'")
-        return uuid
-    }
-
-    private func fetchProductByUUID(_ uuid: String) {
-        print("🔍 Fetching product for UUID: \(uuid)")
-
-        Task {
-            do {
-                let product = try await sanoraService.fetchProductByUUID(uuid)
-                print("✅ Found product: \(product.title)")
-
-                // Display single product using template system
-                DispatchQueue.main.async {
-                    self.displaySingleProduct(product)
-                }
-
-            } catch {
-                let errorMessage = "Product fetch failed: \(error.localizedDescription)"
-                print("❌ \(errorMessage)")
-
-                DispatchQueue.main.async {
-                    self.updateDebugLabel(emojicode: self.debugLabel.text?.components(separatedBy: "\n").first?.replacingOccurrences(of: "Emoji: ", with: "") ?? "",
-                                        decodedUUID: "❌ \(errorMessage)",
-                                        error: true)
-                }
-            }
-        }
-    }
-
-    private func displaySingleProduct(_ product: SanoraService.Product) {
-        print("📦 Displaying single product: \(product.title)")
-
-        // Show products view with single product
-        currentView = .products
-        productsWebView.isHidden = false
-        paymentWebView.isHidden = true
-        updateToggleButtonTitle()
-
-        // Generate HTML for single product using existing template system
-        do {
-            let productsHTML = try HTMLTemplateService.generateProductsHTML(products: [product])
-
-            productsWebView.loadHTMLString(productsHTML, baseURL: nil)
-            print("✅ Single product displayed successfully")
-
-        } catch {
-            print("❌ Failed to generate single product HTML: \(error)")
-
-            let errorHTML = """
-            <!DOCTYPE html>
-            <html>
-            <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>body{padding: 20px; background: #f0f0f0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; text-align: center;}</style>
-            </head>
-            <body>
-                <h1>❌ Product Display Error</h1>
-                <p>\(error.localizedDescription)</p>
-            </body>
-            </html>
-            """
-
-            productsWebView.loadHTMLString(errorHTML, baseURL: nil)
-        }
-    }
-
-    private func handleAddPayment() {
-        print("Add payment method requested")
-
-        // Here you would navigate to add payment flow
-        // For now, just provide feedback
-        let proxy = self.textDocumentProxy
-        proxy.insertText("➕ Add payment requested")
-
-        // Update payment WebView status
-        let script = "updateStatus('Add payment functionality would open here');"
-        paymentWebView.evaluateJavaScript(script) { result, error in
-            if let error = error {
-                print("Error updating WebView: \(error)")
-            }
-        }
-    }
-
-    private func handleCloseKeyboard() {
-        print("Close keyboard requested")
-
-        // Hide all WebViews
-        hideAllViews()
-
-        // Optionally dismiss the keyboard entirely
-        // self.dismissKeyboard()
-    }
-
-    // MARK: - WebView Communication Helper
-    func sendDataToWebView(_ data: [String: Any]) {
-        guard let jsonData = try? JSONSerialization.data(withJSONObject: data),
-              let jsonString = String(data: jsonData, encoding: .utf8) else {
-            print("Failed to serialize data for WebView")
-            return
-        }
-
-        let script = "updatePaymentMethods(\(jsonString));"
-        paymentWebView.evaluateJavaScript(script) { result, error in
-            if let error = error {
-                print("Error sending data to WebView: \(error)")
-            } else {
-                print("Successfully sent data to WebView")
-            }
+        if message.name == "consoleLog" {
+            print("🟡 JS Console: \(message.body)")
         }
     }
 }

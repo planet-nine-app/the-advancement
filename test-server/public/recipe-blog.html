@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grandma's Secret Chocolate Chip Cookies - The Cozy Kitchen Blog</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fefefe;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .blog-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .blog-title {
+            font-size: 2.5rem;
+            color: #8B4513;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .blog-subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .recipe-hero {
+            position: relative;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .recipe-image {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(45deg, #D2691E, #F4A460, #DEB887);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .recipe-title {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-size: 2rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+        }
+
+        .story-section {
+            background-color: #f9f9f9;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 40px;
+            border-left: 4px solid #8B4513;
+        }
+
+        .story-section h2 {
+            color: #8B4513;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .story-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        .recipe-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .ingredients-section, .instructions-section {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .section-title {
+            color: #8B4513;
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #8B4513;
+            padding-bottom: 5px;
+        }
+
+        .ingredients-list {
+            list-style: none;
+        }
+
+        .ingredients-list li {
+            padding: 8px 0;
+            border-bottom: 1px dashed #eee;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .ingredients-list li:before {
+            content: "🥄";
+            position: absolute;
+            left: 0;
+        }
+
+        .instructions-list {
+            list-style: none;
+            counter-reset: step-counter;
+        }
+
+        .instructions-list li {
+            counter-increment: step-counter;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #fafafa;
+            border-radius: 6px;
+            position: relative;
+            padding-left: 50px;
+        }
+
+        .instructions-list li:before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            background: #8B4513;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .recipe-meta {
+            background: linear-gradient(135deg, #8B4513, #A0522D);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .meta-item h4 {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .meta-item span {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .recipe-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .blog-title {
+                font-size: 2rem;
+            }
+
+            .recipe-image {
+                height: 250px;
+                font-size: 3rem;
+            }
+
+            .meta-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+        }
+
+        .recipe-bdo {
+            margin: 40px 0;
+            padding: 25px;
+            background: linear-gradient(135deg, #f0f4ff, #e6f3ff);
+            border-radius: 12px;
+            border: 2px solid #8B4513;
+            text-align: center;
+        }
+
+        .recipe-bdo h3 {
+            color: #8B4513;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+        }
+
+        .bdo-description {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .emojicoded-display {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px dashed #8B4513;
+            font-size: 1.2rem;
+            line-height: 1.4;
+            margin: 20px 0;
+            word-wrap: break-word;
+            user-select: all;
+            cursor: pointer;
+            font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'NotoColorEmoji', sans-serif;
+        }
+
+        .emojicoded-display:hover {
+            background: #fffbe6;
+            border-color: #e91e63;
+        }
+
+        .bdo-instructions {
+            color: #555;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 480px) {
+            .emojicoded-display {
+                font-size: 1rem;
+                padding: 12px;
+            }
+        }
+
+        .blog-footer {
+            margin-top: 50px;
+            text-align: center;
+            color: #888;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="blog-header">
+            <h1 class="blog-title">The Cozy Kitchen Blog</h1>
+            <p class="blog-subtitle">Where family recipes meet modern life</p>
+        </header>
+
+        <div class="recipe-hero">
+            <div class="recipe-image">
+                🍪
+            </div>
+            <h1 class="recipe-title">Grandma's Secret Chocolate Chip Cookies</h1>
+        </div>
+
+        <section class="story-section">
+            <h2>The Story Behind the Recipe</h2>
+            <div class="story-text">
+                <p>I'll never forget the first time I walked into my grandmother's kitchen on a crisp autumn afternoon. The smell of butter, vanilla, and chocolate chips dancing in the warm air was absolutely intoxicating. Grandma Rose was standing at her old wooden counter, flour dusting her apron, rolling perfect spoonfuls of cookie dough with the same gentle precision she'd perfected over sixty years of baking.</p>
+
+                <p>"The secret," she whispered with a mischievous twinkle in her eye, "isn't just in the ingredients, dear. It's in the love you fold into every batch." She showed me how to cream the butter just so, how to fold in the chocolate chips without overworking the dough, and most importantly, how to trust your nose to know when they're perfectly golden.</p>
+
+                <p>Twenty years later, I still use her handwritten recipe card, stained with decades of kitchen adventures. Every time I make these cookies, I can hear her voice guiding me through each step, and I swear they taste even better when made with the same patience and care she taught me. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            </div>
+        </section>
+
+        <div class="recipe-content">
+            <section class="ingredients-section">
+                <h2 class="section-title">Ingredients</h2>
+                <ul class="ingredients-list">
+                    <li>2¼ cups all-purpose flour</li>
+                    <li>1 cup (2 sticks) unsalted butter, softened</li>
+                    <li>¾ cup granulated sugar</li>
+                    <li>¾ cup packed brown sugar</li>
+                    <li>2 large eggs</li>
+                    <li>2 teaspoons pure vanilla extract</li>
+                    <li>1 teaspoon baking soda</li>
+                    <li>1 teaspoon salt</li>
+                    <li>2 cups semi-sweet chocolate chips</li>
+                </ul>
+            </section>
+
+            <section class="instructions-section">
+                <h2 class="section-title">Instructions</h2>
+                <ol class="instructions-list">
+                    <li>Preheat your oven to 375°F (190°C). Line two baking sheets with parchment paper.</li>
+                    <li>In a medium bowl, whisk together flour, baking soda, and salt. Set aside.</li>
+                    <li>In a large bowl, cream together the softened butter, granulated sugar, and brown sugar until light and fluffy (about 3-4 minutes with an electric mixer).</li>
+                    <li>Beat in eggs one at a time, then add vanilla extract. Mix until well combined.</li>
+                    <li>Gradually blend in the flour mixture until just combined. Don't overmix! Fold in chocolate chips gently.</li>
+                    <li>Drop rounded tablespoons of dough onto prepared baking sheets, spacing them about 2 inches apart.</li>
+                    <li>Bake for 9-11 minutes, or until edges are golden brown but centers still look slightly underdone. Cool on baking sheet for 5 minutes before transferring to wire rack.</li>
+                </ol>
+            </section>
+        </div>
+
+        <div class="recipe-meta">
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <h4>PREP TIME</h4>
+                    <span>15 mins</span>
+                </div>
+                <div class="meta-item">
+                    <h4>BAKE TIME</h4>
+                    <span>10 mins</span>
+                </div>
+                <div class="meta-item">
+                    <h4>MAKES</h4>
+                    <span>36 cookies</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recipe BDO Reference for Keyboard Extension -->
+        <section class="recipe-bdo">
+            <div class="recipe-bdo-container">
+                <h3>🍪 Recipe Collection</h3>
+                <p class="bdo-description">Save this recipe using Planet Nine keyboard extension:</p>
+
+                <!-- Emojicoded bdoPubKey for keyboard extension to detect and decode -->
+                <div class="emojicoded-display">
+                    ✨😀😄🐶🍕💙😅🚗🐸👇🍎☁️❤️😆💛😉💙😅😃💜💕😅🔑☀️👎😉😄😆⭐😉🎁❤️❄️😍⭐👈🐶😘💙😀🔑😎⚡😎🏠✨
+                </div>
+
+                <p class="bdo-instructions">
+                    <strong>Instructions:</strong> Select the emoji sequence above, then bring up the Planet Nine keyboard
+                    in any text field to see recipe action buttons (Share, Save, Magic).
+                </p>
+            </div>
+        </section>
+
+        <footer class="blog-footer">
+            <p>Happy baking! Let me know in the comments how your cookies turned out! 💕</p>
+            <p><em>Posted by Sarah Mitchell • October 15, 2024</em></p>
+        </footer>
+    </div>
+</body>
+</html>
