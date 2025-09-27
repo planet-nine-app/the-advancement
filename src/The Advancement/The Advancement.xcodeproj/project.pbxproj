@@ -64,6 +64,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		CA121E092E8715F800C7A88D /* The Advancement (iOS).entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "The Advancement (iOS).entitlements"; sourceTree = "<group>"; };
 		CA54CAFE2E5A0A99007D062D /* The Advancement.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "The Advancement.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA54CB102E5A0A99007D062D /* The Advancement.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "The Advancement.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA54CB1C2E5A0A99007D062D /* The Advancement Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "The Advancement Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -79,6 +80,7 @@
 			membershipExceptions = (
 				"/Localized: Resources/Main.html",
 				Assets.xcassets,
+				CookbookViewController.swift,
 				Resources/Icon.png,
 				Resources/Script.js,
 				Resources/Style.css,
@@ -105,6 +107,7 @@
 			membershipExceptions = (
 				"/Localized: Resources/Main.html",
 				Assets.xcassets,
+				CookbookViewController.swift,
 				Resources/Icon.png,
 				Resources/Script.js,
 				Resources/Style.css,
@@ -143,6 +146,7 @@
 				Resources/slime.png,
 				SafariWebExtensionHandler.swift,
 				Sessionless.swift,
+				SharedUserDefaults.swift,
 			);
 			target = CA54CB1B2E5A0A99007D062D /* The Advancement Extension (iOS) */;
 		};
@@ -170,6 +174,7 @@
 				Resources/slime.png,
 				SafariWebExtensionHandler.swift,
 				Sessionless.swift,
+				SharedUserDefaults.swift,
 			);
 			target = CA54CB252E5A0A99007D062D /* The Advancement Extension (macOS) */;
 		};
@@ -180,6 +185,7 @@
 				Resources/fonts.css,
 				"Resources/fonts/FFVI-Damage-v3-LC-BW.otf",
 				"Resources/fonts/FFVI-Damage-v3-LC-KO.otf",
+				SharedUserDefaults.swift,
 			);
 			target = CA54CAFD2E5A0A99007D062D /* The Advancement (iOS) */;
 		};
@@ -190,6 +196,7 @@
 				Resources/fonts.css,
 				"Resources/fonts/FFVI-Damage-v3-LC-BW.otf",
 				"Resources/fonts/FFVI-Damage-v3-LC-KO.otf",
+				SharedUserDefaults.swift,
 			);
 			target = CA54CB0F2E5A0A99007D062D /* The Advancement (macOS) */;
 		};
@@ -204,6 +211,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Sessionless.swift,
+				SharedUserDefaults.swift,
 			);
 			target = CAB454762E7F34070025F445 /* AdvanceKey */;
 		};
@@ -317,6 +325,7 @@
 		CA54CAE12E5A0A98007D062D = {
 			isa = PBXGroup;
 			children = (
+				CA121E092E8715F800C7A88D /* The Advancement (iOS).entitlements */,
 				CA54CBC62E5A9E8D007D062D /* The-Advancement--macOS--Info.plist */,
 				CA54CAE62E5A0A98007D062D /* Shared (App) */,
 				CA54CAEF2E5A0A99007D062D /* Shared (Extension) */,
@@ -681,6 +690,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "The Advancement (iOS).entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RLJ2FY35FD;
@@ -718,6 +728,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "The Advancement (iOS).entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RLJ2FY35FD;
@@ -1010,6 +1021,7 @@
 		CAB4547F2E7F34070025F445 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = AdvanceKey/AdvanceKey.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RLJ2FY35FD;
@@ -1037,6 +1049,7 @@
 		CAB454802E7F34070025F445 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = AdvanceKey/AdvanceKey.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = RLJ2FY35FD;

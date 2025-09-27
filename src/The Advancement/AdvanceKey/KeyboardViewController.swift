@@ -8,6 +8,13 @@
 import UIKit
 import WebKit
 
+extension Character {
+    var isEmoji: Bool {
+        guard let scalar = unicodeScalars.first else { return false }
+        return scalar.properties.isEmoji
+    }
+}
+
 class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
     var demojiButton: UIButton!
@@ -35,7 +42,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        print("🚀 Demoji Keyboard loading...")
+        NSLog("ADVANCEKEY: 🚀 Demoji Keyboard loading...")
         self.view.backgroundColor = UIColor.systemBackground
 
         // Initialize sessionless for BDO requests
@@ -45,7 +52,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         setupWebView()
         setupDebugLabel()
 
-        print("✅ Demoji Keyboard ready")
+        NSLog("ADVANCEKEY: ✅ Demoji Keyboard ready")
     }
 
     func setupDemojiButton() {
@@ -76,6 +83,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         // Add console message handler to capture JavaScript logs
         let contentController = WKUserContentController()
         contentController.add(self, name: "consoleLog")
+        contentController.add(self, name: "saveRecipe")
         webViewConfig.userContentController = contentController
 
         // Inject console.log override to capture messages
@@ -124,39 +132,127 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     }
 
     @objc func demojiTapped() {
-        print("🎯 DEMOJI button tapped")
+        NSLog("ADVANCEKEY: 🎯 DEMOJI button tapped")
+        NSLog("ADVANCEKEY: ==========================================")
 
-        // Get highlighted/selected text from the input context
+        // Get the text document proxy and examine ALL its properties
         let proxy = self.textDocumentProxy
+
+        NSLog("ADVANCEKEY: 📱 TextDocumentProxy Investigation:")
+        NSLog("ADVANCEKEY:   - hasText: %@", proxy.hasText ? "true" : "false")
+        NSLog("ADVANCEKEY:   - keyboardType: %d", proxy.keyboardType?.rawValue ?? -1)
+        NSLog("ADVANCEKEY:   - returnKeyType: %d", proxy.returnKeyType?.rawValue ?? -1)
+
+        // Test different ways of getting text
         let selectedText = proxy.selectedText ?? ""
         let contextBefore = proxy.documentContextBeforeInput ?? ""
         let contextAfter = proxy.documentContextAfterInput ?? ""
 
+        NSLog("ADVANCEKEY: 🔍 Raw Text Access:")
+        NSLog("ADVANCEKEY:   - selectedText: '%@' (length: %d)", selectedText, selectedText.count)
+        NSLog("ADVANCEKEY:   - documentContextBeforeInput: '%@' (length: %d)", contextBefore, contextBefore.count)
+        NSLog("ADVANCEKEY:   - documentContextAfterInput: '%@' (length: %d)", contextAfter, contextAfter.count)
+
+        // Try to get more context by adjusting the document position
+        NSLog("ADVANCEKEY: 🔧 Trying to get more context...")
+
+        // Move cursor to beginning and try to get all text
+        proxy.adjustTextPosition(byCharacterOffset: -1000) // Move way back
+        let allBefore = proxy.documentContextBeforeInput ?? ""
+
+        proxy.adjustTextPosition(byCharacterOffset: 1000) // Move way forward
+        let allAfter = proxy.documentContextAfterInput ?? ""
+
+        NSLog("ADVANCEKEY:   - After moving cursor back: '%@' (length: %d)", String(allBefore.suffix(50)), allBefore.count)
+        NSLog("ADVANCEKEY:   - After moving cursor forward: '%@' (length: %d)", String(allAfter.prefix(50)), allAfter.count)
+
+        // Try reading character by character around cursor
+        NSLog("ADVANCEKEY: 📖 Character-by-character reading:")
+        var chars: [String] = []
+        for i in -10...10 {
+            proxy.adjustTextPosition(byCharacterOffset: i)
+            if let char = proxy.documentContextBeforeInput?.last {
+                chars.append(String(char))
+            }
+            proxy.adjustTextPosition(byCharacterOffset: -i) // Reset
+        }
+        NSLog("ADVANCEKEY:   - Characters around cursor: %@", chars.joined(separator: ", "))
+
+        // Reset to original position
+        proxy.adjustTextPosition(byCharacterOffset: 0)
+
         // Combine all available text context
         let fullContext = contextBefore + selectedText + contextAfter
 
-        print("📝 Text context details:")
-        print("  - Selected: '\(selectedText.prefix(50))...'")
-        print("  - Before: '\(contextBefore.suffix(50))...'")
-        print("  - After: '\(contextAfter.prefix(50))...'")
-        print("  - Full context: '\(fullContext.prefix(100))...'")
+        NSLog("ADVANCEKEY: 📋 Final Context Analysis:")
+        NSLog("ADVANCEKEY:   - Full context: '%@' (length: %d)", fullContext, fullContext.count)
 
-        debugLabel.text = "Searching for ✨emoji✨..."
+        // Count emojis in context
+        let emojiCount = fullContext.filter { $0.isEmoji }.count
+        NSLog("ADVANCEKEY:   - Emoji count in context: %d", emojiCount)
+
+        // Look for sparkles specifically
+        let sparklesCount = fullContext.filter { $0 == "✨" }.count
+        NSLog("ADVANCEKEY:   - Sparkles (✨) count: %d", sparklesCount)
+
+        debugLabel.text = "📱 Context: \(fullContext.count) chars, \(emojiCount) emoji, \(sparklesCount) ✨"
+
+        // If we're getting no context, show a fallback test
+        if fullContext.isEmpty {
+            debugLabel.text = "❌ No text context available"
+            displayError("No Text Context", details: """
+            The keyboard cannot access any text from the input field.
+
+            This might be due to:
+            - Security restrictions
+            - App-specific text protection
+            - iOS keyboard limitations
+            - Field type restrictions
+
+            Try:
+            1. Different input field (search box, notes app)
+            2. Copy/paste the emoji sequence
+            3. Use a basic text field instead
+            """)
+            return
+        }
+
+        NSLog("ADVANCEKEY: ==========================================")
 
         // Look for emojicoded sequence (starts and ends with ✨)
         if let emojicode = extractEmojicode(from: fullContext) {
-            print("🎨 Found emojicode: \(emojicode.prefix(30))...")
-            debugLabel.text = "Found emoji! Decoding..."
-            decodeAndFetchBDO(emojicode: emojicode)
+            // Remove Unicode variation selectors (U+FE0F) that cause decode failures
+            let cleanedEmojicode = emojicode.filter { char in
+                !char.unicodeScalars.contains { $0.value == 0xFE0F }
+            }
+            NSLog("ADVANCEKEY: 🎨 Found complete emojicode: %@", String(emojicode.prefix(30)))
+            NSLog("ADVANCEKEY: 🧹 Cleaned emojicode (removed variation selectors): %@", String(cleanedEmojicode.prefix(30)))
+            debugLabel.text = "Found complete emoji! Decoding..."
+            decodeAndFetchBDO(emojicode: cleanedEmojicode)
+        } else if sparklesCount >= 1 {
+            // Try to work with partial sequence if we have at least one sparkle
+            debugLabel.text = "Partial emoji found, trying decode..."
+            let rawPartialEmoji = "✨\(fullContext.filter { $0.isEmoji })✨"
+            // Remove variation selectors from partial sequence too
+            let cleanedPartialEmoji = rawPartialEmoji.filter { char in
+                !char.unicodeScalars.contains { $0.value == 0xFE0F }
+            }
+            NSLog("ADVANCEKEY: 🔧 Attempting partial decode: %@", String(cleanedPartialEmoji.prefix(30)))
+            decodeAndFetchBDO(emojicode: cleanedPartialEmoji)
         } else {
             debugLabel.text = "No ✨emoji✨ sequence found"
             displayError("No Emoji Found", details: """
-            Context checked: \(fullContext.prefix(200))
+            Context: \(fullContext.prefix(200))
 
-            Looking for: ✨...emojis...✨
+            Emoji count: \(emojiCount)
+            Sparkles: \(sparklesCount)
+
+            Need: ✨...emojis...✨ pattern
             Selected: \(selectedText)
+
+            Try selecting more text or scrolling to include both ✨ sparkles.
             """)
-            print("❌ No emojicoded sequence found in context")
+            NSLog("ADVANCEKEY: ❌ No emojicoded sequence found in context")
         }
     }
 
@@ -167,62 +263,113 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         let range = NSRange(text.startIndex..<text.endIndex, in: text)
 
         if let match = regex?.firstMatch(in: text, options: [], range: range) {
-            let matchRange = Range(match.range, in: text)!
-            return String(text[matchRange])
+            // Get the full match (including sparkles)
+            let fullMatchRange = Range(match.range, in: text)!
+            let fullMatch = String(text[fullMatchRange])
+
+            NSLog("ADVANCEKEY: 🔍 Regex extraction details:")
+            NSLog("ADVANCEKEY:   - Full match: %@", fullMatch)
+            NSLog("ADVANCEKEY:   - Full match length: %d", fullMatch.count)
+            NSLog("ADVANCEKEY:   - Number of capture groups: %d", match.numberOfRanges - 1)
+
+            // Return the full match (which should include both ✨ delimiters)
+            return fullMatch
         }
 
+        NSLog("ADVANCEKEY: ❌ No regex match found in text: %@", String(text.prefix(50)))
         return nil
     }
 
     func decodeAndFetchBDO(emojicode: String) {
         debugLabel.text = "Decoding emoji..."
 
-        // Decode emoji to hex using JavaScript
+        // Decode emoji to hex using JavaScript with detailed logging
         let jsDecodeCode = """
-        console.log('🔧 JavaScript execution starting...');
+        // Capture console logs
+        let logs = [];
+        const originalLog = console.log;
+        console.log = function(...args) {
+            logs.push(args.join(' '));
+            originalLog.apply(console, args);
+        };
+
+        console.log('ADVANCEKEY: 🔧 JavaScript execution starting...');
 
         // Load the emojicoding.js functions
         \(loadEmojicodingJS())
 
-        console.log('📚 Emojicoding functions loaded');
-        console.log('Input emojicode:', '\(emojicode)');
-        console.log('Input length:', '\(emojicode)'.length);
+        console.log('ADVANCEKEY: 📚 Emojicoding functions loaded');
+        console.log('ADVANCEKEY: Input emojicode:', '\(emojicode)');
+        console.log('ADVANCEKEY: Input length:', '\(emojicode)'.length);
 
-        // Check if decodeEmojiToHex function exists
-        if (typeof decodeEmojiToHex === 'undefined') {
-            'ERROR: decodeEmojiToHex function not found in emojicoding.js';
+        // Check if simpleDecodeEmoji function exists
+        if (typeof simpleDecodeEmoji === 'undefined') {
+            console.log('ADVANCEKEY: ❌ simpleDecodeEmoji function not found');
+            JSON.stringify({ error: 'simpleDecodeEmoji function not found', logs: logs });
         } else {
-            console.log('✅ decodeEmojiToHex function found');
+            console.log('ADVANCEKEY: ✅ simpleDecodeEmoji function found');
 
             try {
-                console.log('🎯 Attempting to decode...');
-                const decoded = decodeEmojiToHex('\(emojicode)');
-                console.log('✅ Decode successful:', decoded);
-                decoded; // Return the result
+                console.log('ADVANCEKEY: 🎯 Attempting to decode user input...');
+                const decodeResult = simpleDecodeEmoji('\(emojicode)');
+                console.log('ADVANCEKEY: ✅ Decode successful:', decodeResult);
+                console.log('ADVANCEKEY: ✅ Extracted hex:', decodeResult.hex);
+                JSON.stringify({ result: decodeResult.hex, logs: logs });
             } catch (error) {
-                console.log('❌ Decode error:', error);
-                'ERROR: ' + error.name + ': ' + error.message + ' (Stack: ' + (error.stack || 'no stack') + ')';
+                console.log('ADVANCEKEY: ❌ Decode error:', error.message);
+                console.log('ADVANCEKEY: ❌ Error stack:', error.stack || 'no stack');
+                JSON.stringify({ error: error.name + ': ' + error.message, stack: error.stack, logs: logs });
             }
         }
         """
 
         resultWebView.evaluateJavaScript(jsDecodeCode) { [weak self] result, error in
             if let error = error {
-                print("❌ JS decode error: \(error)")
+                NSLog("ADVANCEKEY: ❌ JS decode error: %@", error.localizedDescription)
                 self?.debugLabel.text = "JS Error: \(error.localizedDescription)"
                 self?.displayError("JavaScript Error", details: error.localizedDescription)
                 return
             }
 
-            if let decodedHex = result as? String, !decodedHex.hasPrefix("ERROR:") {
-                print("🔓 Decoded hex: \(decodedHex)")
+            guard let jsonString = result as? String else {
+                NSLog("ADVANCEKEY: ❌ Result is not a string: %@", String(describing: result))
+                self?.displayError("Invalid Response", details: "Expected JSON string, got: \(String(describing: result))")
+                return
+            }
+
+            NSLog("ADVANCEKEY: 📋 Raw JS result: %@", jsonString)
+
+            // Parse the JSON response
+            guard let jsonData = jsonString.data(using: .utf8),
+                  let response = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
+                NSLog("ADVANCEKEY: ❌ Failed to parse JSON response")
+                self?.displayError("JSON Parse Error", details: jsonString)
+                return
+            }
+
+            // Log all captured console.log messages
+            if let logs = response["logs"] as? [String] {
+                NSLog("ADVANCEKEY: 📋 JavaScript Console Logs:")
+                for log in logs {
+                    NSLog("ADVANCEKEY: JS: %@", log)
+                }
+            }
+
+            // Check for successful decode
+            if let decodedHex = response["result"] as? String {
+                NSLog("ADVANCEKEY: 🔓 Decoded hex: %@", decodedHex)
                 self?.debugLabel.text = "✅ Decoded! Fetching BDO..."
                 self?.fetchBDOData(bdoPubKey: decodedHex)
-            } else {
-                let errorMsg = result as? String ?? "Unknown decode error"
-                print("❌ Decode failed: \(errorMsg)")
+            } else if let errorMsg = response["error"] as? String {
+                NSLog("ADVANCEKEY: ❌ Decode failed: %@", errorMsg)
+                if let stack = response["stack"] as? String {
+                    NSLog("ADVANCEKEY: ❌ Error stack: %@", stack)
+                }
                 self?.debugLabel.text = "Decode failed"
                 self?.displayError("Emoji Decode Failed", details: errorMsg)
+            } else {
+                NSLog("ADVANCEKEY: ❌ Unexpected response format: %@", String(describing: response))
+                self?.displayError("Unexpected Response", details: String(describing: response))
             }
         }
     }
@@ -235,14 +382,14 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             do {
                 let cardData = try await fetchBDOFromServer(bdoPubKey: bdoPubKey, baseUrl: bdoUrl)
 
-                print("📦 BDO data received: \(String(describing: cardData))")
+                NSLog("ADVANCEKEY: 📦 BDO data received: %@", String(describing: cardData))
 
                 DispatchQueue.main.async { [weak self] in
                     self?.displayBDOContent(cardData: cardData)
                 }
 
             } catch {
-                print("❌ BDO fetch error: \(error)")
+                NSLog("ADVANCEKEY: ❌ BDO fetch error: %@", error.localizedDescription)
                 DispatchQueue.main.async { [weak self] in
                     self?.debugLabel.text = "BDO fetch failed"
                     self?.displayError("BDO Fetch Failed", details: """
@@ -365,15 +512,70 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         <body>
             \(svg)
             <script>
+                // BDO data for spell handling
+                const bdoData = \(String(data: try! JSONSerialization.data(withJSONObject: cardData), encoding: .utf8)!);
+
                 // Handle spell button clicks
                 document.addEventListener('click', function(e) {
                     const spell = e.target.getAttribute('spell');
                     if (spell) {
                         console.log('Spell clicked:', spell);
-                        // You can add spell handling logic here
-                        alert('Spell cast: ' + spell);
+                        handleSpell(spell, bdoData);
                     }
                 });
+
+                function handleSpell(spell, data) {
+                    switch(spell) {
+                        case 'collect':
+                        case 'save':
+                            saveRecipeToApp(data);
+                            break;
+                        case 'share':
+                            shareRecipe(data);
+                            break;
+                        case 'magic':
+                            castMagic(data);
+                            break;
+                        default:
+                            alert('Unknown spell: ' + spell);
+                    }
+                }
+
+                function saveRecipeToApp(data) {
+                    try {
+                        // Extract recipe info from nested BDO structure
+                        const bdo = data.bdo || data; // Handle both nested and flat structures
+                        const bdoPubKey = bdo.bdoPubKey || 'unknown';
+                        const type = bdo.type || 'recipe';
+                        const title = bdo.title || 'Untitled Recipe';
+
+                        console.log('Saving recipe:', { bdoPubKey, type, title });
+
+                        // Send message to Swift to save the recipe
+                        window.webkit.messageHandlers.saveRecipe.postMessage({
+                            action: 'save',
+                            bdoPubKey: bdoPubKey,
+                            type: type,
+                            title: title,
+                            fullBDO: data
+                        });
+
+                        // Show success feedback
+                        alert('✅ Recipe saved to your cookbook!');
+
+                    } catch (error) {
+                        console.error('Error saving recipe:', error);
+                        alert('❌ Failed to save recipe: ' + error.message);
+                    }
+                }
+
+                function shareRecipe(data) {
+                    alert('📤 Share recipe: ' + (data.title || 'Recipe'));
+                }
+
+                function castMagic(data) {
+                    alert('🪄 Kitchen magic cast on: ' + (data.title || 'Recipe'));
+                }
             </script>
         </body>
         </html>
@@ -382,29 +584,49 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         resultWebView.loadHTMLString(html, baseURL: nil)
         debugLabel.text = "✅ Recipe actions loaded!"
 
-        print("✅ SVG displayed in keyboard")
+        NSLog("ADVANCEKEY: ✅ SVG displayed in keyboard")
     }
 
     func loadEmojicodingJS() -> String {
         // Load the emojicoding JavaScript code
         guard let path = Bundle.main.path(forResource: "emojicoding", ofType: "js") else {
-            print("❌ Could not find emojicoding.js file path")
+            NSLog("ADVANCEKEY: ❌ Could not find emojicoding.js file path")
             return "console.log('ERROR: emojicoding.js file not found in bundle');"
         }
 
         guard let jsCode = try? String(contentsOfFile: path) else {
-            print("❌ Could not read emojicoding.js file content")
+            NSLog("ADVANCEKEY: ❌ Could not read emojicoding.js file content")
             return "console.log('ERROR: emojicoding.js file could not be read');"
         }
 
-        print("✅ Loaded emojicoding.js (\(jsCode.count) characters)")
+        NSLog("ADVANCEKEY: ✅ Loaded emojicoding.js (%d characters)", jsCode.count)
 
-        // Add some debugging to see what functions are available
+        // Add debugging and test decoding functionality
         return jsCode + """
 
-        console.log('Available functions:', typeof decodeEmojiToHex);
-        console.log('EmojicodingConfig:', typeof EmojicodingConfig);
-        console.log('EMOJI_SET_64 length:', typeof EMOJI_SET_64 !== 'undefined' ? EMOJI_SET_64.length : 'undefined');
+        console.log('ADVANCEKEY: Available functions:', typeof decodeEmojiToHex);
+        console.log('ADVANCEKEY: EmojicodingConfig:', typeof EmojicodingConfig);
+        console.log('ADVANCEKEY: EMOJI_SET_64 length:', typeof EMOJI_SET_64 !== 'undefined' ? EMOJI_SET_64.length : 'undefined');
+
+        // Test emoji decoding with a known clean sequence (short version from recipe-blog.html)
+        try {
+            console.log('ADVANCEKEY: 🧪 Testing emojicoding with clean test sequence...');
+            const testEmoji = '✨😀😄🐶🍕✨';
+            console.log('ADVANCEKEY: Test input:', testEmoji, 'length:', testEmoji.length);
+
+            if (typeof simpleDecodeEmoji !== 'undefined') {
+                const testResult = simpleDecodeEmoji(testEmoji);
+                console.log('ADVANCEKEY: ✅ Test decode successful:', testResult);
+                console.log('ADVANCEKEY: ✅ Test hex result:', testResult.hex);
+            } else {
+                console.log('ADVANCEKEY: ❌ simpleDecodeEmoji function not available');
+                console.log('ADVANCEKEY: Available functions:', Object.keys(window).filter(key => key.includes('decode')));
+            }
+        } catch (testError) {
+            console.log('ADVANCEKEY: ❌ Test decode failed:', testError.message);
+        }
+
+        console.log('ADVANCEKEY: 🎯 Emojicoding system ready for user input');
         """
     }
 
@@ -463,7 +685,46 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     // MARK: - WKScriptMessageHandler
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         if message.name == "consoleLog" {
-            print("🟡 JS Console: \(message.body)")
+            NSLog("ADVANCEKEY: 🟡 JS Console: %@", String(describing: message.body))
+        } else if message.name == "saveRecipe" {
+            handleSaveRecipeMessage(message.body)
         }
+    }
+
+    private func handleSaveRecipeMessage(_ messageBody: Any) {
+        NSLog("ADVANCEKEY: 💾 Save recipe message received")
+
+        guard let messageDict = messageBody as? [String: Any],
+              let action = messageDict["action"] as? String,
+              action == "save" else {
+            NSLog("ADVANCEKEY: ❌ Invalid save recipe message format")
+            return
+        }
+
+        let bdoPubKey = messageDict["bdoPubKey"] as? String ?? "unknown"
+        let type = messageDict["type"] as? String ?? "recipe"
+        let title = messageDict["title"] as? String ?? "Untitled Recipe"
+        let fullBDO = messageDict["fullBDO"]
+
+        // Save to UserDefaults (or app group if configured)
+        let success = saveRecipeToStorage(bdoPubKey: bdoPubKey, type: type, title: title, fullBDO: fullBDO)
+
+        NSLog("ADVANCEKEY: 💾 Recipe save %@: %@ (%@)", success ? "successful" : "failed", title, bdoPubKey)
+    }
+
+    private func saveRecipeToStorage(bdoPubKey: String, type: String, title: String, fullBDO: Any?) -> Bool {
+        NSLog("ADVANCEKEY: 📦 Saving recipe using SharedUserDefaults")
+
+        // Use the shared configuration
+        SharedUserDefaults.addHolding(bdoPubKey: bdoPubKey, type: type, title: title)
+
+        // Debug: Print current state
+        SharedUserDefaults.debugPrint(prefix: "ADVANCEKEY")
+
+        // Test access
+        let testResult = SharedUserDefaults.testAccess()
+        NSLog("ADVANCEKEY: 📦 Shared access test: %@", testResult ? "✅ PASS" : "❌ FAIL")
+
+        return true
     }
 }
