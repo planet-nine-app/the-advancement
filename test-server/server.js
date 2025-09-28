@@ -183,6 +183,69 @@ const TELEPORTED_PRODUCTS = [
         },
         teleport_signature: 'mock_signature_3',
         shipping_required: true
+    },
+    {
+        id: 'wand_fire',
+        title: 'Wand of Eternal Flames',
+        description: 'A powerful magical wand crafted from phoenix feather and obsidian. Channel the elemental power of fire with this legendary artifact.',
+        price: 2499, // $24.99 in cents
+        currency: 'usd',
+        type: 'magical_item',
+        creator: 'creator1',
+        base: 'base1',
+        image_url: '/images/wand-fire.jpg',
+        emojicoded: '🔥🪄✨⚡🌟💫🔮🎯💥🌈🔥💎⭐🌙☄️🪄🎪🎭🎨🎵🎪⚡🔥🌟💫🔮🎯💥🌈🔥💎⭐🌙☄️🪄🎪🎭🎨🎵🎪⚡🔥🌟💫🔮🎯💥🌈🔥💎⭐🌙☄️🪄',
+        metadata: {
+            magical_power: 'Fire Elemental',
+            enchantment_level: 'Master',
+            durability: 'Indestructible',
+            origin: 'Dragon Forge Mountains',
+            created_at: '2024-12-15T16:30:00Z'
+        },
+        teleport_signature: 'mock_signature_fire',
+        shipping_required: true
+    },
+    {
+        id: 'wand_ice',
+        title: 'Wand of Frozen Starlight',
+        description: 'An elegant wand carved from crystallized moonbeam and winter\'s heart. Harness the power of ice and snow with this mystical creation.',
+        price: 2799, // $27.99 in cents
+        currency: 'usd',
+        type: 'magical_item',
+        creator: 'creator2',
+        base: 'base2',
+        image_url: '/images/wand-ice.jpg',
+        emojicoded: '❄️🪄✨💎🌟💫🔮⭐🌙💠❄️🏔️🌨️☃️🔷💙🩵🤍✨💎🪄❄️🌟💫🔮⭐🌙💠❄️🏔️🌨️☃️🔷💙🩵🤍✨💎🪄❄️🌟💫🔮⭐🌙💠❄️🏔️🌨️☃️🔷',
+        metadata: {
+            magical_power: 'Ice Elemental',
+            enchantment_level: 'Grandmaster',
+            durability: 'Eternal Frost',
+            origin: 'Celestial Ice Caves',
+            created_at: '2024-12-18T11:45:00Z'
+        },
+        teleport_signature: 'mock_signature_ice',
+        shipping_required: true
+    },
+    {
+        id: 'wand_lightning',
+        title: 'Wand of Storm\'s Fury',
+        description: 'A volatile wand forged from thundercloud essence and storm giant bone. Command the raw power of lightning and tempest.',
+        price: 3199, // $31.99 in cents
+        currency: 'usd',
+        type: 'magical_item',
+        creator: 'creator1',
+        base: 'base3',
+        image_url: '/images/wand-lightning.jpg',
+        emojicoded: '⚡🪄✨🌩️🌟💫🔮⭐🌙💥⚡🌊🌀🌪️🌈💜🟣💙⚡✨🪄🌩️🌟💫🔮⭐🌙💥⚡🌊🌀🌪️🌈💜🟣💙⚡✨🪄🌩️🌟💫🔮⭐🌙💥⚡🌊🌀🌪️',
+        metadata: {
+            magical_power: 'Lightning Elemental',
+            enchantment_level: 'Legendary',
+            durability: 'Storm-Forged',
+            origin: 'Sky Realm Foundries',
+            created_at: '2024-12-20T08:15:00Z'
+        },
+        teleport_signature: 'mock_signature_lightning',
+        shipping_required: true
     }
 ];
 

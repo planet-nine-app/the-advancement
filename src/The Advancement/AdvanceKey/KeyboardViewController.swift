@@ -90,6 +90,8 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         let contentController = WKUserContentController()
         contentController.add(self, name: "consoleLog")
         contentController.add(self, name: "saveRecipe")
+        contentController.add(self, name: "paymentMethodSelected")
+        contentController.add(self, name: "addPaymentMethod")
         webViewConfig.userContentController = contentController
 
         // Inject console.log override to capture messages
@@ -566,6 +568,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             "data": [
                 "type": "carrierBag",
                 "carrierBag": [
+                    "spaceTime": [],
                     "cookbook": [],
                     "apothecary": [],
                     "gallery": [],
@@ -624,7 +627,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             "data": [
                 "title": "Grandma's Secret Chocolate Chip Cookies Recipe",
                 "type": "recipe",
-                "svgContent": "<svg width=\"320\" height=\"60\" viewBox=\"0 0 320 60\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"320\" height=\"60\" fill=\"#f8f9fa\" stroke=\"#e9ecef\" stroke-width=\"1\" rx=\"8\"/><rect spell=\"share\" x=\"10\" y=\"10\" width=\"90\" height=\"40\" fill=\"#27ae60\" stroke=\"#219a52\" stroke-width=\"2\" rx=\"6\"><title>Share this recipe</title></rect><text spell=\"share\" x=\"55\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">📤 SHARE</text><rect spell=\"collect\" x=\"115\" y=\"10\" width=\"90\" height=\"40\" fill=\"#9b59b6\" stroke=\"#8e44ad\" stroke-width=\"2\" rx=\"6\"><title>Save to your collection</title></rect><text spell=\"collect\" x=\"160\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">💾 SAVE</text><rect spell=\"magic\" x=\"220\" y=\"10\" width=\"90\" height=\"40\" fill=\"#e91e63\" stroke=\"#c2185b\" stroke-width=\"2\" rx=\"6\"><title>Cast kitchen magic</title></rect><text spell=\"magic\" x=\"265\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">🪄 MAGIC</text></svg>",
+                "svgContent": "<svg width=\"420\" height=\"60\" viewBox=\"0 0 420 60\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"420\" height=\"60\" fill=\"#f8f9fa\" stroke=\"#e9ecef\" stroke-width=\"1\" rx=\"8\"/><rect spell=\"share\" x=\"10\" y=\"10\" width=\"90\" height=\"40\" fill=\"#27ae60\" stroke=\"#219a52\" stroke-width=\"2\" rx=\"6\"><title>Share this recipe</title></rect><text spell=\"share\" x=\"55\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">📤 SHARE</text><rect spell=\"collect\" x=\"110\" y=\"10\" width=\"90\" height=\"40\" fill=\"#9b59b6\" stroke=\"#8e44ad\" stroke-width=\"2\" rx=\"6\"><title>Save to your collection</title></rect><text spell=\"collect\" x=\"155\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">💾 SAVE</text><rect spell=\"magic\" x=\"210\" y=\"10\" width=\"90\" height=\"40\" fill=\"#e91e63\" stroke=\"#c2185b\" stroke-width=\"2\" rx=\"6\"><title>Cast kitchen magic</title></rect><text spell=\"magic\" x=\"255\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">🪄 MAGIC</text><rect spell=\"buy\" x=\"310\" y=\"10\" width=\"90\" height=\"40\" fill=\"#f39c12\" stroke=\"#e67e22\" stroke-width=\"2\" rx=\"6\"><title>Purchase magical items</title></rect><text spell=\"buy\" x=\"355\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">💰 BUY</text></svg>",
                 "description": "A family recipe passed down through generations, featuring the perfect balance of crispy edges and chewy centers.",
                 "author": [
                     "name": "Sarah Mitchell",
@@ -932,6 +935,10 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             NSLog("ADVANCEKEY: 🟡 JS Console: %@", String(describing: message.body))
         } else if message.name == "saveRecipe" {
             handleSaveRecipeMessage(message.body)
+        } else if message.name == "paymentMethodSelected" {
+            handlePaymentMethodSelection(message.body as? [String: Any] ?? [:])
+        } else if message.name == "addPaymentMethod" {
+            handleAddPaymentMethod()
         }
     }
 
@@ -1020,6 +1027,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             return [
                 "data": [
                     "carrierBag": [
+                        "spaceTime": [],
                         "cookbook": [],
                         "created": ISO8601DateFormatter().string(from: Date()),
                         "lastUpdated": ISO8601DateFormatter().string(from: Date())
@@ -1122,6 +1130,122 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             NSLog("ADVANCEKEY: ✅ CarrierBag BDO updated successfully")
         } else {
             throw NSError(domain: "FountError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Failed to update carrierBag: \(httpResponse.statusCode)"])
+        }
+    }
+
+    // MARK: - Stored Payment Methods
+
+    func loadStoredPaymentMethods() -> [PaymentMethod] {
+        guard let userDefaults = UserDefaults(suiteName: "group.com.planetnine.the-advancement") else {
+            NSLog("ADVANCEKEY: ❌ Failed to access shared UserDefaults")
+            return []
+        }
+
+        guard let storedMethodsData = userDefaults.array(forKey: "stored_payment_methods") as? [[String: Any]] else {
+            NSLog("ADVANCEKEY: 📝 No stored payment methods found")
+            return []
+        }
+
+        let paymentMethods = storedMethodsData.compactMap { methodData -> PaymentMethod? in
+            guard let id = methodData["id"] as? String,
+                  let brand = methodData["brand"] as? String,
+                  let last4 = methodData["last4"] as? String else {
+                NSLog("ADVANCEKEY: ⚠️ Invalid payment method data: %@", methodData)
+                return nil
+            }
+
+            return PaymentMethod(id: id, brand: brand, last4: last4, type: "card")
+        }
+
+        NSLog("ADVANCEKEY: 💳 Loaded %d stored payment methods", paymentMethods.count)
+        return paymentMethods
+    }
+
+    func generatePaymentMethodsHTML() throws -> String {
+        let storedMethods = loadStoredPaymentMethods()
+
+        let templateService = HTMLTemplateService()
+        return try templateService.generatePaymentMethodsHTML(paymentMethods: storedMethods)
+    }
+
+    func handlePaymentMethodSelection(_ message: [String: Any]) {
+        guard let paymentMethodId = message["paymentId"] as? String else {
+            NSLog("ADVANCEKEY: ❌ Invalid payment method selection")
+            return
+        }
+
+        NSLog("ADVANCEKEY: 💳 Payment method selected: %@", paymentMethodId)
+
+        // Find the selected payment method
+        let storedMethods = loadStoredPaymentMethods()
+        guard let selectedMethod = storedMethods.first(where: { $0.id == paymentMethodId }) else {
+            NSLog("ADVANCEKEY: ❌ Selected payment method not found: %@", paymentMethodId)
+            return
+        }
+
+        // Process the payment using the stored method
+        // This would integrate with the existing purchase flow
+        NSLog("ADVANCEKEY: 🔄 Processing payment with %@ ending in %@", selectedMethod.brand, selectedMethod.last4)
+
+        // Show confirmation to user
+        showPaymentConfirmation(for: selectedMethod)
+    }
+
+    private func showPaymentConfirmation(for paymentMethod: PaymentMethod) {
+        DispatchQueue.main.async {
+            let alertController = UIAlertController(
+                title: "💳 Confirm Payment",
+                message: "Use \(paymentMethod.brand) ending in \(paymentMethod.last4)?",
+                preferredStyle: .alert
+            )
+
+            alertController.addAction(UIAlertAction(title: "Confirm", style: .default) { _ in
+                // Process the actual payment
+                self.processStoredPayment(paymentMethod)
+            })
+
+            alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+            self.present(alertController, animated: true)
+        }
+    }
+
+    private func processStoredPayment(_ paymentMethod: PaymentMethod) {
+        NSLog("ADVANCEKEY: 💰 Processing payment with stored method: %@", paymentMethod.id)
+
+        // This would integrate with the existing Addie/Stripe payment processing
+        // For now, we'll show a success message
+        DispatchQueue.main.async {
+            let successAlert = UIAlertController(
+                title: "🎉 Payment Successful",
+                message: "Your purchase has been completed using \(paymentMethod.brand) ending in \(paymentMethod.last4)",
+                preferredStyle: .alert
+            )
+            successAlert.addAction(UIAlertAction(title: "Great!", style: .default))
+            self.present(successAlert, animated: true)
+        }
+    }
+
+    func handleAddPaymentMethod() {
+        NSLog("ADVANCEKEY: 💳 Add payment method requested")
+
+        DispatchQueue.main.async {
+            let alertController = UIAlertController(
+                title: "💳 Add Payment Method",
+                message: "To add a new payment method, please use the Nexus portal in The Advancement app.",
+                preferredStyle: .alert
+            )
+
+            alertController.addAction(UIAlertAction(title: "Open App", style: .default) { _ in
+                // This would open The Advancement app to the Nexus portal
+                if let url = URL(string: "advancement://nexus") {
+                    self.openURL(url)
+                }
+            })
+
+            alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+            self.present(alertController, animated: true)
         }
     }
 }

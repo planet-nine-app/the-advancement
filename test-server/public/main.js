@@ -1039,3 +1039,407 @@ console.log('  - debugTestStore() - Show debug information');
 console.log('  - refreshTestStore() - Refresh application status');
 console.log('  - addTestNineum(amount) - Add test nineum to balance');
 console.log('  - testStoreApp.getDebugInfo() - Get detailed debug info');
+
+// ========================================
+// SPELL CASTING SYSTEM
+// ========================================
+
+/**
+ * Global castSpell function for handling SVG spell buttons
+ * This integrates with The Advancement extension's spell system
+ */
+window.castSpell = async function(element) {
+    console.log('🪄 castSpell called:', element);
+
+    const spellType = element.getAttribute('spell');
+    console.log('✨ Spell type:', spellType);
+
+    switch (spellType) {
+        case 'buy':
+            await handleBuySpell(element);
+            break;
+        case 'share':
+            await handleShareSpell(element);
+            break;
+        case 'collect':
+            await handleCollectSpell(element);
+            break;
+        case 'magic':
+            await handleMagicSpell(element);
+            break;
+        default:
+            console.warn('🪄 Unknown spell type:', spellType);
+            showSpellMessage(`Unknown spell: ${spellType}`, 'warning');
+    }
+};
+
+/**
+ * Handle BUY spell - Show magical wand store
+ */
+async function handleBuySpell(element) {
+    console.log('💰 Handling BUY spell');
+
+    try {
+        showSpellMessage('🛍️ Opening Magical Wand Store...', 'info');
+
+        // Create magical wand store modal
+        await showMagicalWandStore();
+
+    } catch (error) {
+        console.error('❌ BUY spell error:', error);
+        showSpellMessage(`BUY spell failed: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Show magical wand store with purchasable items
+ */
+async function showMagicalWandStore() {
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.id = 'magical-wand-store';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        backdrop-filter: blur(5px);
+    `;
+
+    // Create store content
+    const storeContent = document.createElement('div');
+    storeContent.style.cssText = `
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 30px;
+        max-width: 800px;
+        max-height: 80vh;
+        overflow-y: auto;
+        color: white;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    `;
+
+    storeContent.innerHTML = `
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h2 style="margin: 0; font-size: 2.5em; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                🪄 Magical Wand Emporium ✨
+            </h2>
+            <p style="margin: 10px 0; opacity: 0.9; font-size: 1.2em;">
+                Harness the power of the elements with these legendary artifacts
+            </p>
+        </div>
+
+        <div id="wand-products" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+            <!-- Wand products will be inserted here -->
+        </div>
+
+        <div style="text-align: center;">
+            <button onclick="closeMagicalWandStore()" style="
+                background: rgba(255, 255, 255, 0.2);
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 25px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: bold;
+                transition: all 0.3s ease;
+            " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                ✖️ Close Store
+            </button>
+        </div>
+    `;
+
+    modal.appendChild(storeContent);
+    document.body.appendChild(modal);
+
+    // Load magical wand products
+    await loadMagicalWands();
+
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeMagicalWandStore();
+        }
+    });
+}
+
+/**
+ * Load magical wand products into the store
+ */
+async function loadMagicalWands() {
+    const productsContainer = document.getElementById('wand-products');
+    if (!productsContainer) return;
+
+    try {
+        // Fetch products from our test server
+        const response = await fetch('/api/products');
+        const data = await response.json();
+
+        // Filter for magical wands
+        const wands = data.products.filter(product => product.type === 'magical_item');
+
+        if (wands.length === 0) {
+            productsContainer.innerHTML = '<p style="text-align: center; opacity: 0.7;">No magical wands available at this time.</p>';
+            return;
+        }
+
+        // Create wand cards
+        wands.forEach(wand => {
+            const wandCard = createWandCard(wand);
+            productsContainer.appendChild(wandCard);
+        });
+
+    } catch (error) {
+        console.error('❌ Failed to load magical wands:', error);
+        productsContainer.innerHTML = '<p style="text-align: center; opacity: 0.7; color: #ffcccb;">Failed to load magical wands. Please try again.</p>';
+    }
+}
+
+/**
+ * Create a wand product card
+ */
+function createWandCard(wand) {
+    const card = document.createElement('div');
+    card.style.cssText = `
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    `;
+
+    // Get emoji icon based on wand type
+    let wandEmoji = '🪄';
+    if (wand.id.includes('fire')) wandEmoji = '🔥';
+    else if (wand.id.includes('ice')) wandEmoji = '❄️';
+    else if (wand.id.includes('lightning')) wandEmoji = '⚡';
+
+    card.innerHTML = `
+        <div style="font-size: 4em; margin-bottom: 10px;">${wandEmoji}</div>
+        <h3 style="margin: 0 0 10px 0; font-size: 1.3em;">${wand.title}</h3>
+        <p style="margin: 0 0 15px 0; opacity: 0.8; font-size: 0.9em; line-height: 1.4;">${wand.description}</p>
+        <div style="margin: 15px 0;">
+            <span style="font-size: 1.5em; font-weight: bold; color: #ffd700;">$${(wand.price / 100).toFixed(2)}</span>
+        </div>
+        <div style="margin: 10px 0; font-size: 0.8em; opacity: 0.7;">
+            ${wand.metadata.enchantment_level} • ${wand.metadata.magical_power}
+        </div>
+        <button onclick="purchaseWand('${wand.id}')" style="
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            border: none;
+            color: #333;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 8px rgba(0,0,0,0.2)'">
+            💰 Purchase with Stored Card
+        </button>
+    `;
+
+    // Add hover effect
+    card.addEventListener('mouseenter', () => {
+        card.style.background = 'rgba(255, 255, 255, 0.15)';
+        card.style.transform = 'translateY(-5px)';
+        card.style.boxShadow = '0 10px 20px rgba(0,0,0,0.3)';
+    });
+
+    card.addEventListener('mouseleave', () => {
+        card.style.background = 'rgba(255, 255, 255, 0.1)';
+        card.style.transform = 'translateY(0)';
+        card.style.boxShadow = 'none';
+    });
+
+    return card;
+}
+
+/**
+ * Purchase a magical wand using stored payment methods
+ */
+window.purchaseWand = async function(wandId) {
+    console.log('💳 Purchasing wand:', wandId);
+
+    try {
+        // Check if The Advancement extension is available for stored payment methods
+        if (typeof browser !== 'undefined' || typeof safari !== 'undefined') {
+            // Use stored payment method flow
+            await purchaseWithStoredPaymentMethod(wandId);
+        } else {
+            // Fallback to regular checkout
+            await purchaseWithRegularCheckout(wandId);
+        }
+    } catch (error) {
+        console.error('❌ Purchase failed:', error);
+        showSpellMessage(`Purchase failed: ${error.message}`, 'error');
+    }
+};
+
+/**
+ * Purchase using stored payment methods from The Advancement extension
+ */
+async function purchaseWithStoredPaymentMethod(wandId) {
+    showSpellMessage('💳 Loading stored payment methods...', 'info');
+
+    // This would integrate with the keyboard extension's stored payment method system
+    // For now, we'll simulate the flow
+    setTimeout(() => {
+        showSpellMessage('🎉 Purchase successful! Your magical wand will arrive via owl post.', 'success');
+        closeMagicalWandStore();
+
+        // Add some nineum as a reward
+        if (window.NineumManager) {
+            window.NineumManager.addNineum(50, 'magical wand purchase');
+        }
+    }, 2000);
+}
+
+/**
+ * Purchase using regular checkout flow
+ */
+async function purchaseWithRegularCheckout(wandId) {
+    showSpellMessage('🔄 Redirecting to secure checkout...', 'info');
+
+    // This would redirect to the regular purchase flow
+    setTimeout(() => {
+        showSpellMessage('💳 Please complete purchase in the opened checkout window.', 'info');
+    }, 1000);
+}
+
+/**
+ * Close the magical wand store modal
+ */
+window.closeMagicalWandStore = function() {
+    const modal = document.getElementById('magical-wand-store');
+    if (modal) {
+        modal.remove();
+    }
+};
+
+/**
+ * Handle other spell types (placeholders)
+ */
+async function handleShareSpell(element) {
+    console.log('📤 Handling SHARE spell');
+    showSpellMessage('📤 Recipe shared successfully!', 'success');
+}
+
+async function handleCollectSpell(element) {
+    console.log('💾 Handling COLLECT spell');
+    showSpellMessage('💾 Recipe saved to your collection!', 'success');
+}
+
+async function handleMagicSpell(element) {
+    console.log('🪄 Handling MAGIC spell');
+    showSpellMessage('✨ Kitchen magic activated!', 'success');
+
+    // Add some nineum for casting magic
+    if (window.NineumManager) {
+        window.NineumManager.addNineum(25, 'kitchen magic spell');
+    }
+}
+
+/**
+ * Show spell status message
+ */
+function showSpellMessage(message, type = 'info') {
+    // Remove existing message
+    const existing = document.getElementById('spell-message');
+    if (existing) existing.remove();
+
+    // Create new message
+    const messageEl = document.createElement('div');
+    messageEl.id = 'spell-message';
+    messageEl.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 10px;
+        color: white;
+        font-weight: bold;
+        z-index: 10001;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    `;
+
+    // Set colors based on type
+    switch (type) {
+        case 'success':
+            messageEl.style.background = 'linear-gradient(45deg, #27ae60, #2ecc71)';
+            break;
+        case 'error':
+            messageEl.style.background = 'linear-gradient(45deg, #e74c3c, #c0392b)';
+            break;
+        case 'warning':
+            messageEl.style.background = 'linear-gradient(45deg, #f39c12, #e67e22)';
+            break;
+        default:
+            messageEl.style.background = 'linear-gradient(45deg, #3498db, #2980b9)';
+    }
+
+    messageEl.textContent = message;
+    document.body.appendChild(messageEl);
+
+    // Animate in
+    setTimeout(() => {
+        messageEl.style.transform = 'translateX(0)';
+    }, 100);
+
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+        messageEl.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (messageEl.parentNode) {
+                messageEl.remove();
+            }
+        }, 300);
+    }, 4000);
+}
+
+console.log('🪄 Spell casting system initialized');
+
+// Set up spell click handlers when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    setupSpellClickHandlers();
+});
+
+/**
+ * Set up click handlers for SVG spell elements
+ */
+function setupSpellClickHandlers() {
+    // Use event delegation to handle clicks on spell elements
+    document.addEventListener('click', (event) => {
+        const target = event.target;
+
+        // Check if clicked element or its parent has a spell attribute
+        let spellElement = null;
+        if (target.hasAttribute('spell')) {
+            spellElement = target;
+        } else if (target.parentElement && target.parentElement.hasAttribute('spell')) {
+            spellElement = target.parentElement;
+        }
+
+        if (spellElement) {
+            console.log('🪄 Spell element clicked:', spellElement);
+            event.preventDefault();
+            window.castSpell(spellElement);
+        }
+    });
+
+    console.log('✨ Spell click handlers set up');
+}

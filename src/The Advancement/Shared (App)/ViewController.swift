@@ -52,14 +52,16 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         stackView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(stackView)
 
-        // Create the three navigation buttons
+        // Create the navigation buttons
         let cookbookButton = createNavigationButton(title: "🍪 Cookbook", action: #selector(showCookbook))
         let instantiationButton = createNavigationButton(title: "⚡ Instantiation", action: #selector(showInstantiation))
         let carrierBagButton = createNavigationButton(title: "🎒 Carrier Bag", action: #selector(showCarrierBag))
+        let nexusButton = createNavigationButton(title: "🌐 Nexus", action: #selector(showNexus))
 
         stackView.addArrangedSubview(cookbookButton)
         stackView.addArrangedSubview(instantiationButton)
         stackView.addArrangedSubview(carrierBagButton)
+        stackView.addArrangedSubview(nexusButton)
 
         // Position in top-right corner
         NSLayoutConstraint.activate([
@@ -106,6 +108,14 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 
         let carrierBagVC = CarrierBagViewController()
         let navController = UINavigationController(rootViewController: carrierBagVC)
+        present(navController, animated: true)
+    }
+
+    @objc private func showNexus() {
+        NSLog("ADVANCEAPP: 🌐 Showing Nexus portal")
+
+        let nexusVC = NexusViewController()
+        let navController = UINavigationController(rootViewController: nexusVC)
         present(navController, animated: true)
     }
 #endif
