@@ -1118,7 +1118,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
         NSLog("ADVANCEKEY: 📡 Updating carrierBag BDO in Fount")
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (responseData, response) = try await URLSession.shared.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
@@ -1239,7 +1239,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             alertController.addAction(UIAlertAction(title: "Open App", style: .default) { _ in
                 // This would open The Advancement app to the Nexus portal
                 if let url = URL(string: "advancement://nexus") {
-                    self.openURL(url)
+                    UIApplication.shared.open(url, options: [:], completionHandler: nil)
                 }
             })
 
