@@ -63,14 +63,14 @@ class CookbookViewController: UITableViewController {
     }
 
     private func loadRecipes() {
-        NSLog("ADVANCEAPP: 📚 Loading recipes from SharedUserDefaults...")
+        NSLog("ADVANCEAPP: 📚 Loading recipes from SharedUserDefaults and Fount...")
 
         // Force sync
         SharedUserDefaults.shared.synchronize()
 
-        // Get holdings
+        // Get holdings from SharedUserDefaults (immediate display)
         holdings = SharedUserDefaults.getHoldings()
-        NSLog("ADVANCEAPP: 📚 Found %d holdings", holdings.count)
+        NSLog("ADVANCEAPP: 📚 Found %d holdings from SharedUserDefaults", holdings.count)
 
         // Filter for recipes only
         holdings = holdings.filter { holding in
@@ -82,10 +82,61 @@ class CookbookViewController: UITableViewController {
         // Debug print
         SharedUserDefaults.debugPrint(prefix: "ADVANCEAPP")
 
-        // Reload table
+        // Also try to load from Fount carrierBag (async)
+        Task {
+            do {
+                let fountRecipes = try await loadRecipesFromFount()
+                NSLog("ADVANCEAPP: 📚 Loaded %d recipes from Fount carrierBag", fountRecipes.count)
+
+                // Merge with existing recipes (Fount is source of truth)
+                DispatchQueue.main.async {
+                    self.holdings = fountRecipes
+                    self.tableView.reloadData()
+                }
+            } catch {
+                NSLog("ADVANCEAPP: ⚠️ Failed to load from Fount: %@", error.localizedDescription)
+            }
+        }
+
+        // Reload table with current data
         DispatchQueue.main.async {
             self.tableView.reloadData()
         }
+    }
+
+    private func loadRecipesFromFount() async throws -> [[String: Any]] {
+        // Use the same pubkey as the keyboard extension
+        let pubKey = "02a3b4c5d6e7f8910111213141516171819202122232425262728293031323334"
+
+        let fountUrl = "http://127.0.0.1:5117/bdo/\(pubKey)"
+
+        guard let url = URL(string: fountUrl) else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid Fount URL"])
+        }
+
+        NSLog("ADVANCEAPP: 📡 Fetching carrierBag from Fount")
+
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            throw NSError(domain: "FountError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Fount error: \(httpResponse.statusCode)"])
+        }
+
+        let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let bdoData = jsonObject,
+              let dataDict = bdoData["data"] as? [String: Any],
+              let carrierBag = dataDict["carrierBag"] as? [String: Any],
+              let cookbook = carrierBag["cookbook"] as? [[String: Any]] else {
+            NSLog("ADVANCEAPP: 📦 No carrierBag cookbook found in BDO")
+            return []
+        }
+
+        NSLog("ADVANCEAPP: 📚 Found %d recipes in Fount carrierBag", cookbook.count)
+        return cookbook
     }
 
     // MARK: - Table View Data Source

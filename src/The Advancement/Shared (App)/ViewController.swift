@@ -30,8 +30,8 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 #if os(iOS)
         self.webView.scrollView.isScrollEnabled = false
 
-        // Add floating cookbook button since there's no navigation controller
-        addFloatingCookbookButton()
+        // Add floating navigation buttons since there's no navigation controller
+        addFloatingNavigationButtons()
 #endif
 
         self.webView.configuration.userContentController.add(self, name: "controller")
@@ -43,28 +43,44 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
     }
 
 #if os(iOS)
-    private func addFloatingCookbookButton() {
-        let button = UIButton(type: .system)
-        button.setTitle("🍪 Cookbook", for: .normal)
-        button.backgroundColor = UIColor.systemBlue
-        button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 25
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+    private func addFloatingNavigationButtons() {
+        // Create a stack view to hold all navigation buttons
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.spacing = 12
+        stackView.distribution = .fillEqually
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(stackView)
 
-        button.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(button)
+        // Create the three navigation buttons
+        let cookbookButton = createNavigationButton(title: "🍪 Cookbook", action: #selector(showCookbook))
+        let instantiationButton = createNavigationButton(title: "⚡ Instantiation", action: #selector(showInstantiation))
+        let carrierBagButton = createNavigationButton(title: "🎒 Carrier Bag", action: #selector(showCarrierBag))
+
+        stackView.addArrangedSubview(cookbookButton)
+        stackView.addArrangedSubview(instantiationButton)
+        stackView.addArrangedSubview(carrierBagButton)
 
         // Position in top-right corner
         NSLayoutConstraint.activate([
-            button.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            button.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
-            button.heightAnchor.constraint(equalToConstant: 50),
-            button.widthAnchor.constraint(equalToConstant: 130)
+            stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            stackView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
+            stackView.widthAnchor.constraint(equalToConstant: 150)
         ])
 
-        button.addTarget(self, action: #selector(showCookbook), for: .touchUpInside)
+        NSLog("ADVANCEAPP: 🧭 Added floating navigation buttons")
+    }
 
-        NSLog("ADVANCEAPP: 📚 Added floating cookbook button")
+    private func createNavigationButton(title: String, action: Selector) -> UIButton {
+        let button = UIButton(type: .system)
+        button.setTitle(title, for: .normal)
+        button.backgroundColor = UIColor.systemBlue
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 22
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        button.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        button.addTarget(self, action: action, for: .touchUpInside)
+        return button
     }
 #endif
 
@@ -74,6 +90,22 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 
         let cookbookVC = CookbookViewController()
         let navController = UINavigationController(rootViewController: cookbookVC)
+        present(navController, animated: true)
+    }
+
+    @objc private func showInstantiation() {
+        NSLog("ADVANCEAPP: ⚡ Showing instantiation (Fount user info)")
+
+        let instantiationVC = InstantiationViewController()
+        let navController = UINavigationController(rootViewController: instantiationVC)
+        present(navController, animated: true)
+    }
+
+    @objc private func showCarrierBag() {
+        NSLog("ADVANCEAPP: 🎒 Showing carrier bag contents")
+
+        let carrierBagVC = CarrierBagViewController()
+        let navController = UINavigationController(rootViewController: carrierBagVC)
         present(navController, animated: true)
     }
 #endif

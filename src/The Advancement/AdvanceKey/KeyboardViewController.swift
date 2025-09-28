@@ -8,6 +8,12 @@
 import UIKit
 import WebKit
 
+// MARK: - Fount Data Structures
+struct FountUser {
+    let uuid: String
+    let publicKey: String
+}
+
 extension Character {
     var isEmoji: Bool {
         guard let scalar = unicodeScalars.first else { return false }
@@ -436,22 +442,260 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     }
 
     func searchBDOInUsers(bdoPubKey: String, baseUrl: String) async throws -> [String: Any] {
-        // Since BDO is seeded in user data under "recipes", we need to find it
-        // This is a simplified approach - in production you'd have proper BDO endpoints
+        NSLog("ADVANCEKEY: 🔍 Searching for BDO in Fount: %@", bdoPubKey)
 
-        print("🔍 Searching for BDO in seeded user data...")
+        // Call Fount API to get BDO by pubKey
+        return try await fetchBDOFromFount(bdoPubKey: bdoPubKey)
+    }
 
-        // For now, return the seeded recipe data directly since we know the structure
-        let recipeData: [String: Any] = [
-            "bdo": [
-                "bdoPubKey": bdoPubKey,
-                "svgContent": "<svg width=\"320\" height=\"60\" viewBox=\"0 0 320 60\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"320\" height=\"60\" fill=\"#f8f9fa\" stroke=\"#e9ecef\" stroke-width=\"1\" rx=\"8\"/><rect spell=\"share\" x=\"10\" y=\"10\" width=\"90\" height=\"40\" fill=\"#27ae60\" stroke=\"#219a52\" stroke-width=\"2\" rx=\"6\"><title>Share this recipe</title></rect><text spell=\"share\" x=\"55\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">📤 SHARE</text><rect spell=\"collect\" x=\"115\" y=\"10\" width=\"90\" height=\"40\" fill=\"#9b59b6\" stroke=\"#8e44ad\" stroke-width=\"2\" rx=\"6\"><title>Save to your collection</title></rect><text spell=\"collect\" x=\"160\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">💾 SAVE</text><rect spell=\"magic\" x=\"220\" y=\"10\" width=\"90\" height=\"40\" fill=\"#e91e63\" stroke=\"#c2185b\" stroke-width=\"2\" rx=\"6\"><title>Cast kitchen magic</title></rect><text spell=\"magic\" x=\"265\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">🪄 MAGIC</text></svg>",
-                "title": "Grandma's Secret Chocolate Chip Cookies Recipe",
-                "type": "recipe"
+    func fetchBDOFromFount(bdoPubKey: String) async throws -> [String: Any] {
+        // First ensure we have a Fount user
+        let fountUser = try await ensureFountUser()
+
+        // Try to fetch existing BDO
+        let fountUrl = "http://127.0.0.1:5117/bdo/\(bdoPubKey)"
+
+        guard let url = URL(string: fountUrl) else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid Fount URL"])
+        }
+
+        NSLog("ADVANCEKEY: 📡 Fetching BDO from Fount: %@", fountUrl)
+
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+        }
+
+        NSLog("ADVANCEKEY: 📡 Fount response status: %d", httpResponse.statusCode)
+
+        if httpResponse.statusCode == 404 {
+            // BDO not found in Fount, create it
+            NSLog("ADVANCEKEY: 📦 BDO not found in Fount, creating it with user: %@", fountUser.uuid)
+            return try await createBDOInFount(bdoPubKey: bdoPubKey, fountUser: fountUser)
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            throw NSError(domain: "FountError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Fount error: \(httpResponse.statusCode)"])
+        }
+
+        let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let bdoData = jsonObject else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid BDO JSON from Fount"])
+        }
+
+        NSLog("ADVANCEKEY: ✅ BDO fetched from Fount successfully")
+        return bdoData
+    }
+
+    func ensureFountUser() async throws -> FountUser {
+        // Generate or retrieve keypair for Fount
+        let keyPair = generateOrRetrieveKeyPair()
+
+        NSLog("ADVANCEKEY: 👤 Creating Fount user with pubKey: %@", keyPair.publicKey)
+
+        return try await createFountUser(keyPair: keyPair)
+    }
+
+    func generateOrRetrieveKeyPair() -> (publicKey: String, privateKey: String) {
+        // For now, use the same pubkey from our recipe
+        // In production, you'd generate proper keypairs or retrieve from keychain
+        let pubKey = "02a3b4c5d6e7f8910111213141516171819202122232425262728293031323334"
+        let privKey = "a3b4c5d6e7f8910111213141516171819202122232425262728293031323334" // Example private key
+
+        return (publicKey: pubKey, privateKey: privKey)
+    }
+
+    func createFountUser(keyPair: (publicKey: String, privateKey: String)) async throws -> FountUser {
+        let createUserUrl = "http://127.0.0.1:5117/users"
+
+        guard let url = URL(string: createUserUrl) else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid Fount create user URL"])
+        }
+
+        let requestBody: [String: Any] = [
+            "publicKey": keyPair.publicKey,
+            "signature": "placeholder" // In production, sign with private key
+        ]
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        } catch {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to serialize user creation data: \(error.localizedDescription)"])
+        }
+
+        NSLog("ADVANCEKEY: 📡 Creating Fount user...")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+        }
+
+        NSLog("ADVANCEKEY: 📡 Fount create user response status: %d", httpResponse.statusCode)
+
+        guard httpResponse.statusCode == 200 || httpResponse.statusCode == 201 else {
+            throw NSError(domain: "FountError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Failed to create Fount user: \(httpResponse.statusCode)"])
+        }
+
+        let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let userData = jsonObject,
+              let uuid = userData["uuid"] as? String else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid user data from Fount"])
+        }
+
+        NSLog("ADVANCEKEY: ✅ Fount user created: %@", uuid)
+
+        // After creating user, create their carrierBag BDO with empty cookbook
+        try await createUserCarrierBag(userUuid: uuid, publicKey: keyPair.publicKey)
+
+        return FountUser(uuid: uuid, publicKey: keyPair.publicKey)
+    }
+
+    func createUserCarrierBag(userUuid: String, publicKey: String) async throws {
+        NSLog("ADVANCEKEY: 🎒 Creating carrierBag BDO for user: %@", userUuid)
+
+        // Create the user's carrierBag BDO with their pubKey
+        let carrierBagPayload: [String: Any] = [
+            "pubKey": publicKey,
+            "owner": userUuid,
+            "data": [
+                "type": "carrierBag",
+                "carrierBag": [
+                    "cookbook": [],
+                    "apothecary": [],
+                    "gallery": [],
+                    "bookshelf": [],
+                    "familiarPen": [],
+                    "machinery": [],
+                    "metallics": [],
+                    "music": [],
+                    "oracular": [],
+                    "greenHouse": [],
+                    "closet": [],
+                    "games": [],
+                    "created": ISO8601DateFormatter().string(from: Date()),
+                    "lastUpdated": ISO8601DateFormatter().string(from: Date())
+                ]
             ]
         ]
 
-        return recipeData
+        let fountCreateUrl = "http://127.0.0.1:5117/bdo"
+        guard let url = URL(string: fountCreateUrl) else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid Fount create URL"])
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: carrierBagPayload)
+        } catch {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to serialize carrierBag data: \(error.localizedDescription)"])
+        }
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+        }
+
+        NSLog("ADVANCEKEY: 📡 CarrierBag creation response status: %d", httpResponse.statusCode)
+
+        if httpResponse.statusCode == 201 || httpResponse.statusCode == 200 {
+            NSLog("ADVANCEKEY: ✅ CarrierBag BDO created successfully")
+        } else {
+            NSLog("ADVANCEKEY: ⚠️ CarrierBag creation failed with status %d", httpResponse.statusCode)
+        }
+    }
+
+    func createBDOInFount(bdoPubKey: String, fountUser: FountUser) async throws -> [String: Any] {
+        NSLog("ADVANCEKEY: 🏗️ Creating BDO in Fount for pubKey: %@ with user: %@", bdoPubKey, fountUser.uuid)
+
+        // Create the BDO payload for Fount API
+        let bdoPayload: [String: Any] = [
+            "pubKey": bdoPubKey,
+            "owner": fountUser.uuid,
+            "data": [
+                "title": "Grandma's Secret Chocolate Chip Cookies Recipe",
+                "type": "recipe",
+                "svgContent": "<svg width=\"320\" height=\"60\" viewBox=\"0 0 320 60\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"320\" height=\"60\" fill=\"#f8f9fa\" stroke=\"#e9ecef\" stroke-width=\"1\" rx=\"8\"/><rect spell=\"share\" x=\"10\" y=\"10\" width=\"90\" height=\"40\" fill=\"#27ae60\" stroke=\"#219a52\" stroke-width=\"2\" rx=\"6\"><title>Share this recipe</title></rect><text spell=\"share\" x=\"55\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">📤 SHARE</text><rect spell=\"collect\" x=\"115\" y=\"10\" width=\"90\" height=\"40\" fill=\"#9b59b6\" stroke=\"#8e44ad\" stroke-width=\"2\" rx=\"6\"><title>Save to your collection</title></rect><text spell=\"collect\" x=\"160\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">💾 SAVE</text><rect spell=\"magic\" x=\"220\" y=\"10\" width=\"90\" height=\"40\" fill=\"#e91e63\" stroke=\"#c2185b\" stroke-width=\"2\" rx=\"6\"><title>Cast kitchen magic</title></rect><text spell=\"magic\" x=\"265\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">🪄 MAGIC</text></svg>",
+                "description": "A family recipe passed down through generations, featuring the perfect balance of crispy edges and chewy centers.",
+                "author": [
+                    "name": "Sarah Mitchell",
+                    "bio": "Home baker and food blogger sharing family recipes",
+                    "location": "Portland, Oregon"
+                ],
+                "ingredients": [
+                    ["item": "all-purpose flour", "amount": "2¼ cups"],
+                    ["item": "unsalted butter, softened", "amount": "1 cup (2 sticks)"],
+                    ["item": "granulated sugar", "amount": "¾ cup"],
+                    ["item": "packed brown sugar", "amount": "¾ cup"],
+                    ["item": "large eggs", "amount": "2"],
+                    ["item": "pure vanilla extract", "amount": "2 teaspoons"],
+                    ["item": "baking soda", "amount": "1 teaspoon"],
+                    ["item": "salt", "amount": "1 teaspoon"],
+                    ["item": "semi-sweet chocolate chips", "amount": "2 cups"]
+                ],
+                "instructions": [
+                    "Preheat your oven to 375°F (190°C). Line two baking sheets with parchment paper.",
+                    "In a medium bowl, whisk together flour, baking soda, and salt. Set aside.",
+                    "In a large bowl, cream together the softened butter, granulated sugar, and brown sugar until light and fluffy (about 3-4 minutes with an electric mixer).",
+                    "Beat in eggs one at a time, then add vanilla extract. Mix until well combined.",
+                    "Gradually blend in the flour mixture until just combined. Don't overmix! Fold in chocolate chips gently.",
+                    "Drop rounded tablespoons of dough onto prepared baking sheets, spacing them about 2 inches apart.",
+                    "Bake for 9-11 minutes, or until edges are golden brown but centers still look slightly underdone. Cool on baking sheet for 5 minutes before transferring to wire rack."
+                ],
+                "tags": ["cookies", "chocolate-chip", "dessert", "baking", "family-recipe", "comfort-food"]
+            ]
+        ]
+
+        // POST to Fount to create the BDO
+        let fountCreateUrl = "http://127.0.0.1:5117/bdo"
+        guard let url = URL(string: fountCreateUrl) else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid Fount create URL"])
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: bdoPayload)
+        } catch {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to serialize BDO data: \(error.localizedDescription)"])
+        }
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+        }
+
+        NSLog("ADVANCEKEY: 📡 Fount create BDO response status: %d", httpResponse.statusCode)
+
+        // Return data in the format expected by the app (with "bdo" wrapper)
+        let returnData: [String: Any] = [
+            "bdo": [
+                "bdoPubKey": bdoPubKey,
+                "title": "Grandma's Secret Chocolate Chip Cookies Recipe",
+                "type": "recipe",
+                "svgContent": "<svg width=\"320\" height=\"60\" viewBox=\"0 0 320 60\" xmlns=\"http://www.w3.org/2000/svg\"><rect x=\"0\" y=\"0\" width=\"320\" height=\"60\" fill=\"#f8f9fa\" stroke=\"#e9ecef\" stroke-width=\"1\" rx=\"8\"/><rect spell=\"share\" x=\"10\" y=\"10\" width=\"90\" height=\"40\" fill=\"#27ae60\" stroke=\"#219a52\" stroke-width=\"2\" rx=\"6\"><title>Share this recipe</title></rect><text spell=\"share\" x=\"55\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">📤 SHARE</text><rect spell=\"collect\" x=\"115\" y=\"10\" width=\"90\" height=\"40\" fill=\"#9b59b6\" stroke=\"#8e44ad\" stroke-width=\"2\" rx=\"6\"><title>Save to your collection</title></rect><text spell=\"collect\" x=\"160\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">💾 SAVE</text><rect spell=\"magic\" x=\"220\" y=\"10\" width=\"90\" height=\"40\" fill=\"#e91e63\" stroke=\"#c2185b\" stroke-width=\"2\" rx=\"6\"><title>Cast kitchen magic</title></rect><text spell=\"magic\" x=\"265\" y=\"32\" text-anchor=\"middle\" fill=\"white\" font-size=\"12\" font-weight=\"bold\">🪄 MAGIC</text></svg>"
+            ]
+        ]
+
+        if httpResponse.statusCode == 201 || httpResponse.statusCode == 200 {
+            NSLog("ADVANCEKEY: ✅ BDO created in Fount successfully")
+        } else {
+            NSLog("ADVANCEKEY: ⚠️ Fount BDO creation failed with status %d, using local data", httpResponse.statusCode)
+        }
+
+        return returnData
     }
 
     func displayBDOContent(cardData: [String: Any]) {
@@ -725,6 +969,159 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         let testResult = SharedUserDefaults.testAccess()
         NSLog("ADVANCEKEY: 📦 Shared access test: %@", testResult ? "✅ PASS" : "❌ FAIL")
 
+        // Also update the user's carrierBag in Fount
+        Task {
+            do {
+                try await updateCarrierBagCookbook(bdoPubKey: bdoPubKey, type: type, title: title)
+            } catch {
+                NSLog("ADVANCEKEY: ⚠️ Failed to update carrierBag: %@", error.localizedDescription)
+            }
+        }
+
         return true
+    }
+
+    func updateCarrierBagCookbook(bdoPubKey: String, type: String, title: String) async throws {
+        NSLog("ADVANCEKEY: 🎒 Updating carrierBag cookbook with recipe: %@", title)
+
+        // Get the user's keypair to find their carrierBag
+        let keyPair = generateOrRetrieveKeyPair()
+
+        // First, fetch the current carrierBag BDO
+        let currentCarrierBag = try await fetchCarrierBagBDO(publicKey: keyPair.publicKey)
+
+        // Add the new recipe to the cookbook
+        let updatedCarrierBag = try addRecipeToCarrierBag(currentCarrierBag, bdoPubKey: bdoPubKey, type: type, title: title)
+
+        // Update the BDO in Fount
+        try await updateCarrierBagBDO(updatedCarrierBag, publicKey: keyPair.publicKey)
+
+        NSLog("ADVANCEKEY: ✅ CarrierBag cookbook updated successfully")
+    }
+
+    func fetchCarrierBagBDO(publicKey: String) async throws -> [String: Any] {
+        let fountUrl = "http://127.0.0.1:5117/bdo/\(publicKey)"
+
+        guard let url = URL(string: fountUrl) else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid Fount URL"])
+        }
+
+        NSLog("ADVANCEKEY: 📡 Fetching carrierBag BDO from Fount")
+
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+        }
+
+        if httpResponse.statusCode == 404 {
+            // CarrierBag doesn't exist, create empty one
+            NSLog("ADVANCEKEY: 📦 CarrierBag not found, creating empty one")
+            return [
+                "data": [
+                    "carrierBag": [
+                        "cookbook": [],
+                        "created": ISO8601DateFormatter().string(from: Date()),
+                        "lastUpdated": ISO8601DateFormatter().string(from: Date())
+                    ]
+                ]
+            ]
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            throw NSError(domain: "FountError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Fount error: \(httpResponse.statusCode)"])
+        }
+
+        let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        guard let bdoData = jsonObject else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid BDO JSON from Fount"])
+        }
+
+        return bdoData
+    }
+
+    func addRecipeToCarrierBag(_ carrierBagBDO: [String: Any], bdoPubKey: String, type: String, title: String) throws -> [String: Any] {
+        var updatedBDO = carrierBagBDO
+
+        // Get current cookbook
+        guard let data = updatedBDO["data"] as? [String: Any],
+              let carrierBag = data["carrierBag"] as? [String: Any],
+              var cookbook = carrierBag["cookbook"] as? [[String: Any]] else {
+            throw NSError(domain: "CarrierBagError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid carrierBag structure"])
+        }
+
+        // Create recipe entry
+        let recipeEntry: [String: Any] = [
+            "bdoPubKey": bdoPubKey,
+            "type": type,
+            "title": title,
+            "savedAt": ISO8601DateFormatter().string(from: Date())
+        ]
+
+        // Remove existing recipe with same bdoPubKey
+        cookbook.removeAll { recipe in
+            (recipe["bdoPubKey"] as? String) == bdoPubKey
+        }
+
+        // Add new recipe
+        cookbook.append(recipeEntry)
+
+        // Update the structure
+        var updatedCarrierBag = carrierBag
+        updatedCarrierBag["cookbook"] = cookbook
+        updatedCarrierBag["lastUpdated"] = ISO8601DateFormatter().string(from: Date())
+
+        var updatedData = data
+        updatedData["carrierBag"] = updatedCarrierBag
+
+        updatedBDO["data"] = updatedData
+
+        NSLog("ADVANCEKEY: 📚 Recipe added to cookbook. Total recipes: %d", cookbook.count)
+
+        return updatedBDO
+    }
+
+    func updateCarrierBagBDO(_ updatedBDO: [String: Any], publicKey: String) async throws {
+        // Extract the data to update
+        guard let data = updatedBDO["data"] as? [String: Any] else {
+            throw NSError(domain: "CarrierBagError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid BDO data"])
+        }
+
+        // Create update payload
+        let updatePayload: [String: Any] = [
+            "pubKey": publicKey,
+            "data": data
+        ]
+
+        let fountUpdateUrl = "http://127.0.0.1:5117/bdo/\(publicKey)"
+        guard let url = URL(string: fountUpdateUrl) else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid Fount update URL"])
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: updatePayload)
+        } catch {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to serialize update data: \(error.localizedDescription)"])
+        }
+
+        NSLog("ADVANCEKEY: 📡 Updating carrierBag BDO in Fount")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+        }
+
+        NSLog("ADVANCEKEY: 📡 CarrierBag update response status: %d", httpResponse.statusCode)
+
+        if httpResponse.statusCode == 200 || httpResponse.statusCode == 201 {
+            NSLog("ADVANCEKEY: ✅ CarrierBag BDO updated successfully")
+        } else {
+            throw NSError(domain: "FountError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Failed to update carrierBag: \(httpResponse.statusCode)"])
+        }
     }
 }
