@@ -1164,8 +1164,35 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     func generatePaymentMethodsHTML() throws -> String {
         let storedMethods = loadStoredPaymentMethods()
 
-        let templateService = HTMLTemplateService()
-        return try templateService.generatePaymentMethodsHTML(paymentMethods: storedMethods)
+        if storedMethods.isEmpty {
+            return """
+            <div style="text-align: center; padding: 20px;">
+                <p>No stored payment methods found.</p>
+                <p>Please add a payment method via The Advancement app.</p>
+            </div>
+            """
+        }
+
+        let methodsHTML = storedMethods.map { method in
+            return """
+            <div class="payment-method" onclick="selectPaymentMethod('\(method.id)', '\(method.brand)', '\(method.last4)')">
+                <div class="payment-info">
+                    <div class="payment-icon">💳</div>
+                    <div class="payment-details">
+                        <div class="payment-name">\(method.brand.capitalized)</div>
+                        <div class="payment-last4">•••• \(method.last4)</div>
+                    </div>
+                </div>
+            </div>
+            """
+        }.joined(separator: "\n")
+
+        return """
+        <div class="payment-methods-container">
+            <h3>Select Payment Method</h3>
+            \(methodsHTML)
+        </div>
+        """
     }
 
     func handlePaymentMethodSelection(_ message: [String: Any]) {
@@ -1237,10 +1264,9 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             )
 
             alertController.addAction(UIAlertAction(title: "Open App", style: .default) { _ in
-                // This would open The Advancement app to the Nexus portal
-                if let url = URL(string: "advancement://nexus") {
-                    UIApplication.shared.open(url, options: [:], completionHandler: nil)
-                }
+                // Note: Keyboard extensions cannot directly open URLs
+                // The user will need to manually open The Advancement app
+                NSLog("ADVANCEKEY: 💳 User requested to open main app for payment method setup")
             })
 
             alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel))

@@ -18,6 +18,7 @@ class NexusViewController: UIViewController, WKNavigationDelegate, WKScriptMessa
 
     private var webView: WKWebView!
     private let nexusURL = "http://127.0.0.1:3333"
+    private let sessionless = Sessionless()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -41,6 +42,11 @@ class NexusViewController: UIViewController, WKNavigationDelegate, WKScriptMessa
 
         setupWebView()
         loadNexusPortal()
+
+        // Initialize sessionless keys and create all required users
+        Task {
+            await initializeUsers()
+        }
 
         NSLog("ADVANCEAPP: 🌐 NexusViewController loaded")
     }
@@ -178,6 +184,10 @@ class NexusViewController: UIViewController, WKNavigationDelegate, WKScriptMessa
             handlePaymentMethodSaved(messageBody)
         case "purchaseComplete":
             handlePurchaseComplete(messageBody)
+        case "getUserCredentials":
+            handleGetUserCredentials(messageBody)
+        case "signMessage":
+            handleSignMessage(messageBody)
         default:
             NSLog("ADVANCEAPP: ⚠️ Unknown message type: %@", messageType)
         }
@@ -243,6 +253,338 @@ class NexusViewController: UIViewController, WKNavigationDelegate, WKScriptMessa
         userDefaults?.synchronize()
 
         NSLog("ADVANCEAPP: 💾 Payment method stored for keyboard extension access")
+    }
+
+    private func handleGetUserCredentials(_ messageBody: [String: Any]) {
+        NSLog("ADVANCEAPP: 🔐 [CREDENTIALS] Getting user credentials for payment")
+
+        guard let callbackName = messageBody["callbackName"] as? String else {
+            NSLog("ADVANCEAPP: ❌ [CREDENTIALS] No callback name provided for getUserCredentials")
+            return
+        }
+
+        // Get real user credentials from stored Addie user or sessionless keys
+        let userCredentials: [String: Any]
+
+        if let addieUserData = UserDefaults.standard.data(forKey: "addieUser"),
+           let addieUser = try? JSONSerialization.jsonObject(with: addieUserData) as? [String: Any],
+           let uuid = addieUser["uuid"] as? String,
+           let publicKey = addieUser["pubKey"] as? String {
+
+            // Use real Addie user data
+            NSLog("ADVANCEAPP: ✅ [CREDENTIALS] Using stored Addie user: %@", uuid)
+
+            // Get private key from sessionless
+            guard let keys = sessionless.getKeys() else {
+                NSLog("ADVANCEAPP: ❌ [CREDENTIALS] No sessionless keys available")
+                return
+            }
+
+            userCredentials = [
+                "uuid": uuid,
+                "privateKey": keys.privateKey,
+                "publicKey": publicKey
+            ]
+
+            NSLog("ADVANCEAPP: 📊 [CREDENTIALS] Credentials prepared with UUID: %@", uuid)
+
+        } else {
+            NSLog("ADVANCEAPP: ⚠️ [CREDENTIALS] No stored Addie user found, using fallback test credentials")
+
+            // Fallback to test credentials
+            userCredentials = [
+                "uuid": "test-advancement-user-uuid",
+                "privateKey": "test-advancement-private-key",
+                "publicKey": "test-advancement-public-key"
+            ]
+        }
+
+        NSLog("ADVANCEAPP: 📦 [CREDENTIALS] Sending credentials with UUID: %@", userCredentials["uuid"] as? String ?? "unknown")
+
+        // Send credentials back to JavaScript
+        let responseScript = """
+            if (window.\(callbackName)) {
+                window.\(callbackName)(\(jsonString(from: userCredentials)));
+            }
+        """
+
+        webView.evaluateJavaScript(responseScript) { (result, error) in
+            if let error = error {
+                NSLog("ADVANCEAPP: ❌ [CREDENTIALS] Failed to send user credentials: %@", error.localizedDescription)
+            } else {
+                NSLog("ADVANCEAPP: ✅ [CREDENTIALS] User credentials sent to Nexus successfully")
+            }
+        }
+    }
+
+    private func handleSignMessage(_ messageBody: [String: Any]) {
+        NSLog("ADVANCEAPP: ✍️ [SIGNING] Starting message signing for payment")
+
+        guard let callbackName = messageBody["callbackName"] as? String,
+              let message = messageBody["message"] as? String else {
+            NSLog("ADVANCEAPP: ❌ [SIGNING] Invalid signMessage request - missing callback or message")
+            return
+        }
+
+        NSLog("ADVANCEAPP: 📝 [SIGNING] Message to sign: %@", message)
+        NSLog("ADVANCEAPP: 📞 [SIGNING] Callback function: %@", callbackName)
+
+        // Use real sessionless signing instead of test signature
+        guard let signature = sessionless.sign(message: message) else {
+            NSLog("ADVANCEAPP: ❌ [SIGNING] Failed to sign message with sessionless")
+
+            // Send error back to JavaScript
+            let errorData: [String: Any] = [
+                "error": "Failed to sign message"
+            ]
+
+            let errorScript = """
+                if (window.\(callbackName)) {
+                    window.\(callbackName)(\(jsonString(from: errorData)));
+                }
+            """
+
+            webView.evaluateJavaScript(errorScript) { (result, error) in
+                if let error = error {
+                    NSLog("ADVANCEAPP: ❌ [SIGNING] Failed to send error response: %@", error.localizedDescription)
+                }
+            }
+            return
+        }
+
+        NSLog("ADVANCEAPP: ✅ [SIGNING] Message signed successfully, signature length: %d", signature.count)
+
+        let responseData: [String: Any] = [
+            "signature": signature
+        ]
+
+        // Send signature back to JavaScript
+        let responseScript = """
+            if (window.\(callbackName)) {
+                window.\(callbackName)(\(jsonString(from: responseData)));
+            }
+        """
+
+        webView.evaluateJavaScript(responseScript) { (result, error) in
+            if let error = error {
+                NSLog("ADVANCEAPP: ❌ [SIGNING] Failed to send signature: %@", error.localizedDescription)
+            } else {
+                NSLog("ADVANCEAPP: ✅ [SIGNING] Signature sent to Nexus successfully")
+            }
+        }
+    }
+
+    private func jsonString(from dictionary: [String: Any]) -> String {
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: dictionary),
+              let jsonString = String(data: jsonData, encoding: .utf8) else {
+            return "{}"
+        }
+        return jsonString
+    }
+
+    private func initializeUsers() async {
+        NSLog("ADVANCEAPP: 🚀 [INIT] Starting user initialization...")
+
+        // Step 1: Ensure sessionless keys exist
+        await ensureSessionlessKeys()
+
+        // Step 2: Create/verify Fount user
+        await ensureFountUserExists()
+
+        // Step 3: Create/verify Addie user
+        await ensureAddieUserExists()
+
+        NSLog("ADVANCEAPP: ✅ [INIT] User initialization complete")
+    }
+
+    private func ensureSessionlessKeys() async {
+        NSLog("ADVANCEAPP: 🔑 [KEYS] Checking sessionless keys...")
+
+        if let keys = sessionless.getKeys() {
+            NSLog("ADVANCEAPP: ✅ [KEYS] Sessionless keys already exist")
+            NSLog("ADVANCEAPP: 📊 [KEYS] Public key: %@", keys.publicKey.prefix(20) + "...")
+            NSLog("ADVANCEAPP: 📊 [KEYS] Private key length: %d", keys.privateKey.count)
+        } else {
+            NSLog("ADVANCEAPP: 🔧 [KEYS] No sessionless keys found, generating new ones...")
+            let newKeys = sessionless.generateKeys()
+            if newKeys != nil {
+                if let newKeys = sessionless.getKeys() {
+                    NSLog("ADVANCEAPP: ✅ [KEYS] New sessionless keys generated successfully")
+                    NSLog("ADVANCEAPP: 📊 [KEYS] New public key: %@", newKeys.publicKey.prefix(20) + "...")
+                } else {
+                    NSLog("ADVANCEAPP: ❌ [KEYS] Keys generated but could not retrieve them")
+                }
+            } else {
+                NSLog("ADVANCEAPP: ❌ [KEYS] Failed to generate sessionless keys")
+            }
+        }
+    }
+
+    private func ensureFountUserExists() async {
+        NSLog("ADVANCEAPP: ⛲ [FOUNT] Checking Fount user...")
+
+        // Check if we already have a stored Fount user
+        if let fountUserData = UserDefaults.standard.data(forKey: "fountUser"),
+           let fountUser = try? JSONSerialization.jsonObject(with: fountUserData) as? [String: Any],
+           let uuid = fountUser["uuid"] as? String {
+            NSLog("ADVANCEAPP: ✅ [FOUNT] Using existing Fount user: %@", uuid)
+            return
+        }
+
+        NSLog("ADVANCEAPP: 🔧 [FOUNT] No stored Fount user, creating new one...")
+
+        guard let keys = sessionless.getKeys() else {
+            NSLog("ADVANCEAPP: ❌ [FOUNT] No sessionless keys available for Fount user creation")
+            return
+        }
+
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let message = timestamp + keys.publicKey
+
+        guard let signature = sessionless.sign(message: message) else {
+            NSLog("ADVANCEAPP: ❌ [FOUNT] Failed to sign Fount user creation message")
+            return
+        }
+
+        let userPayload: [String: Any] = [
+            "timestamp": timestamp,
+            "pubKey": keys.publicKey,
+            "signature": signature
+        ]
+
+        do {
+            guard let jsonData = try? JSONSerialization.data(withJSONObject: userPayload),
+                  let url = URL(string: "http://127.0.0.1:5117/user/create") else {
+                NSLog("ADVANCEAPP: ❌ [FOUNT] Failed to create Fount user request")
+                return
+            }
+
+            var request = URLRequest(url: url)
+            request.httpMethod = "PUT"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = jsonData
+
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            if let httpResponse = response as? HTTPURLResponse {
+                if httpResponse.statusCode == 200 {
+                    // Parse response to get user data
+                    if let responseData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       let uuid = responseData["uuid"] as? String {
+
+                        let fountUser: [String: Any] = [
+                            "uuid": uuid,
+                            "ordinal": 0,
+                            "created": timestamp,
+                            "pubKey": keys.publicKey
+                        ]
+
+                        // Store for future use
+                        if let userData = try? JSONSerialization.data(withJSONObject: fountUser) {
+                            UserDefaults.standard.set(userData, forKey: "fountUser")
+                            NSLog("ADVANCEAPP: ✅ [FOUNT] Fount user created and stored: %@", uuid)
+                        }
+                    } else {
+                        NSLog("ADVANCEAPP: ✅ [FOUNT] Fount user created successfully")
+                        if let responseString = String(data: data, encoding: .utf8) {
+                            NSLog("ADVANCEAPP: 📄 [FOUNT] Response: %@", responseString)
+                        }
+                    }
+                } else {
+                    NSLog("ADVANCEAPP: ⚠️ [FOUNT] Fount user creation returned status: %d", httpResponse.statusCode)
+                    if let responseString = String(data: data, encoding: .utf8) {
+                        NSLog("ADVANCEAPP: ❌ [FOUNT] Error: %@", responseString)
+                    }
+                }
+            }
+        } catch {
+            NSLog("ADVANCEAPP: ❌ [FOUNT] Failed to create Fount user: %@", error.localizedDescription)
+        }
+    }
+
+    private func ensureAddieUserExists() async {
+        NSLog("ADVANCEAPP: 💳 [ADDIE] Checking Addie user...")
+
+        // Check if user already exists in storage
+        if let existingUser = UserDefaults.standard.data(forKey: "addieUser"),
+           let userData = try? JSONSerialization.jsonObject(with: existingUser) as? [String: Any],
+           let uuid = userData["uuid"] as? String {
+            NSLog("ADVANCEAPP: ✅ [ADDIE] Using existing Addie user: %@", uuid)
+            return
+        }
+
+        NSLog("ADVANCEAPP: 🔧 [ADDIE] No stored Addie user, creating new one...")
+
+        // Create new user using real sessionless keys (like Fount)
+        guard let keys = sessionless.getKeys() else {
+            NSLog("ADVANCEAPP: ❌ [ADDIE] No sessionless keys available for Addie user creation")
+            return
+        }
+
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let message = timestamp + keys.publicKey
+
+        guard let signature = sessionless.sign(message: message) else {
+            NSLog("ADVANCEAPP: ❌ [ADDIE] Failed to sign Addie user creation message")
+            return
+        }
+
+        let userPayload: [String: Any] = [
+            "timestamp": timestamp,
+            "pubKey": keys.publicKey,
+            "signature": signature
+        ]
+
+        do {
+            guard let jsonData = try? JSONSerialization.data(withJSONObject: userPayload),
+                  let url = URL(string: "http://127.0.0.1:5116/user/create") else {
+                NSLog("ADVANCEAPP: ❌ [ADDIE] Failed to create Addie user request")
+                return
+            }
+
+            var request = URLRequest(url: url)
+            request.httpMethod = "PUT"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = jsonData
+
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            if let httpResponse = response as? HTTPURLResponse {
+                if httpResponse.statusCode == 200 {
+                    // Parse response to get user data
+                    if let responseData = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       let uuid = responseData["uuid"] as? String {
+
+                        let addieUser: [String: Any] = [
+                            "uuid": uuid,
+                            "created": timestamp,
+                            "pubKey": keys.publicKey
+                        ]
+
+                        // Store for future use
+                        if let userData = try? JSONSerialization.data(withJSONObject: addieUser) {
+                            UserDefaults.standard.set(userData, forKey: "addieUser")
+                            NSLog("ADVANCEAPP: ✅ [ADDIE] Addie user created and stored: %@", uuid)
+                        }
+                    } else {
+                        NSLog("ADVANCEAPP: ✅ [ADDIE] Addie user created successfully")
+                        if let responseString = String(data: data, encoding: .utf8) {
+                            NSLog("ADVANCEAPP: 📄 [ADDIE] Response: %@", responseString)
+                        }
+                    }
+                } else {
+                    NSLog("ADVANCEAPP: ⚠️ [ADDIE] Addie user creation returned status: %d", httpResponse.statusCode)
+
+                    // Log error response
+                    if let responseString = String(data: data, encoding: .utf8) {
+                        NSLog("ADVANCEAPP: ❌ [ADDIE] Error: %@", responseString)
+                    }
+                }
+            }
+
+        } catch {
+            NSLog("ADVANCEAPP: ❌ [ADDIE] Failed to create Addie user: %@", error.localizedDescription)
+        }
     }
 }
 

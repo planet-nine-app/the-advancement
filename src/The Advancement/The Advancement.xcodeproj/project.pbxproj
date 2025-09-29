@@ -80,7 +80,10 @@
 			membershipExceptions = (
 				"/Localized: Resources/Main.html",
 				Assets.xcassets,
+				CarrierBagViewController.swift,
 				CookbookViewController.swift,
+				InstantiationViewController.swift,
+				NexusViewController.swift,
 				Resources/Icon.png,
 				Resources/Script.js,
 				Resources/Style.css,
@@ -107,7 +110,10 @@
 			membershipExceptions = (
 				"/Localized: Resources/Main.html",
 				Assets.xcassets,
+				CarrierBagViewController.swift,
 				CookbookViewController.swift,
+				InstantiationViewController.swift,
+				NexusViewController.swift,
 				Resources/Icon.png,
 				Resources/Script.js,
 				Resources/Style.css,
@@ -185,6 +191,7 @@
 				Resources/fonts.css,
 				"Resources/fonts/FFVI-Damage-v3-LC-BW.otf",
 				"Resources/fonts/FFVI-Damage-v3-LC-KO.otf",
+				Sessionless.swift,
 				SharedUserDefaults.swift,
 			);
 			target = CA54CAFD2E5A0A99007D062D /* The Advancement (iOS) */;
@@ -196,6 +203,7 @@
 				Resources/fonts.css,
 				"Resources/fonts/FFVI-Damage-v3-LC-BW.otf",
 				"Resources/fonts/FFVI-Damage-v3-LC-KO.otf",
+				Sessionless.swift,
 				SharedUserDefaults.swift,
 			);
 			target = CA54CB0F2E5A0A99007D062D /* The Advancement (macOS) */;
