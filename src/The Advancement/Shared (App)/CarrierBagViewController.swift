@@ -68,11 +68,11 @@ class CarrierBagViewController: UITableViewController {
         collections = []
         tableView.reloadData()
 
-        // Use the same pubkey as the keyboard extension
+        // Use the stored Addie UUID for BDO access
         Task {
             do {
-                let pubKey = "02a3b4c5d6e7f8910111213141516171819202122232425262728293031323334"
-                let carrierBag = try await fetchCarrierBagFromFount(publicKey: pubKey)
+                let uuid = getStoredAddieUUID()
+                let carrierBag = try await fetchCarrierBagFromBDO(uuid: uuid)
 
                 DispatchQueue.main.async {
                     self.processCarrierBagData(carrierBag)
@@ -86,23 +86,25 @@ class CarrierBagViewController: UITableViewController {
         }
     }
 
-    private func fetchCarrierBagFromFount(publicKey: String) async throws -> [String: Any] {
-        let fountUrl = "http://127.0.0.1:5117/bdo/\(publicKey)"
+    private func fetchCarrierBagFromBDO(uuid: String) async throws -> [String: Any] {
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let hash = "the-advancement"
+        let bdoUrl = "http://127.0.0.1:5114/user/\(uuid)/bdo?timestamp=\(timestamp)&hash=\(hash)"
 
-        guard let url = URL(string: fountUrl) else {
-            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid Fount URL"])
+        guard let url = URL(string: bdoUrl) else {
+            throw NSError(domain: "BDOError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid BDO URL"])
         }
 
-        NSLog("ADVANCEAPP: 📡 Fetching carrierBag from Fount")
+        NSLog("ADVANCEAPP: 📡 Fetching carrierBag from BDO")
 
         let (data, response) = try await URLSession.shared.data(from: url)
 
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+            throw NSError(domain: "BDOError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
         }
 
         guard httpResponse.statusCode == 200 else {
-            throw NSError(domain: "FountError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Fount error: \(httpResponse.statusCode)"])
+            throw NSError(domain: "BDOError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "BDO error: \(httpResponse.statusCode)"])
         }
 
         let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any]
@@ -216,13 +218,34 @@ class CarrierBagViewController: UITableViewController {
             let item = collection.items[indexPath.row]
 
             if let itemDict = item as? [String: Any] {
-                // Structured item (like recipes)
+                // Structured item (like recipes, ebooks, etc.)
                 let title = itemDict["title"] as? String ?? "Untitled Item"
                 let type = itemDict["type"] as? String ?? "unknown"
                 let savedAt = itemDict["savedAt"] as? String ?? ""
 
                 cell.textLabel?.text = title
-                cell.detailTextLabel?.text = "Type: \(type) • \(formatDate(savedAt))"
+
+                // Enhanced display for ebooks
+                if type.lowercased() == "ebook" {
+                    var details: [String] = ["📚 Ebook"]
+
+                    if let price = itemDict["price"] as? Int, price > 0 {
+                        let dollarAmount = Double(price) / 100.0
+                        details.append(String(format: "$%.2f", dollarAmount))
+                    }
+
+                    if let purchasedFromNexus = itemDict["purchasedFromNexus"] as? Bool, purchasedFromNexus {
+                        details.append("Purchased via Nexus")
+                    }
+
+                    details.append(formatDate(savedAt))
+
+                    cell.detailTextLabel?.text = details.joined(separator: " • ")
+                } else {
+                    // Default display for other item types
+                    cell.detailTextLabel?.text = "Type: \(type) • \(formatDate(savedAt))"
+                }
+
                 cell.accessoryType = .disclosureIndicator
             } else {
                 // Simple item (string or other)
@@ -264,25 +287,65 @@ class CarrierBagViewController: UITableViewController {
         if let itemDict = item as? [String: Any] {
             title = itemDict["title"] as? String ?? title
 
-            var details: [String] = []
-            for (key, value) in itemDict {
-                if key != "title" {
-                    details.append("\(key): \(value)")
+            // Enhanced formatting for ebooks
+            if let type = itemDict["type"] as? String, type.lowercased() == "ebook" {
+                var details: [String] = []
+
+                if let description = itemDict["description"] as? String, !description.isEmpty {
+                    details.append("📖 Description: \(description)")
                 }
+
+                if let price = itemDict["price"] as? Int, price > 0 {
+                    let dollarAmount = Double(price) / 100.0
+                    details.append("💰 Price: \(String(format: "$%.2f", dollarAmount))")
+                }
+
+                if let productId = itemDict["productId"] as? String, !productId.isEmpty {
+                    details.append("🆔 Product ID: \(productId)")
+                }
+
+                if let savedAt = itemDict["savedAt"] as? String {
+                    details.append("📅 Added: \(formatDate(savedAt))")
+                }
+
+                if let purchasedFromNexus = itemDict["purchasedFromNexus"] as? Bool, purchasedFromNexus {
+                    details.append("🛒 Purchased via The Advancement Nexus")
+                }
+
+                message = details.joined(separator: "\n\n")
+            } else {
+                // Default formatting for other item types
+                var details: [String] = []
+                for (key, value) in itemDict {
+                    if key != "title" {
+                        details.append("\(key): \(value)")
+                    }
+                }
+                message = details.joined(separator: "\n")
             }
-            message = details.joined(separator: "\n")
         } else {
             message = "Raw data: \(item)"
         }
 
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
 
-        // Add copy button for useful data
-        if let itemDict = item as? [String: Any], let bdoPubKey = itemDict["bdoPubKey"] as? String {
-            alert.addAction(UIAlertAction(title: "Copy BDO PubKey", style: .default) { _ in
-                UIPasteboard.general.string = bdoPubKey
-                NSLog("ADVANCEAPP: 📋 Copied BDO PubKey to clipboard")
-            })
+        // Add copy button for product ID if it's an ebook
+        if let itemDict = item as? [String: Any] {
+            if let type = itemDict["type"] as? String, type.lowercased() == "ebook",
+               let productId = itemDict["productId"] as? String, !productId.isEmpty {
+                alert.addAction(UIAlertAction(title: "Copy Product ID", style: .default) { _ in
+                    UIPasteboard.general.string = productId
+                    NSLog("ADVANCEAPP: 📋 Copied Product ID to clipboard")
+                })
+            }
+
+            // Keep existing BDO PubKey copy functionality
+            if let bdoPubKey = itemDict["bdoPubKey"] as? String {
+                alert.addAction(UIAlertAction(title: "Copy BDO PubKey", style: .default) { _ in
+                    UIPasteboard.general.string = bdoPubKey
+                    NSLog("ADVANCEAPP: 📋 Copied BDO PubKey to clipboard")
+                })
+            }
         }
 
         alert.addAction(UIAlertAction(title: "OK", style: .default))
@@ -317,6 +380,21 @@ class CarrierBagViewController: UITableViewController {
 
     override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return 44
+    }
+
+    // MARK: - UUID Management
+
+    private func getStoredAddieUUID() -> String {
+        // Get UUID from stored Addie user data
+        if let existingUser = UserDefaults.standard.data(forKey: "addieUser"),
+           let userData = try? JSONSerialization.jsonObject(with: existingUser) as? [String: Any],
+           let uuid = userData["uuid"] as? String {
+            NSLog("ADVANCEAPP: 🔄 Using stored Addie UUID: %@", uuid)
+            return uuid
+        }
+
+        NSLog("ADVANCEAPP: ❌ No Addie user found, using fallback UUID")
+        return "no-uuid-available"
     }
 }
 #endif

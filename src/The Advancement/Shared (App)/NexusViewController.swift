@@ -184,6 +184,8 @@ class NexusViewController: UIViewController, WKNavigationDelegate, WKScriptMessa
             handlePaymentMethodSaved(messageBody)
         case "purchaseComplete":
             handlePurchaseComplete(messageBody)
+        case "storePaymentMethod":
+            handleStorePaymentMethod(messageBody)
         case "getUserCredentials":
             handleGetUserCredentials(messageBody)
         case "signMessage":
@@ -237,6 +239,146 @@ class NexusViewController: UIViewController, WKNavigationDelegate, WKScriptMessa
         }
     }
 
+    private func handleStorePaymentMethod(_ messageBody: [String: Any]) {
+        guard let product = messageBody["product"] as? [String: Any] else {
+            NSLog("ADVANCEAPP: ❌ Invalid product data in storePaymentMethod")
+            return
+        }
+
+        let paymentIntentId = messageBody["paymentIntentId"] as? String ?? ""
+        let paymentMethodId = messageBody["paymentMethodId"] as? String ?? ""
+
+        NSLog("ADVANCEAPP: 🎉 Processing successful purchase - Product: %@, PaymentIntent: %@",
+              product["title"] as? String ?? "Unknown", paymentIntentId)
+
+        // Store payment method for keyboard extension use
+        let paymentMethodData: [String: Any] = [
+            "paymentMethodId": paymentMethodId,
+            "paymentIntentId": paymentIntentId,
+            "product": product
+        ]
+        storePaymentMethodForKeyboard(paymentMethodData)
+
+        // Payment method will be automatically saved by Stripe since we set savePaymentMethod: true
+        // when providing user credentials to Nexus portal
+        NSLog("ADVANCEAPP: 💳 Payment method %@ should be automatically saved by Stripe", paymentMethodId)
+
+        // If it's an ebook, save to CarrierBag bookshelf
+        let productType = product["type"] as? String ?? ""
+        let productTitle = product["title"] as? String ?? ""
+
+        if productType.lowercased().contains("ebook") || productTitle.lowercased().contains("book") {
+            NSLog("ADVANCEAPP: 📚 Product is an ebook, saving to CarrierBag bookshelf")
+            saveEbookToCarrierBag(product)
+        } else {
+            NSLog("ADVANCEAPP: 📦 Product type: %@, not saving to bookshelf", productType)
+        }
+
+        // Show success message
+        DispatchQueue.main.async {
+            let message = productType.lowercased().contains("ebook") || productTitle.lowercased().contains("book") ?
+                "Your payment method has been saved and the ebook has been added to your CarrierBag bookshelf!" :
+                "Your payment method has been saved for future purchases!"
+
+            let alert = UIAlertController(
+                title: "🎉 Purchase Successful",
+                message: message,
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "Great!", style: .default))
+            self.present(alert, animated: true)
+        }
+    }
+
+    private func saveEbookToCarrierBag(_ product: [String: Any]) {
+        Task {
+            do {
+                guard let keys = sessionless.getKeys() else {
+                    NSLog("ADVANCEAPP: ❌ [CARRRIERBAG] No sessionless keys available")
+                    return
+                }
+
+                // Fetch current CarrierBag from BDO with hash parameter
+                let uuid = getStoredAddieUUID(for: keys.publicKey)
+                let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+                let hash = "the-advancement"
+                let bdoUrl = "http://127.0.0.1:5114/user/\(uuid)/bdo?timestamp=\(timestamp)&hash=\(hash)"
+                guard let url = URL(string: bdoUrl) else { return }
+
+                let (data, response) = try await URLSession.shared.data(from: url)
+                guard let httpResponse = response as? HTTPURLResponse,
+                      httpResponse.statusCode == 200 else {
+                    NSLog("ADVANCEAPP: ⚠️ [CARRIERBAG] Failed to fetch current CarrierBag")
+                    return
+                }
+
+                guard let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let bdoData = jsonObject["data"] as? [String: Any],
+                      var carrierBag = bdoData["carrierBag"] as? [String: Any] else {
+                    NSLog("ADVANCEAPP: ⚠️ [CARRIERBAG] No CarrierBag found in BDO")
+                    return
+                }
+
+                // Add ebook to bookshelf collection
+                var bookshelfItems = carrierBag["bookshelf"] as? [[String: Any]] ?? []
+
+                let ebookItem: [String: Any] = [
+                    "title": product["title"] as? String ?? "Unknown Book",
+                    "type": "ebook",
+                    "productId": product["productId"] as? String ?? product["uuid"] as? String ?? "",
+                    "price": product["price"] ?? 0,
+                    "description": product["description"] as? String ?? "",
+                    "savedAt": ISO8601DateFormatter().string(from: Date()),
+                    "purchasedFromNexus": true
+                ]
+
+                bookshelfItems.append(ebookItem)
+                carrierBag["bookshelf"] = bookshelfItems
+                carrierBag["lastUpdated"] = ISO8601DateFormatter().string(from: Date())
+
+                // Update CarrierBag in Fount
+                let updatedBDO = [
+                    "data": [
+                        "type": "carrierBag",
+                        "owner": getStoredAddieUUID(for: keys.publicKey),
+                        "carrierBag": carrierBag
+                    ]
+                ]
+
+                try await updateCarrierBagInFount(bdo: updatedBDO, publicKey: keys.publicKey)
+
+                NSLog("ADVANCEAPP: ✅ [CARRIERBAG] Ebook '%@' saved to bookshelf", product["title"] as? String ?? "Unknown")
+
+            } catch {
+                NSLog("ADVANCEAPP: ❌ [CARRIERBAG] Failed to save ebook: %@", error.localizedDescription)
+            }
+        }
+    }
+
+    private func updateCarrierBagInFount(bdo: [String: Any], publicKey: String) async throws {
+        let uuid = getStoredAddieUUID(for: publicKey)
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let hash = "the-advancement"
+        let bdoUrl = "http://127.0.0.1:5114/user/\(uuid)/bdo?timestamp=\(timestamp)&hash=\(hash)"
+        guard let url = URL(string: bdoUrl) else {
+            throw NSError(domain: "BDOError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: bdo)
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to update CarrierBag"])
+        }
+
+        NSLog("ADVANCEAPP: ✅ [CARRIERBAG] CarrierBag updated successfully in BDO")
+    }
+
     private func storePaymentMethodForKeyboard(_ paymentMethod: [String: Any]) {
         // Store payment method data in shared UserDefaults for keyboard extension access
         let userDefaults = UserDefaults(suiteName: "group.com.planetnine.the-advancement")
@@ -283,7 +425,10 @@ class NexusViewController: UIViewController, WKNavigationDelegate, WKScriptMessa
             userCredentials = [
                 "uuid": uuid,
                 "privateKey": keys.privateKey,
-                "publicKey": publicKey
+                "publicKey": publicKey,
+                "savePaymentMethod": true,
+                "stripeCustomerId": uuid,  // Use Addie UUID as Stripe customer ID
+                "setupFutureUsage": "off_session"  // Tell Stripe to save for future payments
             ]
 
             NSLog("ADVANCEAPP: 📊 [CREDENTIALS] Credentials prepared with UUID: %@", uuid)
@@ -295,11 +440,16 @@ class NexusViewController: UIViewController, WKNavigationDelegate, WKScriptMessa
             userCredentials = [
                 "uuid": "test-advancement-user-uuid",
                 "privateKey": "test-advancement-private-key",
-                "publicKey": "test-advancement-public-key"
+                "publicKey": "test-advancement-public-key",
+                "savePaymentMethod": true,
+                "stripeCustomerId": "test-advancement-user-uuid",  // Use test UUID as customer ID
+                "setupFutureUsage": "off_session"  // Tell Stripe to save for future payments
             ]
         }
 
-        NSLog("ADVANCEAPP: 📦 [CREDENTIALS] Sending credentials with UUID: %@", userCredentials["uuid"] as? String ?? "unknown")
+        NSLog("ADVANCEAPP: 📦 [CREDENTIALS] Sending credentials with UUID: %@ and Stripe customer ID: %@",
+              userCredentials["uuid"] as? String ?? "unknown",
+              userCredentials["stripeCustomerId"] as? String ?? "unknown")
 
         // Send credentials back to JavaScript
         let responseScript = """
@@ -454,8 +604,8 @@ class NexusViewController: UIViewController, WKNavigationDelegate, WKScriptMessa
 
         do {
             guard let jsonData = try? JSONSerialization.data(withJSONObject: userPayload),
-                  let url = URL(string: "http://127.0.0.1:5117/user/create") else {
-                NSLog("ADVANCEAPP: ❌ [FOUNT] Failed to create Fount user request")
+                  let url = URL(string: "http://127.0.0.1:5114/user/create") else {
+                NSLog("ADVANCEAPP: ❌ [BDO] Failed to create BDO user request")
                 return
             }
 
@@ -585,6 +735,96 @@ class NexusViewController: UIViewController, WKNavigationDelegate, WKScriptMessa
         } catch {
             NSLog("ADVANCEAPP: ❌ [ADDIE] Failed to create Addie user: %@", error.localizedDescription)
         }
+    }
+
+    // MARK: - UUID Management
+
+    private func savePaymentMethodToAddie(paymentMethodId: String, paymentIntentId: String) async {
+        NSLog("ADVANCEAPP: 💳 [ADDIE] Saving payment method to Addie API...")
+
+        guard let addieUUID = getStoredAddieUUID() else {
+            NSLog("ADVANCEAPP: ❌ [ADDIE] No Addie UUID available for payment method storage")
+            return
+        }
+
+        guard let keys = sessionless.getKeys() else {
+            NSLog("ADVANCEAPP: ❌ [ADDIE] No sessionless keys available")
+            return
+        }
+
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let message = timestamp + addieUUID + paymentMethodId
+
+        guard let signature = sessionless.sign(message: message) else {
+            NSLog("ADVANCEAPP: ❌ [ADDIE] Failed to sign payment method storage request")
+            return
+        }
+
+        let payload: [String: Any] = [
+            "uuid": addieUUID,
+            "paymentMethodId": paymentMethodId,
+            "paymentIntentId": paymentIntentId,
+            "timestamp": timestamp,
+            "signature": signature
+        ]
+
+        do {
+            guard let jsonData = try? JSONSerialization.data(withJSONObject: payload),
+                  let url = URL(string: "http://127.0.0.1:5116/save-payment-method") else {
+                NSLog("ADVANCEAPP: ❌ [ADDIE] Failed to create payment method storage request")
+                return
+            }
+
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = jsonData
+
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            if let httpResponse = response as? HTTPURLResponse {
+                if httpResponse.statusCode == 200 {
+                    NSLog("ADVANCEAPP: ✅ [ADDIE] Payment method saved to Addie successfully")
+                    if let responseString = String(data: data, encoding: .utf8) {
+                        NSLog("ADVANCEAPP: 📄 [ADDIE] Response: %@", responseString)
+                    }
+                } else {
+                    NSLog("ADVANCEAPP: ⚠️ [ADDIE] Payment method storage failed with status: %d", httpResponse.statusCode)
+                    if let responseString = String(data: data, encoding: .utf8) {
+                        NSLog("ADVANCEAPP: ❌ [ADDIE] Error: %@", responseString)
+                    }
+                }
+            }
+        } catch {
+            NSLog("ADVANCEAPP: ❌ [ADDIE] Failed to save payment method: %@", error.localizedDescription)
+        }
+    }
+
+    private func getStoredAddieUUID() -> String? {
+        if let addieUserData = UserDefaults.standard.data(forKey: "addieUser"),
+           let addieUser = try? JSONSerialization.jsonObject(with: addieUserData) as? [String: Any],
+           let uuid = addieUser["uuid"] as? String {
+            return uuid
+        }
+        return nil
+    }
+
+    private func getStoredAddieUUID(for publicKey: String) -> String {
+        // Get UUID from stored Addie user data
+        if let existingUser = UserDefaults.standard.data(forKey: "addieUser"),
+           let userData = try? JSONSerialization.jsonObject(with: existingUser) as? [String: Any],
+           let uuid = userData["uuid"] as? String {
+            NSLog("ADVANCEAPP: 🔄 Using stored Addie UUID: %@", uuid)
+
+            // Also store in shared UserDefaults for cross-app access
+            let sharedDefaults = UserDefaults(suiteName: "group.com.planetnine.the-advancement")
+            sharedDefaults?.set(uuid, forKey: "user_uuid")
+
+            return uuid
+        }
+
+        NSLog("ADVANCEAPP: ❌ No Addie user found, UUID not available")
+        return "no-uuid-available"
     }
 }
 

@@ -9,12 +9,14 @@
 
 This demonstration will show:
 1. **Initial Setup**: Payment method saving via Nexus portal in main app
-2. **Keyboard Extension**: Recipe saving to carrierBag cookbook
-3. **Stored Payment Purchase**: Buying magical wands with saved cards
-4. **Order Tracking**: Viewing purchases in Ordary and app integration
-5. **Data Persistence**: Seeing saved recipes in cookbook collection
+2. **Product Creation**: Creating Peace Love & Redistribution products with emojicode in Ninefy
+3. **Keyboard Extension**: Recipe saving to carrierBag cookbook
+4. **Stored Payment Purchase**: Buying magical wands with saved cards
+5. **Contract Creation**: Creating and signing covenant contracts with emojicode integration
+6. **Order Tracking**: Viewing purchases in Ordary and app integration
+7. **Data Persistence**: Seeing saved recipes in cookbook collection
 
-**Estimated Demo Time**: 15-20 minutes
+**Estimated Demo Time**: 25-30 minutes
 
 ---
 
@@ -52,7 +54,25 @@ npm start
 # Verify: http://127.0.0.1:3333 loads with four portal cards
 ```
 
-**Terminal 3 - Allyabase Test Ecosystem** (if needed for full demo):
+**Terminal 3 - Ninefy Digital Marketplace**:
+```bash
+cd /Users/zachbabb/Work/planet-nine/the-nullary/ninefy/ninefy
+npm install  # If first time
+npm run dev:test
+# Should see: "Ninefy running on http://localhost:1420"
+# Verify: Product creation form loads successfully
+```
+
+**Terminal 4 - Covenant Contract Management**:
+```bash
+cd /Users/zachbabb/Work/planet-nine/covenant/src/server/node
+npm install  # If first time
+node covenant.js
+# Should see: "🔮 Covenant server running on port 3011"
+# Verify: http://localhost:3011/health returns OK
+```
+
+**Terminal 5 - Allyabase Test Ecosystem** (for full demo):
 ```bash
 cd /Users/zachbabb/Work/planet-nine/allyabase/deployment/docker
 ./run-test-ecosystem.sh
@@ -166,7 +186,119 @@ xcodebuild -scheme "The Advancement" -destination "platform=iOS Simulator,name=i
 
 **Expected Result**: Recipe displays with all four interactive buttons
 
-#### Step 2.3: Save Recipe to Cookbook
+### **PHASE 2: Product Creation in Ninefy with Emojicode**
+
+#### Step 2.1: Access Ninefy Marketplace
+```
+🎤 "Now let's create some Peace Love & Redistribution products in Ninefy. This will show how emojicodes enable seamless product discovery in AdvanceKey."
+```
+
+**Actions**:
+1. Open browser and navigate to: `http://localhost:1420`
+2. Show Ninefy interface with upload screen
+3. Point out the clean SVG-first design
+4. Explain how Ninefy integrates with the ecosystem
+
+**Expected Result**: Ninefy loads with product creation interface
+
+#### Step 2.2: Copy PublicKey from AdvanceKey
+```
+🎤 "First we need to get our public key from AdvanceKey to use in our products."
+```
+
+**Actions**:
+1. Open The Advancement app
+2. Navigate to ⚡ Instantiation
+3. Tap the new "📋 Copy" button next to the Public Key
+4. Show the green "✅ Copied!" confirmation
+5. Note the key is now ready for use in Ninefy
+
+**Expected Result**: Public key copied to clipboard with visual confirmation
+
+#### Step 2.3: Create Peace Love & Redistribution Products
+```
+🎤 "We'll create branded products using the ☮️💚🏴‍☠️ Peace Love & Redistribution brand with proper emojicode."
+```
+
+**Actions**:
+1. In Ninefy, click "Upload Product"
+2. Select product type (e.g., "Membership")
+3. Fill in product details:
+   - **Brand**: `☮️💚🏴‍☠️` (Peace Love & Redistribution)
+   - **Title**: "Community Membership"
+   - **Description**: "Join our community of makers"
+4. Upload the product
+5. **Show the emojicode**: Point out the beautiful emojicode display with proper base64-emoji encoding
+
+**Expected Result**:
+- Product created successfully
+- Emojicode displays: `☮️💚🏴‍☠️✨[beautiful-emoji-sequence]✨`
+- Product URL shown for Sanora page
+
+#### Step 2.4: Create Additional Products
+```
+🎤 "Let's create a few more products to show the variety and consistency of the emojicode system."
+```
+
+**Actions**:
+1. Create an event ticket: "Community Gathering 2025"
+2. Create an ebook: "Guide to Sustainable Living"
+3. Each time, show:
+   - The brand field auto-filled with ☮️💚🏴‍☠️
+   - The resulting emojicode with proper encoding
+   - The Sanora product page URL
+
+### **PHASE 3: Covenant Contract Creation & Signing**
+
+#### Step 3.1: Access Covenant Service
+```
+🎤 "Now let's demonstrate covenant contracts - magical agreements that can be signed through AdvanceKey emojicodes."
+```
+
+**Actions**:
+1. Navigate to covenant interface (if available) or use API
+2. Show contract creation form
+3. Explain how contracts integrate with the ecosystem
+
+#### Step 3.2: Create Contract with AdvanceKey Integration
+```
+🎤 "We'll create a contract and show how the emojicode enables signing through AdvanceKey."
+```
+
+**Actions**:
+1. Create a contract with:
+   - **Title**: "Community Partnership Agreement"
+   - **Participants**: [Use copied public key from earlier]
+   - **Steps**:
+     - "Review terms and conditions"
+     - "Agree to partnership terms"
+     - "Complete onboarding process"
+2. Save the contract
+3. Generate contract SVG
+4. **Show the emojicode**: Point out the crystal ball emojicode at the bottom
+
+**Expected Result**:
+- Contract created with beautiful SVG visualization
+- Golden emojicode visible: `🔮✨[encoded-contract-pubkey]✨`
+- BDO entry created with signing spell content
+
+#### Step 3.3: Demonstrate Signing Flow
+```
+🎤 "When someone taps this emojicode in AdvanceKey, it will decode to reveal the signing interface."
+```
+
+**Actions**:
+1. Show the contract SVG with emojicode
+2. Explain the signing workflow:
+   - AdvanceKey decodes emojicode
+   - Looks up BDO entry with scgContent
+   - Displays beautiful signing interface
+   - User can sign contract steps with cryptographic security
+3. Point out participant authorization system
+
+### **PHASE 4: Keyboard Extension & Recipe Saving**
+
+#### Step 4.1: Navigate to Recipe Demo
 ```
 🎤 "Now we'll save this recipe to our carrierBag cookbook using The Advancement keyboard extension."
 ```
@@ -299,6 +431,8 @@ npm run dev
 
 ### ✅ Primary Objectives
 - [ ] Payment method successfully saved via Nexus
+- [ ] Peace Love & Redistribution products created in Ninefy with proper emojicode
+- [ ] Covenant contract created with copyable pubKey and emojicode signing
 - [ ] Recipe decoded and saved to cookbook via keyboard extension
 - [ ] Magical wand purchased using stored payment method
 - [ ] Order appears in Ordary tracking system
@@ -310,6 +444,10 @@ npm run dev
 - [ ] Stored payment method automation
 - [ ] SVG spell casting system
 - [ ] Planet Nine ecosystem integration
+- [ ] Ninefy product creation with proper emojicoding system
+- [ ] Covenant contract creation with emojicode signing capability
+- [ ] Real-time pubKey copying from InstantiationViewController
+- [ ] Complete Peace Love & Redistribution brand workflow
 
 ### ✅ User Experience Highlights
 - [ ] Single-tap purchases after initial setup
@@ -363,6 +501,33 @@ Solution:
 1. Check browser console for JavaScript errors
 2. Verify test server is running on localhost:3456
 3. Check that castSpell function is properly loaded
+```
+
+**Issue**: Ninefy products not showing proper emojicode
+```
+Solution:
+1. Verify brand field includes ☮️💚🏴‍☠️ exactly
+2. Check that bdoPubKey is properly emojicoded with base64-to-emoji encoding
+3. Ensure simpleEncodeHex function is working correctly
+4. Check browser console for encoding errors
+```
+
+**Issue**: Covenant contract emojicode not appearing
+```
+Solution:
+1. Verify contract has proper SVG generation
+2. Check that emojicoding functions are loaded in covenant service
+3. Ensure crystal ball emojicode 🔮 appears at bottom of SVG
+4. Verify BDO entry created with scgContent spell
+```
+
+**Issue**: InstantiationViewController pubKey not copyable
+```
+Solution:
+1. Ensure iOS app has latest updates with copy button
+2. Check that UIPasteboard.general permissions are granted
+3. Look for "📋 Copy" button next to Public Key field
+4. Verify button shows "✅ Copied!" confirmation after tap
 ```
 
 ---
