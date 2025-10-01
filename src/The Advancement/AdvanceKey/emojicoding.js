@@ -318,21 +318,42 @@ function simpleDecodeEmoji(emojiString) {
 
         // Convert emoji back to base64, checking each character
         const base64Chars = [];
-        const emojiArray = Array.from(stripped); // Handle multi-byte emoji properly
+
+        // Use Array.from() to properly split emojis (handles surrogate pairs and variation selectors)
+        const emojiArray = Array.from(stripped);
 
         for (let i = 0; i < emojiArray.length; i++) {
             const emoji = emojiArray[i];
-            const base64Char = EMOJI_TO_BASE64[emoji];
+
+            // Try to normalize the emoji first
+            const normalizedEmoji = emoji.normalize('NFC');
+            let base64Char = EMOJI_TO_BASE64[emoji] || EMOJI_TO_BASE64[normalizedEmoji];
 
             console.log(`🔍 SIMPLE: Processing emoji ${i}: "${emoji}" → "${base64Char}"`);
 
             if (base64Char) {
                 base64Chars.push(base64Char);
             } else {
-                console.error('❌ SIMPLE: Unknown emoji at position', i, ':', emoji);
-                console.error('❌ SIMPLE: Emoji code points:', [...emoji].map(c => c.codePointAt(0).toString(16)));
-                console.error('❌ SIMPLE: Available mappings sample:', Object.entries(EMOJI_TO_BASE64).slice(0, 5));
-                throw new Error(`Unknown emoji character: "${emoji}" at position ${i}`);
+                // Try alternative normalization forms
+                const nfdForm = emoji.normalize('NFD');
+                const nfkcForm = emoji.normalize('NFKC');
+                const nfkdForm = emoji.normalize('NFKD');
+
+                base64Char = EMOJI_TO_BASE64[nfdForm] || EMOJI_TO_BASE64[nfkcForm] || EMOJI_TO_BASE64[nfkdForm];
+
+                if (base64Char) {
+                    console.log(`🔍 SIMPLE: Found via normalization: "${emoji}" → "${base64Char}"`);
+                    base64Chars.push(base64Char);
+                } else {
+                    console.error('❌ SIMPLE: Unknown emoji at position', i, ':', emoji);
+                    console.error('❌ SIMPLE: Emoji code points:', [...emoji].map(c => c.codePointAt(0).toString(16)));
+                    console.error('❌ SIMPLE: Normalized forms tried:', [emoji, normalizedEmoji, nfdForm, nfkcForm, nfkdForm]);
+                    console.error('❌ SIMPLE: Available mappings sample:', Object.entries(EMOJI_TO_BASE64).slice(0, 5));
+
+                    // Instead of throwing, skip this emoji and continue
+                    console.warn(`⚠️ SIMPLE: Skipping unknown emoji at position ${i}, continuing decode...`);
+                    continue;
+                }
             }
         }
 

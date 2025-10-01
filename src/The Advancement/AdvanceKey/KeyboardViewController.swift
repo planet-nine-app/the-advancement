@@ -229,24 +229,15 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
         // Look for emojicoded sequence (starts and ends with ✨)
         if let emojicode = extractEmojicode(from: fullContext) {
-            // Remove Unicode variation selectors (U+FE0F) that cause decode failures
-            let cleanedEmojicode = emojicode.filter { char in
-                !char.unicodeScalars.contains { $0.value == 0xFE0F }
-            }
             NSLog("ADVANCEKEY: 🎨 Found complete emojicode: %@", String(emojicode.prefix(30)))
-            NSLog("ADVANCEKEY: 🧹 Cleaned emojicode (removed variation selectors): %@", String(cleanedEmojicode.prefix(30)))
             debugLabel.text = "Found complete emoji! Decoding..."
-            decodeAndFetchBDO(emojicode: cleanedEmojicode)
+            decodeAndFetchBDO(emojicode: emojicode)
         } else if sparklesCount >= 1 {
             // Try to work with partial sequence if we have at least one sparkle
             debugLabel.text = "Partial emoji found, trying decode..."
-            let rawPartialEmoji = "✨\(fullContext.filter { $0.isEmoji })✨"
-            // Remove variation selectors from partial sequence too
-            let cleanedPartialEmoji = rawPartialEmoji.filter { char in
-                !char.unicodeScalars.contains { $0.value == 0xFE0F }
-            }
-            NSLog("ADVANCEKEY: 🔧 Attempting partial decode: %@", String(cleanedPartialEmoji.prefix(30)))
-            decodeAndFetchBDO(emojicode: cleanedPartialEmoji)
+            let partialEmoji = "✨\(fullContext.filter { $0.isEmoji })✨"
+            NSLog("ADVANCEKEY: 🔧 Attempting partial decode: %@", String(partialEmoji.prefix(30)))
+            decodeAndFetchBDO(emojicode: partialEmoji)
         } else {
             debugLabel.text = "No ✨emoji✨ sequence found"
             displayError("No Emoji Found", details: """
@@ -291,6 +282,20 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     func decodeAndFetchBDO(emojicode: String) {
         debugLabel.text = "Decoding emoji..."
 
+        // JSON-encode the emojicode to safely pass it to JavaScript
+        // We need to wrap it in an array to use JSONSerialization, then extract the encoded string
+        guard let emojicodeData = try? JSONSerialization.data(withJSONObject: [emojicode]),
+              let emojicodeArray = String(data: emojicodeData, encoding: .utf8),
+              let firstQuote = emojicodeArray.firstIndex(of: "\""),
+              let lastQuote = emojicodeArray.lastIndex(of: "\"") else {
+            NSLog("ADVANCEKEY: ❌ Failed to JSON-encode emojicode")
+            displayError("Encoding Error", details: "Failed to prepare emojicode for decoding")
+            return
+        }
+
+        // Extract just the JSON-encoded string (without the array brackets)
+        let emojicodeJSON = String(emojicodeArray[firstQuote...lastQuote])
+
         // Decode emoji to hex using JavaScript with detailed logging
         let jsDecodeCode = """
         // Capture console logs
@@ -307,8 +312,11 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         \(loadEmojicodingJS())
 
         console.log('ADVANCEKEY: 📚 Emojicoding functions loaded');
-        console.log('ADVANCEKEY: Input emojicode:', '\(emojicode)');
-        console.log('ADVANCEKEY: Input length:', '\(emojicode)'.length);
+
+        // Parse the JSON-encoded emojicode
+        const emojicode = \(emojicodeJSON);
+        console.log('ADVANCEKEY: Input emojicode:', emojicode);
+        console.log('ADVANCEKEY: Input length:', emojicode.length);
 
         // Check if simpleDecodeEmoji function exists
         if (typeof simpleDecodeEmoji === 'undefined') {
@@ -319,7 +327,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
             try {
                 console.log('ADVANCEKEY: 🎯 Attempting to decode user input...');
-                const decodeResult = simpleDecodeEmoji('\(emojicode)');
+                const decodeResult = simpleDecodeEmoji(emojicode);
                 console.log('ADVANCEKEY: ✅ Decode successful:', decodeResult);
                 console.log('ADVANCEKEY: ✅ Extracted hex:', decodeResult.hex);
                 JSON.stringify({ result: decodeResult.hex, logs: logs });
@@ -393,7 +401,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 NSLog("ADVANCEKEY: 📦 BDO data received: %@", String(describing: cardData))
 
                 DispatchQueue.main.async { [weak self] in
-                    self?.displayBDOContent(cardData: cardData)
+                    self?.displayBDOContent(cardData: cardData, bdoPubKey: bdoPubKey)
                 }
 
             } catch {
@@ -413,15 +421,40 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     }
 
     func fetchBDOFromServer(bdoPubKey: String, baseUrl: String) async throws -> [String: Any] {
-        // Create URL for BDO lookup - we need to find the correct endpoint
-        // Based on the seeding, it's stored in user BDO data, so we'll try a simple GET first
+        // For BDO access, we need to use the proper BDO user endpoint format:
+        // GET /user/{uuid}/bdo?pubKey={pubKey}&timestamp={timestamp}&hash={hash}&signature={signature}
 
-        let urlString = "\(baseUrl)bdo/\(bdoPubKey)"
-        guard let url = URL(string: urlString) else {
+        // Get or create BDO user UUID (persisted in UserDefaults)
+        let bdoUserUUID = try await getBDOUserUUID()
+        NSLog("ADVANCEKEY: 🔍 Fetching BDO for pubKey: %@ with user UUID: %@", bdoPubKey, bdoUserUUID)
+
+        // Generate timestamp
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+
+        // Create message to sign (for BDO GET requests, we sign: timestamp + hash + uuid)
+        // Since we don't have a hash parameter for GET, we'll use empty string
+        let hash = ""
+        let messageToSign = "\(timestamp)\(hash)\(bdoUserUUID)"
+
+        // Sign the message using Sessionless
+        guard let signature = sessionless.sign(message: messageToSign) else {
+            throw NSError(domain: "SignatureError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to sign BDO request"])
+        }
+
+        // Create the proper BDO API URL with query parameters
+        var urlComponents = URLComponents(string: "\(baseUrl)user/\(bdoUserUUID)/bdo")!
+        urlComponents.queryItems = [
+            URLQueryItem(name: "pubKey", value: bdoPubKey.lowercased()),
+            URLQueryItem(name: "timestamp", value: timestamp),
+            URLQueryItem(name: "hash", value: hash),
+            URLQueryItem(name: "signature", value: signature)
+        ]
+
+        guard let url = urlComponents.url else {
             throw NSError(domain: "InvalidURL", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid BDO URL"])
         }
 
-        print("🌐 Fetching BDO from: \(urlString)")
+        NSLog("ADVANCEKEY: 🌐 Fetching BDO from: %@", url.absoluteString)
 
         let (data, response) = try await URLSession.shared.data(from: url)
 
@@ -429,11 +462,12 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             throw NSError(domain: "InvalidResponse", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid HTTP response"])
         }
 
-        print("📡 BDO response status: \(httpResponse.statusCode)")
+        NSLog("ADVANCEKEY: 📡 BDO response status: %d", httpResponse.statusCode)
 
         guard httpResponse.statusCode == 200 else {
-            // If direct endpoint fails, try searching through seeded user data
-            return try await searchBDOInUsers(bdoPubKey: bdoPubKey, baseUrl: baseUrl)
+            // If BDO endpoint fails, fall back to Fount search
+            NSLog("ADVANCEKEY: BDO endpoint failed with status %d, falling back to Fount search", httpResponse.statusCode)
+            return try await fetchBDOFromFount(bdoPubKey: bdoPubKey)
         }
 
         guard let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
@@ -441,6 +475,96 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         }
 
         return jsonObject
+    }
+
+    func getBDOUserUUID() async throws -> String {
+        // Check if we already have a BDO user UUID stored
+        if let existingUUID = UserDefaults.standard.string(forKey: "bdoUserUUID") {
+            return existingUUID
+        }
+
+        // Need to create a new BDO user via API
+        NSLog("ADVANCEKEY: 🆕 No BDO user UUID found, creating new BDO user...")
+        let newUUID = try await createBDOUser()
+
+        // Store the UUID for future use
+        UserDefaults.standard.set(newUUID, forKey: "bdoUserUUID")
+        NSLog("ADVANCEKEY: ✅ Created and saved new BDO user UUID: %@", newUUID)
+
+        return newUUID
+    }
+
+    func createBDOUser() async throws -> String {
+        // Create a new BDO user via PUT /user/create
+        // This requires: timestamp, hash, pubKey, signature
+
+        // Get or generate Sessionless keys
+        var keys = sessionless.getKeys()
+        if keys == nil {
+            NSLog("ADVANCEKEY: 🔑 No Sessionless keys found, generating new keys...")
+            keys = sessionless.generateKeys()
+            guard keys != nil else {
+                throw NSError(domain: "SessionlessError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to generate Sessionless keys"])
+            }
+            NSLog("ADVANCEKEY: ✅ Sessionless keys generated: %@", keys!.publicKey)
+        }
+
+        guard let keys = keys else {
+            throw NSError(domain: "SessionlessError", code: 0, userInfo: [NSLocalizedDescriptionKey: "No Sessionless keys available"])
+        }
+
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let hash = "" // Empty for user creation
+
+        // Message to sign: timestamp + hash + pubKey
+        let messageToSign = "\(timestamp)\(hash)\(keys.publicKey)"
+
+        guard let signature = sessionless.sign(message: messageToSign) else {
+            throw NSError(domain: "SignatureError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to sign user creation request"])
+        }
+
+        // Create request body
+        let requestBody: [String: Any] = [
+            "timestamp": timestamp,
+            "hash": hash,
+            "pubKey": keys.publicKey,
+            "signature": signature,
+            "public": false,
+            "bdo": [:] // Empty BDO for now
+        ]
+
+        let bdoUrl = "http://127.0.0.1:5114/user/create"
+        guard let url = URL(string: bdoUrl) else {
+            throw NSError(domain: "InvalidURL", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid BDO user creation URL"])
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+
+        NSLog("ADVANCEKEY: 📡 Creating BDO user at: %@", bdoUrl)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "InvalidResponse", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid HTTP response"])
+        }
+
+        NSLog("ADVANCEKEY: 📡 BDO user creation response status: %d", httpResponse.statusCode)
+
+        guard httpResponse.statusCode == 200 else {
+            throw NSError(domain: "BDOUserCreationError", code: httpResponse.statusCode,
+                         userInfo: [NSLocalizedDescriptionKey: "Failed to create BDO user: status \(httpResponse.statusCode)"])
+        }
+
+        guard let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let uuid = jsonObject["uuid"] as? String else {
+            throw NSError(domain: "JSONParseError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to parse BDO user creation response"])
+        }
+
+        NSLog("ADVANCEKEY: ✅ BDO user created with UUID: %@", uuid)
+        return uuid
     }
 
     func searchBDOInUsers(bdoPubKey: String, baseUrl: String) async throws -> [String: Any] {
@@ -701,7 +825,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         return returnData
     }
 
-    func displayBDOContent(cardData: [String: Any]) {
+    func displayBDOContent(cardData: [String: Any], bdoPubKey: String) {
         debugLabel.text = "Displaying SVG..."
 
         // Extract SVG content from the BDO data
@@ -721,8 +845,17 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         }
 
         guard let svg = svgContent else {
-            debugLabel.text = "No SVG content found"
-            print("❌ No SVG content in BDO data")
+            debugLabel.text = "No SVG found for \(bdoPubKey.prefix(8))..."
+            NSLog("❌ No SVG content in BDO data for pubKey: %@", bdoPubKey)
+            NSLog("❌ BDO data structure: %@", String(describing: cardData))
+            displayError("No SVG Content Found", details: """
+            bdoPubKey: \(bdoPubKey)
+
+            BDO data keys: \(cardData.keys.joined(separator: ", "))
+
+            Full response:
+            \(String(describing: cardData).prefix(500))
+            """)
             return
         }
 

@@ -1,0 +1,108 @@
+{
+  "" : {
+    "diagnostics" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/The Advancement (iOS)-master.dia",
+    "emit-module-dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/The Advancement (iOS)-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/The Advancement (iOS)-master-emit-module.dia",
+    "swift-dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/The Advancement (iOS)-master.swiftdeps"
+  },
+  "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/Shared (App)/CarrierBagViewController.swift" : {
+    "const-values" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CarrierBagViewController.swiftconstvalues",
+    "dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CarrierBagViewController.d",
+    "diagnostics" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CarrierBagViewController.dia",
+    "index-unit-output-path" : "/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CarrierBagViewController.o",
+    "llvm-bc" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CarrierBagViewController.bc",
+    "object" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CarrierBagViewController.o",
+    "swift-dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CarrierBagViewController.swiftdeps",
+    "swiftmodule" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CarrierBagViewController~partial.swiftmodule"
+  },
+  "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/Shared (App)/CookbookViewController.swift" : {
+    "const-values" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CookbookViewController.swiftconstvalues",
+    "dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CookbookViewController.d",
+    "diagnostics" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CookbookViewController.dia",
+    "index-unit-output-path" : "/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CookbookViewController.o",
+    "llvm-bc" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CookbookViewController.bc",
+    "object" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CookbookViewController.o",
+    "swift-dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CookbookViewController.swiftdeps",
+    "swiftmodule" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/CookbookViewController~partial.swiftmodule"
+  },
+  "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/Shared (App)/InstantiationViewController.swift" : {
+    "const-values" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/InstantiationViewController.swiftconstvalues",
+    "dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/InstantiationViewController.d",
+    "diagnostics" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/InstantiationViewController.dia",
+    "index-unit-output-path" : "/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/InstantiationViewController.o",
+    "llvm-bc" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/InstantiationViewController.bc",
+    "object" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/InstantiationViewController.o",
+    "swift-dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/InstantiationViewController.swiftdeps",
+    "swiftmodule" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/InstantiationViewController~partial.swiftmodule"
+  },
+  "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/Shared (App)/NexusViewController.swift" : {
+    "const-values" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/NexusViewController.swiftconstvalues",
+    "dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/NexusViewController.d",
+    "diagnostics" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/NexusViewController.dia",
+    "index-unit-output-path" : "/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/NexusViewController.o",
+    "llvm-bc" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/NexusViewController.bc",
+    "object" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/NexusViewController.o",
+    "swift-dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/NexusViewController.swiftdeps",
+    "swiftmodule" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/NexusViewController~partial.swiftmodule"
+  },
+  "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/Shared (App)/ViewController.swift" : {
+    "const-values" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/ViewController.swiftconstvalues",
+    "dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/ViewController.d",
+    "diagnostics" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/ViewController.dia",
+    "index-unit-output-path" : "/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/ViewController.o",
+    "llvm-bc" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/ViewController.bc",
+    "object" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/ViewController.o",
+    "swift-dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/ViewController.swiftdeps",
+    "swiftmodule" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/ViewController~partial.swiftmodule"
+  },
+  "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/Shared (Extension)/Sessionless.swift" : {
+    "const-values" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/Sessionless.swiftconstvalues",
+    "dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/Sessionless.d",
+    "diagnostics" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/Sessionless.dia",
+    "index-unit-output-path" : "/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/Sessionless.o",
+    "llvm-bc" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/Sessionless.bc",
+    "object" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/Sessionless.o",
+    "swift-dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/Sessionless.swiftdeps",
+    "swiftmodule" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/Sessionless~partial.swiftmodule"
+  },
+  "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/Shared (Extension)/SharedUserDefaults.swift" : {
+    "const-values" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SharedUserDefaults.swiftconstvalues",
+    "dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SharedUserDefaults.d",
+    "diagnostics" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SharedUserDefaults.dia",
+    "index-unit-output-path" : "/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SharedUserDefaults.o",
+    "llvm-bc" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SharedUserDefaults.bc",
+    "object" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SharedUserDefaults.o",
+    "swift-dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SharedUserDefaults.swiftdeps",
+    "swiftmodule" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SharedUserDefaults~partial.swiftmodule"
+  },
+  "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  },
+  "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/iOS (App)/AppDelegate.swift" : {
+    "const-values" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/AppDelegate.swiftconstvalues",
+    "dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/AppDelegate.d",
+    "diagnostics" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/AppDelegate.dia",
+    "index-unit-output-path" : "/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/AppDelegate.o",
+    "llvm-bc" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/AppDelegate.bc",
+    "object" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/AppDelegate.o",
+    "swift-dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/AppDelegate.swiftdeps",
+    "swiftmodule" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/AppDelegate~partial.swiftmodule"
+  },
+  "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/iOS (App)/SceneDelegate.swift" : {
+    "const-values" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SceneDelegate.swiftconstvalues",
+    "dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SceneDelegate.d",
+    "diagnostics" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SceneDelegate.dia",
+    "index-unit-output-path" : "/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SceneDelegate.o",
+    "llvm-bc" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SceneDelegate.bc",
+    "object" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SceneDelegate.o",
+    "swift-dependencies" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SceneDelegate.swiftdeps",
+    "swiftmodule" : "/Users/zachbabb/Work/planet-nine/the-advancement/src/The Advancement/build/Build/Intermediates.noindex/The Advancement.build/Debug-iphoneos/The Advancement (iOS).build/Objects-normal/arm64/SceneDelegate~partial.swiftmodule"
+  }
+}

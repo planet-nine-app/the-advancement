@@ -218,6 +218,7 @@
 		CAB4548E2E7F4FC80025F445 /* Exceptions for "Shared (Extension)" folder in "AdvanceKey" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Resources/crypto.js,
 				Sessionless.swift,
 				SharedUserDefaults.swift,
 			);
