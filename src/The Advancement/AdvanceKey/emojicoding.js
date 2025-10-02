@@ -319,11 +319,23 @@ function simpleDecodeEmoji(emojiString) {
         // Convert emoji back to base64, checking each character
         const base64Chars = [];
 
-        // Use Array.from() to properly split emojis (handles surrogate pairs and variation selectors)
+        // Use Array.from() to properly split emojis (handles surrogate pairs)
         const emojiArray = Array.from(stripped);
 
         for (let i = 0; i < emojiArray.length; i++) {
-            const emoji = emojiArray[i];
+            let emoji = emojiArray[i];
+
+            // Check if next character is a variation selector (U+FE0F or U+FE0E)
+            if (i + 1 < emojiArray.length) {
+                const nextChar = emojiArray[i + 1];
+                const nextCodePoint = nextChar.codePointAt(0);
+                if (nextCodePoint === 0xFE0F || nextCodePoint === 0xFE0E) {
+                    // Combine emoji with variation selector
+                    emoji = emoji + nextChar;
+                    i++; // Skip the variation selector in next iteration
+                    console.log(`🔍 SIMPLE: Combined emoji with variation selector: "${emoji}"`);
+                }
+            }
 
             // Try to normalize the emoji first
             const normalizedEmoji = emoji.normalize('NFC');

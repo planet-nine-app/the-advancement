@@ -90,6 +90,9 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         let contentController = WKUserContentController()
         contentController.add(self, name: "consoleLog")
         contentController.add(self, name: "saveRecipe")
+        contentController.add(self, name: "addToCart")
+        contentController.add(self, name: "signContract")
+        contentController.add(self, name: "declineContract")
         contentController.add(self, name: "paymentMethodSelected")
         contentController.add(self, name: "addPaymentMethod")
         webViewConfig.userContentController = contentController
@@ -465,15 +468,63 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         NSLog("ADVANCEKEY: 📡 BDO response status: %d", httpResponse.statusCode)
 
         guard httpResponse.statusCode == 200 else {
-            // If BDO endpoint fails, fall back to Fount search
-            NSLog("ADVANCEKEY: BDO endpoint failed with status %d, falling back to Fount search", httpResponse.statusCode)
-            return try await fetchBDOFromFount(bdoPubKey: bdoPubKey)
+            // If BDO endpoint fails, try fetching as public BDO (no user auth needed)
+            NSLog("ADVANCEKEY: BDO endpoint failed with status %d, trying public BDO fetch", httpResponse.statusCode)
+
+            // Try public BDO endpoint (no authentication required for public BDOs)
+            do {
+                return try await fetchPublicBDO(bdoPubKey: bdoPubKey, baseUrl: baseUrl)
+            } catch {
+                NSLog("ADVANCEKEY: Public BDO fetch failed, falling back to Fount search: %@", error.localizedDescription)
+                return try await fetchBDOFromFount(bdoPubKey: bdoPubKey)
+            }
         }
 
         guard let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw NSError(domain: "JSONParseError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to parse BDO JSON"])
         }
 
+        return jsonObject
+    }
+
+    func fetchPublicBDO(bdoPubKey: String, baseUrl: String) async throws -> [String: Any] {
+        NSLog("ADVANCEKEY: 🌍 Fetching public BDO by pubKey: %@", bdoPubKey)
+
+        // Public BDOs can be fetched directly by pubKey without authentication
+        // The BDO service should have an endpoint like GET /public/bdo?pubKey={pubKey}
+        // or we can use the short code endpoint if we know the short code
+
+        // Try fetching directly by pubKey (public endpoint)
+        var urlComponents = URLComponents(string: "\(baseUrl)public/bdo")!
+        urlComponents.queryItems = [
+            URLQueryItem(name: "pubKey", value: bdoPubKey.lowercased())
+        ]
+
+        guard let url = urlComponents.url else {
+            throw NSError(domain: "InvalidURL", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid public BDO URL"])
+        }
+
+        NSLog("ADVANCEKEY: 🌐 Fetching public BDO from: %@", url.absoluteString)
+
+        let (data, response) = try await URLSession.shared.data(from: url)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "InvalidResponse", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid HTTP response"])
+        }
+
+        NSLog("ADVANCEKEY: 📡 Public BDO response status: %d", httpResponse.statusCode)
+
+        guard httpResponse.statusCode == 200 else {
+            let responseBody = String(data: data, encoding: .utf8) ?? "Unable to decode response"
+            NSLog("ADVANCEKEY: ❌ Public BDO fetch failed with status %d: %@", httpResponse.statusCode, responseBody)
+            throw NSError(domain: "PublicBDOFetchError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Failed to fetch public BDO: \(httpResponse.statusCode)"])
+        }
+
+        guard let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "JSONParseError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to parse public BDO JSON"])
+        }
+
+        NSLog("ADVANCEKEY: ✅ Successfully fetched public BDO")
         return jsonObject
     }
 
@@ -859,6 +910,9 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             return
         }
 
+        // Get current user's pubKey for participant verification
+        let currentUserPubKey = SharedUserDefaults.getCurrentUserPubKey() ?? ""
+
         // Create HTML to display the SVG
         let html = """
         <!DOCTYPE html>
@@ -887,6 +941,16 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 svg rect[spell]:hover {
                     opacity: 0.8;
                 }
+                /* Hide unauthorized elements by default */
+                svg rect[spell="sign"],
+                svg text[spell="sign"] {
+                    display: none;
+                }
+                /* Show when authorized */
+                svg.authorized rect[spell="sign"],
+                svg.authorized text[spell="sign"] {
+                    display: block;
+                }
             </style>
         </head>
         <body>
@@ -895,20 +959,74 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 // BDO data for spell handling
                 const bdoData = \(String(data: try! JSONSerialization.data(withJSONObject: cardData), encoding: .utf8)!);
 
+                // Current user's pubKey
+                const currentUserPubKey = "\(currentUserPubKey)";
+
+                // Check if this is a contract signing UI and verify participant authorization
+                (function() {
+                    const bdo = bdoData.bdo || bdoData;
+                    const type = bdo.type;
+                    const participants = bdo.participants || [];
+
+                    if (type === 'contract-signing-ui') {
+                        console.log('Contract signing UI detected');
+                        console.log('Participants:', participants);
+                        console.log('Current user pubKey:', currentUserPubKey);
+
+                        // Check if current user is authorized
+                        const isAuthorized = participants.some(p =>
+                            p.toLowerCase() === currentUserPubKey.toLowerCase()
+                        );
+
+                        console.log('User authorized:', isAuthorized);
+
+                        if (isAuthorized) {
+                            // Show SIGN button
+                            const svg = document.querySelector('svg');
+                            if (svg) {
+                                svg.classList.add('authorized');
+                            }
+                        } else {
+                            console.log('User not authorized to sign this contract');
+                        }
+                    }
+                })();
+
                 // Handle spell button clicks
                 document.addEventListener('click', function(e) {
                     const spell = e.target.getAttribute('spell');
                     if (spell) {
-                        console.log('Spell clicked:', spell);
-                        handleSpell(spell, bdoData);
+                        const spellComponents = e.target.getAttribute('spell-components');
+                        console.log('Spell clicked:', spell, 'components:', spellComponents);
+                        handleSpell(spell, bdoData, spellComponents);
                     }
                 });
 
-                function handleSpell(spell, data) {
+                function handleSpell(spell, data, spellComponents) {
+                    // Parse spell-components if present (format: "key1:value1;key2:value2")
+                    const components = {};
+                    if (spellComponents) {
+                        spellComponents.split(';').forEach(pair => {
+                            const [key, value] = pair.split(':');
+                            if (key && value) {
+                                components[key.trim()] = value.trim();
+                            }
+                        });
+                    }
+
                     switch(spell) {
                         case 'collect':
                         case 'save':
                             saveRecipeToApp(data);
+                            break;
+                        case 'add-to-cart':
+                            addToCart(data, components);
+                            break;
+                        case 'sign':
+                            signContract(data, components);
+                            break;
+                        case 'decline':
+                            declineContract(data, components);
                             break;
                         case 'share':
                             shareRecipe(data);
@@ -946,6 +1064,89 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                     } catch (error) {
                         console.error('Error saving recipe:', error);
                         alert('❌ Failed to save recipe: ' + error.message);
+                    }
+                }
+
+                function addToCart(data, components) {
+                    try {
+                        // Extract product info from BDO
+                        const bdo = data.bdo || data;
+                        const productId = components.productId || bdo.productId || 'unknown';
+                        const baseUuid = components.baseUuid || 'unknown';
+                        const title = bdo.title || 'Unknown Product';
+                        const price = bdo.price || 0;
+
+                        console.log('Adding to cart:', { productId, baseUuid, title, price });
+
+                        // Send message to Swift to add to cart
+                        window.webkit.messageHandlers.addToCart.postMessage({
+                            action: 'add-to-cart',
+                            productId: productId,
+                            baseUuid: baseUuid,
+                            title: title,
+                            price: price,
+                            quantity: 1
+                        });
+
+                        // Show success feedback
+                        alert('✅ Added to cart: ' + title);
+
+                    } catch (error) {
+                        console.error('Error adding to cart:', error);
+                        alert('❌ Failed to add to cart: ' + error.message);
+                    }
+                }
+
+                function signContract(data, components) {
+                    try {
+                        // Extract contract info from BDO
+                        const bdo = data.bdo || data;
+                        const contractId = components.contractId || bdo.contractId || 'unknown';
+                        const title = bdo.title || 'Unknown Contract';
+
+                        console.log('Signing contract:', { contractId, title });
+
+                        // Send message to Swift to sign the contract
+                        window.webkit.messageHandlers.signContract.postMessage({
+                            action: 'sign',
+                            contractId: contractId,
+                            title: title,
+                            fullBDO: data
+                        });
+
+                        // Show success feedback
+                        alert('✍️ Signing contract: ' + title);
+
+                    } catch (error) {
+                        console.error('Error signing contract:', error);
+                        alert('❌ Failed to sign contract: ' + error.message);
+                    }
+                }
+
+                function declineContract(data, components) {
+                    try {
+                        // Extract contract info from BDO
+                        const bdo = data.bdo || data;
+                        const contractId = components.contractId || bdo.contractId || 'unknown';
+                        const title = bdo.title || 'Unknown Contract';
+
+                        console.log('Declining contract:', { contractId, title });
+
+                        // Show confirmation
+                        if (confirm('Are you sure you want to decline this contract?')) {
+                            // Send message to Swift to decline the contract
+                            window.webkit.messageHandlers.declineContract.postMessage({
+                                action: 'decline',
+                                contractId: contractId,
+                                title: title
+                            });
+
+                            alert('❌ Contract declined: ' + title);
+                        }
+
+                    } catch (error) {
+                        console.error('Error declining contract:', error);
+                        alert('❌ Failed to decline contract: ' + error.message);
                     }
                 }
 
@@ -1068,6 +1269,12 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             NSLog("ADVANCEKEY: 🟡 JS Console: %@", String(describing: message.body))
         } else if message.name == "saveRecipe" {
             handleSaveRecipeMessage(message.body)
+        } else if message.name == "addToCart" {
+            handleAddToCartMessage(message.body)
+        } else if message.name == "signContract" {
+            handleSignContractMessage(message.body)
+        } else if message.name == "declineContract" {
+            handleDeclineContractMessage(message.body)
         } else if message.name == "paymentMethodSelected" {
             handlePaymentMethodSelection(message.body as? [String: Any] ?? [:])
         } else if message.name == "addPaymentMethod" {
@@ -1094,6 +1301,86 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         let success = saveRecipeToStorage(bdoPubKey: bdoPubKey, type: type, title: title, fullBDO: fullBDO)
 
         NSLog("ADVANCEKEY: 💾 Recipe save %@: %@ (%@)", success ? "successful" : "failed", title, bdoPubKey)
+    }
+
+    private func handleAddToCartMessage(_ messageBody: Any) {
+        NSLog("ADVANCEKEY: 🛒 Add to cart message received")
+
+        guard let messageDict = messageBody as? [String: Any],
+              let action = messageDict["action"] as? String,
+              action == "add-to-cart" else {
+            NSLog("ADVANCEKEY: ❌ Invalid add to cart message format")
+            return
+        }
+
+        let productId = messageDict["productId"] as? String ?? "unknown"
+        let baseUuid = messageDict["baseUuid"] as? String ?? "unknown"
+        let title = messageDict["title"] as? String ?? "Unknown Product"
+        let quantity = messageDict["quantity"] as? Int ?? 1
+
+        NSLog("ADVANCEKEY: 🛒 Adding to cart - Product: %@, Base: %@, Quantity: %d", productId, baseUuid, quantity)
+
+        // Add to cart using SharedUserDefaults
+        SharedUserDefaults.addToCart(productId: productId, baseUuid: baseUuid, quantity: quantity)
+
+        // Debug: Print cart contents
+        let cart = SharedUserDefaults.getCart()
+        let itemCount = SharedUserDefaults.getCartItemCount()
+        NSLog("ADVANCEKEY: 🛒 Cart now has %d items (%d total)", cart.count, itemCount)
+
+        // Print cart details
+        for (index, item) in cart.enumerated() {
+            let itemProductId = item["productId"] as? String ?? "unknown"
+            let itemQuantity = item["quantity"] as? Int ?? 1
+            NSLog("ADVANCEKEY: 🛒   [%d] %@ (qty: %d)", index, itemProductId, itemQuantity)
+        }
+    }
+
+    private func handleSignContractMessage(_ messageBody: Any) {
+        NSLog("ADVANCEKEY: ✍️ Sign contract message received")
+
+        guard let messageDict = messageBody as? [String: Any],
+              let action = messageDict["action"] as? String,
+              action == "sign" else {
+            NSLog("ADVANCEKEY: ❌ Invalid sign contract message format")
+            return
+        }
+
+        let contractId = messageDict["contractId"] as? String ?? "unknown"
+        let title = messageDict["title"] as? String ?? "Unknown Contract"
+        let fullBDO = messageDict["fullBDO"]
+
+        NSLog("ADVANCEKEY: ✍️ Signing contract - ID: %@, Title: %@", contractId, title)
+
+        // TODO: Implement actual contract signing with cryptographic signature
+        // For now, just log the intent
+        NSLog("ADVANCEKEY: ✍️ Contract signature would be created here")
+        NSLog("ADVANCEKEY: ✍️ This will require:")
+        NSLog("ADVANCEKEY: ✍️   1. Get user's private key")
+        NSLog("ADVANCEKEY: ✍️   2. Create signature of contract data")
+        NSLog("ADVANCEKEY: ✍️   3. Submit to Covenant service")
+
+        // TODO: Send signature to Covenant service
+        // This will be implemented when Covenant contract signing endpoint is ready
+    }
+
+    private func handleDeclineContractMessage(_ messageBody: Any) {
+        NSLog("ADVANCEKEY: ❌ Decline contract message received")
+
+        guard let messageDict = messageBody as? [String: Any],
+              let action = messageDict["action"] as? String,
+              action == "decline" else {
+            NSLog("ADVANCEKEY: ❌ Invalid decline contract message format")
+            return
+        }
+
+        let contractId = messageDict["contractId"] as? String ?? "unknown"
+        let title = messageDict["title"] as? String ?? "Unknown Contract"
+
+        NSLog("ADVANCEKEY: ❌ Declining contract - ID: %@, Title: %@", contractId, title)
+
+        // TODO: Send decline notification to Covenant service
+        NSLog("ADVANCEKEY: ❌ Contract decline would be submitted here")
     }
 
     private func saveRecipeToStorage(bdoPubKey: String, type: String, title: String, fullBDO: Any?) -> Bool {
