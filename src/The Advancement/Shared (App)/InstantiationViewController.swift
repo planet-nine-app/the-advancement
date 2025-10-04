@@ -261,6 +261,19 @@ class InstantiationViewController: UIViewController {
         let pubKeyView = createCopyableInfoLabel(title: "Public Key", value: publicKey)
         stackView.addArrangedSubview(pubKeyView)
 
+        // Add AdvanceKey info section
+        let advanceKeyHeader = UILabel()
+        advanceKeyHeader.text = "🔑 AdvanceKey for Contracts"
+        advanceKeyHeader.font = UIFont.systemFont(ofSize: 18, weight: .semibold)
+        advanceKeyHeader.textColor = .systemPurple
+        stackView.addArrangedSubview(advanceKeyHeader)
+
+        let advanceKeyInfo = createInfoLabel(
+            title: "Contract Participation",
+            value: "Use the Public Key above to add yourself as a participant to contracts in Covenant. AdvanceKey will be able to sign contracts using this key."
+        )
+        stackView.addArrangedSubview(advanceKeyInfo)
+
         // BDO data if available
         if let dataDict = info["data"] as? [String: Any] {
             if let type = dataDict["type"] as? String {

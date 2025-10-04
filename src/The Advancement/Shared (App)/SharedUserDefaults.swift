@@ -25,6 +25,7 @@ struct SharedUserDefaults {
         static let holdings = "holdings"
         static let cart = "cart"
         static let currentUserPubKey = "currentUserPubKey"
+        static let covenantUserUUID = "covenantUserUUID"
         static let testAccess = "test_app_group_access"
     }
 
@@ -143,6 +144,16 @@ struct SharedUserDefaults {
         shared.set(pubKey, forKey: Keys.currentUserPubKey)
         shared.synchronize()
         NSLog("USER: Set current user pubKey: %@", pubKey)
+    }
+
+    static func getCovenantUserUUID() -> String? {
+        return shared.string(forKey: Keys.covenantUserUUID)
+    }
+
+    static func setCovenantUserUUID(_ uuid: String) {
+        shared.set(uuid, forKey: Keys.covenantUserUUID)
+        shared.synchronize()
+        NSLog("COVENANT: Set user UUID: %@", uuid)
     }
 
     // MARK: - Testing

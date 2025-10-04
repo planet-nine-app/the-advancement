@@ -756,6 +756,8 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                     "greenHouse": [],
                     "closet": [],
                     "games": [],
+                    "events": [],
+                    "contracts": [],
                     "created": ISO8601DateFormatter().string(from: Date()),
                     "lastUpdated": ISO8601DateFormatter().string(from: Date())
                 ]
@@ -1041,29 +1043,45 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
                 function saveRecipeToApp(data) {
                     try {
-                        // Extract recipe info from nested BDO structure
+                        // Extract item info from nested BDO structure
                         const bdo = data.bdo || data; // Handle both nested and flat structures
                         const bdoPubKey = bdo.bdoPubKey || 'unknown';
                         const type = bdo.type || 'recipe';
-                        const title = bdo.title || 'Untitled Recipe';
+                        const title = bdo.title || 'Untitled Item';
 
-                        console.log('Saving recipe:', { bdoPubKey, type, title });
+                        console.log('Saving item:', { bdoPubKey, type, title });
 
-                        // Send message to Swift to save the recipe
+                        // Determine which collection this should go into
+                        let collection = 'cookbook'; // Default
+                        let successMessage = '✅ Recipe saved to your cookbook!';
+
+                        if (type === 'contract-signing-ui' || type === 'contract') {
+                            collection = 'contracts';
+                            successMessage = '✅ Contract saved to your contracts collection!';
+                        } else if (type === 'recipe') {
+                            collection = 'cookbook';
+                            successMessage = '✅ Recipe saved to your cookbook!';
+                        } else if (type === 'ebook') {
+                            collection = 'bookshelf';
+                            successMessage = '✅ Ebook saved to your bookshelf!';
+                        }
+
+                        // Send message to Swift to save the item
                         window.webkit.messageHandlers.saveRecipe.postMessage({
                             action: 'save',
                             bdoPubKey: bdoPubKey,
                             type: type,
                             title: title,
+                            collection: collection,
                             fullBDO: data
                         });
 
                         // Show success feedback
-                        alert('✅ Recipe saved to your cookbook!');
+                        alert(successMessage);
 
                     } catch (error) {
-                        console.error('Error saving recipe:', error);
-                        alert('❌ Failed to save recipe: ' + error.message);
+                        console.error('Error saving item:', error);
+                        alert('❌ Failed to save item: ' + error.message);
                     }
                 }
 
@@ -1101,14 +1119,16 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                     try {
                         // Extract contract info from BDO
                         const bdo = data.bdo || data;
+                        const contractUuid = components.contractUuid || bdo.contractUuid || 'unknown';
                         const contractId = components.contractId || bdo.contractId || 'unknown';
                         const title = bdo.title || 'Unknown Contract';
 
-                        console.log('Signing contract:', { contractId, title });
+                        console.log('Signing contract:', { contractUuid, contractId, title });
 
                         // Send message to Swift to sign the contract
                         window.webkit.messageHandlers.signContract.postMessage({
                             action: 'sign',
+                            contractUuid: contractUuid,
                             contractId: contractId,
                             title: title,
                             fullBDO: data
@@ -1283,24 +1303,25 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     }
 
     private func handleSaveRecipeMessage(_ messageBody: Any) {
-        NSLog("ADVANCEKEY: 💾 Save recipe message received")
+        NSLog("ADVANCEKEY: 💾 Save item message received")
 
         guard let messageDict = messageBody as? [String: Any],
               let action = messageDict["action"] as? String,
               action == "save" else {
-            NSLog("ADVANCEKEY: ❌ Invalid save recipe message format")
+            NSLog("ADVANCEKEY: ❌ Invalid save item message format")
             return
         }
 
         let bdoPubKey = messageDict["bdoPubKey"] as? String ?? "unknown"
         let type = messageDict["type"] as? String ?? "recipe"
-        let title = messageDict["title"] as? String ?? "Untitled Recipe"
+        let title = messageDict["title"] as? String ?? "Untitled Item"
+        let collection = messageDict["collection"] as? String
         let fullBDO = messageDict["fullBDO"]
 
         // Save to UserDefaults (or app group if configured)
-        let success = saveRecipeToStorage(bdoPubKey: bdoPubKey, type: type, title: title, fullBDO: fullBDO)
+        let success = saveItemToStorage(bdoPubKey: bdoPubKey, type: type, title: title, collection: collection, fullBDO: fullBDO)
 
-        NSLog("ADVANCEKEY: 💾 Recipe save %@: %@ (%@)", success ? "successful" : "failed", title, bdoPubKey)
+        NSLog("ADVANCEKEY: 💾 Item save %@: %@ (%@) to collection: %@", success ? "successful" : "failed", title, bdoPubKey, collection ?? "default")
     }
 
     private func handleAddToCartMessage(_ messageBody: Any) {
@@ -1346,22 +1367,113 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             return
         }
 
+        let contractUuid = messageDict["contractUuid"] as? String ?? "unknown"
         let contractId = messageDict["contractId"] as? String ?? "unknown"
         let title = messageDict["title"] as? String ?? "Unknown Contract"
-        let fullBDO = messageDict["fullBDO"]
 
-        NSLog("ADVANCEKEY: ✍️ Signing contract - ID: %@, Title: %@", contractId, title)
+        NSLog("ADVANCEKEY: ✍️ Signing contract - UUID: %@, ID: %@, Title: %@", contractUuid, contractId, title)
 
-        // TODO: Implement actual contract signing with cryptographic signature
-        // For now, just log the intent
-        NSLog("ADVANCEKEY: ✍️ Contract signature would be created here")
-        NSLog("ADVANCEKEY: ✍️ This will require:")
-        NSLog("ADVANCEKEY: ✍️   1. Get user's private key")
-        NSLog("ADVANCEKEY: ✍️   2. Create signature of contract data")
-        NSLog("ADVANCEKEY: ✍️   3. Submit to Covenant service")
+        // TODO: In a real implementation, we would:
+        // 1. Fetch the contract from Covenant to get the list of steps
+        // 2. Present UI for user to select which step to sign
+        // 3. Get the stepId from user selection
 
-        // TODO: Send signature to Covenant service
-        // This will be implemented when Covenant contract signing endpoint is ready
+        // For now, we'll use a placeholder stepId
+        let stepId = "step-1" // TODO: Get actual step ID from contract or user selection
+
+        signContractStep(contractUuid: contractUuid, stepId: stepId)
+    }
+
+    private func signContractStep(contractUuid: String, stepId: String) {
+        NSLog("ADVANCEKEY: ✍️ Signing contract step - UUID: %@, Step: %@", contractUuid, stepId)
+
+        // Get user's pubKey and covenant UUID from SharedUserDefaults
+        guard let userPubKey = SharedUserDefaults.getCurrentUserPubKey() else {
+            NSLog("ADVANCEKEY: ❌ No user pubKey found")
+            return
+        }
+
+        guard let covenantUserUUID = SharedUserDefaults.getCovenantUserUUID() else {
+            NSLog("ADVANCEKEY: ❌ No covenant user UUID found - need to create covenant user first")
+            return
+        }
+
+        NSLog("ADVANCEKEY: ✍️ User pubKey: %@", userPubKey)
+        NSLog("ADVANCEKEY: ✍️ Covenant UUID: %@", covenantUserUUID)
+
+        // Create timestamp for sessionless auth
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+
+        // Create auth message: timestamp + contractUuid (for Covenant's verifySessionlessAuth)
+        let authMessage = timestamp + contractUuid
+
+        // Sign the auth message using sessionless
+        guard let authSignature = sessionless.sign(message: authMessage) else {
+            NSLog("ADVANCEKEY: ❌ Failed to create auth signature")
+            return
+        }
+
+        // Create step signature message: timestamp + userUUID + contractUuid + stepId
+        let stepMessage = timestamp + covenantUserUUID + contractUuid + stepId
+
+        // Sign the step message using sessionless
+        guard let stepSignature = sessionless.sign(message: stepMessage) else {
+            NSLog("ADVANCEKEY: ❌ Failed to create step signature")
+            return
+        }
+
+        // Prepare request to Covenant (use test environment port 5122)
+        let covenantURL = URL(string: "http://127.0.0.1:5122/contract/\(contractUuid)/sign")!
+        var request = URLRequest(url: covenantURL)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(timestamp, forHTTPHeaderField: "timestamp")
+        request.setValue(authSignature, forHTTPHeaderField: "signature")
+        request.setValue(covenantUserUUID, forHTTPHeaderField: "userUUID")
+        request.setValue(userPubKey, forHTTPHeaderField: "pubKey")
+
+        let body: [String: Any] = [
+            "stepId": stepId,
+            "stepSignature": stepSignature
+        ]
+
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        NSLog("ADVANCEKEY: ✍️ Sending signature to Covenant...")
+        NSLog("ADVANCEKEY: ✍️ URL: %@", covenantURL.absoluteString)
+        NSLog("ADVANCEKEY: ✍️ Auth message: %@", authMessage)
+        NSLog("ADVANCEKEY: ✍️ Step message: %@", stepMessage)
+        NSLog("ADVANCEKEY: ✍️ Headers: timestamp=%@, userUUID=%@, pubKey=%@", timestamp, covenantUserUUID, userPubKey)
+
+        // Make the request
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                NSLog("ADVANCEKEY: ❌ Covenant request error: %@", error.localizedDescription)
+                return
+            }
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                NSLog("ADVANCEKEY: ❌ Invalid response from Covenant")
+                return
+            }
+
+            NSLog("ADVANCEKEY: ✍️ Covenant response status: %d", httpResponse.statusCode)
+
+            if let data = data,
+               let responseJSON = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                NSLog("ADVANCEKEY: ✍️ Covenant response: %@", String(describing: responseJSON))
+
+                if httpResponse.statusCode == 200 {
+                    NSLog("ADVANCEKEY: ✅ Contract step signed successfully!")
+                } else {
+                    if let errorMsg = responseJSON["error"] as? String {
+                        NSLog("ADVANCEKEY: ❌ Covenant error: %@", errorMsg)
+                    }
+                }
+            }
+        }
+
+        task.resume()
     }
 
     private func handleDeclineContractMessage(_ messageBody: Any) {
@@ -1383,11 +1495,11 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         NSLog("ADVANCEKEY: ❌ Contract decline would be submitted here")
     }
 
-    private func saveRecipeToStorage(bdoPubKey: String, type: String, title: String, fullBDO: Any?) -> Bool {
-        NSLog("ADVANCEKEY: 📦 Saving recipe using SharedUserDefaults")
+    private func saveItemToStorage(bdoPubKey: String, type: String, title: String, collection: String?, fullBDO: Any?) -> Bool {
+        NSLog("ADVANCEKEY: 📦 Saving item using SharedUserDefaults")
 
         // Use the shared configuration
-        SharedUserDefaults.addHolding(bdoPubKey: bdoPubKey, type: type, title: title)
+        SharedUserDefaults.addHolding(bdoPubKey: bdoPubKey, type: type, title: title, collection: collection)
 
         // Debug: Print current state
         SharedUserDefaults.debugPrint(prefix: "ADVANCEKEY")

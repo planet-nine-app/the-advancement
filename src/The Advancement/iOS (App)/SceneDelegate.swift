@@ -12,7 +12,50 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
-        guard let _ = (scene as? UIWindowScene) else { return }
+        guard let windowScene = (scene as? UIWindowScene) else { return }
+
+        // Create window
+        window = UIWindow(windowScene: windowScene)
+
+        // Check if user needs onboarding
+        let rootViewController: UIViewController
+        if SharedUserDefaults.getCurrentUserPubKey() == nil {
+            // Show onboarding
+            rootViewController = OnboardingViewController()
+            NSLog("🚀 Showing onboarding screen")
+        } else {
+            // Show main app
+            if let mainVC = UIStoryboard(name: "Main", bundle: nil).instantiateInitialViewController() {
+                rootViewController = mainVC
+            } else {
+                // Fallback
+                rootViewController = createPlaceholderMainViewController()
+            }
+            NSLog("✅ Showing main app")
+        }
+
+        window?.rootViewController = rootViewController
+        window?.makeKeyAndVisible()
+    }
+
+    private func createPlaceholderMainViewController() -> UIViewController {
+        let vc = UIViewController()
+        vc.view.backgroundColor = .systemBackground
+
+        let label = UILabel()
+        label.text = "Welcome to The Advancement"
+        label.font = UIFont.systemFont(ofSize: 24, weight: .bold)
+        label.textAlignment = .center
+        label.translatesAutoresizingMaskIntoConstraints = false
+
+        vc.view.addSubview(label)
+
+        NSLayoutConstraint.activate([
+            label.centerXAnchor.constraint(equalTo: vc.view.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: vc.view.centerYAnchor)
+        ])
+
+        return vc
     }
 
 }

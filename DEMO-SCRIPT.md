@@ -186,115 +186,166 @@ xcodebuild -scheme "The Advancement" -destination "platform=iOS Simulator,name=i
 
 **Expected Result**: Recipe displays with all four interactive buttons
 
-### **PHASE 2: Product Creation in Ninefy with Emojicode**
+### **PHASE 2: Emojicoded Sanora Products & Shopping**
 
-#### Step 2.1: Access Ninefy Marketplace
+#### Step 2.1: Access Peace Love T-Shirt Product Page
 ```
-🎤 "Now let's create some Peace Love & Redistribution products in Ninefy. This will show how emojicodes enable seamless product discovery in AdvanceKey."
-```
-
-**Actions**:
-1. Open browser and navigate to: `http://localhost:1420`
-2. Show Ninefy interface with upload screen
-3. Point out the clean SVG-first design
-4. Explain how Ninefy integrates with the ecosystem
-
-**Expected Result**: Ninefy loads with product creation interface
-
-#### Step 2.2: Copy PublicKey from AdvanceKey
-```
-🎤 "First we need to get our public key from AdvanceKey to use in our products."
+🎤 "Let's check out our Peace Love and Redistribution t-shirt product with emojicoded interactive buttons for shopping."
 ```
 
 **Actions**:
-1. Open The Advancement app
-2. Navigate to ⚡ Instantiation
-3. Tap the new "📋 Copy" button next to the Public Key
-4. Show the green "✅ Copied!" confirmation
-5. Note the key is now ready for use in Ninefy
+1. Open Safari and navigate to: `http://localhost:3456/peace-love-tshirt.html`
+2. Show the product page with:
+   - Product details and pricing ($29.00)
+   - Product image placeholder
+   - Interactive BDO section at the bottom
+3. Point out the **emojicoded pubKey display** with the sparkle delimiters
+4. Explain this emojicode encodes the product BDO pubKey for AdvanceKey
 
-**Expected Result**: Public key copied to clipboard with visual confirmation
+**Expected Result**: Product page loads with emojicoded pubKey visible
 
-#### Step 2.3: Create Peace Love & Redistribution Products
+#### Step 2.2: Decode Product Emojicode in AdvanceKey
 ```
-🎤 "We'll create branded products using the ☮️💚🏴‍☠️ Peace Love & Redistribution brand with proper emojicode."
+🎤 "Now we'll decode this product emojicode to reveal the interactive shopping buttons."
 ```
 
 **Actions**:
-1. In Ninefy, click "Upload Product"
-2. Select product type (e.g., "Membership")
-3. Fill in product details:
-   - **Brand**: `☮️💚🏴‍☠️` (Peace Love & Redistribution)
-   - **Title**: "Community Membership"
-   - **Description**: "Join our community of makers"
-4. Upload the product
-5. **Show the emojicode**: Point out the beautiful emojicode display with proper base64-emoji encoding
+1. **Select the emojicode**: Double-tap on the emoji sequence to select it
+2. If only partial selection, drag to include both ✨ sparkle delimiters
+3. Open any text field (Notes app, Messages, etc.)
+4. **Switch to AdvanceKey keyboard**
+5. Tap **DEMOJI** button to decode
+6. Watch the BDO decode and display the SVG buttons
 
 **Expected Result**:
-- Product created successfully
-- Emojicode displays: `☮️💚🏴‍☠️✨[beautiful-emoji-sequence]✨`
-- Product URL shown for Sanora page
+- Emojicode decodes successfully
+- SVG displays with three buttons:
+  - 📤 SHARE (blue)
+  - 🛒 ADD TO CART (green)
+  - 🪄 MAGIC (pink)
 
-#### Step 2.4: Create Additional Products
+#### Step 2.3: Add Product to Cart
 ```
-🎤 "Let's create a few more products to show the variety and consistency of the emojicode system."
+🎤 "The ADD TO CART button has the productId and baseUuid embedded in spell-components, allowing seamless cart integration."
 ```
 
 **Actions**:
-1. Create an event ticket: "Community Gathering 2025"
-2. Create an ebook: "Guide to Sustainable Living"
-3. Each time, show:
-   - The brand field auto-filled with ☮️💚🏴‍☠️
-   - The resulting emojicode with proper encoding
-   - The Sanora product page URL
+1. Tap **🛒 ADD TO CART** button in the decoded SVG
+2. Watch the success alert: "✅ Added to cart: Peace Love and Redistribution T-Shirt"
+3. Show in logs: Cart update with productId and quantity
+4. Verify cart data saved to SharedUserDefaults
+
+**Expected Result**:
+- Product added to cart successfully
+- Cart count increases
+- Data persisted in app group storage
+
+#### Step 2.4: View Additional Sanora Product
+```
+🎤 "Let's look at another product page to show the consistent emojicode system."
+```
+
+**Actions**:
+1. Navigate to recipe blog: `http://localhost:3456/recipe-blog.html`
+2. Show Grandma's Chocolate Chip Cookies recipe
+3. Point out the emojicoded BDO at the bottom
+4. Explain how different content types (products, recipes, contracts) all use the same emojicode system
+
+**Expected Result**: Recipe page displays with emojicoded pubKey for recipe BDO
 
 ### **PHASE 3: Covenant Contract Creation & Signing**
 
-#### Step 3.1: Access Covenant Service
+#### Step 3.1: View Website Development Contract
 ```
-🎤 "Now let's demonstrate covenant contracts - magical agreements that can be signed through AdvanceKey emojicodes."
-```
-
-**Actions**:
-1. Navigate to covenant interface (if available) or use API
-2. Show contract creation form
-3. Explain how contracts integrate with the ecosystem
-
-#### Step 3.2: Create Contract with AdvanceKey Integration
-```
-🎤 "We'll create a contract and show how the emojicode enables signing through AdvanceKey."
+🎤 "Now let's demonstrate covenant contracts - cryptographic agreements that can be signed through AdvanceKey with participant authorization."
 ```
 
 **Actions**:
-1. Create a contract with:
-   - **Title**: "Community Partnership Agreement"
-   - **Participants**: [Use copied public key from earlier]
-   - **Steps**:
-     - "Review terms and conditions"
-     - "Agree to partnership terms"
-     - "Complete onboarding process"
-2. Save the contract
-3. Generate contract SVG
-4. **Show the emojicode**: Point out the crystal ball emojicode at the bottom
+1. Navigate to: `http://localhost:3456/website-dev-contract.html`
+2. Show the contract page with:
+   - Contract title: "Website Development Agreement"
+   - Contract details and project steps
+   - Participants section (Client and Developer)
+   - Status: "⏳ Awaiting Signatures"
+3. Scroll to the signing section at the bottom
+4. Point out the **emojicoded signing UI pubKey** with sparkle delimiters
+
+**Expected Result**: Contract page loads with full details and emojicoded signing interface
+
+#### Step 3.2: Decode Contract Signing UI in AdvanceKey
+```
+🎤 "The emojicode encodes a signing UI BDO that contains participant authorization. Only authorized participants will see the SIGN button."
+```
+
+**Actions**:
+1. **Select the emojicode**: Double-tap the emoji sequence to select it
+2. Ensure both ✨ sparkles are included in the selection
+3. Open any text field and switch to **AdvanceKey keyboard**
+4. Tap **DEMOJI** button to decode
+5. Watch the signing UI BDO decode
 
 **Expected Result**:
-- Contract created with beautiful SVG visualization
-- Golden emojicode visible: `🔮✨[encoded-contract-pubkey]✨`
-- BDO entry created with signing spell content
+- Emojicode decodes successfully
+- SVG displays with signing interface
+- Participant verification happens automatically
 
-#### Step 3.3: Demonstrate Signing Flow
+#### Step 3.3: Participant Authorization Demo
 ```
-🎤 "When someone taps this emojicode in AdvanceKey, it will decode to reveal the signing interface."
+🎤 "The signing UI includes the participants' pubKeys. AdvanceKey verifies if the current user is authorized before showing the SIGN button."
 ```
 
 **Actions**:
-1. Show the contract SVG with emojicode
-2. Explain the signing workflow:
-   - AdvanceKey decodes emojicode
-   - Looks up BDO entry with scgContent
-   - Displays beautiful signing interface
-   - User can sign contract steps with cryptographic security
-3. Point out participant authorization system
+1. Point out the participant verification in action:
+   - AdvanceKey gets current user's pubKey from SharedUserDefaults
+   - Compares it against participants array in the BDO
+   - If match found: Shows ✍️ SIGN button
+   - If no match: SIGN button stays hidden
+2. Show the three buttons for authorized users:
+   - ✍️ SIGN (green) - Creates cryptographic signature for contract step
+   - ❌ DECLINE (red) - Declines the contract
+   - 🪄 MAGIC (pink) - Cast contract magic
+
+**Expected Result**: Only authorized participants see SIGN button
+
+#### Step 3.4: Sign Contract Step (If Authorized)
+```
+🎤 "When an authorized user taps SIGN, it creates a cryptographic signature and submits it to Covenant."
+```
+
+**Actions**:
+1. If current user is authorized, tap **✍️ SIGN** button
+2. Watch the signing process:
+   - Creates auth signature: `timestamp + contractUuid`
+   - Creates step signature: `timestamp + userUUID + contractUuid + stepId`
+   - Sends PUT request to `/contract/:uuid/sign` endpoint
+3. Show success message: "✍️ Signing contract: Website Development Agreement"
+4. View logs showing:
+   - Signature messages
+   - Covenant response
+   - Contract step completion
+
+**Expected Result**:
+- Signature created using sessionless.sign()
+- Request sent to Covenant successfully
+- Contract step marked as signed
+
+#### Step 3.5: Contract Signing Architecture
+```
+🎤 "The contract signing uses the same sessionless authentication pattern throughout Planet Nine, ensuring cryptographic security."
+```
+
+**Explain**:
+1. **Contract UUID**: Embedded in spell-components for API calls
+2. **Participant PubKeys**: Stored in BDO for authorization
+3. **Step Signatures**: Cryptographically verifiable (timestamp + userUUID + contractUuid + stepId)
+4. **Covenant Verification**: Server-side checks both auth and step signatures
+5. **Completion Logic**: Step completes when all participants have signed
+
+**Key Points**:
+- No passwords needed (sessionless)
+- Per-contract authorization
+- Tamper-proof signatures
+- Cross-app integration (main app ↔ keyboard)
 
 ### **PHASE 4: Keyboard Extension & Recipe Saving**
 
@@ -431,23 +482,28 @@ npm run dev
 
 ### ✅ Primary Objectives
 - [ ] Payment method successfully saved via Nexus
-- [ ] Peace Love & Redistribution products created in Ninefy with proper emojicode
-- [ ] Covenant contract created with copyable pubKey and emojicode signing
+- [ ] Peace Love & Redistribution t-shirt product page displayed with emojicode
+- [ ] Product emojicode decoded in AdvanceKey showing SHARE/ADD TO CART/MAGIC buttons
+- [ ] Product added to cart via AdvanceKey with SharedUserDefaults persistence
+- [ ] Website Development Contract page displayed with signing UI emojicode
+- [ ] Contract signing UI decoded in AdvanceKey with participant verification
+- [ ] Contract signed via AdvanceKey with cryptographic signatures (if authorized)
 - [ ] Recipe decoded and saved to cookbook via keyboard extension
 - [ ] Magical wand purchased using stored payment method
 - [ ] Order appears in Ordary tracking system
 - [ ] Recipe persists in app cookbook collection
 
 ### ✅ Technical Demonstrations
+- [ ] Emojicoded Sanora products with interactive shopping buttons
+- [ ] Cart management via SharedUserDefaults (keyboard → app data sharing)
+- [ ] Covenant contract with participant-based authorization
+- [ ] Sessionless contract signing with dual signatures (auth + step)
+- [ ] BDO-based signing UI with embedded participant pubKeys
 - [ ] Cross-app data sharing (main app ↔ keyboard extension)
 - [ ] Embedded web portal (Nexus in native app)
 - [ ] Stored payment method automation
-- [ ] SVG spell casting system
-- [ ] Planet Nine ecosystem integration
-- [ ] Ninefy product creation with proper emojicoding system
-- [ ] Covenant contract creation with emojicode signing capability
-- [ ] Real-time pubKey copying from InstantiationViewController
-- [ ] Complete Peace Love & Redistribution brand workflow
+- [ ] SVG spell casting system with spell-components
+- [ ] Planet Nine ecosystem integration across services
 
 ### ✅ User Experience Highlights
 - [ ] Single-tap purchases after initial setup

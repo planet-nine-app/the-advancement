@@ -78,10 +78,18 @@ open http://localhost:3456
 ### ✅ **Fount Integration & CarrierBag System** (January 2025)
 - **Direct Fount Integration**: Native Swift API calls to Fount service
 - **User Instantiation**: Automatic Fount user creation with cryptographic keys
-- **CarrierBag Architecture**: Persistent user-owned BDO containing 12 collections
+- **CarrierBag Architecture**: Persistent user-owned BDO containing 14 collections
 - **Recipe Management**: Save and sync recipes through Fount carrierBag
-- **Multi-Collection Support**: cookbook, apothecary, gallery, bookshelf, familiarPen, machinery, metallics, music, oracular, greenHouse, closet, games
+- **Multi-Collection Support**: cookbook, apothecary, gallery, bookshelf, familiarPen, machinery, metallics, music, oracular, greenHouse, closet, games, events, contracts
 - **Native UI**: InstantiationViewController and CarrierBagViewController for data visualization
+
+### ✅ **Contract System Integration** (January 2025)
+- **Covenant Emojicodes**: Contracts generate emojicodes for easy sharing and identification
+- **Contract Saving**: Save contracts to carrierBag "contracts" collection via AdvanceKey
+- **Contract Signing**: Sign contract steps using Sessionless authentication through AdvanceKey
+- **PubKey Display**: AdvanceKey public key exposed in main app for adding to contract participants
+- **Shared Authentication**: Main app and AdvanceKey share same Sessionless keys via App Group keychain
+- **Test Environment**: Covenant service on port 5122 (allyabase-base1 container)
 
 ## File Structure
 
@@ -115,6 +123,7 @@ the-advancement/
 - **Ad Covering System**: Dual-mode experience (plants/monsters) with entertainment
 - **Emojicoding**: Perfect UUID ↔ emoji conversion with iOS integration
 - **MAGIC Protocol**: Complete spell casting with background management
+- **Contract System**: Full contract saving and signing via AdvanceKey with Covenant integration
 - **Test Environment**: Comprehensive testing infrastructure
 
 ### 🚧 In Development
@@ -131,6 +140,7 @@ The Advancement serves as the **primary consumer gateway** to Planet Nine:
 - **💳 Payment Processing**: Secure commerce without intermediaries
 - **🎯 MAGIC Protocol**: Universal spell casting across applications
 - **📡 Teleported Commerce**: Cross-base product discovery and purchasing
+- **📜 Contract Management**: Create, sign, and manage contracts through Covenant integration
 
 ---
 

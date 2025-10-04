@@ -83,6 +83,39 @@ for file in "${REQUIRED_FILES[@]}"; do
     fi
 done
 
+# Check for emojicoded product pages
+echo
+echo "🛍️ Checking emojicoded product pages..."
+if [[ -f "test-server/public/peace-love-tshirt.html" ]]; then
+    echo "✅ Peace Love T-shirt product page found"
+else
+    echo "❌ Peace Love T-shirt product page not found"
+    exit 1
+fi
+
+if [[ -f "test-server/public/recipe-blog.html" ]]; then
+    echo "✅ Recipe blog page found"
+else
+    echo "❌ Recipe blog page not found"
+    exit 1
+fi
+
+# Check for contract signing page
+if [[ -f "test-server/public/website-dev-contract.html" ]]; then
+    echo "✅ Website Development Contract page found"
+else
+    echo "❌ Website Development Contract page not found"
+    exit 1
+fi
+
+# Check for emojicoded content
+if grep -q "✨" test-server/public/peace-love-tshirt.html; then
+    echo "✅ Emojicode found in product page"
+else
+    echo "❌ Emojicode not found in product page"
+    exit 1
+fi
+
 # Check for magical wands in server.js
 echo
 echo "🪄 Checking magical wand products..."
@@ -90,14 +123,6 @@ if grep -q "wand_fire\|wand_ice\|wand_lightning" test-server/server.js; then
     echo "✅ Magical wands configured in test server"
 else
     echo "❌ Magical wands not found in test server"
-    exit 1
-fi
-
-# Check for BUY button in recipe
-if grep -q "buy" test-server/recipe-bdo.json; then
-    echo "✅ BUY button found in recipe SVG"
-else
-    echo "❌ BUY button not found in recipe SVG"
     exit 1
 fi
 
@@ -109,11 +134,19 @@ else
     exit 1
 fi
 
-# Check for stored payment method functions in KeyboardViewController
-if grep -q "loadStoredPaymentMethods\|storePaymentMethodForKeyboard" src/The\ Advancement/AdvanceKey/KeyboardViewController.swift; then
-    echo "✅ Stored payment method functions found in keyboard extension"
+# Check for cart management in SharedUserDefaults
+if grep -q "addToCart\|getCart\|covenantUserUUID" src/The\ Advancement/Shared\ \(App\)/SharedUserDefaults.swift; then
+    echo "✅ Cart and Covenant user management found in SharedUserDefaults"
 else
-    echo "❌ Stored payment method functions not found in keyboard extension"
+    echo "❌ Cart management functions not found in SharedUserDefaults"
+    exit 1
+fi
+
+# Check for contract signing in KeyboardViewController
+if grep -q "signContract\|handleSignContractMessage" src/The\ Advancement/AdvanceKey/KeyboardViewController.swift; then
+    echo "✅ Contract signing functions found in keyboard extension"
+else
+    echo "❌ Contract signing functions not found in keyboard extension"
     exit 1
 fi
 
@@ -160,6 +193,13 @@ else
     echo "   → Start with: cd /Users/zachbabb/Work/planet-nine/the-nullary/nexus/server && npm start"
 fi
 
+# Covenant Server
+if check_port 3011 "Covenant Server"; then
+    echo "   → http://localhost:3011"
+else
+    echo "   → Start with: cd /Users/zachbabb/Work/planet-nine/covenant/src/server/node && node covenant.js"
+fi
+
 # Optional: Allyabase test ecosystem
 if check_port 5111 "Allyabase Base 1"; then
     echo "✅ Allyabase test ecosystem running"
@@ -193,7 +233,11 @@ echo "============================"
 echo "Before starting the demo, verify:"
 echo
 echo "✅ Test Server running (http://localhost:3456)"
+echo "   - Peace Love T-shirt: http://localhost:3456/peace-love-tshirt.html"
+echo "   - Recipe Blog: http://localhost:3456/recipe-blog.html"
+echo "   - Contract: http://localhost:3456/website-dev-contract.html"
 echo "✅ Nexus Server running (http://127.0.0.1:3333)"
+echo "✅ Covenant Server running (http://localhost:3011)"
 echo "✅ The Advancement iOS app built and running"
 echo "✅ Safari extension installed and enabled"
 echo "✅ AdvanceKey keyboard installed with Full Access"

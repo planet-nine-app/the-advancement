@@ -24,6 +24,9 @@ struct SharedUserDefaults {
     struct Keys {
         static let holdings = "holdings"
         static let testAccess = "test_app_group_access"
+        static let cart = "cart"
+        static let covenantUserUUID = "covenant_user_uuid"
+        static let currentUserPubKey = "current_user_pubkey"
     }
 
     // MARK: - Holdings Management
@@ -36,7 +39,7 @@ struct SharedUserDefaults {
         shared.synchronize()
     }
 
-    static func addHolding(bdoPubKey: String, type: String, title: String) {
+    static func addHolding(bdoPubKey: String, type: String, title: String, collection: String? = nil) {
         var holdings = getHoldings()
 
         // Remove existing holding with same bdoPubKey
@@ -45,15 +48,83 @@ struct SharedUserDefaults {
         }
 
         // Add new holding
-        let newHolding: [String: Any] = [
+        var newHolding: [String: Any] = [
             "bdoPubKey": bdoPubKey,
             "type": type,
             "title": title,
             "savedAt": ISO8601DateFormatter().string(from: Date())
         ]
 
+        // Add collection if specified
+        if let collection = collection {
+            newHolding["collection"] = collection
+        }
+
         holdings.append(newHolding)
         saveHoldings(holdings)
+    }
+
+    // MARK: - Cart Management
+    static func getCart() -> [[String: Any]] {
+        return shared.array(forKey: Keys.cart) as? [[String: Any]] ?? []
+    }
+
+    static func saveCart(_ cart: [[String: Any]]) {
+        shared.set(cart, forKey: Keys.cart)
+        shared.synchronize()
+    }
+
+    static func addToCart(productId: String, baseUuid: String, quantity: Int) {
+        var cart = getCart()
+
+        // Check if product already in cart
+        if let existingIndex = cart.firstIndex(where: {
+            ($0["productId"] as? String) == productId && ($0["baseUuid"] as? String) == baseUuid
+        }) {
+            // Update quantity
+            var item = cart[existingIndex]
+            let currentQuantity = item["quantity"] as? Int ?? 1
+            item["quantity"] = currentQuantity + quantity
+            cart[existingIndex] = item
+        } else {
+            // Add new item
+            let newItem: [String: Any] = [
+                "productId": productId,
+                "baseUuid": baseUuid,
+                "quantity": quantity,
+                "addedAt": ISO8601DateFormatter().string(from: Date())
+            ]
+            cart.append(newItem)
+        }
+
+        saveCart(cart)
+    }
+
+    static func getCartItemCount() -> Int {
+        let cart = getCart()
+        return cart.reduce(0) { total, item in
+            total + (item["quantity"] as? Int ?? 0)
+        }
+    }
+
+    // MARK: - Covenant User Management
+    static func getCovenantUserUUID() -> String? {
+        return shared.string(forKey: Keys.covenantUserUUID)
+    }
+
+    static func setCovenantUserUUID(_ uuid: String) {
+        shared.set(uuid, forKey: Keys.covenantUserUUID)
+        shared.synchronize()
+    }
+
+    // MARK: - Current User Management
+    static func getCurrentUserPubKey() -> String? {
+        return shared.string(forKey: Keys.currentUserPubKey)
+    }
+
+    static func setCurrentUserPubKey(_ pubKey: String) {
+        shared.set(pubKey, forKey: Keys.currentUserPubKey)
+        shared.synchronize()
     }
 
     // MARK: - Testing
