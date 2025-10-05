@@ -925,15 +925,46 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             <style>
                 body {
                     margin: 0;
-                    padding: 10px;
-                    background: #f8f9fa;
+                    padding: 0;
+                    background: #1a1a2e;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    height: 100vh;
+                    overflow: hidden;
+                }
+                #banner {
+                    width: 100%;
+                    padding: 8px;
+                    text-align: center;
+                    font-family: Arial, sans-serif;
+                    font-size: 14px;
+                    font-weight: bold;
+                    display: none;
+                }
+                #banner.view-only {
+                    display: block;
+                    background: #94a3b8;
+                    color: white;
+                }
+                #banner.authorized {
+                    display: block;
+                    background: #22c55e;
+                    color: white;
+                }
+                #svg-container {
+                    flex: 1;
+                    width: 100%;
                     display: flex;
                     justify-content: center;
                     align-items: center;
-                    min-height: 100vh;
+                    overflow: auto;
+                    padding: 10px;
                 }
                 svg {
                     max-width: 100%;
+                    max-height: 100%;
+                    width: auto;
                     height: auto;
                     cursor: pointer;
                 }
@@ -943,7 +974,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 svg rect[spell]:hover {
                     opacity: 0.8;
                 }
-                /* Hide unauthorized elements by default */
+                /* Hide sign elements by default */
                 svg rect[spell="sign"],
                 svg text[spell="sign"] {
                     display: none;
@@ -956,7 +987,10 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             </style>
         </head>
         <body>
-            \(svg)
+            <div id="banner"></div>
+            <div id="svg-container">
+                \(svg)
+            </div>
             <script>
                 // BDO data for spell handling
                 const bdoData = \(String(data: try! JSONSerialization.data(withJSONObject: cardData), encoding: .utf8)!);
@@ -982,13 +1016,24 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
                         console.log('User authorized:', isAuthorized);
 
+                        const banner = document.getElementById('banner');
+                        const svg = document.querySelector('svg');
+
                         if (isAuthorized) {
-                            // Show SIGN button
-                            const svg = document.querySelector('svg');
+                            // Show authorized banner and SIGN button
+                            if (banner) {
+                                banner.textContent = '✅ You can sign this contract';
+                                banner.className = 'authorized';
+                            }
                             if (svg) {
                                 svg.classList.add('authorized');
                             }
                         } else {
+                            // Show view-only banner
+                            if (banner) {
+                                banner.textContent = '👁️ View Only - You are not a participant';
+                                banner.className = 'view-only';
+                            }
                             console.log('User not authorized to sign this contract');
                         }
                     }
