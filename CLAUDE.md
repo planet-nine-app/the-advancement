@@ -86,9 +86,12 @@ open http://localhost:3456
 ### ✅ **Contract System Integration** (January 2025)
 - **Covenant Emojicodes**: Contracts generate emojicodes for easy sharing and identification
 - **Contract Saving**: Save contracts to carrierBag "contracts" collection via AdvanceKey
+- **Contract Visualization**: Scaled SVG contract display in AdvanceKey keyboard with proper viewport fitting
+- **Authorization UI**: Native Swift buttons (SIGN/View-Only) next to DEMOJI button based on participant status
 - **Contract Signing**: Sign contract steps using Sessionless authentication through AdvanceKey
 - **PubKey Display**: AdvanceKey public key exposed in main app for adding to contract participants
 - **Shared Authentication**: Main app and AdvanceKey share same Sessionless keys via App Group keychain
+- **Simplified BDO Structure**: Contracts store dark-theme SVG as `svgContent` with `bdoPubKey` and `emojicode` fields
 - **Test Environment**: Covenant service on port 5122 (allyabase-base1 container)
 
 ## File Structure

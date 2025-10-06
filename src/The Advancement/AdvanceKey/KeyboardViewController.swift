@@ -24,9 +24,11 @@ extension Character {
 class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
     var demojiButton: UIButton!
+    var contractActionButton: UIButton!
     var resultWebView: WKWebView!
     var debugLabel: UILabel!
     var sessionless: Sessionless!
+    var currentContractData: [String: Any]?
 
     override func updateViewConstraints() {
         super.updateViewConstraints()
@@ -55,6 +57,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         sessionless = Sessionless()
 
         setupDemojiButton()
+        setupContractActionButton()
         setupWebView()
         setupDebugLabel()
 
@@ -75,10 +78,32 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         self.view.addSubview(demojiButton)
 
         NSLayoutConstraint.activate([
-            demojiButton.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+            demojiButton.trailingAnchor.constraint(equalTo: self.view.centerXAnchor, constant: -5),
             demojiButton.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: -20),
             demojiButton.widthAnchor.constraint(equalToConstant: 120),
             demojiButton.heightAnchor.constraint(equalToConstant: 50)
+        ])
+    }
+
+    func setupContractActionButton() {
+        contractActionButton = UIButton(type: .system)
+        contractActionButton.setTitle("View-Only", for: .normal)
+        contractActionButton.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
+        contractActionButton.backgroundColor = UIColor.systemGray
+        contractActionButton.setTitleColor(.white, for: .normal)
+        contractActionButton.layer.cornerRadius = 12
+        contractActionButton.translatesAutoresizingMaskIntoConstraints = false
+        contractActionButton.isHidden = true  // Hidden by default
+
+        contractActionButton.addTarget(self, action: #selector(contractActionTapped), for: .touchUpInside)
+
+        self.view.addSubview(contractActionButton)
+
+        NSLayoutConstraint.activate([
+            contractActionButton.leadingAnchor.constraint(equalTo: self.view.centerXAnchor, constant: 5),
+            contractActionButton.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: -20),
+            contractActionButton.widthAnchor.constraint(equalToConstant: 120),
+            contractActionButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
 
@@ -95,6 +120,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         contentController.add(self, name: "declineContract")
         contentController.add(self, name: "paymentMethodSelected")
         contentController.add(self, name: "addPaymentMethod")
+        contentController.add(self, name: "contractAuthorization")
         webViewConfig.userContentController = contentController
 
         // Inject console.log override to capture messages
@@ -255,6 +281,43 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             Try selecting more text or scrolling to include both ✨ sparkles.
             """)
             NSLog("ADVANCEKEY: ❌ No emojicoded sequence found in context")
+        }
+    }
+
+    @objc func contractActionTapped() {
+        NSLog("ADVANCEKEY: 📜 Contract action button tapped")
+
+        guard let contractData = currentContractData else {
+            NSLog("ADVANCEKEY: ⚠️ No contract data available")
+            return
+        }
+
+        // Check if user is authorized
+        let bdo = contractData["bdo"] as? [String: Any] ?? contractData
+        let participants = bdo["participants"] as? [String] ?? []
+
+        // Get current user's pubKey
+        let sharedDefaults = UserDefaults(suiteName: "group.com.planetnine.Planet-Nine")
+        guard let currentUserPubKey = sharedDefaults?.string(forKey: "sessionless_public_key") else {
+            NSLog("ADVANCEKEY: ❌ No user pubKey found")
+            return
+        }
+
+        let isAuthorized = participants.contains { $0.lowercased() == currentUserPubKey.lowercased() }
+
+        if isAuthorized {
+            // Sign the contract
+            NSLog("ADVANCEKEY: ✍️ User is authorized, signing contract")
+            // TODO: Implement signing logic (call signContract function)
+            let alert = UIAlertController(title: "Sign Contract", message: "Contract signing functionality will be implemented here.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(alert, animated: true)
+        } else {
+            // View-only mode
+            NSLog("ADVANCEKEY: 👁️ User is not authorized, view-only mode")
+            let alert = UIAlertController(title: "View Only", message: "You are not a participant in this contract.", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(alert, animated: true)
         }
     }
 
@@ -926,7 +989,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 body {
                     margin: 0;
                     padding: 0;
-                    background: #1a1a2e;
+                    background: #1a1afe;
                     display: flex;
                     flex-direction: column;
                     align-items: center;
@@ -957,16 +1020,18 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                     width: 100%;
                     display: flex;
                     justify-content: center;
-                    align-items: center;
-                    overflow: auto;
-                    padding: 10px;
+                    align-items: flex-start;
+                    overflow-x: hidden;
+                    overflow-y: auto;
+                    padding: 5px;
+                    background: green;
+                    box-sizing: border-box;
                 }
                 svg {
-                    max-width: 100%;
-                    max-height: 100%;
-                    width: auto;
+                    width: 100%;
                     height: auto;
                     cursor: pointer;
+                    display: block;
                 }
                 svg rect[spell] {
                     transition: opacity 0.2s;
@@ -976,12 +1041,14 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 }
                 /* Hide sign elements by default */
                 svg rect[spell="sign"],
-                svg text[spell="sign"] {
+                svg text[spell="sign"],
+                svg .sign-button {
                     display: none;
                 }
                 /* Show when authorized */
                 svg.authorized rect[spell="sign"],
-                svg.authorized text[spell="sign"] {
+                svg.authorized text[spell="sign"],
+                svg.authorized .sign-button {
                     display: block;
                 }
             </style>
@@ -1004,7 +1071,11 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                     const type = bdo.type;
                     const participants = bdo.participants || [];
 
-                    if (type === 'contract-signing-ui') {
+                    console.log('BDO type:', type);
+                    console.log('BDO has participants:', participants);
+
+                    // Check if this is a contract (either type or has participants array)
+                    if (type === 'contract-signing-ui' || type === 'contract' || (participants && participants.length > 0)) {
                         console.log('Contract signing UI detected');
                         console.log('Participants:', participants);
                         console.log('Current user pubKey:', currentUserPubKey);
@@ -1018,6 +1089,18 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
                         const banner = document.getElementById('banner');
                         const svg = document.querySelector('svg');
+
+                        // Notify Swift about contract authorization status
+                        console.log('Sending contractAuthorization message to Swift...');
+                        try {
+                            window.webkit.messageHandlers.contractAuthorization.postMessage({
+                                isAuthorized: isAuthorized,
+                                contractData: bdoData
+                            });
+                            console.log('contractAuthorization message sent successfully');
+                        } catch (error) {
+                            console.log('Error sending contractAuthorization:', error);
+                        }
 
                         if (isAuthorized) {
                             // Show authorized banner and SIGN button
@@ -1344,6 +1427,39 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             handlePaymentMethodSelection(message.body as? [String: Any] ?? [:])
         } else if message.name == "addPaymentMethod" {
             handleAddPaymentMethod()
+        } else if message.name == "contractAuthorization" {
+            handleContractAuthorizationMessage(message.body)
+        }
+    }
+
+    private func handleContractAuthorizationMessage(_ messageBody: Any) {
+        NSLog("ADVANCEKEY: 🔐 Contract authorization message received")
+
+        guard let messageDict = messageBody as? [String: Any],
+              let isAuthorized = messageDict["isAuthorized"] as? Bool,
+              let contractData = messageDict["contractData"] as? [String: Any] else {
+            NSLog("ADVANCEKEY: ❌ Invalid contract authorization message format")
+            return
+        }
+
+        // Store contract data for button action
+        currentContractData = contractData
+
+        // Update button appearance on main thread
+        DispatchQueue.main.async {
+            self.contractActionButton.isHidden = false
+
+            if isAuthorized {
+                self.contractActionButton.setTitle("SIGN", for: .normal)
+                self.contractActionButton.backgroundColor = UIColor.systemGreen
+                self.contractActionButton.isEnabled = true
+                NSLog("ADVANCEKEY: ✅ User is authorized to sign this contract")
+            } else {
+                self.contractActionButton.setTitle("View-Only", for: .normal)
+                self.contractActionButton.backgroundColor = UIColor.systemGray
+                self.contractActionButton.isEnabled = false
+                NSLog("ADVANCEKEY: 👁️ User can only view this contract")
+            }
         }
     }
 
