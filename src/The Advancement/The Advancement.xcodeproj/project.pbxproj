@@ -10,6 +10,7 @@
 		CA54CB1D2E5A0A99007D062D /* The Advancement Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA54CB1C2E5A0A99007D062D /* The Advancement Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CA54CB272E5A0A99007D062D /* The Advancement Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA54CB262E5A0A99007D062D /* The Advancement Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CA54CBC22E5A53E6007D062D /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CA54CBC12E5A53E6007D062D /* JavaScriptCore.framework */; };
+		CA918CEE2E9465F7002D1D70 /* AdvanceShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CA918CE12E9465F6002D1D70 /* AdvanceShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CAB4547E2E7F34070025F445 /* AdvanceKey.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CAB454772E7F34070025F445 /* AdvanceKey.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -27,6 +28,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = CA54CB252E5A0A99007D062D;
 			remoteInfo = "The Advancement Extension (macOS)";
+		};
+		CA918CEC2E9465F7002D1D70 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CA54CAE22E5A0A98007D062D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CA918CE02E9465F6002D1D70;
+			remoteInfo = AdvanceShare;
 		};
 		CAB4547C2E7F34070025F445 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -57,6 +65,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				CA54CB272E5A0A99007D062D /* The Advancement Extension.appex in Embed Foundation Extensions */,
+				CA918CEE2E9465F7002D1D70 /* AdvanceShare.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -71,6 +80,7 @@
 		CA54CB262E5A0A99007D062D /* The Advancement Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "The Advancement Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA54CBC12E5A53E6007D062D /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.5.sdk/System/Library/Frameworks/JavaScriptCore.framework; sourceTree = DEVELOPER_DIR; };
 		CA54CBC62E5A9E8D007D062D /* The-Advancement--macOS--Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "The-Advancement--macOS--Info.plist"; sourceTree = "<group>"; };
+		CA918CE12E9465F6002D1D70 /* AdvanceShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AdvanceShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		CAB454772E7F34070025F445 /* AdvanceKey.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AdvanceKey.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -208,6 +218,21 @@
 			);
 			target = CA54CB0F2E5A0A99007D062D /* The Advancement (macOS) */;
 		};
+		CA918CF22E9465F7002D1D70 /* Exceptions for "AdvanceShare" folder in "AdvanceShare" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = CA918CE02E9465F6002D1D70 /* AdvanceShare */;
+		};
+		CA918CF42E94671E002D1D70 /* Exceptions for "Shared (Extension)" folder in "AdvanceShare" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Resources/crypto.js,
+				Sessionless.swift,
+			);
+			target = CA918CE02E9465F6002D1D70 /* AdvanceShare */;
+		};
 		CAB454822E7F34070025F445 /* Exceptions for "AdvanceKey" folder in "AdvanceKey" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -244,6 +269,7 @@
 				CA54CB5E2E5A0A99007D062D /* Exceptions for "Shared (Extension)" folder in "The Advancement Extension (iOS)" target */,
 				CA54CB5F2E5A0A99007D062D /* Exceptions for "Shared (Extension)" folder in "The Advancement Extension (macOS)" target */,
 				CAB4548E2E7F4FC80025F445 /* Exceptions for "Shared (Extension)" folder in "AdvanceKey" target */,
+				CA918CF42E94671E002D1D70 /* Exceptions for "Shared (Extension)" folder in "AdvanceShare" target */,
 			);
 			explicitFolders = (
 				Resources/_locales,
@@ -279,6 +305,14 @@
 				CA54CB592E5A0A99007D062D /* Exceptions for "macOS (Extension)" folder in "The Advancement Extension (macOS)" target */,
 			);
 			path = "macOS (Extension)";
+			sourceTree = "<group>";
+		};
+		CA918CE22E9465F6002D1D70 /* AdvanceShare */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CA918CF22E9465F7002D1D70 /* Exceptions for "AdvanceShare" folder in "AdvanceShare" target */,
+			);
+			path = AdvanceShare;
 			sourceTree = "<group>";
 		};
 		CAB454782E7F34070025F445 /* AdvanceKey */ = {
@@ -321,6 +355,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CA918CDE2E9465F6002D1D70 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CAB454742E7F34070025F445 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -343,6 +384,7 @@
 				CA54CB202E5A0A99007D062D /* iOS (Extension) */,
 				CA54CB2A2E5A0A99007D062D /* macOS (Extension) */,
 				CAB454782E7F34070025F445 /* AdvanceKey */,
+				CA918CE22E9465F6002D1D70 /* AdvanceShare */,
 				CA54CBC02E5A53E6007D062D /* Frameworks */,
 				CA54CAFF2E5A0A99007D062D /* Products */,
 			);
@@ -356,6 +398,7 @@
 				CA54CB1C2E5A0A99007D062D /* The Advancement Extension.appex */,
 				CA54CB262E5A0A99007D062D /* The Advancement Extension.appex */,
 				CAB454772E7F34070025F445 /* AdvanceKey.appex */,
+				CA918CE12E9465F6002D1D70 /* AdvanceShare.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -409,6 +452,7 @@
 			);
 			dependencies = (
 				CA54CB292E5A0A99007D062D /* PBXTargetDependency */,
+				CA918CED2E9465F7002D1D70 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				CA54CB112E5A0A99007D062D /* macOS (App) */,
@@ -464,6 +508,28 @@
 			productReference = CA54CB262E5A0A99007D062D /* The Advancement Extension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		CA918CE02E9465F6002D1D70 /* AdvanceShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CA918CEF2E9465F7002D1D70 /* Build configuration list for PBXNativeTarget "AdvanceShare" */;
+			buildPhases = (
+				CA918CDD2E9465F6002D1D70 /* Sources */,
+				CA918CDE2E9465F6002D1D70 /* Frameworks */,
+				CA918CDF2E9465F6002D1D70 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				CA918CE22E9465F6002D1D70 /* AdvanceShare */,
+			);
+			name = AdvanceShare;
+			packageProductDependencies = (
+			);
+			productName = AdvanceShare;
+			productReference = CA918CE12E9465F6002D1D70 /* AdvanceShare.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		CAB454762E7F34070025F445 /* AdvanceKey */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = CAB454812E7F34070025F445 /* Build configuration list for PBXNativeTarget "AdvanceKey" */;
@@ -508,6 +574,9 @@
 					CA54CB252E5A0A99007D062D = {
 						CreatedOnToolsVersion = 16.4;
 					};
+					CA918CE02E9465F6002D1D70 = {
+						CreatedOnToolsVersion = 16.4;
+					};
 					CAB454762E7F34070025F445 = {
 						CreatedOnToolsVersion = 16.4;
 					};
@@ -532,6 +601,7 @@
 				CA54CB1B2E5A0A99007D062D /* The Advancement Extension (iOS) */,
 				CA54CB252E5A0A99007D062D /* The Advancement Extension (macOS) */,
 				CAB454762E7F34070025F445 /* AdvanceKey */,
+				CA918CE02E9465F6002D1D70 /* AdvanceShare */,
 			);
 		};
 /* End PBXProject section */
@@ -559,6 +629,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		CA54CB242E5A0A99007D062D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CA918CDF2E9465F6002D1D70 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -603,6 +680,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CA918CDD2E9465F6002D1D70 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		CAB454732E7F34070025F445 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -622,6 +706,11 @@
 			isa = PBXTargetDependency;
 			target = CA54CB252E5A0A99007D062D /* The Advancement Extension (macOS) */;
 			targetProxy = CA54CB282E5A0A99007D062D /* PBXContainerItemProxy */;
+		};
+		CA918CED2E9465F7002D1D70 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CA918CE02E9465F6002D1D70 /* AdvanceShare */;
+			targetProxy = CA918CEC2E9465F7002D1D70 /* PBXContainerItemProxy */;
 		};
 		CAB4547D2E7F34070025F445 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1027,6 +1116,66 @@
 			};
 			name = Release;
 		};
+		CA918CF02E9465F7002D1D70 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = AdvanceShare/AdvanceShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RLJ2FY35FD;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AdvanceShare/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AdvanceShare;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.planetnine.the-advancement.The-Advancement.AdvanceShare";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		CA918CF12E9465F7002D1D70 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = AdvanceShare/AdvanceShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RLJ2FY35FD;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AdvanceShare/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = AdvanceShare;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.planetnine.the-advancement.The-Advancement.AdvanceShare";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		CAB4547F2E7F34070025F445 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1128,6 +1277,15 @@
 			buildConfigurations = (
 				CA54CB5C2E5A0A99007D062D /* Debug */,
 				CA54CB5D2E5A0A99007D062D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CA918CEF2E9465F7002D1D70 /* Build configuration list for PBXNativeTarget "AdvanceShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CA918CF02E9465F7002D1D70 /* Debug */,
+				CA918CF12E9465F7002D1D70 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
