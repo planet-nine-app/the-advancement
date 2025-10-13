@@ -42,6 +42,7 @@ public class Sessionless {
     
     private let keyService = "TheAdvancementKeyStore"
     private let keyAccount = "TheAdvancement"
+    private let keychainAccessGroup = "com.planetnine.Planet-Nine"
     
     public init() {
         jsContext = getJSContext()
@@ -110,10 +111,11 @@ public class Sessionless {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keyService,
             kSecAttrAccount as String: keyAccount,
+            kSecAttrAccessGroup as String: keychainAccessGroup,
             kSecValueData as String: data
         ]
         let status = SecItemAdd(query as CFDictionary, nil)
-        
+
         return status == errSecSuccess
     }
     
@@ -122,6 +124,7 @@ public class Sessionless {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keyService,
             kSecAttrAccount as String: keyAccount,
+            kSecAttrAccessGroup as String: keychainAccessGroup,
             kSecReturnData as String: true
         ]
         var result: CFTypeRef?

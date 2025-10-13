@@ -79,24 +79,21 @@ class ShareViewController: NSViewController {
     }
 
     func setupSessionless() {
-        let sharedDefaults = UserDefaults(suiteName: "group.com.planetnine.Planet-Nine")
-
-        guard let savedKeys = sharedDefaults?.string(forKey: "sessionless_keys") else {
-            NSLog("ADVANCESHARE: ❌ No Sessionless keys found in shared defaults")
-            // Don't show error yet - wait until we actually need it
-            return
-        }
-
-        guard let savedKeysData = savedKeys.data(using: .utf8),
-              let keysDict = try? JSONSerialization.jsonObject(with: savedKeysData, options: []) as? [String: String],
-              let publicKey = keysDict["publicKey"],
-              let privateKey = keysDict["privateKey"] else {
-            NSLog("ADVANCESHARE: ❌ Failed to parse Sessionless keys")
-            return
-        }
-
+        NSLog("ADVANCESHARE: 🔧 Setting up Sessionless...")
         sessionless = Sessionless()
-        NSLog("ADVANCESHARE: ✅ Sessionless initialized")
+        NSLog("ADVANCESHARE: 📝 Sessionless instance created")
+
+        // Try to get existing keys
+        NSLog("ADVANCESHARE: 🔑 Attempting to retrieve keys from keychain...")
+        let keys = sessionless.getKeys()
+        if keys == nil {
+            NSLog("ADVANCESHARE: ⚠️ No Sessionless keys found - keys will be generated if needed")
+            debugLabel.stringValue = "No keys found - will generate"
+        } else {
+            NSLog("ADVANCESHARE: ✅ Sessionless initialized with keys: %@", keys!.publicKey)
+            debugLabel.stringValue = "Keys loaded successfully"
+        }
+        NSLog("ADVANCESHARE: ✅ Setup complete")
     }
 
     func processSharedContent() {
@@ -109,6 +106,7 @@ class ShareViewController: NSViewController {
 
         guard let attachments = item.attachments, attachments.count > 0 else {
             NSLog("ADVANCESHARE: ❌ No attachments")
+            NSLog("ADVANCESHARE: But item looks like \(item)")
             debugLabel.stringValue = "No attachments found"
             showMessage("The shared content has no attachments.\n\nPlease share text containing emojicoded content.", icon: "⚠️")
             return
