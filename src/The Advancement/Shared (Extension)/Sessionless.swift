@@ -42,7 +42,7 @@ public class Sessionless {
     
     private let keyService = "TheAdvancementKeyStore"
     private let keyAccount = "TheAdvancement"
-    private let keychainAccessGroup = "com.planetnine.Planet-Nine"
+    private let keychainAccessGroup = "RLJ2FY35FD.com.planetnine.Planet-Nine"
     
     public init() {
         jsContext = getJSContext()
@@ -106,6 +106,28 @@ public class Sessionless {
         return context
     }
     
+    public func deleteKeys() -> Bool {
+        logger.info("ADVANCEMENT - 🗑️ Deleting keys from keychain...")
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keyService,
+            kSecAttrAccount as String: keyAccount,
+            kSecAttrAccessGroup as String: keychainAccessGroup
+        ]
+        let status = SecItemDelete(query as CFDictionary)
+
+        if status == errSecSuccess {
+            logger.info("ADVANCEMENT - ✅ Keys deleted successfully")
+            return true
+        } else if status == errSecItemNotFound {
+            logger.info("ADVANCEMENT - No keys to delete (already empty)")
+            return true
+        } else {
+            logger.error("ADVANCEMENT - ❌ Failed to delete keys: \(status)")
+            return false
+        }
+    }
+
     public func saveKeys(data: Data) -> Bool {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -114,9 +136,38 @@ public class Sessionless {
             kSecAttrAccessGroup as String: keychainAccessGroup,
             kSecValueData as String: data
         ]
-        let status = SecItemAdd(query as CFDictionary, nil)
 
-        return status == errSecSuccess
+        // Try to add keys
+        var status = SecItemAdd(query as CFDictionary, nil)
+
+        // If keys already exist, update them instead
+        if status == errSecDuplicateItem {
+            logger.info("ADVANCEMENT - Keys already exist in keychain, updating...")
+            let updateQuery: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: keyService,
+                kSecAttrAccount as String: keyAccount,
+                kSecAttrAccessGroup as String: keychainAccessGroup
+            ]
+            let updateAttributes: [String: Any] = [
+                kSecValueData as String: data
+            ]
+            status = SecItemUpdate(updateQuery as CFDictionary, updateAttributes as CFDictionary)
+
+            if status == errSecSuccess {
+                logger.info("ADVANCEMENT - ✅ Keys updated successfully in keychain")
+                return true
+            } else {
+                logger.error("ADVANCEMENT - ❌ Failed to update keys in keychain: \(status)")
+                return false
+            }
+        } else if status == errSecSuccess {
+            logger.info("ADVANCEMENT - ✅ Keys added successfully to keychain")
+            return true
+        } else {
+            logger.error("ADVANCEMENT - ❌ Failed to add keys to keychain: \(status)")
+            return false
+        }
     }
     
     public func getKeys() -> Keys? {
@@ -129,46 +180,111 @@ public class Sessionless {
         ]
         var result: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
-        if result == nil {
+
+        if status != errSecSuccess {
+            if status == errSecItemNotFound {
+                logger.info("ADVANCEMENT - No keys found in keychain (first run)")
+            } else {
+                logger.error("ADVANCEMENT - ❌ Failed to retrieve keys from keychain: \(status)")
+            }
             return nil
         }
-        if let data = result.unsafelyUnwrapped as? Data,
-           let keyString = String(data: data, encoding: .utf8) {
-            let keyStringSplit = keyString.split(separator: ":")
-            let keys = Keys(publicKey: String(keyStringSplit[0]), privateKey: String(keyStringSplit[1]))
-            return keys
+
+        guard let data = result as? Data else {
+            logger.error("ADVANCEMENT - ❌ Keychain result is not Data")
+            return nil
         }
-        return nil
+
+        guard let keyString = String(data: data, encoding: .utf8) else {
+            logger.error("ADVANCEMENT - ❌ Failed to decode keychain data as UTF8")
+            return nil
+        }
+
+        let keyStringSplit = keyString.split(separator: ":")
+        guard keyStringSplit.count == 2 else {
+            logger.error("ADVANCEMENT - ❌ Invalid key format in keychain")
+            return nil
+        }
+
+        let keys = Keys(publicKey: String(keyStringSplit[0]), privateKey: String(keyStringSplit[1]))
+        logger.debug("ADVANCEMENT - ✅ Keys retrieved from keychain")
+        logger.debug("ADVANCEMENT - Public key: \(String(keys.publicKey.prefix(20)))...")
+        return keys
     }
     
     public func generateKeys() -> Keys? {
+        logger.info("ADVANCEMENT - 🔑 Generating new keys...")
+
+        // Check if JS context is properly initialized
+        guard generateKeysJS != nil else {
+            logger.error("ADVANCEMENT - ❌ generateKeysJS is nil - crypto.js not loaded properly")
+            return nil
+        }
+
         var bytes = [UInt8](repeating: 0, count: 32)
         let status = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
 
-        if status == errSecSuccess { 
-            logger.debug("ADVANCEMENT - Random bytes: \(bytes)")
+        if status == errSecSuccess {
+            logger.debug("ADVANCEMENT - Random bytes generated successfully")
             let data = Data(bytes: bytes)
             let hex = data.hexEncodedString()
-            let keys = generateKeysJS?.call(withArguments: [hex])
-            logger.debug("ADVANCEMENT - Generated keys: \(String(describing: keys))")
-            logger.debug("ADVANCEMENT - Private key: \(String(describing: keys?.objectForKeyedSubscript("privateKey")))")
-            let pubKeyData = Data(bytes: keys?.objectForKeyedSubscript("publicKey").toArray() as [UInt8])
+
+            guard let keys = generateKeysJS?.call(withArguments: [hex]) else {
+                logger.error("ADVANCEMENT - ❌ Failed to call generateKeysJS")
+                return nil
+            }
+
+            logger.debug("ADVANCEMENT - Keys generated from JS")
+            let pubKeyData = Data(bytes: keys.objectForKeyedSubscript("publicKey").toArray() as [UInt8])
             let pubKeyHex = pubKeyData.hexEncodedString()
-            logger.debug("ADVANCEMENT - Public key hex: \(pubKeyHex)")
-            
-            let keysToSave = Keys(publicKey: pubKeyHex, privateKey: keys?.objectForKeyedSubscript("privateKey").toString() ?? "")
-            self.saveKeys(data: keysToSave.toData())
+            let privateKey = keys.objectForKeyedSubscript("privateKey").toString() ?? ""
+
+            logger.info("ADVANCEMENT - Public key: \(String(pubKeyHex.prefix(20)))...")
+
+            let keysToSave = Keys(publicKey: pubKeyHex, privateKey: privateKey)
+
+            // Save keys and check result
+            let saveSuccess = self.saveKeys(data: keysToSave.toData())
+            if !saveSuccess {
+                logger.error("ADVANCEMENT - ❌ Failed to save keys to keychain")
+                return nil
+            }
+
+            logger.info("ADVANCEMENT - ✅ Keys generated and saved successfully")
             return keysToSave
+        } else {
+            logger.error("ADVANCEMENT - ❌ Failed to generate random bytes: \(status)")
         }
         return nil
     }
     
     public func sign(message: String) -> String? {
-        guard let keys = getKeys(),
-              let signaturejs = signMessageJS?.call(withArguments: [message, keys.privateKey]) else {
+        logger.info("ADVANCEMENT - 🖊️ Signing message...")
+
+        // Check if keys exist
+        guard let keys = getKeys() else {
+            logger.error("ADVANCEMENT - ❌ Cannot sign: No keys found in keychain")
             return nil
         }
+
+        logger.debug("ADVANCEMENT - Keys retrieved for signing")
+
+        // Check if JS signing function is available
+        guard let signJS = signMessageJS else {
+            logger.error("ADVANCEMENT - ❌ Cannot sign: signMessageJS is nil - crypto.js not loaded properly")
+            return nil
+        }
+
+        // Perform signing
+        guard let signaturejs = signJS.call(withArguments: [message, keys.privateKey]) else {
+            logger.error("ADVANCEMENT - ❌ Failed to call signMessageJS")
+            return nil
+        }
+
         let signature = signaturejs.toString()
+        logger.info("ADVANCEMENT - ✅ Message signed successfully")
+        logger.debug("ADVANCEMENT - Signature: \(String(signature?.prefix(20) ?? "nil"))...")
+
         return signature
     }
     

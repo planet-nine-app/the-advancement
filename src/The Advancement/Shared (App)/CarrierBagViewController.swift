@@ -138,7 +138,8 @@ class CarrierBagViewController: UITableViewController {
             ("closet", "👕"),
             ("games", "🎮"),
             ("events", "🎫"),
-            ("contracts", "📜")
+            ("contracts", "📜"),
+            ("stacks", "🏠")
         ]
 
         // Process each collection

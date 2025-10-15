@@ -103,6 +103,14 @@ open http://localhost:3456
 - **Simplified BDO Structure**: Contracts store dark-theme SVG as `svgContent` with `bdoPubKey` and `emojicode` fields
 - **Test Environment**: Covenant service on port 5122 (allyabase-base1 container)
 
+### ✅ **AdvanceKey Enhanced Display** (October 2025)
+- **Matterport Integration**: Embedded 3D tour iframes below BDO SVG display
+- **Vertical Scrolling**: Flexible layout with SVG (100px) + iframe (200px) allowing vertical scroll
+- **Clean Interface**: Removed debug status labels to maximize display space
+- **Optimized Layout**: WebView gains 30px additional vertical space (from 40px to 10px top margin)
+- **BDO Visualization**: Dual-pane view showing both BDO card and 3D property tour
+- **Room Listings**: Perfect for viewing roomz/stacks with interactive 3D tours
+
 ### ✅ **NFC Coordinating Keys Integration** (October 2025)
 - **NFC Reading**: Read NFC tags containing pubKey + signature tuples using CoreNFC
 - **NFC Writing**: Write coordinating keys to NFC tags for physical key distribution
@@ -146,6 +154,7 @@ the-advancement/
 - **Emojicoding**: Perfect UUID ↔ emoji conversion with iOS integration
 - **MAGIC Protocol**: Complete spell casting with background management
 - **Contract System**: Full contract saving and signing via AdvanceKey with Covenant integration
+- **AdvanceKey Enhanced Display**: BDO visualization with embedded 3D tour iframes
 - **Test Environment**: Comprehensive testing infrastructure
 
 ### 🚧 In Development

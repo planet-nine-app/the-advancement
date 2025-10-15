@@ -45,5 +45,12 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NFCReaderUsageDescription</key>
+	<string>The Advancement needs NFC access to read and write coordinating keys for secure authentication</string>
+	<key>com.apple.developer.nfc.readersession.formats</key>
+	<array>
+		<string>NDEF</string>
+		<string>TAG</string>
+	</array>
 </dict>
 </plist>

@@ -877,6 +877,29 @@ app.get('/api/nineum-balance', async (req, res) => {
     }
 });
 
+// API: Proxy to Sanora (Base 1)
+app.get('/api/sanora/*', async (req, res) => {
+    const sanoraPath = req.params[0];
+    const sanoraURL = `http://127.0.0.1:5121/${sanoraPath}${req.url.includes('?') ? '?' + req.url.split('?')[1] : ''}`;
+
+    console.log(`🔄 Proxying to Sanora: ${sanoraURL}`);
+
+    try {
+        const fetch = (await import('node-fetch')).default;
+        const response = await fetch(sanoraURL);
+        const data = await response.json();
+
+        res.json(data);
+    } catch (error) {
+        console.error('❌ Sanora proxy error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to connect to Sanora service',
+            details: error.message
+        });
+    }
+});
+
 // API: Health check
 app.get('/api/health', (req, res) => {
     res.json({
@@ -889,7 +912,8 @@ app.get('/api/health', (req, res) => {
             'multi-pubkey',
             'stripe-integration',
             'addie-coordination',
-            'magic-protocol'
+            'magic-protocol',
+            'sanora-proxy'
         ]
     });
 });

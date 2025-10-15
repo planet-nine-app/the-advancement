@@ -57,11 +57,13 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         let instantiationButton = createNavigationButton(title: "⚡ Instantiation", action: #selector(showInstantiation))
         let carrierBagButton = createNavigationButton(title: "🎒 Carrier Bag", action: #selector(showCarrierBag))
         let nexusButton = createNavigationButton(title: "🌐 Nexus", action: #selector(showNexus))
+        let nfcButton = createNavigationButton(title: "📱 NFC Keys", action: #selector(showNFC))
 
         stackView.addArrangedSubview(cookbookButton)
         stackView.addArrangedSubview(instantiationButton)
         stackView.addArrangedSubview(carrierBagButton)
         stackView.addArrangedSubview(nexusButton)
+        stackView.addArrangedSubview(nfcButton)
 
         // Position in top-right corner
         NSLayoutConstraint.activate([
@@ -116,6 +118,14 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 
         let nexusVC = NexusViewController()
         let navController = UINavigationController(rootViewController: nexusVC)
+        present(navController, animated: true)
+    }
+
+    @objc private func showNFC() {
+        NSLog("ADVANCEAPP: 📱 Showing NFC Keys")
+
+        let nfcVC = NFCViewController()
+        let navController = UINavigationController(rootViewController: nfcVC)
         present(navController, animated: true)
     }
 #endif

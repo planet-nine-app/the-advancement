@@ -8,12 +8,6 @@
 import UIKit
 import WebKit
 
-// MARK: - Fount Data Structures
-struct FountUser {
-    let uuid: String
-    let publicKey: String
-}
-
 extension Character {
     var isEmoji: Bool {
         guard let scalar = unicodeScalars.first else { return false }
@@ -26,7 +20,6 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     var demojiButton: UIButton!
     var contractActionButton: UIButton!
     var resultWebView: WKWebView!
-    var debugLabel: UILabel!
     var sessionless: Sessionless!
     var currentContractData: [String: Any]?
 
@@ -59,7 +52,6 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         setupDemojiButton()
         setupContractActionButton()
         setupWebView()
-        setupDebugLabel()
 
         NSLog("ADVANCEKEY: ✅ Demoji Keyboard ready")
     }
@@ -115,6 +107,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         let contentController = WKUserContentController()
         contentController.add(self, name: "consoleLog")
         contentController.add(self, name: "saveRecipe")
+        contentController.add(self, name: "saveToStacks")
         contentController.add(self, name: "addToCart")
         contentController.add(self, name: "signContract")
         contentController.add(self, name: "declineContract")
@@ -142,29 +135,10 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         self.view.addSubview(resultWebView)
 
         NSLayoutConstraint.activate([
-            resultWebView.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 40),
+            resultWebView.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 10),
             resultWebView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 10),
             resultWebView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -10),
             resultWebView.bottomAnchor.constraint(equalTo: demojiButton.topAnchor, constant: -40)
-        ])
-    }
-
-    func setupDebugLabel() {
-        debugLabel = UILabel()
-        debugLabel.text = "Select emojicoded text and tap DEMOJI"
-        debugLabel.font = UIFont.systemFont(ofSize: 12, weight: .medium)
-        debugLabel.textColor = UIColor.systemGray
-        debugLabel.textAlignment = .center
-        debugLabel.numberOfLines = 2
-        debugLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        self.view.addSubview(debugLabel)
-
-        NSLayoutConstraint.activate([
-            debugLabel.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 10),
-            debugLabel.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 10),
-            debugLabel.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -10),
-            debugLabel.heightAnchor.constraint(equalToConstant: 30)
         ])
     }
 
@@ -232,11 +206,8 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         let sparklesCount = fullContext.filter { $0 == "✨" }.count
         NSLog("ADVANCEKEY:   - Sparkles (✨) count: %d", sparklesCount)
 
-        debugLabel.text = "📱 Context: \(fullContext.count) chars, \(emojiCount) emoji, \(sparklesCount) ✨"
-
         // If we're getting no context, show a fallback test
         if fullContext.isEmpty {
-            debugLabel.text = "❌ No text context available"
             displayError("No Text Context", details: """
             The keyboard cannot access any text from the input field.
 
@@ -256,29 +227,31 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
         NSLog("ADVANCEKEY: ==========================================")
 
+        // Check for 8-emoji shortcode first (new BDO emojicode format)
+        if let shortcode = extract8EmojiShortcode(from: fullContext) {
+            NSLog("ADVANCEKEY: 🎨 Found 8-emoji shortcode: %@", shortcode)
+            decodeAndFetchBDO(emojicode: shortcode)
+        }
         // Look for emojicoded sequence (starts and ends with ✨)
-        if let emojicode = extractEmojicode(from: fullContext) {
+        else if let emojicode = extractEmojicode(from: fullContext) {
             NSLog("ADVANCEKEY: 🎨 Found complete emojicode: %@", String(emojicode.prefix(30)))
-            debugLabel.text = "Found complete emoji! Decoding..."
             decodeAndFetchBDO(emojicode: emojicode)
         } else if sparklesCount >= 1 {
             // Try to work with partial sequence if we have at least one sparkle
-            debugLabel.text = "Partial emoji found, trying decode..."
             let partialEmoji = "✨\(fullContext.filter { $0.isEmoji })✨"
             NSLog("ADVANCEKEY: 🔧 Attempting partial decode: %@", String(partialEmoji.prefix(30)))
             decodeAndFetchBDO(emojicode: partialEmoji)
         } else {
-            debugLabel.text = "No ✨emoji✨ sequence found"
             displayError("No Emoji Found", details: """
             Context: \(fullContext.prefix(200))
 
             Emoji count: \(emojiCount)
             Sparkles: \(sparklesCount)
 
-            Need: ✨...emojis...✨ pattern
+            Need: 8 consecutive emojis OR ✨...emojis...✨ pattern
             Selected: \(selectedText)
 
-            Try selecting more text or scrolling to include both ✨ sparkles.
+            Try selecting more text or scrolling to include the emoji sequence.
             """)
             NSLog("ADVANCEKEY: ❌ No emojicoded sequence found in context")
         }
@@ -321,6 +294,27 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         }
     }
 
+    func extract8EmojiShortcode(from text: String) -> String? {
+        // Extract all emojis from the text
+        let emojis = text.filter { $0.isEmoji }
+
+        // Check if we have exactly 8 consecutive emojis
+        if emojis.count == 8 {
+            NSLog("ADVANCEKEY: 🎯 Found exactly 8 emojis: %@", String(emojis))
+            return String(emojis)
+        }
+
+        // If more than 8, try to find a sequence of 8 consecutive emojis
+        if emojis.count > 8 {
+            // Look for patterns: try the first 8, last 8, or any 8 consecutive
+            let first8 = String(emojis.prefix(8))
+            NSLog("ADVANCEKEY: 🔍 Found %d emojis, trying first 8: %@", emojis.count, first8)
+            return first8
+        }
+
+        return nil
+    }
+
     func extractEmojicode(from text: String) -> String? {
         // Look for text between ✨ delimiters
         let pattern = "✨([^✨]+)✨"
@@ -346,7 +340,13 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     }
 
     func decodeAndFetchBDO(emojicode: String) {
-        debugLabel.text = "Decoding emoji..."
+        // Check if this is an 8-emoji shortcode (no sparkles)
+        let emojiOnly = emojicode.filter { $0.isEmoji }
+        if emojiOnly.count == 8 && !emojicode.contains("✨") {
+            NSLog("ADVANCEKEY: 🎯 Detected 8-emoji shortcode, fetching directly from /emoji endpoint")
+            fetchBDOByEmojicode(emojicode: String(emojiOnly))
+            return
+        }
 
         // JSON-encode the emojicode to safely pass it to JavaScript
         // We need to wrap it in an array to use JSONSerialization, then extract the encoded string
@@ -408,7 +408,6 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         resultWebView.evaluateJavaScript(jsDecodeCode) { [weak self] result, error in
             if let error = error {
                 NSLog("ADVANCEKEY: ❌ JS decode error: %@", error.localizedDescription)
-                self?.debugLabel.text = "JS Error: \(error.localizedDescription)"
                 self?.displayError("JavaScript Error", details: error.localizedDescription)
                 return
             }
@@ -440,18 +439,81 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             // Check for successful decode
             if let decodedHex = response["result"] as? String {
                 NSLog("ADVANCEKEY: 🔓 Decoded hex: %@", decodedHex)
-                self?.debugLabel.text = "✅ Decoded! Fetching BDO..."
                 self?.fetchBDOData(bdoPubKey: decodedHex)
             } else if let errorMsg = response["error"] as? String {
                 NSLog("ADVANCEKEY: ❌ Decode failed: %@", errorMsg)
                 if let stack = response["stack"] as? String {
                     NSLog("ADVANCEKEY: ❌ Error stack: %@", stack)
                 }
-                self?.debugLabel.text = "Decode failed"
                 self?.displayError("Emoji Decode Failed", details: errorMsg)
             } else {
                 NSLog("ADVANCEKEY: ❌ Unexpected response format: %@", String(describing: response))
                 self?.displayError("Unexpected Response", details: String(describing: response))
+            }
+        }
+    }
+
+    func fetchBDOByEmojicode(emojicode: String) {
+        // Fetch BDO data directly by emojicode from /emoji/:emojicode endpoint
+        let bdoUrl = "http://127.0.0.1:5114/"
+
+        Task {
+            do {
+                // URL encode the emojicode
+                guard let encodedEmojicode = emojicode.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) else {
+                    throw NSError(domain: "EncodingError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to encode emojicode"])
+                }
+
+                let url = URL(string: "\(bdoUrl)emoji/\(encodedEmojicode)")!
+                NSLog("ADVANCEKEY: 🌐 Fetching BDO from: %@", url.absoluteString)
+
+                let (data, response) = try await URLSession.shared.data(from: url)
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    throw NSError(domain: "NetworkError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+                }
+
+                NSLog("ADVANCEKEY: 📡 Response status: %d", httpResponse.statusCode)
+
+                guard httpResponse.statusCode == 200 else {
+                    throw NSError(domain: "NetworkError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "HTTP \(httpResponse.statusCode)"])
+                }
+
+                guard let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                    throw NSError(domain: "JSONError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to parse JSON"])
+                }
+
+                // Extract the BDO from the response
+                // Response format: {emojicode, pubKey, bdo: {...}, createdAt}
+                guard let bdoData = jsonObject["bdo"] as? [String: Any] else {
+                    throw NSError(domain: "DataError", code: 0, userInfo: [NSLocalizedDescriptionKey: "No BDO data in response"])
+                }
+
+                let pubKey = jsonObject["pubKey"] as? String ?? "unknown"
+
+                NSLog("ADVANCEKEY: ✅ BDO fetched successfully")
+                NSLog("ADVANCEKEY: 📦 PubKey: %@", String(pubKey.prefix(20)))
+
+                DispatchQueue.main.async { [weak self] in
+                    self?.displayBDOContent(cardData: ["bdo": bdoData], bdoPubKey: pubKey)
+                }
+
+            } catch {
+                NSLog("ADVANCEKEY: ❌ Emojicode fetch error: %@", error.localizedDescription)
+                DispatchQueue.main.async { [weak self] in
+                    self?.displayError("Emojicode Fetch Failed", details: """
+                    Error: \(error.localizedDescription)
+
+                    Attempted to fetch:
+                    emojicode: \(emojicode)
+                    URL: \(bdoUrl)emoji/\(emojicode)
+
+                    Make sure:
+                    • BDO service is running on port 5114
+                    • The emojicode exists in the database
+                    • The BDO was created as a public BDO
+                    """)
+                }
             }
         }
     }
@@ -473,7 +535,6 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             } catch {
                 NSLog("ADVANCEKEY: ❌ BDO fetch error: %@", error.localizedDescription)
                 DispatchQueue.main.async { [weak self] in
-                    self?.debugLabel.text = "BDO fetch failed"
                     self?.displayError("BDO Fetch Failed", details: """
                     Error: \(error.localizedDescription)
 
@@ -689,10 +750,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     }
 
     func fetchBDOFromFount(bdoPubKey: String) async throws -> [String: Any] {
-        // First ensure we have a Fount user
-        let fountUser = try await ensureFountUser()
-
-        // Try to fetch existing BDO
+        // Fetch BDO by its public key
         let fountUrl = "http://127.0.0.1:5117/bdo/\(bdoPubKey)"
 
         guard let url = URL(string: fountUrl) else {
@@ -709,14 +767,8 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
         NSLog("ADVANCEKEY: 📡 Fount response status: %d", httpResponse.statusCode)
 
-        if httpResponse.statusCode == 404 {
-            // BDO not found in Fount, create it
-            NSLog("ADVANCEKEY: 📦 BDO not found in Fount, creating it with user: %@", fountUser.uuid)
-            return try await createBDOInFount(bdoPubKey: bdoPubKey, fountUser: fountUser)
-        }
-
         guard httpResponse.statusCode == 200 else {
-            throw NSError(domain: "FountError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Fount error: \(httpResponse.statusCode)"])
+            throw NSError(domain: "FountError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "BDO not found in Fount (status: \(httpResponse.statusCode))"])
         }
 
         let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any]
@@ -728,133 +780,93 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         return bdoData
     }
 
-    func ensureFountUser() async throws -> FountUser {
-        // Generate or retrieve keypair for Fount
-        let keyPair = generateOrRetrieveKeyPair()
+    // MARK: - CarrierBag Management
+    // Note: Fount user and carrierBag are created during onboarding in the main app.
+    // AdvanceKey just fetches and updates the existing carrierBag.
 
-        NSLog("ADVANCEKEY: 👤 Creating Fount user with pubKey: %@", keyPair.publicKey)
+    func saveRoomToCarrierBag(roomData: [String: Any], title: String, collection: String) async throws -> Bool {
+        NSLog("ADVANCEKEY: 🏠 Saving room to carrierBag: %@", title)
 
-        return try await createFountUser(keyPair: keyPair)
-    }
-
-    func generateOrRetrieveKeyPair() -> (publicKey: String, privateKey: String) {
-        // For now, use the same pubkey from our recipe
-        // In production, you'd generate proper keypairs or retrieve from keychain
-        let pubKey = "02a3b4c5d6e7f8910111213141516171819202122232425262728293031323334"
-        let privKey = "a3b4c5d6e7f8910111213141516171819202122232425262728293031323334" // Example private key
-
-        return (publicKey: pubKey, privateKey: privKey)
-    }
-
-    func createFountUser(keyPair: (publicKey: String, privateKey: String)) async throws -> FountUser {
-        let createUserUrl = "http://127.0.0.1:5117/users"
-
-        guard let url = URL(string: createUserUrl) else {
-            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid Fount create user URL"])
+        // Get user UUID from SharedUserDefaults (set during onboarding)
+        guard let userUUID = SharedUserDefaults.getCovenantUserUUID() else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "No Fount user found. Please complete onboarding first."])
         }
 
-        let requestBody: [String: Any] = [
-            "publicKey": keyPair.publicKey,
-            "signature": "placeholder" // In production, sign with private key
+        // Get user's public key from Sessionless
+        let sessionless = Sessionless()
+        guard let keys = sessionless.getKeys() else {
+            throw NSError(domain: "SessionlessError", code: 0, userInfo: [NSLocalizedDescriptionKey: "No Sessionless keys found"])
+        }
+
+        NSLog("ADVANCEKEY: 🔍 Using Fount user: %@", userUUID)
+
+        // Fetch current carrierBag from BDO service
+        let bdoUrl = "http://127.0.0.1:5114/user/\(userUUID)/bdo"
+        guard let url = URL(string: bdoUrl) else {
+            throw NSError(domain: "BDOError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid BDO URL"])
+        }
+
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw NSError(domain: "BDOError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to fetch carrierBag"])
+        }
+
+        // BDO response format: { uuid: "...", bdo: {...carrierBag data...} }
+        guard let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              var carrierBag = jsonObject["bdo"] as? [String: Any] else {
+            throw NSError(domain: "BDOError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid carrierBag format"])
+        }
+
+        // Get existing stacks collection or create empty array
+        var stacks = carrierBag["stacks"] as? [[String: Any]] ?? []
+
+        // Create room entry with metadata
+        let roomEntry: [String: Any] = [
+            "type": "room",
+            "title": title,
+            "roomData": roomData,
+            "savedAt": ISO8601DateFormatter().string(from: Date())
         ]
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        // Add room to stacks
+        stacks.append(roomEntry)
+        carrierBag["stacks"] = stacks
+        carrierBag["lastUpdated"] = ISO8601DateFormatter().string(from: Date())
 
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
-        } catch {
-            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to serialize user creation data: \(error.localizedDescription)"])
+        // Update carrierBag in BDO service
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let hash = ""
+        let message = timestamp + hash + keys.publicKey
+        guard let signature = sessionless.sign(message: message) else {
+            throw NSError(domain: "SessionlessError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to sign update"])
         }
 
-        NSLog("ADVANCEKEY: 📡 Creating Fount user...")
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
-        }
-
-        NSLog("ADVANCEKEY: 📡 Fount create user response status: %d", httpResponse.statusCode)
-
-        guard httpResponse.statusCode == 200 || httpResponse.statusCode == 201 else {
-            throw NSError(domain: "FountError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Failed to create Fount user: \(httpResponse.statusCode)"])
-        }
-
-        let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        guard let userData = jsonObject,
-              let uuid = userData["uuid"] as? String else {
-            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid user data from Fount"])
-        }
-
-        NSLog("ADVANCEKEY: ✅ Fount user created: %@", uuid)
-
-        // After creating user, create their carrierBag BDO with empty cookbook
-        try await createUserCarrierBag(userUuid: uuid, publicKey: keyPair.publicKey)
-
-        return FountUser(uuid: uuid, publicKey: keyPair.publicKey)
-    }
-
-    func createUserCarrierBag(userUuid: String, publicKey: String) async throws {
-        NSLog("ADVANCEKEY: 🎒 Creating carrierBag BDO for user: %@", userUuid)
-
-        // Create the user's carrierBag BDO with their pubKey
-        let carrierBagPayload: [String: Any] = [
-            "pubKey": publicKey,
-            "owner": userUuid,
-            "data": [
-                "type": "carrierBag",
-                "carrierBag": [
-                    "spaceTime": [],
-                    "cookbook": [],
-                    "apothecary": [],
-                    "gallery": [],
-                    "bookshelf": [],
-                    "familiarPen": [],
-                    "machinery": [],
-                    "metallics": [],
-                    "music": [],
-                    "oracular": [],
-                    "greenHouse": [],
-                    "closet": [],
-                    "games": [],
-                    "events": [],
-                    "contracts": [],
-                    "created": ISO8601DateFormatter().string(from: Date()),
-                    "lastUpdated": ISO8601DateFormatter().string(from: Date())
-                ]
-            ]
+        let updatePayload: [String: Any] = [
+            "pubKey": keys.publicKey,
+            "timestamp": timestamp,
+            "hash": hash,
+            "signature": signature,
+            "bdo": carrierBag
         ]
 
-        let fountCreateUrl = "http://127.0.0.1:5117/bdo"
-        guard let url = URL(string: fountCreateUrl) else {
-            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid Fount create URL"])
+        let updateUrl = "http://127.0.0.1:5114/user/\(userUUID)/bdo"
+        guard let url = URL(string: updateUrl) else {
+            throw NSError(domain: "BDOError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid BDO update URL"])
         }
 
         var request = URLRequest(url: url)
-        request.httpMethod = "POST"
+        request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: updatePayload)
 
-        do {
-            request.httpBody = try JSONSerialization.data(withJSONObject: carrierBagPayload)
-        } catch {
-            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to serialize carrierBag data: \(error.localizedDescription)"])
+        let (_, updateResponse) = try await URLSession.shared.data(for: request)
+        guard let httpUpdateResponse = updateResponse as? HTTPURLResponse,
+              httpUpdateResponse.statusCode == 200 else {
+            throw NSError(domain: "BDOError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to update carrierBag"])
         }
 
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
-        }
-
-        NSLog("ADVANCEKEY: 📡 CarrierBag creation response status: %d", httpResponse.statusCode)
-
-        if httpResponse.statusCode == 201 || httpResponse.statusCode == 200 {
-            NSLog("ADVANCEKEY: ✅ CarrierBag BDO created successfully")
-        } else {
-            NSLog("ADVANCEKEY: ⚠️ CarrierBag creation failed with status %d", httpResponse.statusCode)
-        }
+        NSLog("ADVANCEKEY: ✅ Room saved successfully to carrierBag stacks collection")
+        return true
     }
 
     func createBDOInFount(bdoPubKey: String, fountUser: FountUser) async throws -> [String: Any] {
@@ -942,8 +954,6 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     }
 
     func displayBDOContent(cardData: [String: Any], bdoPubKey: String) {
-        debugLabel.text = "Displaying SVG..."
-
         // Extract SVG content from the BDO data
         var svgContent: String?
 
@@ -961,7 +971,6 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         }
 
         guard let svg = svgContent else {
-            debugLabel.text = "No SVG found for \(bdoPubKey.prefix(8))..."
             NSLog("❌ No SVG content in BDO data for pubKey: %@", bdoPubKey)
             NSLog("❌ BDO data structure: %@", String(describing: cardData))
             displayError("No SVG Content Found", details: """
@@ -993,8 +1002,9 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    height: 100vh;
-                    overflow: hidden;
+                    min-height: 100vh;
+                    overflow-y: auto;
+                    overflow-x: hidden;
                 }
                 #banner {
                     width: 100%;
@@ -1016,8 +1026,8 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                     color: white;
                 }
                 #svg-container {
-                    flex: 1;
                     width: 100%;
+                    height: 100px;
                     display: flex;
                     justify-content: center;
                     align-items: flex-start;
@@ -1027,17 +1037,48 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                     background: green;
                     box-sizing: border-box;
                 }
+                #iframe-container {
+                    width: 100%;
+                    height: 200px;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    background: #000;
+                    box-sizing: border-box;
+                }
+                #matterport-iframe {
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                }
                 svg {
                     width: 100%;
                     height: auto;
                     cursor: pointer;
                     display: block;
                 }
-                svg rect[spell] {
+                svg rect[spell], svg text[spell], svg [spell] {
                     transition: opacity 0.2s;
+                    cursor: pointer;
+                    position: relative;
                 }
-                svg rect[spell]:hover {
+                svg rect[spell]:hover, svg text[spell]:hover, svg [spell]:hover {
                     opacity: 0.8;
+                }
+                /* Tooltip styling */
+                .spell-tooltip {
+                    position: absolute;
+                    background: rgba(0, 0, 0, 0.9);
+                    color: white;
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    font-size: 12px;
+                    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                    white-space: nowrap;
+                    pointer-events: none;
+                    z-index: 1000;
+                    opacity: 0;
+                    transition: opacity 0.2s;
                 }
                 /* Hide sign elements by default */
                 svg rect[spell="sign"],
@@ -1057,6 +1098,9 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             <div id="banner"></div>
             <div id="svg-container">
                 \(svg)
+            </div>
+            <div id="iframe-container">
+                <iframe id="matterport-iframe" src="https://my.matterport.com/show/?m=j8sXCrZxaM6" allow="xr-spatial-tracking"></iframe>
             </div>
             <script>
                 // BDO data for spell handling
@@ -1122,6 +1166,106 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                     }
                 })();
 
+                // Spell descriptions for tooltips
+                const spellDescriptions = {
+                    'collect': 'Save to your collection',
+                    'save': 'Save to your collection',
+                    'add-to-cart': 'Add to shopping cart',
+                    'sign': 'Sign this contract step',
+                    'decline': 'Decline this contract',
+                    'share': 'Share with others',
+                    'magic': 'Cast magical spell',
+                    'buy': 'Purchase this item',
+                    'purchaseLesson': 'Purchase this lesson',
+                    'signInMoney': 'Complete payment and sign contract',
+                    'purchase': 'Process payment',
+                    'selection': 'Add to magistack selection',
+                    'magicard': 'Navigate to another card',
+                    'lookup': 'Find product from selections'
+                };
+
+                // Create tooltip element
+                const tooltip = document.createElement('div');
+                tooltip.className = 'spell-tooltip';
+                document.body.appendChild(tooltip);
+
+                let tooltipTimeout = null;
+                let currentSpellElement = null;
+
+                function showTooltip(element, touch) {
+                    const spell = element.getAttribute('spell');
+                    const spellDescription = element.getAttribute('spell-description');
+
+                    if (spell) {
+                        let tooltipText = spellDescription || spellDescriptions[spell] || `Will cast ${spell}`;
+                        tooltip.textContent = tooltipText;
+                        tooltip.style.opacity = '1';
+
+                        // Position tooltip above the element
+                        const rect = element.getBoundingClientRect();
+                        tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
+                        tooltip.style.top = (rect.top - tooltip.offsetHeight - 5) + 'px';
+                    }
+                }
+
+                function hideTooltip() {
+                    tooltip.style.opacity = '0';
+                    currentSpellElement = null;
+                    if (tooltipTimeout) {
+                        clearTimeout(tooltipTimeout);
+                        tooltipTimeout = null;
+                    }
+                }
+
+                // Touch events for iOS (long press to show tooltip)
+                document.addEventListener('touchstart', function(e) {
+                    const spell = e.target.getAttribute('spell');
+                    if (spell) {
+                        currentSpellElement = e.target;
+                        // Show tooltip after 500ms long press
+                        tooltipTimeout = setTimeout(() => {
+                            showTooltip(e.target, e.touches[0]);
+                        }, 500);
+                    }
+                });
+
+                document.addEventListener('touchmove', function(e) {
+                    // Hide tooltip if user moves finger
+                    hideTooltip();
+                });
+
+                document.addEventListener('touchend', function(e) {
+                    // Clear the timeout but keep tooltip visible if it's already shown
+                    if (tooltipTimeout) {
+                        clearTimeout(tooltipTimeout);
+                        tooltipTimeout = null;
+                    }
+
+                    // Hide tooltip after a delay if shown
+                    if (tooltip.style.opacity === '1') {
+                        setTimeout(hideTooltip, 1500);
+                    }
+                });
+
+                document.addEventListener('touchcancel', function(e) {
+                    hideTooltip();
+                });
+
+                // Also support mouse events for iPad with mouse/trackpad
+                document.addEventListener('mouseover', function(e) {
+                    const spell = e.target.getAttribute('spell');
+                    if (spell) {
+                        showTooltip(e.target, null);
+                    }
+                });
+
+                document.addEventListener('mouseout', function(e) {
+                    const spell = e.target.getAttribute('spell');
+                    if (spell) {
+                        hideTooltip();
+                    }
+                });
+
                 // Handle spell button clicks
                 document.addEventListener('click', function(e) {
                     const spell = e.target.getAttribute('spell');
@@ -1133,21 +1277,31 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 });
 
                 function handleSpell(spell, data, spellComponents) {
-                    // Parse spell-components if present (format: "key1:value1;key2:value2")
-                    const components = {};
+                    // Parse spell-components - try JSON first, then fallback to key:value format
+                    let components = {};
                     if (spellComponents) {
-                        spellComponents.split(';').forEach(pair => {
-                            const [key, value] = pair.split(':');
-                            if (key && value) {
-                                components[key.trim()] = value.trim();
-                            }
-                        });
+                        try {
+                            components = JSON.parse(spellComponents);
+                        } catch (e) {
+                            // Fallback to key:value format
+                            spellComponents.split(';').forEach(pair => {
+                                const [key, value] = pair.split(':');
+                                if (key && value) {
+                                    components[key.trim()] = value.trim();
+                                }
+                            });
+                        }
                     }
+
+                    console.log('🪄 Casting spell:', spell, 'with components:', components);
 
                     switch(spell) {
                         case 'collect':
                         case 'save':
                             saveRecipeToApp(data);
+                            break;
+                        case 'saveToStacks':
+                            saveToStacks(data, components);
                             break;
                         case 'add-to-cart':
                             addToCart(data, components);
@@ -1162,10 +1316,29 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                             shareRecipe(data);
                             break;
                         case 'magic':
-                            castMagic(data);
+                            castMagic(data, components);
+                            break;
+                        case 'purchaseLesson':
+                            purchaseLesson(data, components);
+                            break;
+                        case 'signInMoney':
+                            signInMoney(data, components);
+                            break;
+                        case 'purchase':
+                            purchaseItem(data, components);
+                            break;
+                        case 'selection':
+                            handleSelection(data, components);
+                            break;
+                        case 'magicard':
+                            navigateToCard(data, components);
+                            break;
+                        case 'lookup':
+                            lookupProduct(data, components);
                             break;
                         default:
-                            alert('Unknown spell: ' + spell);
+                            // Generic fallback for unknown spells
+                            handleGenericSpell(spell, data, components);
                     }
                 }
 
@@ -1302,8 +1475,201 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                     alert('📤 Share recipe: ' + (data.title || 'Recipe'));
                 }
 
-                function castMagic(data) {
-                    alert('🪄 Kitchen magic cast on: ' + (data.title || 'Recipe'));
+                function saveToStacks(data, components) {
+                    try {
+                        // Parse roomData from spell-components
+                        let roomData = {};
+                        if (components.roomData) {
+                            try {
+                                roomData = JSON.parse(decodeURIComponent(components.roomData));
+                            } catch (e) {
+                                console.error('Failed to parse roomData:', e);
+                                roomData = components;
+                            }
+                        } else {
+                            roomData = data.bdo || data;
+                        }
+
+                        console.log('💾 Saving room to stacks:', roomData);
+
+                        // Send message to Swift to save the room
+                        window.webkit.messageHandlers.saveToStacks.postMessage({
+                            action: 'saveToStacks',
+                            type: 'room',
+                            title: roomData.name || roomData.title || 'Room',
+                            collection: 'stacks',
+                            roomData: roomData,
+                            fullBDO: data
+                        });
+
+                        // Show success feedback
+                        alert('✅ Room saved to Stacks!');
+
+                    } catch (error) {
+                        console.error('Error saving to stacks:', error);
+                        alert('❌ Failed to save room: ' + error.message);
+                    }
+                }
+
+                function castMagic(data, components) {
+                    console.log('🪄 Generic magic spell:', components);
+                    alert('🪄 Magic cast: ' + (data.title || 'Item'));
+                }
+
+                function purchaseLesson(data, components) {
+                    try {
+                        console.log('📚 Purchase lesson spell:', components);
+                        const lessonId = components.lessonId || components.productId || 'unknown';
+                        const price = components.price || components.amount || 0;
+                        const lessonTitle = data.title || components.title || 'Lesson';
+
+                        // Send to Swift to initiate purchase flow
+                        window.webkit.messageHandlers.purchaseLesson.postMessage({
+                            action: 'purchaseLesson',
+                            lessonId: lessonId,
+                            title: lessonTitle,
+                            price: price,
+                            components: components,
+                            fullBDO: data
+                        });
+
+                        alert('📚 Starting lesson purchase: ' + lessonTitle);
+                    } catch (error) {
+                        console.error('Error purchasing lesson:', error);
+                        alert('❌ Failed to purchase lesson: ' + error.message);
+                    }
+                }
+
+                function signInMoney(data, components) {
+                    try {
+                        console.log('💰 Sign in money spell:', components);
+                        const amount = components.amount || 0;
+                        const contractUuid = components.contractUuid || 'unknown';
+
+                        // Send to Swift to process payment and sign contract
+                        window.webkit.messageHandlers.signInMoney.postMessage({
+                            action: 'signInMoney',
+                            amount: amount,
+                            contractUuid: contractUuid,
+                            components: components,
+                            fullBDO: data
+                        });
+
+                        alert('💰 Processing payment: $' + (amount / 100).toFixed(2));
+                    } catch (error) {
+                        console.error('Error processing payment:', error);
+                        alert('❌ Failed to process payment: ' + error.message);
+                    }
+                }
+
+                function purchaseItem(data, components) {
+                    try {
+                        console.log('💳 Purchase item spell:', components);
+                        const productId = components.productId || 'unknown';
+                        const amount = components.amount || 0;
+                        const mp = components.mp;
+
+                        // Send to Swift to process purchase
+                        window.webkit.messageHandlers.purchase.postMessage({
+                            action: 'purchase',
+                            productId: productId,
+                            amount: amount,
+                            mp: mp,
+                            components: components,
+                            fullBDO: data
+                        });
+
+                        alert('💳 Processing purchase: $' + (amount / 100).toFixed(2));
+                    } catch (error) {
+                        console.error('Error processing purchase:', error);
+                        alert('❌ Failed to process purchase: ' + error.message);
+                    }
+                }
+
+                function handleSelection(data, components) {
+                    try {
+                        console.log('🎯 Selection spell:', components);
+                        // Add to in-memory selection storage
+                        if (!window.magistackSelections) {
+                            window.magistackSelections = [];
+                        }
+
+                        const selection = {
+                            ...components,
+                            timestamp: new Date().toISOString(),
+                            id: 'selection_' + Date.now()
+                        };
+
+                        window.magistackSelections.push(selection);
+                        console.log('📦 Added to magistack:', selection);
+                        alert('✅ Selection added (' + window.magistackSelections.length + ' total)');
+                    } catch (error) {
+                        console.error('Error handling selection:', error);
+                        alert('❌ Failed to add selection: ' + error.message);
+                    }
+                }
+
+                function navigateToCard(data, components) {
+                    try {
+                        console.log('🧭 Navigate to card:', components);
+                        const bdoPubKey = components.bdoPubKey || 'unknown';
+
+                        // Send to Swift to navigate to new card
+                        window.webkit.messageHandlers.navigateToCard.postMessage({
+                            action: 'navigate',
+                            bdoPubKey: bdoPubKey,
+                            components: components
+                        });
+
+                        alert('🧭 Navigating to card...');
+                    } catch (error) {
+                        console.error('Error navigating to card:', error);
+                        alert('❌ Failed to navigate: ' + error.message);
+                    }
+                }
+
+                function lookupProduct(data, components) {
+                    try {
+                        console.log('🔍 Lookup product spell:', components);
+                        const catalog = components.catalog || {};
+
+                        if (!window.magistackSelections || window.magistackSelections.length === 0) {
+                            throw new Error('No magistack selections for lookup');
+                        }
+
+                        // Send to Swift to perform lookup
+                        window.webkit.messageHandlers.lookupProduct.postMessage({
+                            action: 'lookup',
+                            catalog: catalog,
+                            selections: window.magistackSelections,
+                            components: components
+                        });
+
+                        alert('🔍 Looking up product...');
+                    } catch (error) {
+                        console.error('Error looking up product:', error);
+                        alert('❌ Failed to lookup product: ' + error.message);
+                    }
+                }
+
+                function handleGenericSpell(spell, data, components) {
+                    console.log('⚡ Generic spell handler:', spell, components);
+
+                    // Try to send to Swift for handling
+                    try {
+                        window.webkit.messageHandlers.genericSpell.postMessage({
+                            action: 'genericSpell',
+                            spell: spell,
+                            components: components,
+                            fullBDO: data
+                        });
+
+                        alert('⚡ Casting ' + spell + ' spell...');
+                    } catch (error) {
+                        // Fallback if Swift handler doesn't exist
+                        console.warn('No Swift handler for spell:', spell);
+                        alert('⚡ Unknown spell: ' + spell + '\\n\\nThis spell is not yet implemented.');
+                    }
                 }
             </script>
         </body>
@@ -1311,7 +1677,6 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         """
 
         resultWebView.loadHTMLString(html, baseURL: nil)
-        debugLabel.text = "✅ Recipe actions loaded!"
 
         NSLog("ADVANCEKEY: ✅ SVG displayed in keyboard")
     }
@@ -1417,6 +1782,8 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             NSLog("ADVANCEKEY: 🟡 JS Console: %@", String(describing: message.body))
         } else if message.name == "saveRecipe" {
             handleSaveRecipeMessage(message.body)
+        } else if message.name == "saveToStacks" {
+            handleSaveToStacksMessage(message.body)
         } else if message.name == "addToCart" {
             handleAddToCartMessage(message.body)
         } else if message.name == "signContract" {
@@ -1459,6 +1826,34 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 self.contractActionButton.backgroundColor = UIColor.systemGray
                 self.contractActionButton.isEnabled = false
                 NSLog("ADVANCEKEY: 👁️ User can only view this contract")
+            }
+        }
+    }
+
+    private func handleSaveToStacksMessage(_ messageBody: Any) {
+        NSLog("ADVANCEKEY: 🏠 Save to stacks message received")
+
+        guard let messageDict = messageBody as? [String: Any],
+              let action = messageDict["action"] as? String,
+              action == "saveToStacks" else {
+            NSLog("ADVANCEKEY: ❌ Invalid save to stacks message format")
+            return
+        }
+
+        let type = messageDict["type"] as? String ?? "room"
+        let title = messageDict["title"] as? String ?? "Untitled Room"
+        let collection = messageDict["collection"] as? String ?? "stacks"
+        let roomData = messageDict["roomData"] as? [String: Any] ?? [:]
+
+        NSLog("ADVANCEKEY: 🏠 Saving room to stacks: %@", title)
+
+        // Save room to Fount carrierBag's stacks collection
+        Task {
+            do {
+                let success = try await saveRoomToCarrierBag(roomData: roomData, title: title, collection: collection)
+                NSLog("ADVANCEKEY: 🏠 Room save %@: %@", success ? "successful" : "failed", title)
+            } catch {
+                NSLog("ADVANCEKEY: ❌ Failed to save room: %@", error.localizedDescription)
             }
         }
     }
@@ -1684,17 +2079,20 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     func updateCarrierBagCookbook(bdoPubKey: String, type: String, title: String) async throws {
         NSLog("ADVANCEKEY: 🎒 Updating carrierBag cookbook with recipe: %@", title)
 
-        // Get the user's keypair to find their carrierBag
-        let keyPair = generateOrRetrieveKeyPair()
+        // Get user's public key from Sessionless
+        let sessionless = Sessionless()
+        guard let keys = sessionless.getKeys() else {
+            throw NSError(domain: "SessionlessError", code: 0, userInfo: [NSLocalizedDescriptionKey: "No Sessionless keys found"])
+        }
 
         // First, fetch the current carrierBag BDO
-        let currentCarrierBag = try await fetchCarrierBagBDO(publicKey: keyPair.publicKey)
+        let currentCarrierBag = try await fetchCarrierBagBDO(publicKey: keys.publicKey)
 
         // Add the new recipe to the cookbook
         let updatedCarrierBag = try addRecipeToCarrierBag(currentCarrierBag, bdoPubKey: bdoPubKey, type: type, title: title)
 
         // Update the BDO in Fount
-        try await updateCarrierBagBDO(updatedCarrierBag, publicKey: keyPair.publicKey)
+        try await updateCarrierBagBDO(updatedCarrierBag, publicKey: keys.publicKey)
 
         NSLog("ADVANCEKEY: ✅ CarrierBag cookbook updated successfully")
     }

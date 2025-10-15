@@ -193,14 +193,17 @@ class OnboardingViewController: UIViewController {
         }
 
         // Create Fount user
-        try await createFountUser(pubKey: userPubKey, timestamp: timestamp, signature: signature)
+        let userUUID = try await createFountUser(pubKey: userPubKey, timestamp: timestamp, signature: signature)
+
+        // Create carrierBag for the user
+        try await createCarrierBag(userUUID: userUUID, pubKey: userPubKey)
 
         // TODO: Create users for other services (Sanora, Dolores, etc.)
 
         NSLog("✅ Planet Nine users created successfully!")
     }
 
-    private func createFountUser(pubKey: String, timestamp: String, signature: String) async throws {
+    private func createFountUser(pubKey: String, timestamp: String, signature: String) async throws -> String {
         updateLoadingStatus("Creating Fount user...")
 
         let url = URL(string: "http://localhost:5117/user/create")!
@@ -229,16 +232,79 @@ class OnboardingViewController: UIViewController {
 
         let responseJSON = try JSONSerialization.jsonObject(with: data) as? [String: Any]
 
-        if let userUUID = responseJSON?["uuid"] as? String {
-            SharedUserDefaults.setCovenantUserUUID(userUUID)
-            NSLog("✅ Fount user created: %@", userUUID)
-        } else {
+        guard let userUUID = responseJSON?["uuid"] as? String else {
             // Log the actual response to help debug
             if let responseString = String(data: data, encoding: .utf8) {
                 NSLog("⚠️ Fount response: %@", responseString)
             }
             throw NSError(domain: "ParseError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to parse Fount user response"])
         }
+
+        SharedUserDefaults.setCovenantUserUUID(userUUID)
+        NSLog("✅ Fount user created: %@", userUUID)
+
+        return userUUID
+    }
+
+    private func createCarrierBag(userUUID: String, pubKey: String) async throws {
+        updateLoadingStatus("Creating carrierBag...")
+
+        // BDO service endpoint (not Fount!)
+        let url = URL(string: "http://localhost:5114/user/\(userUUID)/bdo")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        // Create empty carrierBag with all collections
+        let carrierBagData: [String: Any] = [
+            "type": "carrierBag",
+            "cookbook": [],
+            "apothecary": [],
+            "gallery": [],
+            "bookshelf": [],
+            "familiarPen": [],
+            "machinery": [],
+            "metallics": [],
+            "music": [],
+            "oracular": [],
+            "greenHouse": [],
+            "closet": [],
+            "games": [],
+            "events": [],
+            "contracts": [],
+            "stacks": []
+        ]
+
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let hash = ""
+        let sessionless = Sessionless()
+        let message = timestamp + hash + pubKey
+        guard let signature = sessionless.sign(message: message) else {
+            throw NSError(domain: "SignatureError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to sign carrierBag creation"])
+        }
+
+        let body: [String: Any] = [
+            "pubKey": pubKey,
+            "timestamp": timestamp,
+            "hash": hash,
+            "signature": signature,
+            "bdo": carrierBagData
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "InvalidResponse", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response from BDO service"])
+        }
+
+        guard httpResponse.statusCode == 200 || httpResponse.statusCode == 201 else {
+            let errorMessage = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw NSError(domain: "BDOError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "CarrierBag creation failed: \(errorMessage)"])
+        }
+
+        NSLog("✅ CarrierBag created successfully")
     }
 
     private func updateLoadingStatus(_ status: String) {

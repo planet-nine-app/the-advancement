@@ -94,6 +94,9 @@
 				CookbookViewController.swift,
 				InstantiationViewController.swift,
 				NexusViewController.swift,
+				NFCService.swift,
+				NFCViewController.swift,
+				Resources/crypto.js,
 				Resources/Icon.png,
 				Resources/Script.js,
 				Resources/Style.css,
@@ -124,6 +127,7 @@
 				CookbookViewController.swift,
 				InstantiationViewController.swift,
 				NexusViewController.swift,
+				Resources/crypto.js,
 				Resources/Icon.png,
 				Resources/Script.js,
 				Resources/Style.css,
@@ -141,11 +145,12 @@
 		CA54CB5E2E5A0A99007D062D /* Exceptions for "Shared (Extension)" folder in "The Advancement Extension (iOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				BDOService.swift,
+				emojicoding.js,
 				Resources/_locales,
 				Resources/adversement.js,
 				Resources/background.js,
 				Resources/content.js,
-				Resources/crypto.js,
 				Resources/ecs.js,
 				"Resources/entertainment-system.js",
 				Resources/ficus.jpg,
@@ -169,11 +174,12 @@
 		CA54CB5F2E5A0A99007D062D /* Exceptions for "Shared (Extension)" folder in "The Advancement Extension (macOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				BDOService.swift,
+				emojicoding.js,
 				Resources/_locales,
 				Resources/adversement.js,
 				Resources/background.js,
 				Resources/content.js,
-				Resources/crypto.js,
 				Resources/ecs.js,
 				"Resources/entertainment-system.js",
 				Resources/ficus.jpg,
@@ -197,7 +203,6 @@
 		CA54CBB92E5A2BC6007D062D /* Exceptions for "Shared (Extension)" folder in "The Advancement (iOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Resources/crypto.js,
 				Resources/fonts.css,
 				"Resources/fonts/FFVI-Damage-v3-LC-BW.otf",
 				"Resources/fonts/FFVI-Damage-v3-LC-KO.otf",
@@ -209,7 +214,6 @@
 		CA54CBBA2E5A2BC6007D062D /* Exceptions for "Shared (Extension)" folder in "The Advancement (macOS)" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Resources/crypto.js,
 				Resources/fonts.css,
 				"Resources/fonts/FFVI-Damage-v3-LC-BW.otf",
 				"Resources/fonts/FFVI-Damage-v3-LC-KO.otf",
@@ -228,8 +232,37 @@
 		CA918CF42E94671E002D1D70 /* Exceptions for "Shared (Extension)" folder in "AdvanceShare" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Resources/crypto.js,
+				BDOService.swift,
+				emojicoding.js,
 				Sessionless.swift,
+			);
+			target = CA918CE02E9465F6002D1D70 /* AdvanceShare */;
+		};
+		CA918D0D2E9F653E002D1D70 /* Exceptions for "Shared (App)" folder in "The Advancement Extension (iOS)" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Resources/crypto.js,
+			);
+			target = CA54CB1B2E5A0A99007D062D /* The Advancement Extension (iOS) */;
+		};
+		CA918D0E2E9F653E002D1D70 /* Exceptions for "Shared (App)" folder in "The Advancement Extension (macOS)" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Resources/crypto.js,
+			);
+			target = CA54CB252E5A0A99007D062D /* The Advancement Extension (macOS) */;
+		};
+		CA918D0F2E9F653E002D1D70 /* Exceptions for "Shared (App)" folder in "AdvanceKey" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Resources/crypto.js,
+			);
+			target = CAB454762E7F34070025F445 /* AdvanceKey */;
+		};
+		CA918D102E9F653E002D1D70 /* Exceptions for "Shared (App)" folder in "AdvanceShare" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Resources/crypto.js,
 			);
 			target = CA918CE02E9465F6002D1D70 /* AdvanceShare */;
 		};
@@ -243,7 +276,8 @@
 		CAB4548E2E7F4FC80025F445 /* Exceptions for "Shared (Extension)" folder in "AdvanceKey" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Resources/crypto.js,
+				BDOService.swift,
+				emojicoding.js,
 				Sessionless.swift,
 				SharedUserDefaults.swift,
 			);
@@ -257,6 +291,10 @@
 			exceptions = (
 				CA54CB4B2E5A0A99007D062D /* Exceptions for "Shared (App)" folder in "The Advancement (iOS)" target */,
 				CA54CB552E5A0A99007D062D /* Exceptions for "Shared (App)" folder in "The Advancement (macOS)" target */,
+				CA918D0D2E9F653E002D1D70 /* Exceptions for "Shared (App)" folder in "The Advancement Extension (iOS)" target */,
+				CA918D0E2E9F653E002D1D70 /* Exceptions for "Shared (App)" folder in "The Advancement Extension (macOS)" target */,
+				CA918D0F2E9F653E002D1D70 /* Exceptions for "Shared (App)" folder in "AdvanceKey" target */,
+				CA918D102E9F653E002D1D70 /* Exceptions for "Shared (App)" folder in "AdvanceShare" target */,
 			);
 			path = "Shared (App)";
 			sourceTree = "<group>";
