@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roomz - Find Your Perfect Space</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .rooms-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            padding-bottom: 40px;
+        }
+
+        .room-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .room-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .room-image {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .room-details {
+            padding: 24px;
+        }
+
+        .room-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .room-specs {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .spec-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: #666;
+            background: #f5f5f5;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .spec-icon {
+            font-size: 16px;
+        }
+
+        .room-price {
+            font-size: 32px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .room-price span {
+            font-size: 16px;
+            font-weight: 400;
+            color: #999;
+        }
+
+        .deposit-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .availability {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .amenities {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #eee;
+        }
+
+        .amenities-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .amenity-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .amenity-tag {
+            background: #e8eaf6;
+            color: #5c6bc0;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .neighborhood {
+            font-size: 14px;
+            color: #666;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .contact-button {
+            width: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 16px;
+        }
+
+        .contact-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            padding: 40px;
+        }
+
+        .error {
+            text-align: center;
+            color: #ff6b6b;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 36px;
+            }
+
+            .rooms-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏠 Roomz</h1>
+        <p>Find your perfect space on Planet Nine</p>
+    </div>
+
+    <div id="loading" class="loading">
+        Loading available rooms...
+    </div>
+
+    <div id="rooms-container" class="rooms-container"></div>
+
+    <script>
+        // Base configuration - proxied through test server
+        const BASE_URL = '/api/sanora'; // Proxy to Sanora Base 1 (http://127.0.0.1:5121)
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        function formatPrice(cents) {
+            return `$${(cents / 100).toFixed(2)}`;
+        }
+
+        function createRoomCard(room) {
+            const metadata = room.metadata || {};
+            const card = document.createElement('div');
+            card.className = 'room-card';
+
+            card.innerHTML = `
+                <div class="room-image" ${metadata.roomPic ? `style="background-image: url('${metadata.roomPic}')"` : ''}>
+                    ${!metadata.roomPic ? '🏠' : ''}
+                </div>
+                <div class="room-details">
+                    <h2 class="room-name">${room.title}</h2>
+
+                    <div class="room-specs">
+                        <div class="spec-item">
+                            <span class="spec-icon">🛏️</span>
+                            <span>${metadata.beds || 0} bed${metadata.beds !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-icon">🚿</span>
+                            <span>${metadata.baths || 0} bath${metadata.baths !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-icon">📐</span>
+                            <span>${metadata.size || 0} sq ft</span>
+                        </div>
+                    </div>
+
+                    ${metadata.dateAvailable ? `
+                        <div class="availability">
+                            📅 Available ${formatDate(metadata.dateAvailable)}
+                        </div>
+                    ` : ''}
+
+                    <div class="room-price">
+                        ${metadata.rentFormatted || formatPrice(room.price)}
+                    </div>
+
+                    ${metadata.deposit ? `
+                        <div class="deposit-info">
+                            💰 Deposit: ${metadata.depositFormatted || formatPrice(metadata.deposit)}
+                        </div>
+                    ` : ''}
+
+                    ${metadata.neighborhood ? `
+                        <div class="neighborhood">
+                            📍 ${metadata.neighborhood}
+                        </div>
+                    ` : ''}
+
+                    ${metadata.amenities && metadata.amenities.length > 0 ? `
+                        <div class="amenities">
+                            <div class="amenities-title">Amenities</div>
+                            <div class="amenity-tags">
+                                ${metadata.amenities.map(amenity => `
+                                    <span class="amenity-tag">${amenity}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <button class="contact-button" onclick="contactAboutRoom('${room.title}', '${room.uuid}')">
+                        Contact About This Room
+                    </button>
+                </div>
+            `;
+
+            return card;
+        }
+
+        async function loadRooms() {
+            const loading = document.getElementById('loading');
+            const container = document.getElementById('rooms-container');
+
+            try {
+                console.log('Fetching rooms from:', `${BASE_URL}/products/base`);
+                const response = await fetch(`${BASE_URL}/products/base`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('Received data:', data);
+
+                // Sanora returns array of user products, flatten into single array
+                const allProducts = [];
+                if (Array.isArray(data)) {
+                    data.forEach(userProducts => {
+                        if (typeof userProducts === 'object') {
+                            Object.values(userProducts).forEach(product => {
+                                allProducts.push(product);
+                            });
+                        }
+                    });
+                }
+
+                const rooms = allProducts.filter(product =>
+                    product.contentType === 'room' || product.category === 'rental'
+                );
+
+                loading.style.display = 'none';
+
+                if (rooms.length === 0) {
+                    container.innerHTML = `
+                        <div class="error">
+                            <h2>No rooms available</h2>
+                            <p>Check back soon for new listings!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                rooms.forEach(room => {
+                    container.appendChild(createRoomCard(room));
+                });
+
+                console.log(`Loaded ${rooms.length} rooms`);
+
+            } catch (error) {
+                console.error('Error loading rooms:', error);
+                loading.style.display = 'none';
+                container.innerHTML = `
+                    <div class="error">
+                        <h2>Error Loading Rooms</h2>
+                        <p>${error.message}</p>
+                        <p style="margin-top: 10px; font-size: 14px;">
+                            Make sure the test server and Sanora (Base 1) are running
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        function contactAboutRoom(roomName, uuid) {
+            alert(`Contact about: ${roomName}\n\nThis would open a contact form or messaging interface.\n\nRoom UUID: ${uuid}`);
+            // TODO: Implement actual contact functionality via Julia or direct messaging
+        }
+
+        // Load rooms when page loads
+        document.addEventListener('DOMContentLoaded', loadRooms);
+    </script>
+</body>
+</html>
