@@ -26,6 +26,7 @@ struct SharedUserDefaults {
         static let cart = "cart"
         static let currentUserPubKey = "currentUserPubKey"
         static let covenantUserUUID = "covenantUserUUID"
+        static let carrierBag = "carrier_bag"
         static let testAccess = "test_app_group_access"
     }
 
@@ -154,6 +155,69 @@ struct SharedUserDefaults {
         shared.set(uuid, forKey: Keys.covenantUserUUID)
         shared.synchronize()
         NSLog("COVENANT: Set user UUID: %@", uuid)
+    }
+
+    // Get Fount UUID from App Group shared UserDefaults
+    static func getFountUserUUID() -> String? {
+        return shared.string(forKey: "fountUserUUID")
+    }
+
+    // Set Fount UUID in App Group shared UserDefaults
+    static func setFountUserUUID(_ uuid: String) {
+        shared.set(uuid, forKey: "fountUserUUID")
+        shared.synchronize()
+        NSLog("FOUNT: Set Fount user UUID: %@", uuid)
+    }
+
+    // MARK: - CarrierBag Management
+    static func getCarrierBag() -> [String: Any]? {
+        return shared.dictionary(forKey: Keys.carrierBag)
+    }
+
+    static func saveCarrierBag(_ carrierBag: [String: Any]) {
+        shared.set(carrierBag, forKey: Keys.carrierBag)
+        shared.synchronize()
+        NSLog("CARRIERBAG: Saved carrierBag with %d collections", carrierBag.keys.count)
+    }
+
+    static func updateCarrierBagCollection(_ collection: String, items: [[String: Any]]) {
+        var carrierBag = getCarrierBag() ?? createEmptyCarrierBag()
+        carrierBag[collection] = items
+        carrierBag["lastUpdated"] = ISO8601DateFormatter().string(from: Date())
+        saveCarrierBag(carrierBag)
+        NSLog("CARRIERBAG: Updated collection '%@' with %d items", collection, items.count)
+    }
+
+    static func addToCarrierBagCollection(_ collection: String, item: [String: Any]) {
+        var carrierBag = getCarrierBag() ?? createEmptyCarrierBag()
+        var items = carrierBag[collection] as? [[String: Any]] ?? []
+        items.append(item)
+        carrierBag[collection] = items
+        carrierBag["lastUpdated"] = ISO8601DateFormatter().string(from: Date())
+        saveCarrierBag(carrierBag)
+        NSLog("CARRIERBAG: Added item to collection '%@' (now %d items)", collection, items.count)
+    }
+
+    static func createEmptyCarrierBag() -> [String: Any] {
+        return [
+            "type": "carrierBag",
+            "cookbook": [],
+            "apothecary": [],
+            "gallery": [],
+            "bookshelf": [],
+            "familiarPen": [],
+            "machinery": [],
+            "metallics": [],
+            "music": [],
+            "oracular": [],
+            "greenHouse": [],
+            "closet": [],
+            "games": [],
+            "events": [],
+            "contracts": [],
+            "stacks": [],
+            "lastUpdated": ISO8601DateFormatter().string(from: Date())
+        ]
     }
 
     // MARK: - Testing

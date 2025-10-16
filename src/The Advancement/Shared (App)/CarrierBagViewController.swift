@@ -23,9 +23,9 @@ class CarrierBagViewController: UITableViewController {
         title = "🎒 Carrier Bag"
         view.backgroundColor = .systemBackground
 
-        // Setup table view
+        // Setup table view (use .subtitle style for detail text)
         tableView.register(UITableViewCell.self, forCellReuseIdentifier: "CollectionCell")
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "ItemCell")
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "SubtitleCell")
 
         // Add refresh button
         navigationItem.rightBarButtonItem = UIBarButtonItem(
@@ -41,6 +41,14 @@ class CarrierBagViewController: UITableViewController {
             action: #selector(closeTapped)
         )
 
+        // Observe app becoming active to refresh from SharedUserDefaults
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appBecameActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+
         loadCarrierBagData()
 
         NSLog("ADVANCEAPP: 🎒 CarrierBagViewController loaded")
@@ -49,6 +57,15 @@ class CarrierBagViewController: UITableViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         loadCarrierBagData() // Refresh when view appears
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func appBecameActive() {
+        NSLog("ADVANCEAPP: 🎒 App became active, refreshing carrierBag from SharedUserDefaults")
+        loadCarrierBagData()
     }
 
     @objc private func refreshTapped() {
@@ -62,27 +79,17 @@ class CarrierBagViewController: UITableViewController {
     }
 
     private func loadCarrierBagData() {
-        NSLog("ADVANCEAPP: 🎒 Loading carrierBag data from Fount...")
+        NSLog("ADVANCEAPP: 🎒 Loading carrierBag data from SharedUserDefaults...")
 
-        // Show loading state
-        collections = []
-        tableView.reloadData()
-
-        // Use the stored Addie UUID for BDO access
-        Task {
-            do {
-                let uuid = getStoredAddieUUID()
-                let carrierBag = try await fetchCarrierBagFromBDO(uuid: uuid)
-
-                DispatchQueue.main.async {
-                    self.processCarrierBagData(carrierBag)
-                }
-            } catch {
-                NSLog("ADVANCEAPP: ⚠️ Failed to load carrierBag: %@", error.localizedDescription)
-                DispatchQueue.main.async {
-                    self.showError(error)
-                }
-            }
+        // Load carrierBag from SharedUserDefaults (updated by AdvanceKey)
+        if let carrierBag = SharedUserDefaults.getCarrierBag() {
+            NSLog("ADVANCEAPP: 🎒 Found carrierBag in SharedUserDefaults with %d keys", carrierBag.keys.count)
+            processCarrierBagData(carrierBag)
+        } else {
+            NSLog("ADVANCEAPP: 🎒 No carrierBag in SharedUserDefaults, creating empty one")
+            let emptyCarrierBag = SharedUserDefaults.createEmptyCarrierBag()
+            SharedUserDefaults.saveCarrierBag(emptyCarrierBag)
+            processCarrierBagData(emptyCarrierBag)
         }
     }
 
@@ -197,7 +204,7 @@ class CarrierBagViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ItemCell", for: indexPath)
+        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "SubtitleCell")
 
         if collections.isEmpty {
             // Empty state
@@ -228,7 +235,7 @@ class CarrierBagViewController: UITableViewController {
 
                 cell.textLabel?.text = title
 
-                // Enhanced display for ebooks
+                // Enhanced display for different item types
                 if type.lowercased() == "ebook" {
                     var details: [String] = ["📚 Ebook"]
 
@@ -239,6 +246,25 @@ class CarrierBagViewController: UITableViewController {
 
                     if let purchasedFromNexus = itemDict["purchasedFromNexus"] as? Bool, purchasedFromNexus {
                         details.append("Purchased via Nexus")
+                    }
+
+                    details.append(formatDate(savedAt))
+
+                    cell.detailTextLabel?.text = details.joined(separator: " • ")
+                } else if type.lowercased() == "room" {
+                    // Enhanced display for rooms
+                    var details: [String] = ["🏠 Room"]
+
+                    if let roomData = itemDict["roomData"] as? [String: Any] {
+                        if let beds = roomData["beds"],
+                           let baths = roomData["baths"] {
+                            details.append("\(beds) bed, \(baths) bath")
+                        }
+
+                        if let rent = roomData["rent"] as? Int {
+                            let dollarAmount = Double(rent) / 100.0
+                            details.append(String(format: "$%.0f/mo", dollarAmount))
+                        }
                     }
 
                     details.append(formatDate(savedAt))

@@ -294,7 +294,7 @@ async function seedBooks() {
 // Create BDO associations
 async function createAssociations() {
   console.log('\n🔗 Creating author-book associations in BDO...');
-  
+
   // Create associations object
   const associations = {
     type: 'author-book-associations',
@@ -319,7 +319,7 @@ async function createAssociations() {
         description: 'Author and book associations for carousel demo'
       }
     });
-    
+
     if (result.uuid) {
       console.log(`✅ Created BDO associations with UUID: ${result.uuid}`);
       console.log('🎯 Save this UUID for the carousel site:', result.uuid);
@@ -340,23 +340,23 @@ async function main() {
     console.log(`  Prof: ${BASE_URL}`);
     console.log(`  Sanora: ${SANORA_URL}`);
     console.log(`  BDO: ${BDO_URL}`);
-    
+
     await seedProfiles();
     await seedBooks();
     const associationsUUID = await createAssociations();
-    
+
     console.log('\n🎉 Seeding completed!');
     console.log('\n📋 Summary:');
     console.log(`  Authors created: ${authors.length}`);
     console.log(`  Books created: ${books.length}`);
     console.log(`  BDO UUID: ${associationsUUID || 'Failed to create'}`);
-    
+
     console.log('\n📖 Authors and their books:');
     authors.forEach(author => {
       const authorBooks = books.filter(book => book.authorUUID === author.uuid);
       console.log(`  ${author.name}: ${authorBooks.map(b => b.title).join(', ')}`);
     });
-    
+
   } catch (error) {
     console.error('❌ Seeding failed:', error);
     process.exit(1);

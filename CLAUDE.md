@@ -121,6 +121,15 @@ open http://localhost:3456
 - **Native iOS UI**: Full NFCViewController with read/write/verify flows
 - **Tag Data Format**: JSON-encoded `{pubKey, signature}` stored in NDEF format
 
+### ✅ **MP Ticket Purchases via MAGIC Protocol** (January 2025)
+- **Single Spell Execution**: `arethaUserPurchase` spell handles MP validation, deduction, and nineum transfer atomically
+- **Fount UUID Management**: Shared UserDefaults properly stores Fount UUID in App Group for AdvanceKey access
+- **MAGIC Spell Integration**: AdvanceKey casts spells through Fount's `/resolve` endpoint
+- **Automatic Experience**: 1:1 MP-to-experience granting handled by MAGIC resolver
+- **Gateway Rewards**: Automatic 10% gateway reward distribution
+- **Error Handling**: Insufficient MP or transfer failures handled gracefully by resolver
+- **Complete Flow**: Validate MP → Transfer nineum → Create ticket BDO → Save to carrierBag
+
 ## File Structure
 
 ```

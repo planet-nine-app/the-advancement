@@ -304,7 +304,10 @@ class OnboardingViewController: UIViewController {
             throw NSError(domain: "BDOError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "CarrierBag creation failed: \(errorMessage)"])
         }
 
-        NSLog("✅ CarrierBag created successfully")
+        // Save carrierBag to SharedUserDefaults for AdvanceKey access
+        SharedUserDefaults.saveCarrierBag(carrierBagData)
+
+        NSLog("✅ CarrierBag created successfully and saved to SharedUserDefaults")
     }
 
     private func updateLoadingStatus(_ status: String) {

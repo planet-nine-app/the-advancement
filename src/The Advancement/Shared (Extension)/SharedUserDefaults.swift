@@ -27,6 +27,7 @@ struct SharedUserDefaults {
         static let cart = "cart"
         static let covenantUserUUID = "covenant_user_uuid"
         static let currentUserPubKey = "current_user_pubkey"
+        static let carrierBag = "carrier_bag"
     }
 
     // MARK: - Holdings Management
@@ -125,6 +126,66 @@ struct SharedUserDefaults {
     static func setCurrentUserPubKey(_ pubKey: String) {
         shared.set(pubKey, forKey: Keys.currentUserPubKey)
         shared.synchronize()
+    }
+
+    // Get Fount UUID from App Group shared UserDefaults
+    static func getFountUserUUID() -> String? {
+        return shared.string(forKey: "fountUserUUID")
+    }
+
+    // Set Fount UUID in App Group shared UserDefaults
+    static func setFountUserUUID(_ uuid: String) {
+        shared.set(uuid, forKey: "fountUserUUID")
+        shared.synchronize()
+        NSLog("FOUNT: Set Fount user UUID: %@", uuid)
+    }
+
+    // MARK: - CarrierBag Management
+    static func getCarrierBag() -> [String: Any]? {
+        return shared.dictionary(forKey: Keys.carrierBag)
+    }
+
+    static func saveCarrierBag(_ carrierBag: [String: Any]) {
+        shared.set(carrierBag, forKey: Keys.carrierBag)
+        shared.synchronize()
+    }
+
+    static func updateCarrierBagCollection(_ collection: String, items: [[String: Any]]) {
+        var carrierBag = getCarrierBag() ?? createEmptyCarrierBag()
+        carrierBag[collection] = items
+        carrierBag["lastUpdated"] = ISO8601DateFormatter().string(from: Date())
+        saveCarrierBag(carrierBag)
+    }
+
+    static func addToCarrierBagCollection(_ collection: String, item: [String: Any]) {
+        var carrierBag = getCarrierBag() ?? createEmptyCarrierBag()
+        var items = carrierBag[collection] as? [[String: Any]] ?? []
+        items.append(item)
+        carrierBag[collection] = items
+        carrierBag["lastUpdated"] = ISO8601DateFormatter().string(from: Date())
+        saveCarrierBag(carrierBag)
+    }
+
+    static func createEmptyCarrierBag() -> [String: Any] {
+        return [
+            "type": "carrierBag",
+            "cookbook": [],
+            "apothecary": [],
+            "gallery": [],
+            "bookshelf": [],
+            "familiarPen": [],
+            "machinery": [],
+            "metallics": [],
+            "music": [],
+            "oracular": [],
+            "greenHouse": [],
+            "closet": [],
+            "games": [],
+            "events": [],
+            "contracts": [],
+            "stacks": [],
+            "lastUpdated": ISO8601DateFormatter().string(from: Date())
+        ]
     }
 
     // MARK: - Testing

@@ -629,7 +629,10 @@ class NexusViewController: UIViewController, WKNavigationDelegate, WKScriptMessa
                             "pubKey": keys.publicKey
                         ]
 
-                        // Store for future use
+                        // Store UUID in App Group for AdvanceKey access
+                        SharedUserDefaults.setFountUserUUID(uuid)
+
+                        // Also store full user data in standard UserDefaults for app use
                         if let userData = try? JSONSerialization.data(withJSONObject: fountUser) {
                             UserDefaults.standard.set(userData, forKey: "fountUser")
                             NSLog("ADVANCEAPP: ✅ [FOUNT] Fount user created and stored: %@", uuid)
