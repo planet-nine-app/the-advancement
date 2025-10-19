@@ -24,13 +24,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             rootViewController = OnboardingViewController()
             NSLog("🚀 Showing onboarding screen")
         } else {
-            // Show main app
-            if let mainVC = UIStoryboard(name: "Main", bundle: nil).instantiateInitialViewController() {
-                rootViewController = mainVC
-            } else {
-                // Fallback
-                rootViewController = createPlaceholderMainViewController()
-            }
+            // Show main app with new SVG-based interface
+            rootViewController = MainViewController()
             NSLog("✅ Showing main app")
         }
 

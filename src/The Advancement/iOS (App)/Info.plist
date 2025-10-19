@@ -52,5 +52,9 @@
 		<string>NDEF</string>
 		<string>TAG</string>
 	</array>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>The Advancement needs Bluetooth access to exchange cryptographic keys with nearby devices for secure peer-to-peer authentication</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>The Advancement needs Bluetooth access to share and receive cryptographic keys with nearby devices</string>
 </dict>
 </plist>
