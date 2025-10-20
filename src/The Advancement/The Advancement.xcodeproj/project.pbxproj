@@ -91,6 +91,7 @@
 				"/Localized: Resources/Main.html",
 				Assets.xcassets,
 				CarrierBagViewController.swift,
+				Configuration.swift,
 				CookbookViewController.swift,
 				InstantiationViewController.swift,
 				NexusViewController.swift,
@@ -124,6 +125,7 @@
 				"/Localized: Resources/Main.html",
 				Assets.xcassets,
 				CarrierBagViewController.swift,
+				Configuration.swift,
 				CookbookViewController.swift,
 				InstantiationViewController.swift,
 				NexusViewController.swift,
@@ -255,6 +257,7 @@
 		CA918D0F2E9F653E002D1D70 /* Exceptions for "Shared (App)" folder in "AdvanceKey" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Configuration.swift,
 				Resources/crypto.js,
 			);
 			target = CAB454762E7F34070025F445 /* AdvanceKey */;

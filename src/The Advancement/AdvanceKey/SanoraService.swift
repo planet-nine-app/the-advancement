@@ -51,7 +51,7 @@ public class SanoraService {
         }
     }
 
-    public init(baseURL: String = "http://127.0.0.1:5121") {
+    public init(baseURL: String = Configuration.Sanora.baseURL) {
         self.baseURL = baseURL
         self.sessionless = Sessionless()
     }

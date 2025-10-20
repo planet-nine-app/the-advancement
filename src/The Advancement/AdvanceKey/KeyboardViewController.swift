@@ -471,7 +471,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
     func fetchBDOByEmojicode(emojicode: String) {
         // Fetch BDO data directly by emojicode from /emoji/:emojicode endpoint
-        let bdoUrl = "http://127.0.0.1:5114/"
+        let bdoUrl = Configuration.BDO.baseURL
 
         Task {
             do {
@@ -536,7 +536,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
     func fetchBDOData(bdoPubKey: String) {
         // Fetch BDO data from test environment using URLSession
-        let bdoUrl = "http://127.0.0.1:5114/"
+        let bdoUrl = Configuration.BDO.baseURL
 
         Task {
             do {
@@ -724,7 +724,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             "bdo": [:] // Empty BDO for now
         ]
 
-        let bdoUrl = "http://127.0.0.1:5114/user/create"
+        let bdoUrl = Configuration.BDO.createUser()
         guard let url = URL(string: bdoUrl) else {
             throw NSError(domain: "InvalidURL", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid BDO user creation URL"])
         }
@@ -767,7 +767,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
     func fetchBDOFromFount(bdoPubKey: String) async throws -> [String: Any] {
         // Fetch BDO by its public key
-        let fountUrl = "http://127.0.0.1:5117/bdo/\(bdoPubKey)"
+        let fountUrl = Configuration.Fount.getBDO(bdoPubKey: bdoPubKey)
 
         guard let url = URL(string: fountUrl) else {
             throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid Fount URL"])
@@ -842,7 +842,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         ]
 
         // POST to Fount to create the BDO
-        let fountCreateUrl = "http://127.0.0.1:5117/bdo"
+        let fountCreateUrl = Configuration.Fount.createBDO()
         guard let url = URL(string: fountCreateUrl) else {
             throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid Fount create URL"])
         }
@@ -1866,8 +1866,8 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             return
         }
 
-        // Prepare request to Covenant (use test environment port 5122)
-        let covenantURL = URL(string: "http://127.0.0.1:5122/contract/\(contractUuid)/sign")!
+        // Prepare request to Covenant
+        let covenantURL = URL(string: Configuration.Covenant.signContract(contractUuid: contractUuid))!
         var request = URLRequest(url: covenantURL)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -2228,7 +2228,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         NSLog("ADVANCEKEY: 💳 Using payment method: %@ ending in %@", paymentMethod.brand, paymentMethod.last4)
 
         // Call Addie's charge-with-saved-method endpoint
-        let addieURL = URL(string: "http://127.0.0.1:3005/charge-with-saved-method")!
+        let addieURL = URL(string: Configuration.Addie.chargeWithSavedMethod())!
         var request = URLRequest(url: addieURL)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -2282,11 +2282,6 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         NSLog("ADVANCEKEY: ✨ Validating %d MP for user %@", amount, userUUID)
 
         // Get user's current MP balance from Fount
-        guard let getUserURL = URL(string: "http://127.0.0.1:5117/user/\(userUUID)") else {
-            throw NSError(domain: "URLError", code: 0,
-                        userInfo: [NSLocalizedDescriptionKey: "Invalid Fount URL"])
-        }
-
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
         let getMessage = timestamp + userUUID
 
@@ -2295,7 +2290,10 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                         userInfo: [NSLocalizedDescriptionKey: "Failed to sign request"])
         }
 
-        let getUserRequestURL = URL(string: "http://127.0.0.1:5117/user/\(userUUID)?timestamp=\(timestamp)&signature=\(getSignature)")!
+        guard let getUserRequestURL = URL(string: "\(Configuration.Fount.getUser(userUUID: userUUID))?timestamp=\(timestamp)&signature=\(getSignature)") else {
+            throw NSError(domain: "URLError", code: 0,
+                        userInfo: [NSLocalizedDescriptionKey: "Invalid Fount URL"])
+        }
 
         NSLog("ADVANCEKEY: 📡 Getting user data from Fount...")
         let (userData, userResponse) = try await URLSession.shared.data(from: getUserRequestURL)
@@ -2326,11 +2324,6 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         NSLog("ADVANCEKEY: ✨ Charging %d MP from user %@", amount, userUUID)
 
         // Step 1: Get user's current MP balance from Fount
-        guard let getUserURL = URL(string: "http://127.0.0.1:5117/user/\(userUUID)") else {
-            throw NSError(domain: "URLError", code: 0,
-                        userInfo: [NSLocalizedDescriptionKey: "Invalid Fount URL"])
-        }
-
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
         let getMessage = timestamp + userUUID
 
@@ -2339,8 +2332,10 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                         userInfo: [NSLocalizedDescriptionKey: "Failed to sign request"])
         }
 
-        var getUserRequest = getUserURL.appendingPathComponent("?timestamp=\(timestamp)&signature=\(getSignature)")
-        let getUserRequestURL = URL(string: "http://127.0.0.1:5117/user/\(userUUID)?timestamp=\(timestamp)&signature=\(getSignature)")!
+        guard let getUserRequestURL = URL(string: "\(Configuration.Fount.getUser(userUUID: userUUID))?timestamp=\(timestamp)&signature=\(getSignature)") else {
+            throw NSError(domain: "URLError", code: 0,
+                        userInfo: [NSLocalizedDescriptionKey: "Invalid Fount URL"])
+        }
 
         NSLog("ADVANCEKEY: 📡 Getting user data from Fount...")
         let (userData, userResponse) = try await URLSession.shared.data(from: getUserRequestURL)
@@ -2375,7 +2370,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                         userInfo: [NSLocalizedDescriptionKey: "Failed to sign grant request"])
         }
 
-        guard let grantURL = URL(string: "http://127.0.0.1:5117/user/\(userUUID)/grant") else {
+        guard let grantURL = URL(string: Configuration.Fount.grantExperience(userUUID: userUUID)) else {
             throw NSError(domain: "URLError", code: 0,
                         userInfo: [NSLocalizedDescriptionKey: "Invalid grant URL"])
         }
@@ -2457,7 +2452,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         signedSpell["casterSignature"] = casterSignature
 
         // POST spell to Fount's /resolve endpoint
-        guard let resolveURL = URL(string: "http://127.0.0.1:5117/resolve/\(spellName)") else {
+        guard let resolveURL = URL(string: Configuration.Fount.resolve(spellName: spellName)) else {
             throw NSError(domain: "URLError", code: 0,
                         userInfo: [NSLocalizedDescriptionKey: "Invalid resolve URL"])
         }
@@ -2565,7 +2560,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             "bdo": ticketBDOData
         ]
 
-        let bdoURL = URL(string: "http://127.0.0.1:5114/user/create")!
+        let bdoURL = URL(string: Configuration.BDO.createUser())!
         var request = URLRequest(url: bdoURL)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

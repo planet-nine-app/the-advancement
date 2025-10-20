@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        * { margin: 0; padding: 0; -webkit-user-select: none; -webkit-user-drag: none; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background-color: #000000; }
+        #onboardingSVG { width: 100vw; height: 100vh; display: block; }
+        .button-group { cursor: pointer; }
+        .button-group:active rect { fill: rgba(16, 185, 129, 0.2); }
+    </style>
+</head>
+<body>
+    <svg id="onboardingSVG" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+        <defs>
+            <filter id="greenGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="0.8" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="purpleGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="0.5" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="pinkGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="0.6" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="yellowGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="0.4" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <radialGradient id="bgGradient" cx="50%" cy="50%" r="70%">
+                <stop offset="0%" style="stop-color:#1a0033; stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#000000; stop-opacity:1" />
+            </radialGradient>
+            <g id="particle">
+                <circle r="0.2" fill="#8b5cf6" opacity="0.6" filter="url(#purpleGlow)">
+                    <animate attributeName="opacity" values="0.3;0.8;0.3" dur="4s" repeatCount="indefinite"/>
+                </circle>
+            </g>
+        </defs>
+
+        <rect width="100" height="100" fill="url(#bgGradient)"/>
+
+        <use href="#particle" x="10" y="15">
+            <animateMotion path="M 0 0 Q 8 -12 0 -24 Q -8 -36 0 -48" dur="10s" repeatCount="indefinite"/>
+        </use>
+        <use href="#particle" x="90" y="25">
+            <animateMotion path="M 0 0 Q -10 10 0 20 Q 10 30 0 40" dur="12s" repeatCount="indefinite"/>
+        </use>
+        <use href="#particle" x="25" y="85">
+            <animateMotion path="M 0 0 Q 15 -8 30 0 Q 45 8 60 0" dur="14s" repeatCount="indefinite"/>
+        </use>
+        <use href="#particle" x="75" y="75">
+            <animateMotion path="M 0 0 Q -8 -12 -16 -24 Q -24 -36 -32 -48" dur="11s" repeatCount="indefinite"/>
+        </use>
+
+        <g id="corners">
+            <path d="M 5,5 L 15,5 M 5,5 L 5,15" stroke="#10b981" stroke-width="0.4" opacity="0.7" filter="url(#greenGlow)"/>
+            <path d="M 95,5 L 85,5 M 95,5 L 95,15" stroke="#ec4899" stroke-width="0.4" opacity="0.7" filter="url(#pinkGlow)"/>
+            <path d="M 5,95 L 15,95 M 5,95 L 5,85" stroke="#fbbf24" stroke-width="0.4" opacity="0.7" filter="url(#yellowGlow)"/>
+            <path d="M 95,95 L 85,95 M 95,95 L 95,85" stroke="#8b5cf6" stroke-width="0.4" opacity="0.7" filter="url(#purpleGlow)"/>
+        </g>
+
+        <g id="content">
+            <text x="50" y="22" text-anchor="middle" style="font-family: -apple-system; font-size: 5px; font-weight: 700; letter-spacing: 0.5px;" fill="#10b981" filter="url(#greenGlow)">
+                GREETINGS HUMAN
+            </text>
+            <text x="50" y="32" text-anchor="middle" style="font-family: -apple-system; font-size: 3.5px; font-weight: 400; letter-spacing: 0.2px;" fill="#8b5cf6" opacity="0.9">
+                Would you like to join
+            </text>
+            <text x="50" y="37" text-anchor="middle" style="font-family: -apple-system; font-size: 6px; font-weight: 700; letter-spacing: 0.8px;" fill="#ec4899" filter="url(#pinkGlow)">
+                THE ADVANCEMENT
+            </text>
+            <text x="50" y="41" text-anchor="middle" style="font-family: -apple-system; font-size: 2.8px; font-weight: 400; letter-spacing: 0.1px;" fill="#8b5cf6" opacity="0.8">
+                ?
+            </text>
+        </g>
+
+        <g id="yesButton" class="button-group">
+            <rect x="25" y="50" width="20" height="8" rx="1" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="0.25" filter="url(#greenGlow)" opacity="0.9">
+                <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
+            </rect>
+            <text x="35" y="54.8" text-anchor="middle" style="font-family: -apple-system; font-size: 3px; font-weight: 600; letter-spacing: 0.3px;" fill="#10b981" filter="url(#greenGlow)">
+                YES
+            </text>
+        </g>
+
+        <g id="hellYesButton" class="button-group">
+            <rect x="55" y="50" width="20" height="8" rx="1" fill="rgba(236, 72, 153, 0.15)" stroke="#ec4899" stroke-width="0.25" filter="url(#pinkGlow)" opacity="0.9">
+                <animate attributeName="opacity" values="0.7;1;0.7" dur="2.5s" repeatCount="indefinite"/>
+            </rect>
+            <text x="65" y="54.8" text-anchor="middle" style="font-family: -apple-system; font-size: 3px; font-weight: 600; letter-spacing: 0.3px;" fill="#ec4899" filter="url(#pinkGlow)">
+                HELL YES
+            </text>
+        </g>
+
+        <g id="loadingState" opacity="0">
+            <text id="loadingText" x="50" y="70" text-anchor="middle" style="font-family: -apple-system; font-size: 2.5px; font-weight: 500;" fill="#10b981" filter="url(#greenGlow)">
+                Initiating connection to Planet Nine...
+            </text>
+            <circle cx="50" cy="75" r="3" fill="none" stroke="#10b981" stroke-width="0.4" stroke-dasharray="15 5" opacity="0.8">
+                <animateTransform attributeName="transform" type="rotate" from="0 50 75" to="360 50 75" dur="2s" repeatCount="indefinite"/>
+            </circle>
+        </g>
+
+        <g id="errorState" opacity="0">
+            <text id="errorText" x="50" y="70" text-anchor="middle" style="font-family: -apple-system; font-size: 2.2px; font-weight: 500;" fill="#ef4444" filter="url(#yellowGlow)">
+                Error: Connection failed
+            </text>
+        </g>
+
+        <line x1="20" y1="92" x2="80" y2="92" stroke="#8b5cf6" stroke-width="0.15" opacity="0.5" filter="url(#purpleGlow)">
+            <animate attributeName="opacity" values="0.3;0.7;0.3" dur="3s" repeatCount="indefinite"/>
+        </line>
+    </svg>
+
+    <script src="onboarding.js"></script>
+</body>
+</html>

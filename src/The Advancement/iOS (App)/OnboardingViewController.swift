@@ -334,7 +334,7 @@ class OnboardingViewController: UIViewController, WKNavigationDelegate, WKScript
     }
 
     private func createFountUser(pubKey: String, timestamp: String, signature: String) async throws -> String {
-        let url = URL(string: "http://localhost:5117/user/create")!
+        let url = URL(string: Configuration.Fount.createUser())!
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -375,7 +375,7 @@ class OnboardingViewController: UIViewController, WKNavigationDelegate, WKScript
 
     private func createCarrierBag(userUUID: String, pubKey: String) async throws {
         // BDO service endpoint
-        let url = URL(string: "http://localhost:5114/user/\(userUUID)/bdo")!
+        let url = URL(string: Configuration.BDO.putBDO(userUUID: userUUID))!
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -436,7 +436,7 @@ class OnboardingViewController: UIViewController, WKNavigationDelegate, WKScript
     }
 
     private func createBDOUser(pubKey: String) async throws -> String {
-        let url = URL(string: "http://localhost:5114/user/create")!
+        let url = URL(string: Configuration.BDO.createUser())!
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -497,7 +497,7 @@ class OnboardingViewController: UIViewController, WKNavigationDelegate, WKScript
     }
 
     private func createAddieUser(pubKey: String) async throws {
-        let url = URL(string: "http://localhost:5116/user/create")!
+        let url = URL(string: Configuration.Addie.createUser())!
         var request = URLRequest(url: url)
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

@@ -130,6 +130,21 @@ open http://localhost:3456
 - **Error Handling**: Insufficient MP or transfer failures handled gracefully by resolver
 - **Complete Flow**: Validate MP → Transfer nineum → Create ticket BDO → Save to carrierBag
 
+### ✅ **Android AdvanceKey Keyboard Extension** (October 2025)
+- **WebView-Based Architecture**: Custom IME using WebView instead of Jetpack Compose to avoid lifecycle issues
+- **4-Mode Interface**: ABC (standard keyboard), DEMOJI (emojicode decoding), MAGIC (spell casting), BDO (viewing posted BDOs)
+- **JavaScript Bridge**: KeyboardJSInterface provides native Android methods to JavaScript
+- **Text Input Integration**: Direct integration with InputMethodService for text insertion/deletion
+- **BDO Display**: View and insert emojicodes from posted BDOs directly from keyboard
+- **Spell Casting**: Cast MAGIC spells (arethaUserPurchase, teleport, grant) through keyboard
+- **SharedPreferences Sync**: Posted BDOs shared between main app and keyboard extension
+- **Hardware Acceleration**: WebView rendering optimized for keyboard performance
+- **Implementation Files**:
+  - `keyboard.html` - 4-mode UI with Planet Nine color scheme
+  - `keyboard.js` - Mode switching and BDO display logic
+  - `AdvanceKeyService.kt` - InputMethodService with WebView integration
+  - `KeyboardJSInterface.kt` - JavaScript-to-Android bridge
+
 ## File Structure
 
 ```
@@ -147,13 +162,24 @@ the-advancement/
 ├── test-server/                # Complete test environment
 ├── resources/                  # Assets (ficus.jpg, etc.)
 └── src/
-    └── extensions/
-        ├── chrome/             # Chrome extension
-        ├── safari/             # Safari extension + native app
-        └── The Advancement/AdvanceKey/  # iOS keyboard extension
+    ├── extensions/
+    │   ├── chrome/             # Chrome extension
+    │   ├── safari/             # Safari extension + native app
+    │   └── The Advancement/AdvanceKey/  # iOS keyboard extension
+    └── android/                # Android app
+        └── app/src/main/
+            ├── assets/         # WebView HTML/JS
+            │   ├── main.html   # Main app WebView
+            │   ├── main.js     # Main app JavaScript
+            │   ├── keyboard.html # AdvanceKey keyboard UI
+            │   └── keyboard.js # AdvanceKey keyboard logic
+            └── java/app/planetnine/theadvancement/
+                ├── crypto/     # Sessionless authentication
+                ├── ime/        # AdvanceKey IME service
+                └── ui/         # Main app UI
 ```
 
-## Current Status (January 2025)
+## Current Status (October 2025)
 
 ### ✅ Production Ready Features
 - **Safari Extension**: Complete Planet Nine ecosystem integration
@@ -165,11 +191,12 @@ the-advancement/
 - **Contract System**: Full contract saving and signing via AdvanceKey with Covenant integration
 - **AdvanceKey Enhanced Display**: BDO visualization with embedded 3D tour iframes
 - **Test Environment**: Comprehensive testing infrastructure
+- **Android App**: Native Android app with WebView-based main screen and AdvanceKey IME keyboard
 
 ### 🚧 In Development
 - **Chrome Extension**: Manifest v3 update and feature parity with Safari
 - **Firefox Support**: Cross-browser compatibility expansion
-- **Mobile Extensions**: iOS and Android extension capabilities
+- **Android Feature Parity**: DEMOJI decoding, MAGIC spell casting, Contract system integration
 
 ## NFC Coordinating Keys System
 
@@ -434,6 +461,228 @@ Each Planet Nine base should have unique base emoji for easy identification:
 - Dev environment: `🌍🔑💎`
 - Production base: `🏰👑✨`
 - Test environment: `🧪🔬🧬`
+
+## Android AdvanceKey Keyboard System
+
+### Overview
+
+The Android AdvanceKey keyboard is a custom Input Method Editor (IME) that provides the same functionality as the iOS keyboard extension, enabling users to view posted BDOs, decode emojicodes, and cast MAGIC spells directly from any text input field.
+
+### Architecture
+
+Unlike typical Android keyboards that use Jetpack Compose, AdvanceKey uses a WebView-based architecture to avoid lifecycle issues inherent in InputMethodService:
+
+```
+┌─────────────────────────────┐
+│   InputMethodService        │
+│   (AdvanceKeyService)       │
+└──────────┬──────────────────┘
+           │
+           ▼
+┌─────────────────────────────┐
+│   WebView                   │
+│   - keyboard.html           │
+│   - keyboard.js             │
+└──────────┬──────────────────┘
+           │
+           ▼ JavaScript Bridge
+┌─────────────────────────────┐
+│   KeyboardJSInterface       │
+│   - insertText()            │
+│   - deleteText()            │
+│   - decodeEmojicode()       │
+│   - castSpell()             │
+│   - getPostedBDOs()         │
+└──────────┬──────────────────┘
+           │
+           ▼
+┌─────────────────────────────┐
+│   AdvanceKeyViewModel       │
+│   - Emojicode decoding      │
+│   - BDO fetching            │
+│   - MAGIC spell casting     │
+└─────────────────────────────┘
+```
+
+### Keyboard Modes
+
+**1. ABC Mode (Standard Keyboard)**
+- QWERTY layout with space, backspace, enter keys
+- Direct text insertion through InputMethodService
+- Basic typing functionality
+
+**2. DEMOJI Mode (Emojicode Decoding)**
+- Monitors clipboard for emojicodes (8 emoji characters)
+- Decodes emojicodes by fetching BDO from BDO service
+- Displays decoded BDO content
+
+**3. MAGIC Mode (Spell Casting)**
+- Available spells: `arethaUserPurchase`, `teleport`, `grant`
+- Casts spells through Fount's `/resolve` endpoint
+- Uses Sessionless authentication for signing
+
+**4. BDO Mode (Posted BDO Viewing)**
+- Displays all BDOs posted from main app
+- Clickable emojicode cards for easy insertion
+- Auto-refreshes when mode is opened
+
+### Implementation Files
+
+**keyboard.html** (`src/android/app/src/main/assets/keyboard.html`):
+```html
+<!-- 4 mode buttons: ABC | DEMOJI | MAGIC | BDO -->
+<div id="modeButtons">
+  <button class="mode-button selected" data-mode="standard">ABC</button>
+  <button class="mode-button" data-mode="demoji">DEMOJI</button>
+  <button class="mode-button" data-mode="magic">MAGIC</button>
+  <button class="mode-button" data-mode="bdo">BDO</button>
+</div>
+
+<!-- Dynamic content area -->
+<div id="contentArea"></div>
+```
+
+**keyboard.js** (`src/android/app/src/main/assets/keyboard.js`):
+```javascript
+// Mode switching
+function switchMode(mode) {
+  currentMode = mode;
+  renderContent(mode);
+}
+
+// Insert text through Android interface
+function handleKeyPress(key) {
+  if (window.Android && window.Android.insertText) {
+    window.Android.insertText(key);
+  }
+}
+
+// Update BDOs from native code
+window.updatePostedBDOs = function(bdosJson) {
+  postedBDOs = JSON.parse(bdosJson);
+  if (currentMode === 'bdo') {
+    renderBDOPanel(document.getElementById('contentArea'));
+  }
+};
+```
+
+**AdvanceKeyService.kt** (`src/android/app/src/main/java/.../ime/AdvanceKeyService.kt`):
+```kotlin
+class AdvanceKeyService : InputMethodService(), LifecycleOwner {
+    override fun onCreateInputView(): View? {
+        val webView = android.webkit.WebView(this).apply {
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+
+            // Add JavaScript interface
+            addJavascriptInterface(
+                KeyboardJSInterface(this@AdvanceKeyService, viewModel, this),
+                "Android"
+            )
+
+            // Load keyboard HTML
+            loadUrl("file:///android_asset/keyboard.html")
+        }
+        return webView
+    }
+}
+```
+
+**KeyboardJSInterface.kt** (`src/android/app/src/main/java/.../ime/AdvanceKeyService.kt`):
+```kotlin
+class KeyboardJSInterface(
+    private val service: AdvanceKeyService,
+    private val viewModel: AdvanceKeyViewModel?,
+    private val webView: android.webkit.WebView
+) {
+    @JavascriptInterface
+    fun insertText(text: String) {
+        service.currentInputConnection?.commitText(text, 1)
+    }
+
+    @JavascriptInterface
+    fun deleteText() {
+        service.currentInputConnection?.deleteSurroundingText(1, 0)
+    }
+
+    @JavascriptInterface
+    fun getPostedBDOs(): String {
+        val bdos = viewModel?.postedBDOs?.value ?: emptyList()
+        return Gson().toJson(bdos)
+    }
+}
+```
+
+### Data Sharing Between Main App and Keyboard
+
+**SharedPreferences** is used to share posted BDOs:
+
+**Main App** (`MainViewModel.kt`):
+```kotlin
+private fun savePostedBDOs(bdos: List<PostedBDO>) {
+    val bdosJson = gson.toJson(bdos)
+    prefs.edit().putString("posted_bdos", bdosJson).apply()
+}
+```
+
+**Keyboard Extension** (`AdvanceKeyViewModel.kt`):
+```kotlin
+private fun loadPostedBDOs() {
+    val bdosJson = prefs.getString("posted_bdos", null)
+    if (bdosJson != null) {
+        val bdos = gson.fromJson(bdosJson, Array<PostedBDO>::class.java).toList()
+        _postedBDOs.value = bdos
+    }
+}
+```
+
+### Configuration
+
+**AndroidManifest.xml**:
+```xml
+<service
+    android:name=".ime.AdvanceKeyService"
+    android:label="AdvanceKey"
+    android:permission="android.permission.BIND_INPUT_METHOD"
+    android:exported="true">
+    <intent-filter>
+        <action android:name="android.view.InputMethod" />
+    </intent-filter>
+    <meta-data
+        android:name="android.view.im"
+        android:resource="@xml/method" />
+</service>
+```
+
+### Usage
+
+1. **Enable Keyboard**:
+   - Settings → System → Languages & Input → On-screen keyboard → Manage keyboards
+   - Toggle "AdvanceKey" ON
+
+2. **Switch to AdvanceKey**:
+   - Tap any text input field
+   - Tap the yellow "Switch to AdvanceKey" button in main app
+   - Or long-press spacebar and select AdvanceKey
+
+3. **View Posted BDOs**:
+   - Tap "BDO" mode button
+   - See all posted BDOs with emojicodes
+   - Tap emojicode to insert into current text field
+
+### Why WebView Instead of Compose?
+
+**Problem with Compose**: InputMethodService doesn't provide a proper ViewTreeLifecycleOwner, causing crashes:
+```
+java.lang.IllegalStateException: ViewTreeLifecycleOwner not found from android.widget.LinearLayout
+```
+
+**WebView Solution**:
+- No lifecycle dependencies
+- HTML/CSS provides rich UI capabilities
+- JavaScript enables dynamic content updates
+- Same architecture as main app (consistency)
+- Hardware acceleration for smooth rendering
 
 ## Integration with Planet Nine Ecosystem
 

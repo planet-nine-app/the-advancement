@@ -364,7 +364,7 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             ]
         ]
 
-        let url = URL(string: "http://localhost:5114/user/\(uuid)/bdo")!
+        let url = URL(string: Configuration.BDO.putBDO(userUUID: uuid))!
         NSLog("📡 Sending BDO to: %@", url.absoluteString)
 
         if let payloadData = try? JSONSerialization.data(withJSONObject: bdoPayload),
@@ -438,7 +438,7 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
     }
 
     private func fetchEmojicode(pubKey: String) async throws -> String {
-        let url = URL(string: "http://localhost:5114/pubkey/\(pubKey)/emojicode")!
+        let url = URL(string: Configuration.BDO.getEmojicode(pubKey: pubKey))!
         NSLog("🔍 Fetching emojicode from: %@", url.absoluteString)
 
         let (data, response) = try await URLSession.shared.data(from: url)

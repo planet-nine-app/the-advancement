@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow: hidden;
+        }
+
+        #keyboardContainer {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: 8px;
+        }
+
+        /* Mode buttons row */
+        #modeButtons {
+            display: flex;
+            justify-content: space-evenly;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .mode-button {
+            flex: 1;
+            height: 40px;
+            border: 1px solid rgba(139, 92, 246, 0.5);
+            border-radius: 4px;
+            background: transparent;
+            color: #8b5cf6;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-button.selected {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+            color: #10b981;
+        }
+
+        .mode-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Content area */
+        #contentArea {
+            flex: 1;
+            border: 1px solid #8b5cf6;
+            border-radius: 4px;
+            background: rgba(139, 92, 246, 0.05);
+            padding: 12px;
+            overflow-y: auto;
+        }
+
+        /* Standard keyboard */
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        .key-button {
+            min-width: 30px;
+            height: 40px;
+            padding: 0 8px;
+            border: none;
+            border-radius: 4px;
+            background: rgba(139, 92, 246, 0.3);
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .key-button.wide {
+            flex: 2;
+        }
+
+        .key-button:active {
+            background: rgba(16, 185, 129, 0.5);
+        }
+
+        /* BDO list */
+        #bdoList {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .bdo-card {
+            border: 1px solid #ec4899;
+            border-radius: 4px;
+            background: rgba(236, 72, 153, 0.1);
+            padding: 12px;
+            cursor: pointer;
+        }
+
+        .bdo-card:active {
+            background: rgba(236, 72, 153, 0.2);
+        }
+
+        .bdo-text {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .bdo-emojicode {
+            background: rgba(251, 191, 36, 0.2);
+            border-radius: 4px;
+            padding: 8px;
+            color: #fbbf24;
+            font-size: 20px;
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+        }
+
+        .bdo-timestamp {
+            color: rgba(139, 92, 246, 0.6);
+            font-size: 10px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: #fbbf24;
+        }
+
+        .empty-state h3 {
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 12px;
+            color: rgba(139, 92, 246, 0.8);
+        }
+
+        /* Panel headers */
+        .panel-header {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .panel-header.demoji { color: #10b981; }
+        .panel-header.magic { color: #ec4899; }
+        .panel-header.bdo { color: #fbbf24; }
+
+        /* DEMOJI panel */
+        #demojiPanel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .clipboard-text {
+            font-size: 12px;
+            color: rgba(139, 92, 246, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .decode-button {
+            padding: 12px;
+            border: 1px solid #10b981;
+            border-radius: 4px;
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .decode-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .decode-button:active:not(:disabled) {
+            background: rgba(16, 185, 129, 0.4);
+        }
+
+        /* MAGIC panel */
+        #magicPanel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .spell-button {
+            padding: 12px;
+            border: 1px solid #ec4899;
+            border-radius: 4px;
+            background: rgba(236, 72, 153, 0.1);
+            cursor: pointer;
+        }
+
+        .spell-button:active {
+            background: rgba(236, 72, 153, 0.2);
+        }
+
+        .spell-name {
+            color: #ec4899;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .spell-description {
+            color: rgba(139, 92, 246, 0.7);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="keyboardContainer">
+        <!-- Mode buttons -->
+        <div id="modeButtons">
+            <button class="mode-button selected" data-mode="standard">ABC</button>
+            <button class="mode-button" data-mode="demoji">DEMOJI</button>
+            <button class="mode-button" data-mode="magic">MAGIC</button>
+            <button class="mode-button" data-mode="bdo">BDO</button>
+        </div>
+
+        <!-- Content area -->
+        <div id="contentArea">
+            <!-- Content will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <script src="keyboard.js"></script>
+</body>
+</html>

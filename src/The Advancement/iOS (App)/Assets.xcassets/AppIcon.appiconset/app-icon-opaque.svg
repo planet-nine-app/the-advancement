@@ -1,0 +1,45 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bgGradient" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" style="stop-color:#1a0033; stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#000000; stop-opacity:1" />
+    </radialGradient>
+
+    <linearGradient id="greenGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981; stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#34d399; stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="purpleGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6; stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a78bfa; stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="pinkGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ec4899; stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f472b6; stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Fully opaque background (no rounded corners for icon) -->
+  <rect width="1024" height="1024" fill="url(#bgGradient)"/>
+
+  <!-- Geometric "A" for Advancement (no opacity/transparency) -->
+  <!-- Left leg -->
+  <path d="M 340 750 L 450 300 L 500 300 L 420 750 Z" fill="url(#purpleGlow)"/>
+
+  <!-- Right leg -->
+  <path d="M 574 300 L 684 750 L 604 750 L 524 300 Z" fill="url(#greenGlow)"/>
+
+  <!-- Cross bar -->
+  <rect x="400" y="500" width="224" height="60" fill="url(#pinkGlow)"/>
+
+  <!-- Top accent triangle -->
+  <path d="M 512 200 L 470 300 L 554 300 Z" fill="#fbbf24"/>
+
+  <!-- Orbiting particles (sci-fi element) - solid colors -->
+  <circle cx="280" cy="400" r="12" fill="#10b981"/>
+  <circle cx="744" cy="400" r="12" fill="#8b5cf6"/>
+  <circle cx="400" cy="220" r="8" fill="#ec4899"/>
+  <circle cx="624" cy="220" r="8" fill="#fbbf24"/>
+</svg>
