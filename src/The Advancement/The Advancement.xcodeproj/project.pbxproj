@@ -97,6 +97,7 @@
 				NexusViewController.swift,
 				NFCService.swift,
 				NFCViewController.swift,
+				Resources/CarrierBag.html,
 				Resources/crypto.js,
 				Resources/Icon.png,
 				Resources/Script.js,

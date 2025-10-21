@@ -10,6 +10,13 @@ import Foundation
 public struct Configuration {
     // MARK: - Environment Configuration
 
+    /// Environment mode: "production", "test", or "local"
+    //public static let environment: String = "production"  // Change to "test" for local testing
+    public static let environment: String = "test"  // Change to "test" for local testing
+
+    /// Test base number (1, 2, or 3) - only used when environment = "test"
+    public static let testBaseNumber: Int = 1
+
     /// The subdomain for this environment (e.g., "hitchhikers", "dev", "production")
     public static let subdomain: String = "hitchhikers"
 
@@ -17,7 +24,7 @@ public struct Configuration {
     public static let baseDomain: String = "allyabase.com"
 
     /// Use HTTPS for production, HTTP for local development
-    public static let useHTTPS: Bool = true
+    public static let useHTTPS: Bool = environment == "production"
 
     // MARK: - Service Names
 
@@ -32,11 +39,53 @@ public struct Configuration {
 
     // MARK: - URL Generation
 
-    /// Generate a service URL based on subdomain and domain
-    /// Format: https://subdomain.service.domain.tld
+    /// Generate a service URL based on environment
+    /// - Production: https://subdomain.service.domain.tld
+    /// - Test: http://127.0.0.1:port (based on testBaseNumber)
+    /// - Local: http://localhost:port
     private static func serviceURL(for service: Service) -> String {
-        let scheme = useHTTPS ? "https" : "http"
-        return "\(scheme)://\(subdomain).\(service.rawValue).\(baseDomain)"
+        switch environment {
+        case "test":
+            let portBase = 5000 + (testBaseNumber * 100)
+            let port: Int
+            switch service {
+            case .bdo:
+                port = portBase + 14
+            case .addie:
+                port = portBase + 16 // Not in test environment yet
+            case .fount:
+                port = portBase + 17
+            case .nexus:
+                port = 7001 // Not in test environment yet
+            case .sanora:
+                port = portBase + 21
+            case .covenant:
+                port = portBase + 22
+            }
+            return "http://127.0.0.1:\(port)"
+
+        case "local":
+            let port: Int
+            switch service {
+            case .bdo:
+                port = 3003
+            case .addie:
+                port = 3004
+            case .fount:
+                port = 3006
+            case .nexus:
+                port = 3005
+            case .sanora:
+                port = 7243
+            case .covenant:
+                port = 3011
+            }
+            return "http://localhost:\(port)"
+
+        default: // "production"
+            let scheme = useHTTPS ? "https" : "http"
+            return "\(scheme)://\(subdomain).\(service.rawValue).\(baseDomain)"
+        }
     }
 
     // MARK: - Service URLs
@@ -131,8 +180,13 @@ public struct Configuration {
 
     public static func printConfiguration() {
         print("🌍 The Advancement Configuration")
-        print("   Subdomain: \(subdomain)")
-        print("   Domain: \(baseDomain)")
+        print("   Environment: \(environment)")
+        if environment == "test" {
+            print("   Test Base: #\(testBaseNumber)")
+        } else if environment == "production" {
+            print("   Subdomain: \(subdomain)")
+            print("   Domain: \(baseDomain)")
+        }
         print("   HTTPS: \(useHTTPS)")
         print("")
         print("📡 Service URLs:")
@@ -142,5 +196,10 @@ public struct Configuration {
         print("   Nexus:    \(nexusBaseURL)")
         print("   Sanora:   \(sanoraBaseURL)")
         print("   Covenant: \(covenantBaseURL)")
+        print("")
+        print("💡 To change environment, edit Configuration.swift:")
+        print("   - Set environment to \"test\" for local testing (127.0.0.1:ports)")
+        print("   - Set environment to \"local\" for localhost development")
+        print("   - Set environment to \"production\" for deployed services")
     }
 }

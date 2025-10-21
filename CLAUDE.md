@@ -78,10 +78,15 @@ open http://localhost:3456
 ### ✅ **Fount Integration & CarrierBag System** (January 2025)
 - **Direct Fount Integration**: Native Swift API calls to Fount service
 - **User Instantiation**: Automatic Fount user creation with cryptographic keys
-- **CarrierBag Architecture**: Persistent user-owned BDO containing 14 collections
-- **Recipe Management**: Save and sync recipes through Fount carrierBag
-- **Multi-Collection Support**: cookbook, apothecary, gallery, bookshelf, familiarPen, machinery, metallics, music, oracular, greenHouse, closet, games, events, contracts
-- **Native UI**: InstantiationViewController and CarrierBagViewController for data visualization
+- **CarrierBag Architecture**: Persistent user-owned BDO containing 15 collections
+- **Save Spell Integration**: Universal save spell with automatic collection routing
+- **Collection Mapping**: Automatic type-to-collection inference (recipe→cookbook, music→music, room→stacks, event→events, popup→events, book→bookshelf, contract→contracts)
+- **Multi-Collection Support**: cookbook, apothecary, gallery, bookshelf, familiarPen, machinery, metallics, music, oracular, greenHouse, closet, games, events, contracts, stacks
+- **HTML-Based UI**: Beautiful gradient interface with grid layout and shimmer animations
+- **Glowy BAG Button**: Pink pulsing button in iOS app for easy carrierBag access
+- **WebView Architecture**: WKWebView-based CarrierBagViewController with JavaScript bridge
+- **Item Management**: View, copy, and remove saved items from any collection
+- **Test Infrastructure**: Headless carrierBag test suite for validating save spell functionality
 
 ### ✅ **BDO Emojicode Support** (October 2025)
 - **Human-Readable Identifiers**: Public BDOs automatically receive 8-emoji codes (3 base + 5 unique)

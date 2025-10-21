@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrier Bag - The Advancement</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        /* Carrier Bag Styles */
+        .carrier-bag-toggle {
+            position: fixed;
+            top: -80px;
+            right: 20px;
+            width: 120px;
+            height: 160px;
+            background: linear-gradient(135deg, #e91e63, #ff6090);
+            border-radius: 0 0 120px 120px;
+            cursor: pointer;
+            box-shadow: 0 8px 32px rgba(233, 30, 99, 0.5);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 20px;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 999;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .carrier-bag-toggle:hover {
+            box-shadow: 0 12px 48px rgba(233, 30, 99, 0.8);
+            transform: translateY(2px);
+        }
+
+        .carrier-bag-toggle span {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            letter-spacing: 2px;
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 8px 32px rgba(233, 30, 99, 0.5);
+            }
+            50% {
+                box-shadow: 0 8px 48px rgba(233, 30, 99, 0.8),
+                            0 0 60px rgba(233, 30, 99, 0.4);
+            }
+        }
+
+        /* Carrier Bag Full View */
+        .carrier-bag-full {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a0033 0%, #2d1b4e 50%, #1a0033 100%);
+            transform-origin: top right;
+            transform: scale(0) rotate(-90deg);
+            opacity: 0;
+            z-index: 998;
+            overflow-y: auto;
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            pointer-events: none;
+        }
+
+        .carrier-bag-full.active {
+            transform: scale(1) rotate(0deg);
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* Bag Header */
+        .bag-header {
+            padding: 40px;
+            text-align: center;
+            border-bottom: 2px solid rgba(233, 30, 99, 0.3);
+        }
+
+        .bag-title {
+            font-size: 48px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #e91e63, #ff6090, #e91e63);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        .bag-subtitle {
+            color: #a78bfa;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+
+        @keyframes shimmer {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        /* Collections Grid */
+        .collections-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            padding: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .collection-card {
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.1), rgba(102, 126, 234, 0.1));
+            border: 2px solid rgba(233, 30, 99, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .collection-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(233, 30, 99, 0.1),
+                transparent
+            );
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+
+        .collection-card:hover {
+            border-color: #e91e63;
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(233, 30, 99, 0.4);
+        }
+
+        .collection-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        .collection-name {
+            font-size: 22px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            margin-bottom: 8px;
+            text-transform: capitalize;
+        }
+
+        .collection-count {
+            font-size: 14px;
+            color: #a78bfa;
+            text-align: center;
+        }
+
+        .collection-items {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(233, 30, 99, 0.2);
+        }
+
+        .collection-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(233, 30, 99, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .collection-item:hover {
+            background: rgba(233, 30, 99, 0.1);
+            border-color: #e91e63;
+            transform: translateX(4px);
+        }
+
+        .item-title {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .item-emojicode {
+            font-size: 11px;
+            font-family: monospace;
+            color: #ff6090;
+        }
+
+        /* Empty state */
+        .collection-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        /* Close button */
+        .bag-close {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #e91e63, #ff6090);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(233, 30, 99, 0.5);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bag-close:hover {
+            transform: rotate(90deg) scale(1.1);
+            box-shadow: 0 6px 24px rgba(233, 30, 99, 0.7);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .collections-grid {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+
+            .bag-title {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Carrier Bag Toggle (semi-circle) -->
+    <div class="carrier-bag-toggle" id="bag-toggle">
+        <span>BAG</span>
+    </div>
+
+    <!-- Carrier Bag Full View -->
+    <div class="carrier-bag-full" id="bag-full">
+        <button class="bag-close" id="bag-close">✕</button>
+
+        <div class="bag-header">
+            <div class="bag-title">🎒 Carrier Bag</div>
+            <div class="bag-subtitle">Your personal collection of discoveries</div>
+        </div>
+
+        <div class="collections-grid" id="collections-grid">
+            <!-- Collections will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        // Collection definitions with icons
+        const collections = [
+            { name: 'cookbook', icon: '🍳', description: 'Recipes and culinary delights' },
+            { name: 'apothecary', icon: '🧪', description: 'Potions and remedies' },
+            { name: 'gallery', icon: '🖼️', description: 'Art and visual treasures' },
+            { name: 'bookshelf', icon: '📚', description: 'Books and literature' },
+            { name: 'familiarPen', icon: '🐾', description: 'Companions and creatures' },
+            { name: 'machinery', icon: '⚙️', description: 'Tools and mechanisms' },
+            { name: 'metallics', icon: '💎', description: 'Precious metals and gems' },
+            { name: 'music', icon: '🎵', description: 'Songs and melodies' },
+            { name: 'oracular', icon: '🔮', description: 'Divination and prophecy' },
+            { name: 'greenHouse', icon: '🌿', description: 'Plants and botanicals' },
+            { name: 'closet', icon: '👔', description: 'Garments and accessories' },
+            { name: 'games', icon: '🎮', description: 'Entertainment and play' },
+            { name: 'events', icon: '🎫', description: 'Gatherings and occasions' },
+            { name: 'contracts', icon: '📜', description: 'Agreements and covenants' }
+        ];
+
+        // Mock data - in real implementation, this would come from Fount
+        const mockCarrierBag = {
+            cookbook: [
+                { title: "Grandma's Chocolate Chip Cookies", emojicode: "🌍🔑💎🌟💎🎨🐉📌" }
+            ],
+            bookshelf: [
+                { title: "The Digital Garden", emojicode: "🌍🔑💎🎯🔥✨💫🎪" },
+                { title: "If I Write Another Word", emojicode: "🌍🔑💎🌈🎨🔮🌙✨" }
+            ],
+            events: [
+                { title: "El Popupito", emojicode: "🌮🎪🔥🎉🍹🎭🌶️✨" }
+            ],
+            contracts: [],
+            apothecary: [],
+            gallery: [],
+            familiarPen: [],
+            machinery: [],
+            metallics: [],
+            music: [],
+            oracular: [],
+            greenHouse: [],
+            closet: [],
+            games: []
+        };
+
+        // Toggle bag open/close
+        const toggle = document.getElementById('bag-toggle');
+        const full = document.getElementById('bag-full');
+        const close = document.getElementById('bag-close');
+
+        function openBag() {
+            full.classList.add('active');
+            renderCollections();
+        }
+
+        function closeBag() {
+            full.classList.remove('active');
+        }
+
+        toggle.addEventListener('click', openBag);
+        close.addEventListener('click', closeBag);
+
+        // Render collections
+        function renderCollections() {
+            const grid = document.getElementById('collections-grid');
+            grid.innerHTML = '';
+
+            collections.forEach(collection => {
+                const items = mockCarrierBag[collection.name] || [];
+                const card = document.createElement('div');
+                card.className = 'collection-card';
+
+                let itemsHTML = '';
+                if (items.length > 0) {
+                    itemsHTML = `
+                        <div class="collection-items">
+                            ${items.map(item => `
+                                <div class="collection-item" onclick="openItem('${item.emojicode}')">
+                                    <div class="item-title">${item.title}</div>
+                                    <div class="item-emojicode">${item.emojicode}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="collection-icon">${collection.icon}</div>
+                    <div class="collection-name">${collection.name}</div>
+                    <div class="collection-count">${items.length} ${items.length === 1 ? 'item' : 'items'}</div>
+                    ${itemsHTML}
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        // Open item (in real implementation, this would fetch and display the BDO)
+        function openItem(emojicode) {
+            console.log('Opening item with emojicode:', emojicode);
+            // TODO: Fetch BDO and display
+            alert(`Opening item: ${emojicode}\n\n(This will fetch and display the BDO in production)`);
+        }
+
+        // Initialize
+        renderCollections();
+    </script>
+</body>
+</html>

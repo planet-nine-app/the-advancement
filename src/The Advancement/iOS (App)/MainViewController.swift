@@ -101,6 +101,16 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             THE ADVANCEMENT
         </text>
 
+        <!-- Carrier Bag Button (top right) -->
+        <g id="bagButton" class="button-group">
+            <ellipse cx="85" cy="15" rx="12" ry="9" fill="rgba(233, 30, 99, 0.2)" stroke="#e91e63" stroke-width="0.3" filter="url(#pinkGlow)">
+                <animate attributeName="opacity" values="0.6;1;0.6" dur="2.5s" repeatCount="indefinite"/>
+            </ellipse>
+            <text x="85" y="17" text-anchor="middle" style="font-family: -apple-system; font-size: 3.5px; font-weight: 700; letter-spacing: 0.2px;" fill="#e91e63" filter="url(#pinkGlow)">
+                BAG
+            </text>
+        </g>
+
         <!-- Posted BDOs Display Area (will be populated dynamically) -->
         <g id="bdoDisplayArea" transform="translate(0, 32)">
             <!-- BDOs will be inserted here -->
@@ -198,6 +208,16 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             textInput.value = '';
         });
 
+        // BAG button click handler
+        document.getElementById('bagButton').addEventListener('click', function() {
+            console.log('🎒 BAG button clicked');
+
+            // Send to Swift
+            webkit.messageHandlers.mainApp.postMessage({
+                action: 'openBag'
+            });
+        });
+
         // Function called from Swift to add posted BDO to display
         function addPostedBDO(bdoData) {
             const displayArea = document.getElementById('bdoDisplayArea');
@@ -289,7 +309,21 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
 
         if action == "post", let text = messageBody["text"] as? String {
             postBDO(text: text)
+        } else if action == "openBag" {
+            openCarrierBag()
         }
+    }
+
+    // MARK: - Carrier Bag
+
+    private func openCarrierBag() {
+        NSLog("🎒 Opening Carrier Bag")
+
+        let carrierBagVC = CarrierBagViewController()
+        let navController = UINavigationController(rootViewController: carrierBagVC)
+        navController.modalPresentationStyle = .fullScreen
+
+        present(navController, animated: true)
     }
 
     // MARK: - BDO Posting

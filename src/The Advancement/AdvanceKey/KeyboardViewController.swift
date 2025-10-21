@@ -22,11 +22,12 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     var resultWebView: WKWebView!
     var sessionless: Sessionless!
     var currentContractData: [String: Any]?
+    var lastProcessedText: String = ""  // Track last processed text to avoid duplicates
 
     override func updateViewConstraints() {
         super.updateViewConstraints()
 
-        // Set keyboard height
+        // Set keyboard height - increased from 280 to 400 for more BDO display space
         let heightConstraint = NSLayoutConstraint(
             item: self.view!,
             attribute: .height,
@@ -34,7 +35,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             toItem: nil,
             attribute: .notAnAttribute,
             multiplier: 0.0,
-            constant: 280
+            constant: 400
         )
         heightConstraint.priority = UILayoutPriority(999)
         self.view.addConstraint(heightConstraint)
@@ -49,11 +50,11 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         // Initialize sessionless for BDO requests
         sessionless = Sessionless()
 
-        setupDemojiButton()
+        // setupDemojiButton()  // Removed - auto-detection enabled
         setupContractActionButton()
         setupWebView()
 
-        NSLog("ADVANCEKEY: ✅ Demoji Keyboard ready")
+        NSLog("ADVANCEKEY: ✅ Demoji Keyboard ready (auto-detection enabled)")
     }
 
     func setupDemojiButton() {
@@ -116,6 +117,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         contentController.add(self, name: "addPaymentMethod")
         contentController.add(self, name: "contractAuthorization")
         contentController.add(self, name: "purchase")
+        contentController.add(self, name: "navigateToCard")
         webViewConfig.userContentController = contentController
 
         // Inject console.log override to capture messages
@@ -140,7 +142,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             resultWebView.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 10),
             resultWebView.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 10),
             resultWebView.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: -10),
-            resultWebView.bottomAnchor.constraint(equalTo: demojiButton.topAnchor, constant: -40)
+            resultWebView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor, constant: -10)
         ])
     }
 
@@ -307,6 +309,38 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 setTimeout(() => { document.getElementById('banner').innerHTML = ''; }, 3000);
             """
             resultWebView.evaluateJavaScript(viewScript, completionHandler: nil)
+        }
+    }
+
+    // MARK: - Automatic Emojicode Detection
+    override func textDidChange(_ textInput: UITextInput?) {
+        super.textDidChange(textInput)
+
+        // Get current text context
+        let proxy = self.textDocumentProxy
+        let contextBefore = proxy.documentContextBeforeInput ?? ""
+        let contextAfter = proxy.documentContextAfterInput ?? ""
+        let selectedText = proxy.selectedText ?? ""
+        let fullContext = contextBefore + selectedText + contextAfter
+
+        // Avoid processing the same text repeatedly
+        guard fullContext != lastProcessedText else { return }
+        lastProcessedText = fullContext
+
+        // Only process if we have enough text
+        guard fullContext.count >= 8 else { return }
+
+        NSLog("ADVANCEKEY: 🔍 Auto-detecting emojicode in text: %@", String(fullContext.prefix(50)))
+
+        // Check for 8-emoji shortcode first (new BDO emojicode format)
+        if let shortcode = extract8EmojiShortcode(from: fullContext) {
+            NSLog("ADVANCEKEY: ✨ Auto-detected 8-emoji shortcode: %@", shortcode)
+            decodeAndFetchBDO(emojicode: shortcode)
+        }
+        // Look for emojicoded sequence (starts and ends with ✨)
+        else if let emojicode = extractEmojicode(from: fullContext) {
+            NSLog("ADVANCEKEY: ✨ Auto-detected emojicode: %@", String(emojicode.prefix(30)))
+            decodeAndFetchBDO(emojicode: emojicode)
         }
     }
 
@@ -1269,10 +1303,14 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                                 collection = 'contracts';
                             } else if (type === 'recipe') {
                                 collection = 'cookbook';
-                            } else if (type === 'ebook') {
+                            } else if (type === 'ebook' || type === 'book' || type === 'article') {
                                 collection = 'bookshelf';
                             } else if (type === 'room') {
                                 collection = 'stacks';
+                            } else if (type === 'popup' || type === 'event') {
+                                collection = 'events';
+                            } else if (type === 'music-player' || type === 'music') {
+                                collection = 'music';
                             } else {
                                 collection = 'stacks'; // Default
                             }
@@ -1695,6 +1733,8 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             handleContractAuthorizationMessage(message.body)
         } else if message.name == "purchase" {
             handlePurchaseMessage(message.body)
+        } else if message.name == "navigateToCard" {
+            handleNavigateToCardMessage(message.body)
         }
     }
 
@@ -2009,6 +2049,41 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             purchaseProduct(productId: productId, price: price, fullBDO: fullBDO)
         } else {
             NSLog("ADVANCEKEY: ❌ Unknown purchase type")
+        }
+    }
+
+    private func handleNavigateToCardMessage(_ messageBody: Any) {
+        NSLog("ADVANCEKEY: 🧭 Navigate to card message received")
+
+        guard let messageDict = messageBody as? [String: Any],
+              let action = messageDict["action"] as? String,
+              action == "navigate",
+              let bdoPubKey = messageDict["bdoPubKey"] as? String else {
+            NSLog("ADVANCEKEY: ❌ Invalid navigate to card message format")
+            return
+        }
+
+        NSLog("ADVANCEKEY: 🧭 Fetching BDO with pubKey: %@", bdoPubKey)
+
+        // Use the existing fetchBDOFromServer method which handles authentication
+        Task {
+            do {
+                let baseUrl = Configuration.BDO.baseURL
+                let cardData = try await fetchBDOFromServer(bdoPubKey: bdoPubKey, baseUrl: baseUrl)
+
+                NSLog("ADVANCEKEY: ✅ BDO fetched successfully")
+
+                // Display the BDO in the keyboard
+                await MainActor.run {
+                    self.displayBDOContent(cardData: cardData, bdoPubKey: bdoPubKey)
+                }
+
+            } catch {
+                NSLog("ADVANCEKEY: ❌ Error fetching BDO: %@", error.localizedDescription)
+                await MainActor.run {
+                    self.displayError("Navigation Failed", details: "Could not fetch BDO: \(error.localizedDescription)")
+                }
+            }
         }
     }
 

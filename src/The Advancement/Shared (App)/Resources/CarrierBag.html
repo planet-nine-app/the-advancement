@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Carrier Bag</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a0033 0%, #2d1b4e 50%, #1a0033 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .bag-header {
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 2px solid rgba(233, 30, 99, 0.3);
+        }
+
+        .bag-title {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #e91e63, #ff6090, #e91e63);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        .bag-subtitle {
+            color: #a78bfa;
+            font-size: 16px;
+        }
+
+        @keyframes shimmer {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        /* Collections Grid */
+        .collections-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .collection-card {
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.1), rgba(102, 126, 234, 0.1));
+            border: 2px solid rgba(233, 30, 99, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .collection-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent,
+                rgba(233, 30, 99, 0.1),
+                transparent
+            );
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+
+        .collection-card.has-items:active {
+            border-color: #e91e63;
+            transform: scale(0.98);
+            box-shadow: 0 8px 24px rgba(233, 30, 99, 0.4);
+        }
+
+        .collection-icon {
+            font-size: 40px;
+            text-align: center;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        .collection-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            margin-bottom: 6px;
+            text-transform: capitalize;
+        }
+
+        .collection-count {
+            font-size: 13px;
+            color: #a78bfa;
+            text-align: center;
+        }
+
+        .collection-items {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(233, 30, 99, 0.2);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .collection-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(233, 30, 99, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .collection-item:active {
+            background: rgba(233, 30, 99, 0.2);
+            border-color: #e91e63;
+            transform: scale(0.98);
+        }
+
+        .item-title {
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .item-emojicode {
+            font-size: 10px;
+            font-family: monospace;
+            color: #ff6090;
+        }
+
+        /* Empty state */
+        .collection-empty {
+            text-align: center;
+            padding: 30px 15px;
+            color: #6c757d;
+            font-style: italic;
+            font-size: 14px;
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #a78bfa;
+        }
+
+        .spinner {
+            font-size: 32px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(233, 30, 99, 0.5);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(233, 30, 99, 0.7);
+        }
+
+        @media (max-width: 768px) {
+            .collections-grid {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+
+            .bag-title {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bag-header">
+        <div class="bag-title">🎒 Carrier Bag</div>
+        <div class="bag-subtitle">Your personal collection of discoveries</div>
+    </div>
+
+    <div id="collections-container">
+        <div class="loading">
+            <div class="spinner">⏳</div>
+            <p>Loading carrier bag...</p>
+        </div>
+    </div>
+
+    <script>
+        // Collection definitions with icons
+        const collections = [
+            { name: 'cookbook', icon: '🍳', description: 'Recipes and culinary delights' },
+            { name: 'apothecary', icon: '🧪', description: 'Potions and remedies' },
+            { name: 'gallery', icon: '🖼️', description: 'Art and visual treasures' },
+            { name: 'bookshelf', icon: '📚', description: 'Books and literature' },
+            { name: 'familiarPen', icon: '🐾', description: 'Companions and creatures' },
+            { name: 'machinery', icon: '⚙️', description: 'Tools and mechanisms' },
+            { name: 'metallics', icon: '💎', description: 'Precious metals and gems' },
+            { name: 'music', icon: '🎵', description: 'Songs and melodies' },
+            { name: 'oracular', icon: '🔮', description: 'Divination and prophecy' },
+            { name: 'greenHouse', icon: '🌿', description: 'Plants and botanicals' },
+            { name: 'closet', icon: '👔', description: 'Garments and accessories' },
+            { name: 'games', icon: '🎮', description: 'Entertainment and play' },
+            { name: 'events', icon: '🎫', description: 'Gatherings and occasions' },
+            { name: 'contracts', icon: '📜', description: 'Agreements and covenants' },
+            { name: 'stacks', icon: '🏠', description: 'Saved spaces and places' }
+        ];
+
+        // Render carrier bag
+        function renderCarrierBag(carrierBagData) {
+            console.log('📦 Rendering carrier bag:', carrierBagData);
+
+            const container = document.getElementById('collections-container');
+            const grid = document.createElement('div');
+            grid.className = 'collections-grid';
+
+            collections.forEach(collection => {
+                const items = carrierBagData[collection.name] || [];
+                const card = document.createElement('div');
+                card.className = 'collection-card';
+                if (items.length > 0) {
+                    card.classList.add('has-items');
+                }
+
+                let itemsHTML = '';
+                if (items.length > 0) {
+                    itemsHTML = `
+                        <div class="collection-items">
+                            ${items.map((item, index) => {
+                                const title = item.title || 'Untitled Item';
+                                const emojicode = item.emojicode || '';
+                                return `
+                                    <div class="collection-item" data-collection="${collection.name}" data-index="${index}">
+                                        <div class="item-title">${title}</div>
+                                        ${emojicode ? `<div class="item-emojicode">${emojicode}</div>` : ''}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="collection-icon">${collection.icon}</div>
+                    <div class="collection-name">${collection.name}</div>
+                    <div class="collection-count">${items.length} ${items.length === 1 ? 'item' : 'items'}</div>
+                    ${itemsHTML}
+                `;
+
+                // Add tap handler for items
+                card.querySelectorAll('.collection-item').forEach(itemEl => {
+                    itemEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const collectionName = itemEl.dataset.collection;
+                        const index = parseInt(itemEl.dataset.index);
+                        const item = items[index];
+                        openItem(collectionName, item, index);
+                    });
+                });
+
+                grid.appendChild(card);
+            });
+
+            container.innerHTML = '';
+            container.appendChild(grid);
+        }
+
+        // Open an item
+        function openItem(collectionName, item, index) {
+            console.log('📖 Opening item from', collectionName, 'at index', index, ':', item);
+
+            // Send message to Swift
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.itemSelected) {
+                window.webkit.messageHandlers.itemSelected.postMessage({
+                    action: 'select',
+                    collection: collectionName,
+                    index: index,
+                    item: item
+                });
+            } else {
+                console.warn('⚠️ Swift message handler not available');
+            }
+        }
+
+        // Update carrier bag data from Swift
+        window.updateCarrierBag = function(carrierBagData) {
+            console.log('📦 Received carrier bag update from Swift');
+            renderCarrierBag(carrierBagData);
+        };
+
+        // Initial empty state
+        renderCarrierBag({});
+    </script>
+</body>
+</html>

@@ -2,46 +2,44 @@
 //  CarrierBagViewController.swift
 //  The Advancement
 //
-//  Shows the contents of the user's carrierBag with all collections
+//  HTML-based carrier bag view showing all collections
 //
 
 #if os(iOS)
 import UIKit
-#elseif os(macOS)
-import Cocoa
-#endif
+import WebKit
 
-#if os(iOS)
-class CarrierBagViewController: UITableViewController {
+class CarrierBagViewController: UIViewController, WKScriptMessageHandler, WKNavigationDelegate {
 
+    private var webView: WKWebView!
     private var carrierBagData: [String: Any] = [:]
-    private var collections: [(name: String, emoji: String, items: [Any])] = []
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
         title = "🎒 Carrier Bag"
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = UIColor(red: 0.1, green: 0.0, blue: 0.2, alpha: 1.0) // Match HTML background
 
-        // Setup table view (use .subtitle style for detail text)
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "CollectionCell")
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "SubtitleCell")
-
-        // Add refresh button
+        // Setup navigation bar
         navigationItem.rightBarButtonItem = UIBarButtonItem(
             barButtonSystemItem: .refresh,
             target: self,
             action: #selector(refreshTapped)
         )
 
-        // Add close button
         navigationItem.leftBarButtonItem = UIBarButtonItem(
             barButtonSystemItem: .done,
             target: self,
             action: #selector(closeTapped)
         )
 
-        // Observe app becoming active to refresh from SharedUserDefaults
+        // Setup WebView
+        setupWebView()
+
+        // Load initial data
+        loadCarrierBagData()
+
+        // Observe app becoming active to refresh
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(appBecameActive),
@@ -49,22 +47,58 @@ class CarrierBagViewController: UITableViewController {
             object: nil
         )
 
-        loadCarrierBagData()
-
-        NSLog("ADVANCEAPP: 🎒 CarrierBagViewController loaded")
+        NSLog("ADVANCEAPP: 🎒 CarrierBagViewController loaded (HTML-based)")
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        loadCarrierBagData() // Refresh when view appears
+        loadCarrierBagData()
     }
 
     deinit {
         NotificationCenter.default.removeObserver(self)
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "itemSelected")
+    }
+
+    private func setupWebView() {
+        let contentController = WKUserContentController()
+
+        // Register message handler for item selection
+        contentController.add(self, name: "itemSelected")
+
+        let config = WKWebViewConfiguration()
+        config.userContentController = contentController
+
+        webView = WKWebView(frame: .zero, configuration: config)
+        webView.navigationDelegate = self
+        webView.isOpaque = false
+        webView.backgroundColor = .clear
+        webView.scrollView.backgroundColor = .clear
+
+        view.addSubview(webView)
+
+        // Layout
+        webView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            webView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+
+        // Load HTML
+        if let htmlPath = Bundle.main.path(forResource: "CarrierBag", ofType: "html"),
+           let htmlString = try? String(contentsOfFile: htmlPath, encoding: .utf8) {
+            let baseURL = URL(fileURLWithPath: htmlPath).deletingLastPathComponent()
+            webView.loadHTMLString(htmlString, baseURL: baseURL)
+            NSLog("ADVANCEAPP: 🎒 Loaded CarrierBag.html")
+        } else {
+            NSLog("ADVANCEAPP: ❌ Failed to load CarrierBag.html")
+        }
     }
 
     @objc private func appBecameActive() {
-        NSLog("ADVANCEAPP: 🎒 App became active, refreshing carrierBag from SharedUserDefaults")
+        NSLog("ADVANCEAPP: 🎒 App became active, refreshing carrier bag")
         loadCarrierBagData()
     }
 
@@ -79,309 +113,159 @@ class CarrierBagViewController: UITableViewController {
     }
 
     private func loadCarrierBagData() {
-        NSLog("ADVANCEAPP: 🎒 Loading carrierBag data from SharedUserDefaults...")
+        NSLog("ADVANCEAPP: 🎒 Loading carrier bag data from SharedUserDefaults...")
 
-        // Load carrierBag from SharedUserDefaults (updated by AdvanceKey)
+        // Load from SharedUserDefaults (updated by AdvanceKey)
         if let carrierBag = SharedUserDefaults.getCarrierBag() {
-            NSLog("ADVANCEAPP: 🎒 Found carrierBag in SharedUserDefaults with %d keys", carrierBag.keys.count)
-            processCarrierBagData(carrierBag)
+            NSLog("ADVANCEAPP: 🎒 Found carrier bag with %d collections", carrierBag.keys.count)
+            carrierBagData = carrierBag
+            updateWebView()
         } else {
-            NSLog("ADVANCEAPP: 🎒 No carrierBag in SharedUserDefaults, creating empty one")
+            NSLog("ADVANCEAPP: 🎒 No carrier bag found, creating empty one")
             let emptyCarrierBag = SharedUserDefaults.createEmptyCarrierBag()
             SharedUserDefaults.saveCarrierBag(emptyCarrierBag)
-            processCarrierBagData(emptyCarrierBag)
+            carrierBagData = emptyCarrierBag
+            updateWebView()
         }
     }
 
-    private func fetchCarrierBagFromBDO(uuid: String) async throws -> [String: Any] {
-        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
-        let hash = "the-advancement"
-        let bdoUrl = "http://127.0.0.1:5114/user/\(uuid)/bdo?timestamp=\(timestamp)&hash=\(hash)"
-
-        guard let url = URL(string: bdoUrl) else {
-            throw NSError(domain: "BDOError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid BDO URL"])
+    private func updateWebView() {
+        // Convert carrier bag to JSON
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: carrierBagData, options: []),
+              let jsonString = String(data: jsonData, encoding: .utf8) else {
+            NSLog("ADVANCEAPP: ❌ Failed to serialize carrier bag data")
+            return
         }
 
-        NSLog("ADVANCEAPP: 📡 Fetching carrierBag from BDO")
+        // Escape for JavaScript
+        let escapedJson = jsonString.replacingOccurrences(of: "\\", with: "\\\\")
+                                    .replacingOccurrences(of: "'", with: "\\'")
+                                    .replacingOccurrences(of: "\n", with: "\\n")
+                                    .replacingOccurrences(of: "\r", with: "\\r")
 
-        let (data, response) = try await URLSession.shared.data(from: url)
+        let javascript = "window.updateCarrierBag(\(jsonString));"
 
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NSError(domain: "BDOError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
-        }
-
-        guard httpResponse.statusCode == 200 else {
-            throw NSError(domain: "BDOError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "BDO error: \(httpResponse.statusCode)"])
-        }
-
-        let jsonObject = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        guard let bdoData = jsonObject,
-              let dataDict = bdoData["data"] as? [String: Any],
-              let carrierBag = dataDict["carrierBag"] as? [String: Any] else {
-            NSLog("ADVANCEAPP: 📦 No carrierBag found in BDO")
-            return [:]
-        }
-
-        NSLog("ADVANCEAPP: 🎒 Found carrierBag with keys: %@", Array(carrierBag.keys).joined(separator: ", "))
-        return carrierBag
-    }
-
-    private func processCarrierBagData(_ carrierBag: [String: Any]) {
-        carrierBagData = carrierBag
-        collections = []
-
-        // Define all available collections with their emojis
-        let collectionDefinitions = [
-            ("cookbook", "🍪"),
-            ("apothecary", "🧪"),
-            ("gallery", "🖼️"),
-            ("bookshelf", "📚"),
-            ("familiarPen", "🐾"),
-            ("machinery", "⚙️"),
-            ("metallics", "⚡"),
-            ("music", "🎵"),
-            ("oracular", "🔮"),
-            ("greenHouse", "🌱"),
-            ("closet", "👕"),
-            ("games", "🎮"),
-            ("events", "🎫"),
-            ("contracts", "📜"),
-            ("stacks", "🏠")
-        ]
-
-        // Process each collection
-        for (name, emoji) in collectionDefinitions {
-            if let items = carrierBag[name] as? [Any] {
-                collections.append((name: name, emoji: emoji, items: items))
-                NSLog("ADVANCEAPP: 📦 Found %d items in %@", items.count, name)
+        webView.evaluateJavaScript(javascript) { result, error in
+            if let error = error {
+                NSLog("ADVANCEAPP: ❌ Error updating carrier bag in WebView: %@", error.localizedDescription)
             } else {
-                // Show empty collections too
-                collections.append((name: name, emoji: emoji, items: []))
+                NSLog("ADVANCEAPP: ✅ Carrier bag updated in WebView")
             }
         }
-
-        // Sort collections by name for consistent display
-        collections.sort { $0.name < $1.name }
-
-        // Reload table
-        tableView.reloadData()
-
-        NSLog("ADVANCEAPP: 🎒 Processed %d collections", collections.count)
     }
 
-    private func showError(_ error: Error) {
-        collections = []
+    // MARK: - WKScriptMessageHandler
 
-        // Create an error collection to display the error
-        let errorCollection = (name: "Error", emoji: "⚠️", items: [error.localizedDescription])
-        collections = [errorCollection]
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        guard message.name == "itemSelected" else { return }
 
-        tableView.reloadData()
-    }
-
-    // MARK: - Table View Data Source
-
-    override func numberOfSections(in tableView: UITableView) -> Int {
-        return max(collections.count, 1) // At least 1 section for empty state
-    }
-
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if collections.isEmpty {
-            return 1 // Empty state
+        guard let messageBody = message.body as? [String: Any],
+              let action = messageBody["action"] as? String,
+              action == "select",
+              let collectionName = messageBody["collection"] as? String,
+              let index = messageBody["index"] as? Int,
+              let item = messageBody["item"] as? [String: Any] else {
+            NSLog("ADVANCEAPP: ❌ Invalid item selection message")
+            return
         }
 
-        let collection = collections[section]
-        return max(collection.items.count, 1) // At least 1 row to show "empty" state
+        NSLog("ADVANCEAPP: 📖 Item selected from %@: %@", collectionName, item["title"] as? String ?? "Unknown")
+
+        showItemDetails(item: item, collectionName: collectionName, index: index)
     }
 
-    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        if collections.isEmpty {
-            return "🎒 Carrier Bag"
-        }
+    // MARK: - Item Details
 
-        let collection = collections[section]
-        return "\(collection.emoji) \(collection.name.capitalized) (\(collection.items.count))"
-    }
-
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = UITableViewCell(style: .subtitle, reuseIdentifier: "SubtitleCell")
-
-        if collections.isEmpty {
-            // Empty state
-            cell.textLabel?.text = "🎒 Loading carrier bag..."
-            cell.detailTextLabel?.text = "Fetching data from Fount"
-            cell.textLabel?.textColor = .systemGray
-            cell.selectionStyle = .none
-            return cell
-        }
-
-        let collection = collections[indexPath.section]
-
-        if collection.items.isEmpty {
-            // Empty collection
-            cell.textLabel?.text = "Empty \(collection.name)"
-            cell.detailTextLabel?.text = "No items in this collection yet"
-            cell.textLabel?.textColor = .systemGray2
-            cell.selectionStyle = .none
-        } else {
-            // Item in collection
-            let item = collection.items[indexPath.row]
-
-            if let itemDict = item as? [String: Any] {
-                // Structured item (like recipes, ebooks, etc.)
-                let title = itemDict["title"] as? String ?? "Untitled Item"
-                let type = itemDict["type"] as? String ?? "unknown"
-                let savedAt = itemDict["savedAt"] as? String ?? ""
-
-                cell.textLabel?.text = title
-
-                // Enhanced display for different item types
-                if type.lowercased() == "ebook" {
-                    var details: [String] = ["📚 Ebook"]
-
-                    if let price = itemDict["price"] as? Int, price > 0 {
-                        let dollarAmount = Double(price) / 100.0
-                        details.append(String(format: "$%.2f", dollarAmount))
-                    }
-
-                    if let purchasedFromNexus = itemDict["purchasedFromNexus"] as? Bool, purchasedFromNexus {
-                        details.append("Purchased via Nexus")
-                    }
-
-                    details.append(formatDate(savedAt))
-
-                    cell.detailTextLabel?.text = details.joined(separator: " • ")
-                } else if type.lowercased() == "room" {
-                    // Enhanced display for rooms
-                    var details: [String] = ["🏠 Room"]
-
-                    if let roomData = itemDict["roomData"] as? [String: Any] {
-                        if let beds = roomData["beds"],
-                           let baths = roomData["baths"] {
-                            details.append("\(beds) bed, \(baths) bath")
-                        }
-
-                        if let rent = roomData["rent"] as? Int {
-                            let dollarAmount = Double(rent) / 100.0
-                            details.append(String(format: "$%.0f/mo", dollarAmount))
-                        }
-                    }
-
-                    details.append(formatDate(savedAt))
-
-                    cell.detailTextLabel?.text = details.joined(separator: " • ")
-                } else {
-                    // Default display for other item types
-                    cell.detailTextLabel?.text = "Type: \(type) • \(formatDate(savedAt))"
-                }
-
-                cell.accessoryType = .disclosureIndicator
-            } else {
-                // Simple item (string or other)
-                cell.textLabel?.text = String(describing: item)
-                cell.detailTextLabel?.text = "Simple item"
-                cell.accessoryType = .none
-            }
-
-            cell.textLabel?.textColor = .label
-            cell.selectionStyle = .default
-        }
-
-        return cell
-    }
-
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
-
-        guard !collections.isEmpty else { return }
-
-        let collection = collections[indexPath.section]
-
-        if collection.items.isEmpty {
-            return // No action for empty collections
-        }
-
-        let item = collection.items[indexPath.row]
-
-        // Show item details
-        showItemDetails(item: item, collectionName: collection.name, collectionEmoji: collection.emoji)
-    }
-
-    // MARK: - Helper Methods
-
-    private func showItemDetails(item: Any, collectionName: String, collectionEmoji: String) {
-        var title = "\(collectionEmoji) Item Details"
+    private func showItemDetails(item: [String: Any], collectionName: String, index: Int) {
+        let title = item["title"] as? String ?? "Item Details"
         var message = ""
 
-        if let itemDict = item as? [String: Any] {
-            title = itemDict["title"] as? String ?? title
+        // Build message from item properties
+        var details: [String] = []
 
-            // Enhanced formatting for ebooks
-            if let type = itemDict["type"] as? String, type.lowercased() == "ebook" {
-                var details: [String] = []
-
-                if let description = itemDict["description"] as? String, !description.isEmpty {
-                    details.append("📖 Description: \(description)")
-                }
-
-                if let price = itemDict["price"] as? Int, price > 0 {
-                    let dollarAmount = Double(price) / 100.0
-                    details.append("💰 Price: \(String(format: "$%.2f", dollarAmount))")
-                }
-
-                if let productId = itemDict["productId"] as? String, !productId.isEmpty {
-                    details.append("🆔 Product ID: \(productId)")
-                }
-
-                if let savedAt = itemDict["savedAt"] as? String {
-                    details.append("📅 Added: \(formatDate(savedAt))")
-                }
-
-                if let purchasedFromNexus = itemDict["purchasedFromNexus"] as? Bool, purchasedFromNexus {
-                    details.append("🛒 Purchased via The Advancement Nexus")
-                }
-
-                message = details.joined(separator: "\n\n")
-            } else {
-                // Default formatting for other item types
-                var details: [String] = []
-                for (key, value) in itemDict {
-                    if key != "title" {
-                        details.append("\(key): \(value)")
-                    }
-                }
-                message = details.joined(separator: "\n")
-            }
-        } else {
-            message = "Raw data: \(item)"
+        if let type = item["type"] as? String {
+            details.append("Type: \(type)")
         }
+
+        if let description = item["description"] as? String, !description.isEmpty {
+            details.append("\n\(description)")
+        }
+
+        if let emojicode = item["emojicode"] as? String, !emojicode.isEmpty {
+            details.append("\nEmojicode: \(emojicode)")
+        }
+
+        if let bdoPubKey = item["bdoPubKey"] as? String, !bdoPubKey.isEmpty {
+            details.append("\nBDO PubKey: \(bdoPubKey.prefix(20))...")
+        }
+
+        if let savedAt = item["savedAt"] as? String {
+            details.append("\nSaved: \(formatDate(savedAt))")
+        }
+
+        // Add other properties
+        for (key, value) in item {
+            if !["title", "type", "description", "emojicode", "bdoPubKey", "savedAt"].contains(key) {
+                details.append("\n\(key): \(value)")
+            }
+        }
+
+        message = details.joined()
 
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
 
-        // Add copy button for product ID if it's an ebook
-        if let itemDict = item as? [String: Any] {
-            if let type = itemDict["type"] as? String, type.lowercased() == "ebook",
-               let productId = itemDict["productId"] as? String, !productId.isEmpty {
-                alert.addAction(UIAlertAction(title: "Copy Product ID", style: .default) { _ in
-                    UIPasteboard.general.string = productId
-                    NSLog("ADVANCEAPP: 📋 Copied Product ID to clipboard")
-                })
-            }
-
-            // Keep existing BDO PubKey copy functionality
-            if let bdoPubKey = itemDict["bdoPubKey"] as? String {
-                alert.addAction(UIAlertAction(title: "Copy BDO PubKey", style: .default) { _ in
-                    UIPasteboard.general.string = bdoPubKey
-                    NSLog("ADVANCEAPP: 📋 Copied BDO PubKey to clipboard")
-                })
-            }
+        // Add copy buttons
+        if let emojicode = item["emojicode"] as? String, !emojicode.isEmpty {
+            alert.addAction(UIAlertAction(title: "Copy Emojicode", style: .default) { _ in
+                UIPasteboard.general.string = emojicode
+                NSLog("ADVANCEAPP: 📋 Copied emojicode to clipboard")
+            })
         }
+
+        if let bdoPubKey = item["bdoPubKey"] as? String, !bdoPubKey.isEmpty {
+            alert.addAction(UIAlertAction(title: "Copy BDO PubKey", style: .default) { _ in
+                UIPasteboard.general.string = bdoPubKey
+                NSLog("ADVANCEAPP: 📋 Copied BDO PubKey to clipboard")
+            })
+        }
+
+        // Add remove option
+        alert.addAction(UIAlertAction(title: "Remove from \(collectionName)", style: .destructive) { _ in
+            self.removeItem(collectionName: collectionName, index: index)
+        })
 
         alert.addAction(UIAlertAction(title: "OK", style: .default))
 
         present(alert, animated: true)
+    }
 
-        NSLog("ADVANCEAPP: 🔍 Showing details for item in %@", collectionName)
+    private func removeItem(collectionName: String, index: Int) {
+        NSLog("ADVANCEAPP: 🗑️ Removing item at index %d from %@", index, collectionName)
+
+        // Get current carrier bag
+        guard var carrierBag = SharedUserDefaults.getCarrierBag() else {
+            NSLog("ADVANCEAPP: ❌ No carrier bag found")
+            return
+        }
+
+        // Remove item from collection
+        if var collection = carrierBag[collectionName] as? [[String: Any]] {
+            guard index >= 0 && index < collection.count else {
+                NSLog("ADVANCEAPP: ❌ Invalid index")
+                return
+            }
+
+            collection.remove(at: index)
+            carrierBag[collectionName] = collection
+
+            // Save updated carrier bag
+            SharedUserDefaults.saveCarrierBag(carrierBag)
+
+            // Reload
+            loadCarrierBagData()
+
+            NSLog("ADVANCEAPP: ✅ Item removed from %@", collectionName)
+        }
     }
 
     private func formatDate(_ dateString: String) -> String {
@@ -396,34 +280,6 @@ class CarrierBagViewController: UITableViewController {
         }
 
         return dateString
-    }
-
-    // MARK: - Section Header Customization
-
-    override func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
-        if let headerView = view as? UITableViewHeaderFooterView {
-            headerView.textLabel?.font = UIFont.systemFont(ofSize: 16, weight: .medium)
-            headerView.textLabel?.textColor = .systemBlue
-        }
-    }
-
-    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 44
-    }
-
-    // MARK: - UUID Management
-
-    private func getStoredAddieUUID() -> String {
-        // Get UUID from stored Addie user data
-        if let existingUser = UserDefaults.standard.data(forKey: "addieUser"),
-           let userData = try? JSONSerialization.jsonObject(with: existingUser) as? [String: Any],
-           let uuid = userData["uuid"] as? String {
-            NSLog("ADVANCEAPP: 🔄 Using stored Addie UUID: %@", uuid)
-            return uuid
-        }
-
-        NSLog("ADVANCEAPP: ❌ No Addie user found, using fallback UUID")
-        return "no-uuid-available"
     }
 }
 #endif
