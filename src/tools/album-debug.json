@@ -1,0 +1,293 @@
+{
+  "title": "Bury the Needle Thinks You're Lookin' Pretty Good on Mirlo",
+  "buttons": [
+    {
+      "text": "",
+      "ariaLabel": "Log in",
+      "className": "css-1dvcxr3 css-1mgd2t7 es0rh070",
+      "html": "<button title=\"\" aria-label=\"Log in\" class=\"css-1dvcxr3 css-1mgd2t7 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 51"
+    },
+    {
+      "text": "Got it!",
+      "ariaLabel": "Got it!",
+      "className": "css-nkijlp es0rh070",
+      "html": "<button title=\"Got it!\" aria-label=\"Got it!\" class=\"css-nkijlp es0rh070\"><span class=\"children\">Got it!</span></button>"
+    },
+    {
+      "text": "",
+      "ariaLabel": "Play",
+      "className": "css-eheiqr play-button css-84rdg7 es0rh070",
+      "html": "<button title=\"Play\" aria-label=\"Play\" class=\"css-eheiqr play-button css-84rdg7 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" vie"
+    },
+    {
+      "text": "",
+      "ariaLabel": "",
+      "className": "css-1ycw7du css-1lrnbbq css-1mgd2t7 es0rh070",
+      "html": "<button title=\"Embed or share album\" aria-label=\"\" class=\"css-1ycw7du css-1lrnbbq css-1mgd2t7 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke"
+    },
+    {
+      "text": "Buy",
+      "ariaLabel": "Buy",
+      "className": "css-1ycw7du undefined css-nkijlp es0rh070",
+      "html": "<button title=\"Buy\" aria-label=\"Buy\" type=\"button\" class=\"css-1ycw7du undefined css-nkijlp es0rh070\"><span class=\"children\">Buy</span></button>"
+    },
+    {
+      "text": "",
+      "ariaLabel": "Play",
+      "className": "css-eheiqr play-button css-84rdg7 es0rh070",
+      "html": "<button title=\"Play\" aria-label=\"Play\" class=\"css-eheiqr play-button css-84rdg7 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" vie"
+    },
+    {
+      "text": "",
+      "ariaLabel": "",
+      "className": "play-button css-6cr1jk es0rh070",
+      "html": "<button title=\"\" aria-label=\"\" class=\"play-button css-6cr1jk es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 16 16\" he"
+    },
+    {
+      "text": "",
+      "ariaLabel": "Track options",
+      "className": "css-18h3ndd css-hzb38m css-1c598z6 es0rh070",
+      "html": "<button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\""
+    },
+    {
+      "text": "",
+      "ariaLabel": "",
+      "className": "play-button css-6cr1jk es0rh070",
+      "html": "<button title=\"\" aria-label=\"\" class=\"play-button css-6cr1jk es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 16 16\" he"
+    },
+    {
+      "text": "",
+      "ariaLabel": "Track options",
+      "className": "css-18h3ndd css-hzb38m css-1c598z6 es0rh070",
+      "html": "<button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\""
+    },
+    {
+      "text": "",
+      "ariaLabel": "",
+      "className": "play-button css-6cr1jk es0rh070",
+      "html": "<button title=\"\" aria-label=\"\" class=\"play-button css-6cr1jk es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 16 16\" he"
+    },
+    {
+      "text": "",
+      "ariaLabel": "Track options",
+      "className": "css-18h3ndd css-hzb38m css-1c598z6 es0rh070",
+      "html": "<button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\""
+    },
+    {
+      "text": "",
+      "ariaLabel": "",
+      "className": "play-button css-6cr1jk es0rh070",
+      "html": "<button title=\"\" aria-label=\"\" class=\"play-button css-6cr1jk es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 16 16\" he"
+    },
+    {
+      "text": "",
+      "ariaLabel": "Track options",
+      "className": "css-18h3ndd css-hzb38m css-1c598z6 es0rh070",
+      "html": "<button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\""
+    },
+    {
+      "text": "",
+      "ariaLabel": "",
+      "className": "play-button css-6cr1jk es0rh070",
+      "html": "<button title=\"\" aria-label=\"\" class=\"play-button css-6cr1jk es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 16 16\" he"
+    },
+    {
+      "text": "",
+      "ariaLabel": "Track options",
+      "className": "css-18h3ndd css-hzb38m css-1c598z6 es0rh070",
+      "html": "<button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\""
+    },
+    {
+      "text": "",
+      "ariaLabel": "",
+      "className": "play-button css-6cr1jk es0rh070",
+      "html": "<button title=\"\" aria-label=\"\" class=\"play-button css-6cr1jk es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 16 16\" he"
+    },
+    {
+      "text": "",
+      "ariaLabel": "Track options",
+      "className": "css-18h3ndd css-hzb38m css-1c598z6 es0rh070",
+      "html": "<button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\""
+    },
+    {
+      "text": "",
+      "ariaLabel": "",
+      "className": "play-button css-6cr1jk es0rh070",
+      "html": "<button title=\"\" aria-label=\"\" class=\"play-button css-6cr1jk es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 16 16\" he"
+    },
+    {
+      "text": "",
+      "ariaLabel": "Track options",
+      "className": "css-18h3ndd css-hzb38m css-1c598z6 es0rh070",
+      "html": "<button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\""
+    },
+    {
+      "text": "",
+      "ariaLabel": "",
+      "className": "play-button css-6cr1jk es0rh070",
+      "html": "<button title=\"\" aria-label=\"\" class=\"play-button css-6cr1jk es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 16 16\" he"
+    },
+    {
+      "text": "",
+      "ariaLabel": "Track options",
+      "className": "css-18h3ndd css-hzb38m css-1c598z6 es0rh070",
+      "html": "<button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\""
+    },
+    {
+      "text": "Flag content",
+      "ariaLabel": "Flag content",
+      "className": "css-fw9b1t css-u9aqhf css-1xh19v0 es0rh070",
+      "html": "<button title=\"Flag content\" aria-label=\"Flag content\" class=\"css-fw9b1t css-u9aqhf css-1xh19v0 es0rh070\"><span class=\"children\">Flag content</span></button>"
+    },
+    {
+      "text": "Follow",
+      "ariaLabel": "Follow",
+      "className": "css-eheiqr undefined css-60y3hl es0rh070",
+      "html": "<button title=\"Follow\" aria-label=\"Follow\" type=\"button\" class=\"css-eheiqr undefined css-60y3hl es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stro"
+    }
+  ],
+  "lists": [],
+  "h2": [],
+  "svg": [
+    {
+      "ariaLabel": null,
+      "className": " css-17p906i",
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": " css-17p906i",
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "SPAN"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "A"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "A"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "A"
+    },
+    {
+      "ariaLabel": null,
+      "className": {},
+      "parent": "A"
+    }
+  ]
+}

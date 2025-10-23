@@ -17,7 +17,7 @@ import WebKit
 class NexusViewController: UIViewController, WKNavigationDelegate, WKScriptMessageHandler {
 
     private var webView: WKWebView!
-    private let nexusURL = "http://127.0.0.1:3333"
+    private let nexusURL = "http://127.0.0.1:3006/nexus"
     private let sessionless = Sessionless()
 
     override func viewDidLoad() {
@@ -159,7 +159,7 @@ class NexusViewController: UIViewController, WKNavigationDelegate, WKScriptMessa
         Could not connect to Nexus portal.
 
         Please ensure:
-        • Nexus server is running on localhost:3333
+        • Fount server is running on localhost:3006
         • Network connection is available
 
         Error: \(error.localizedDescription)

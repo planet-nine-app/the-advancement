@@ -1216,11 +1216,20 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
                 // Handle spell button clicks
                 document.addEventListener('click', function(e) {
-                    const spell = e.target.getAttribute('spell');
-                    if (spell) {
-                        const spellComponents = e.target.getAttribute('spell-components');
-                        console.log('Spell clicked:', spell, 'components:', spellComponents);
-                        handleSpell(spell, bdoData, spellComponents);
+                    // Traverse up the DOM tree to find an element with a spell attribute
+                    let target = e.target;
+                    let spell = null;
+                    let spellComponents = null;
+
+                    while (target && target !== document) {
+                        spell = target.getAttribute('spell');
+                        if (spell) {
+                            spellComponents = target.getAttribute('spell-components');
+                            console.log('Spell clicked:', spell, 'components:', spellComponents);
+                            handleSpell(spell, bdoData, spellComponents);
+                            break;
+                        }
+                        target = target.parentElement;
                     }
                 });
 
@@ -1309,7 +1318,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                                 collection = 'stacks';
                             } else if (type === 'popup' || type === 'event') {
                                 collection = 'events';
-                            } else if (type === 'music-player' || type === 'music') {
+                            } else if (type === 'music-player' || type === 'music' || type === 'canimus-feed') {
                                 collection = 'music';
                             } else {
                                 collection = 'stacks'; // Default

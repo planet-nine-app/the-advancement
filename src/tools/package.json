@@ -1,0 +1,16 @@
+{
+  "name": "mirlo-to-canimus",
+  "version": "1.0.0",
+  "description": "Scrape Mirlo artist pages and convert to Canimus music feed format",
+  "main": "mirlo-to-canimus.js",
+  "scripts": {
+    "convert": "node mirlo-to-canimus.js",
+    "test": "node mirlo-to-canimus.js bury-the-needle ../../canimus-feed.json"
+  },
+  "keywords": ["mirlo", "canimus", "music", "feed", "scraper"],
+  "author": "Planet Nine",
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^24.15.0"
+  }
+}

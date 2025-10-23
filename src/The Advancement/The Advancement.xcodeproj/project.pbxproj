@@ -125,6 +125,7 @@
 			membershipExceptions = (
 				"/Localized: Resources/Main.html",
 				Assets.xcassets,
+				BLEWandManager.swift,
 				CarrierBagViewController.swift,
 				Configuration.swift,
 				CookbookViewController.swift,
@@ -135,6 +136,7 @@
 				Resources/Script.js,
 				Resources/Style.css,
 				ViewController.swift,
+				WandCoordinator.swift,
 			);
 			target = CA54CB0F2E5A0A99007D062D /* The Advancement (macOS) */;
 		};

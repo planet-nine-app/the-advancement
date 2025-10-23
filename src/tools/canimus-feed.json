@@ -1,0 +1,316 @@
+{
+  "type": "feed",
+  "name": "Bury the Needle - Music Feed",
+  "url": "https://mirlo.space/bury-the-needle/releases",
+  "updated-date": "2025-10-22T05:48:46.533Z",
+  "description": "Music releases from Bury the Needle on Mirlo",
+  "links": [
+    {
+      "rel": "self",
+      "type": "application/canimus+json",
+      "href": "https://mirlo.space/bury-the-needle/feed.json"
+    },
+    {
+      "rel": "alternate",
+      "type": "text/html",
+      "href": "https://mirlo.space/bury-the-needle/releases"
+    }
+  ],
+  "children": [
+    {
+      "type": "artist",
+      "uid": "bury-the-needle",
+      "name": "Bury the Needle",
+      "url": "https://mirlo.space/bury-the-needle",
+      "images": [
+        {
+          "src": "https://artist-avatars.s3.us-east-005.backblazeb2.com/887490b7-a9bb-46f6-b077-9d2c12710694-x300.webp?2025-10-22T04:31:53.186Z",
+          "width": 600,
+          "height": 600
+        }
+      ],
+      "children": [
+        {
+          "type": "album",
+          "uid": "bury-the-needle",
+          "name": "Bury the Needle Thinks You're Lookin' Pretty Good",
+          "artist": "Bury the Needle",
+          "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle",
+          "images": [
+            {
+              "src": "https://trackgroup-covers.s3.us-east-005.backblazeb2.com/7d2fb2c4-ec9e-4f88-95fe-78bd383500fa-x300.webp",
+              "width": 600,
+              "height": 600
+            }
+          ],
+          "children": [
+            {
+              "type": "track",
+              "uid": "track-1",
+              "name": "PBR",
+              "artist": "Bury the Needle",
+              "duration": 77,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle#track-1"
+            },
+            {
+              "type": "track",
+              "uid": "track-2",
+              "name": "Let's Go Surfin' Now",
+              "artist": "Bury the Needle",
+              "duration": 74,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle#track-2"
+            },
+            {
+              "type": "track",
+              "uid": "track-3",
+              "name": "Pedal To the Metal",
+              "artist": "Bury the Needle",
+              "duration": 72,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle#track-3"
+            },
+            {
+              "type": "track",
+              "uid": "track-4",
+              "name": "Oldstyle",
+              "artist": "Bury the Needle",
+              "duration": 73,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle#track-4"
+            },
+            {
+              "type": "track",
+              "uid": "track-5",
+              "name": "Whisperin' Sweet Nothin's",
+              "artist": "Bury the Needle",
+              "duration": 96,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle#track-5"
+            },
+            {
+              "type": "track",
+              "uid": "track-6",
+              "name": "Got To Got To Got To Have It",
+              "artist": "Bury the Needle",
+              "duration": 94,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle#track-6"
+            },
+            {
+              "type": "track",
+              "uid": "track-7",
+              "name": "All Night Long",
+              "artist": "Bury the Needle",
+              "duration": 70,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle#track-7"
+            },
+            {
+              "type": "track",
+              "uid": "track-8",
+              "name": "Bury the Needle Thinks You're Lookin' Pretty Good",
+              "artist": "Bury the Needle",
+              "duration": 138,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle#track-8"
+            }
+          ]
+        },
+        {
+          "type": "album",
+          "uid": "bury-the-needle-gets-deliciously-sauced",
+          "name": "Bury the Needle Gets Deliciously Sauced",
+          "artist": "Bury the Needle",
+          "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-deliciously-sauced",
+          "images": [
+            {
+              "src": "https://trackgroup-covers.s3.us-east-005.backblazeb2.com/739122a4-e2b9-48d0-bfa6-9ef208c70e68-x300.webp",
+              "width": 600,
+              "height": 600
+            }
+          ],
+          "children": [
+            {
+              "type": "track",
+              "uid": "track-1",
+              "name": "Take It Past the Limit",
+              "artist": "Bury the Needle",
+              "duration": 58,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-deliciously-sauced#track-1"
+            },
+            {
+              "type": "track",
+              "uid": "track-2",
+              "name": "Where's My Beer?",
+              "artist": "Bury the Needle",
+              "duration": 87,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-deliciously-sauced#track-2"
+            },
+            {
+              "type": "track",
+              "uid": "track-3",
+              "name": "Booze Blanket Party",
+              "artist": "Bury the Needle",
+              "duration": 108,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-deliciously-sauced#track-3"
+            },
+            {
+              "type": "track",
+              "uid": "track-4",
+              "name": "The Cheaper the Woman, the Classier the Beer",
+              "artist": "Bury the Needle",
+              "duration": 75,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-deliciously-sauced#track-4"
+            },
+            {
+              "type": "track",
+              "uid": "track-5",
+              "name": "Dunk Tunk",
+              "artist": "Bury the Needle",
+              "duration": 68,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-deliciously-sauced#track-5"
+            },
+            {
+              "type": "track",
+              "uid": "track-6",
+              "name": "Smoke 'em If You Got 'em, But We're Fine Drunk",
+              "artist": "Bury the Needle",
+              "duration": 73,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-deliciously-sauced#track-6"
+            },
+            {
+              "type": "track",
+              "uid": "track-7",
+              "name": "Lady Whiskey Blues",
+              "artist": "Bury the Needle",
+              "duration": 94,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-deliciously-sauced#track-7"
+            },
+            {
+              "type": "track",
+              "uid": "track-8",
+              "name": "The Lady's My Ante",
+              "artist": "Bury the Needle",
+              "duration": 80,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-deliciously-sauced#track-8"
+            },
+            {
+              "type": "track",
+              "uid": "track-9",
+              "name": "I'll See Your Beer and I'll Raise You 15",
+              "artist": "Bury the Needle",
+              "duration": 112,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-deliciously-sauced#track-9"
+            },
+            {
+              "type": "track",
+              "uid": "track-10",
+              "name": "Always Drunk",
+              "artist": "Bury the Needle",
+              "duration": 246,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-deliciously-sauced#track-10"
+            }
+          ]
+        },
+        {
+          "type": "album",
+          "uid": "bury-the-needle-gets-their-swerve-on",
+          "name": "Bury the Needle Gets Their Swerve On",
+          "artist": "Bury the Needle",
+          "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-their-swerve-on",
+          "images": [
+            {
+              "src": "https://trackgroup-covers.s3.us-east-005.backblazeb2.com/731ec7b6-d1fb-4b85-9efc-a080c82b86f8-x300.webp",
+              "width": 600,
+              "height": 600
+            }
+          ],
+          "children": [
+            {
+              "type": "track",
+              "uid": "track-1",
+              "name": "Muscle Car",
+              "artist": "Bury the Needle",
+              "duration": 57,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-their-swerve-on#track-1"
+            },
+            {
+              "type": "track",
+              "uid": "track-2",
+              "name": "I Still Can See",
+              "artist": "Bury the Needle",
+              "duration": 141,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-their-swerve-on#track-2"
+            },
+            {
+              "type": "track",
+              "uid": "track-3",
+              "name": "Well Whiskey",
+              "artist": "Bury the Needle",
+              "duration": 113,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-their-swerve-on#track-3"
+            },
+            {
+              "type": "track",
+              "uid": "track-4",
+              "name": "Ace in the Hole",
+              "artist": "Bury the Needle",
+              "duration": 132,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-their-swerve-on#track-4"
+            },
+            {
+              "type": "track",
+              "uid": "track-5",
+              "name": "Rock N' Roll In My Pants",
+              "artist": "Bury the Needle",
+              "duration": 85,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-their-swerve-on#track-5"
+            },
+            {
+              "type": "track",
+              "uid": "track-6",
+              "name": "Gimme Some of That Good Lovin'",
+              "artist": "Bury the Needle",
+              "duration": 64,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-their-swerve-on#track-6"
+            },
+            {
+              "type": "track",
+              "uid": "track-7",
+              "name": "Backpack Full of Beer",
+              "artist": "Bury the Needle",
+              "duration": 109,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-their-swerve-on#track-7"
+            },
+            {
+              "type": "track",
+              "uid": "track-8",
+              "name": "This Place Is Dead",
+              "artist": "Bury the Needle",
+              "duration": 117,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-their-swerve-on#track-8"
+            },
+            {
+              "type": "track",
+              "uid": "track-9",
+              "name": "Throw It All In",
+              "artist": "Bury the Needle",
+              "duration": 115,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-their-swerve-on#track-9"
+            },
+            {
+              "type": "track",
+              "uid": "track-10",
+              "name": "Accelerate",
+              "artist": "Bury the Needle",
+              "duration": 108,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-their-swerve-on#track-10"
+            },
+            {
+              "type": "track",
+              "uid": "track-11",
+              "name": "The Land o' Whiskey",
+              "artist": "Bury the Needle",
+              "duration": 118,
+              "url": "https://mirlo.space/bury-the-needle/release/bury-the-needle-gets-their-swerve-on#track-11"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
