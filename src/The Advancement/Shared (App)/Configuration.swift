@@ -35,6 +35,7 @@ public struct Configuration {
         case nexus = "nexus"
         case sanora = "sanora"
         case covenant = "covenant"
+        case dolores = "dolores"
     }
 
     // MARK: - URL Generation
@@ -61,6 +62,8 @@ public struct Configuration {
                 port = portBase + 21
             case .covenant:
                 port = portBase + 22
+            case .dolores:
+                port = portBase + 18
             }
             return "http://127.0.0.1:\(port)"
 
@@ -79,6 +82,8 @@ public struct Configuration {
                 port = 7243
             case .covenant:
                 port = 3011
+            case .dolores:
+                port = 3007
             }
             return "http://localhost:\(port)"
 
@@ -107,6 +112,9 @@ public struct Configuration {
 
     /// Covenant service base URL (Contract service)
     public static let covenantBaseURL: String = serviceURL(for: .covenant)
+
+    /// Dolores service base URL (Discovery/audio service)
+    public static let doloresBaseURL: String = serviceURL(for: .dolores)
 
     // MARK: - Common Endpoints
 
@@ -176,6 +184,19 @@ public struct Configuration {
         }
     }
 
+    public struct Dolores {
+        public static func audioPlayer(feedUrl: String) -> String {
+            guard let encodedFeedUrl = feedUrl.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
+                return "\(doloresBaseURL)/audio-player.html"
+            }
+            return "\(doloresBaseURL)/audio-player.html?feedUrl=\(encodedFeedUrl)"
+        }
+
+        public static var baseURL: String {
+            return doloresBaseURL
+        }
+    }
+
     // MARK: - Debug Info
 
     public static func printConfiguration() {
@@ -196,6 +217,7 @@ public struct Configuration {
         print("   Nexus:    \(nexusBaseURL)")
         print("   Sanora:   \(sanoraBaseURL)")
         print("   Covenant: \(covenantBaseURL)")
+        print("   Dolores:  \(doloresBaseURL)")
         print("")
         print("💡 To change environment, edit Configuration.swift:")
         print("   - Set environment to \"test\" for local testing (127.0.0.1:ports)")

@@ -177,6 +177,12 @@ class CarrierBagViewController: UIViewController, WKScriptMessageHandler, WKNavi
     // MARK: - Item Details
 
     private func showItemDetails(item: [String: Any], collectionName: String, index: Int) {
+        // Special handling for music items - open audio player
+        if collectionName == "music", let feedUrl = item["feedUrl"] as? String {
+            openMusicPlayer(feedUrl: feedUrl, title: item["title"] as? String ?? "Music")
+            return
+        }
+
         let title = item["title"] as? String ?? "Item Details"
         var message = ""
 
@@ -281,5 +287,109 @@ class CarrierBagViewController: UIViewController, WKScriptMessageHandler, WKNavi
 
         return dateString
     }
+
+    // MARK: - Music Player
+
+    private func openMusicPlayer(feedUrl: String, title: String) {
+        NSLog("ADVANCEAPP: 🎵 Opening music player for: %@", title)
+        NSLog("ADVANCEAPP: 🎵 Feed URL: %@", feedUrl)
+
+        // Create music player view controller
+        let playerVC = MusicPlayerViewController()
+        playerVC.feedUrl = feedUrl
+        playerVC.feedTitle = title
+
+        // Present as modal
+        let navController = UINavigationController(rootViewController: playerVC)
+        navController.modalPresentationStyle = .fullScreen
+        present(navController, animated: true)
+    }
 }
+
+// MARK: - Music Player View Controller
+
+class MusicPlayerViewController: UIViewController, WKNavigationDelegate {
+    var feedUrl: String?
+    var feedTitle: String?
+    private var webView: WKWebView!
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        title = feedTitle ?? "🎵 Music Player"
+        view.backgroundColor = UIColor(red: 0.1, green: 0.0, blue: 0.2, alpha: 1.0)
+
+        // Add close button
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem: .done,
+            target: self,
+            action: #selector(closeTapped)
+        )
+
+        // Setup WebView
+        setupWebView()
+    }
+
+    private func setupWebView() {
+        let config = WKWebViewConfiguration()
+        config.allowsInlineMediaPlayback = true
+        config.mediaTypesRequiringUserActionForPlayback = []
+
+        webView = WKWebView(frame: .zero, configuration: config)
+        webView.navigationDelegate = self
+        webView.isOpaque = false
+        webView.backgroundColor = .clear
+        webView.scrollView.backgroundColor = .clear
+
+        view.addSubview(webView)
+
+        // Layout
+        webView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            webView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+
+        // Load Dolores audio player
+        loadAudioPlayer()
+    }
+
+    private func loadAudioPlayer() {
+        guard let feedUrl = feedUrl else {
+            NSLog("MUSICPLAYER: ❌ No feed URL provided")
+            return
+        }
+
+        // Use Configuration for environment-aware Dolores URL
+        let doloresUrl = Configuration.Dolores.audioPlayer(feedUrl: feedUrl)
+
+        guard let url = URL(string: doloresUrl) else {
+            NSLog("MUSICPLAYER: ❌ Invalid URL: %@", doloresUrl)
+            return
+        }
+
+        NSLog("MUSICPLAYER: 🎵 Loading Dolores audio player: %@", doloresUrl)
+
+        let request = URLRequest(url: url)
+        webView.load(request)
+    }
+
+    @objc private func closeTapped() {
+        NSLog("MUSICPLAYER: 🎵 Close button tapped")
+        dismiss(animated: true)
+    }
+
+    // MARK: - WKNavigationDelegate
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        NSLog("MUSICPLAYER: ✅ Audio player loaded successfully")
+    }
+
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        NSLog("MUSICPLAYER: ❌ Failed to load audio player: %@", error.localizedDescription)
+    }
+}
+
 #endif
