@@ -178,9 +178,22 @@ class CarrierBagViewController: UIViewController, WKScriptMessageHandler, WKNavi
 
     private func showItemDetails(item: [String: Any], collectionName: String, index: Int) {
         // Special handling for music items - open audio player
-        if collectionName == "music", let feedUrl = item["feedUrl"] as? String {
-            openMusicPlayer(feedUrl: feedUrl, title: item["title"] as? String ?? "Music")
-            return
+        if collectionName == "music" {
+            // Try to get feedUrl from top level or metadata
+            let feedUrl: String? = {
+                if let url = item["feedUrl"] as? String {
+                    return url
+                } else if let metadata = item["metadata"] as? [String: Any],
+                          let url = metadata["feedUrl"] as? String {
+                    return url
+                }
+                return nil
+            }()
+
+            if let feedUrl = feedUrl {
+                openMusicPlayer(feedUrl: feedUrl, title: item["title"] as? String ?? "Music")
+                return
+            }
         }
 
         let title = item["title"] as? String ?? "Item Details"
