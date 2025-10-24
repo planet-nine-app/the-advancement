@@ -28,6 +28,20 @@
             </intent-filter>
         </activity>
 
+        <!-- Music Player Activity -->
+        <activity
+            android:name=".ui.music.MusicPlayerActivity"
+            android:exported="false"
+            android:label="Music Player"
+            android:theme="@style/Theme.TheAdvancement" />
+
+        <!-- Carrier Bag Activity -->
+        <activity
+            android:name=".ui.carrierbag.CarrierBagActivity"
+            android:exported="false"
+            android:label="Carrier Bag"
+            android:theme="@style/Theme.TheAdvancement" />
+
         <!-- AdvanceKey IME Service -->
         <service
             android:name=".ime.AdvanceKeyService"

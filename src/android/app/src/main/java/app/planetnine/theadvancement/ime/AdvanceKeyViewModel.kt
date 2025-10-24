@@ -37,6 +37,7 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
         private const val PREFS_NAME = "the_advancement"
         private const val KEY_FOUNT_UUID = "fount_uuid"
         private const val KEY_USER_PUBKEY = "user_pubkey"
+        private const val KEY_CARRIER_BAG = "carrier_bag"
     }
 
     private val _clipboardText = MutableStateFlow("")
@@ -272,5 +273,128 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
      */
     fun refreshPostedBDOs() {
         loadPostedBDOs()
+    }
+
+    /**
+     * Save BDO to carrier bag
+     */
+    fun saveToCarrierBag(emojicode: String) {
+        viewModelScope.launch {
+            try {
+                Log.d(TAG, "💾 Saving to carrier bag: $emojicode")
+
+                // Fetch BDO by emojicode
+                val bdoResponse = fetchBDOByEmojicode(emojicode)
+                val bdo = bdoResponse["bdo"] as? Map<String, Any>
+                    ?: throw Exception("No BDO data in response")
+
+                val bdoPubKey = bdoResponse["pubKey"] as? String
+                    ?: throw Exception("No pubKey in response")
+
+                // Determine collection from BDO type
+                val collection = determineCollection(bdo)
+
+                Log.d(TAG, "💾 Determined collection: $collection")
+
+                // Load current carrier bag
+                val carrierBagJson = prefs.getString(KEY_CARRIER_BAG, null)
+                val carrierBag = if (carrierBagJson != null) {
+                    @Suppress("UNCHECKED_CAST")
+                    gson.fromJson(carrierBagJson, Map::class.java).toMutableMap() as MutableMap<String, Any>
+                } else {
+                    createEmptyCarrierBag().toMutableMap()
+                }
+
+                // Get collection array
+                @Suppress("UNCHECKED_CAST")
+                val collectionItems = (carrierBag[collection] as? List<Map<String, Any>>)?.toMutableList()
+                    ?: mutableListOf()
+
+                // Create item to save
+                val item = mapOf(
+                    "title" to (bdo["name"] as? String ?: bdo["title"] as? String ?: "Untitled"),
+                    "type" to (bdo["type"] as? String ?: "unknown"),
+                    "emojicode" to emojicode,
+                    "bdoPubKey" to bdoPubKey,
+                    "bdoData" to bdo,
+                    "metadata" to (bdo["metadata"] ?: emptyMap<String, Any>()),
+                    "savedAt" to System.currentTimeMillis()
+                )
+
+                // Add to collection (avoid duplicates by checking emojicode)
+                val existingIndex = collectionItems.indexOfFirst {
+                    it["emojicode"] == emojicode
+                }
+
+                if (existingIndex >= 0) {
+                    Log.d(TAG, "💾 Item already in $collection, updating...")
+                    collectionItems[existingIndex] = item
+                } else {
+                    Log.d(TAG, "💾 Adding new item to $collection")
+                    collectionItems.add(0, item) // Add to beginning
+                }
+
+                // Update carrier bag
+                carrierBag[collection] = collectionItems
+
+                // Save to SharedPreferences
+                val updatedJson = gson.toJson(carrierBag)
+                prefs.edit().putString(KEY_CARRIER_BAG, updatedJson).apply()
+
+                Log.d(TAG, "✅ Saved to carrier bag: $collection (${collectionItems.size} items)")
+
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Failed to save to carrier bag", e)
+            }
+        }
+    }
+
+    /**
+     * Determine collection from BDO type
+     */
+    private fun determineCollection(bdo: Map<String, Any>): String {
+        val type = bdo["type"] as? String ?: ""
+
+        return when {
+            type == "recipe" || type == "food" -> "cookbook"
+            type == "potion" || type == "remedy" -> "apothecary"
+            type == "artwork" || type == "image" -> "gallery"
+            type == "book" || type == "literature" -> "bookshelf"
+            type == "pet" || type == "familiar" -> "familiarPen"
+            type == "tool" || type == "machine" -> "machinery"
+            type == "gem" || type == "metal" -> "metallics"
+            type == "music" || type == "song" || type == "canimus-feed" -> "music"
+            type == "prophecy" || type == "divination" -> "oracular"
+            type == "plant" || type == "botanical" -> "greenHouse"
+            type == "clothing" || type == "garment" -> "closet"
+            type == "game" || type == "entertainment" -> "games"
+            type == "event" || type == "popup" -> "events"
+            type == "contract" || type == "covenant" -> "contracts"
+            type == "room" || type == "space" -> "stacks"
+            else -> "stacks" // default
+        }
+    }
+
+    /**
+     * Create empty carrier bag with all 15 collections
+     */
+    private fun createEmptyCarrierBag(): Map<String, Any> {
+        return mapOf(
+            "cookbook" to emptyList<Any>(),
+            "apothecary" to emptyList<Any>(),
+            "gallery" to emptyList<Any>(),
+            "bookshelf" to emptyList<Any>(),
+            "familiarPen" to emptyList<Any>(),
+            "machinery" to emptyList<Any>(),
+            "metallics" to emptyList<Any>(),
+            "music" to emptyList<Any>(),
+            "oracular" to emptyList<Any>(),
+            "greenHouse" to emptyList<Any>(),
+            "closet" to emptyList<Any>(),
+            "games" to emptyList<Any>(),
+            "events" to emptyList<Any>(),
+            "contracts" to emptyList<Any>(),
+            "stacks" to emptyList<Any>()
+        )
     }
 }

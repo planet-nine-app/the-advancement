@@ -168,6 +168,7 @@
 
         .panel-header.demoji { color: #10b981; }
         .panel-header.magic { color: #ec4899; }
+        .panel-header.save { color: #8b5cf6; }
         .panel-header.bdo { color: #fbbf24; }
 
         /* DEMOJI panel */
@@ -233,6 +234,60 @@
             color: rgba(139, 92, 246, 0.7);
             font-size: 12px;
         }
+
+        /* SAVE panel */
+        #savePanel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .save-button {
+            padding: 16px;
+            border: 1px solid #8b5cf6;
+            border-radius: 4px;
+            background: rgba(139, 92, 246, 0.2);
+            color: #8b5cf6;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .save-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .save-button:active:not(:disabled) {
+            background: rgba(139, 92, 246, 0.4);
+        }
+
+        .save-info {
+            font-size: 12px;
+            color: rgba(139, 92, 246, 0.8);
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .collection-preview {
+            padding: 12px;
+            border: 1px solid rgba(139, 92, 246, 0.5);
+            border-radius: 4px;
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .collection-name-preview {
+            color: #8b5cf6;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .collection-icon-preview {
+            font-size: 32px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -242,6 +297,7 @@
             <button class="mode-button selected" data-mode="standard">ABC</button>
             <button class="mode-button" data-mode="demoji">DEMOJI</button>
             <button class="mode-button" data-mode="magic">MAGIC</button>
+            <button class="mode-button" data-mode="save">SAVE</button>
             <button class="mode-button" data-mode="bdo">BDO</button>
         </div>
 

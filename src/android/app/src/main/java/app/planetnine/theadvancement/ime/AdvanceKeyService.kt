@@ -203,6 +203,12 @@ class KeyboardJSInterface(
         android.util.Log.d("KeyboardJSInterface", "Get clipboard text")
         return viewModel?.clipboardText?.value ?: ""
     }
+
+    @android.webkit.JavascriptInterface
+    fun saveToCarrierBag(emojicode: String) {
+        android.util.Log.d("KeyboardJSInterface", "Save to carrier bag: $emojicode")
+        viewModel?.saveToCarrierBag(emojicode)
+    }
 }
 
 /**

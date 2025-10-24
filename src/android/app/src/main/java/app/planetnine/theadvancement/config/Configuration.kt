@@ -26,7 +26,8 @@ object Configuration {
         FOUNT("fount"),
         NEXUS("nexus"),
         SANORA("sanora"),
-        COVENANT("covenant")
+        COVENANT("covenant"),
+        DOLORES("dolores")
     }
 
     private fun serviceURL(service: Service, port: Int? = null): String {
@@ -46,6 +47,7 @@ object Configuration {
         Service.SANORA -> 7423
         Service.COVENANT -> 5122
         Service.NEXUS -> 3002
+        Service.DOLORES -> 3007
     }
 
     val bdoBaseURL: String = serviceURL(Service.BDO)
@@ -54,6 +56,7 @@ object Configuration {
     val nexusBaseURL: String = serviceURL(Service.NEXUS)
     val sanoraBaseURL: String = serviceURL(Service.SANORA)
     val covenantBaseURL: String = serviceURL(Service.COVENANT)
+    val doloresBaseURL: String = serviceURL(Service.DOLORES)
 
     /**
      * BDO service endpoints
@@ -118,5 +121,17 @@ object Configuration {
         fun getContract(contractUuid: String): String = "$covenantBaseURL/contract/$contractUuid"
 
         val baseURL: String = "$covenantBaseURL/"
+    }
+
+    /**
+     * Dolores service endpoints
+     */
+    object Dolores {
+        fun audioPlayer(feedUrl: String): String {
+            val encodedFeedUrl = java.net.URLEncoder.encode(feedUrl, "UTF-8")
+            return "$doloresBaseURL/audio-player.html?feedUrl=$encodedFeedUrl"
+        }
+
+        val baseURL: String = "$doloresBaseURL/"
     }
 }

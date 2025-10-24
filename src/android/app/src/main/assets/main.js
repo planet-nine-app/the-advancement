@@ -179,6 +179,20 @@
         textInput.value = '';
     });
 
+    // BAG button click handler
+    document.getElementById('bagButton').addEventListener('click', function() {
+        console.log('🎒 BAG button clicked');
+
+        // Send to native code
+        if (platform === 'ios' && window.webkit?.messageHandlers?.mainApp) {
+            window.webkit.messageHandlers.mainApp.postMessage({
+                action: 'openCarrierBag'
+            });
+        } else if (platform === 'android' && window.Android?.openCarrierBag) {
+            window.Android.openCarrierBag();
+        }
+    });
+
     // Keyboard switch button (Android only)
     const keyboardSwitchButton = document.getElementById('keyboardSwitchButton');
     if (keyboardSwitchButton) {

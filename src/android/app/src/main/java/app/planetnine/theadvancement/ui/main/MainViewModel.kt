@@ -1,11 +1,13 @@
 package app.planetnine.theadvancement.ui.main
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.planetnine.theadvancement.config.Configuration
 import app.planetnine.theadvancement.crypto.Sessionless
+import app.planetnine.theadvancement.ui.carrierbag.CarrierBagActivity
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +36,8 @@ class MainViewModel(private val context: Context) : ViewModel() {
         private const val PREFS_NAME = "the_advancement"
         private const val KEY_BDO_UUID = "bdo_uuid"
         private const val KEY_USER_PUBKEY = "user_pubkey"
+        private const val KEY_FOUNT_UUID = "fount_uuid"
+        private const val KEY_CARRIER_BAG = "carrier_bag"
     }
 
     private val _postedBDOs = MutableStateFlow<List<PostedBDO>>(emptyList())
@@ -41,6 +45,9 @@ class MainViewModel(private val context: Context) : ViewModel() {
 
     private val _isPosting = MutableStateFlow(false)
     val isPosting: StateFlow<Boolean> = _isPosting.asStateFlow()
+
+    private val _carrierBag = MutableStateFlow<Map<String, Any>>(emptyMap())
+    val carrierBag: StateFlow<Map<String, Any>> = _carrierBag.asStateFlow()
 
     private val sessionless = Sessionless(context)
     private val gson = Gson()
@@ -86,6 +93,12 @@ class MainViewModel(private val context: Context) : ViewModel() {
     init {
         // Load previously posted BDOs
         loadPostedBDOs()
+
+        // Load carrier bag from SharedPreferences
+        loadCarrierBag()
+
+        // TODO: Load carrier bag from Fount on startup
+        // This would require Fount UUID which needs to be obtained during onboarding
     }
 
     private suspend fun postTextBDO(text: String): PostedBDO = withContext(Dispatchers.IO) {
@@ -246,6 +259,83 @@ class MainViewModel(private val context: Context) : ViewModel() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load posted BDOs", e)
+        }
+    }
+
+    /**
+     * Load carrier bag from SharedPreferences
+     */
+    private fun loadCarrierBag() {
+        try {
+            val carrierBagJson = prefs.getString(KEY_CARRIER_BAG, null)
+            if (carrierBagJson != null) {
+                @Suppress("UNCHECKED_CAST")
+                val bag = gson.fromJson(carrierBagJson, Map::class.java) as Map<String, Any>
+                _carrierBag.value = bag
+                Log.d(TAG, "🎒 Loaded carrier bag with ${bag.keys.size} collections")
+            } else {
+                // Create empty carrier bag
+                _carrierBag.value = createEmptyCarrierBag()
+                saveCarrierBag(_carrierBag.value)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to load carrier bag", e)
+            _carrierBag.value = createEmptyCarrierBag()
+        }
+    }
+
+    /**
+     * Save carrier bag to SharedPreferences
+     */
+    fun saveCarrierBag(bag: Map<String, Any>) {
+        try {
+            val bagJson = gson.toJson(bag)
+            prefs.edit().putString(KEY_CARRIER_BAG, bagJson).apply()
+            _carrierBag.value = bag
+            Log.d(TAG, "🎒 Saved carrier bag")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to save carrier bag", e)
+        }
+    }
+
+    /**
+     * Create empty carrier bag with all 15 collections
+     */
+    private fun createEmptyCarrierBag(): Map<String, Any> {
+        return mapOf(
+            "cookbook" to emptyList<Any>(),
+            "apothecary" to emptyList<Any>(),
+            "gallery" to emptyList<Any>(),
+            "bookshelf" to emptyList<Any>(),
+            "familiarPen" to emptyList<Any>(),
+            "machinery" to emptyList<Any>(),
+            "metallics" to emptyList<Any>(),
+            "music" to emptyList<Any>(),
+            "oracular" to emptyList<Any>(),
+            "greenHouse" to emptyList<Any>(),
+            "closet" to emptyList<Any>(),
+            "games" to emptyList<Any>(),
+            "events" to emptyList<Any>(),
+            "contracts" to emptyList<Any>(),
+            "stacks" to emptyList<Any>()
+        )
+    }
+
+    /**
+     * Open carrier bag activity
+     */
+    fun openCarrierBag() {
+        Log.d(TAG, "🎒 Opening carrier bag")
+
+        try {
+            val carrierBagJson = gson.toJson(_carrierBag.value)
+            val intent = Intent(context, CarrierBagActivity::class.java).apply {
+                putExtra(CarrierBagActivity.EXTRA_CARRIER_BAG_JSON, carrierBagJson)
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to open carrier bag", e)
         }
     }
 }

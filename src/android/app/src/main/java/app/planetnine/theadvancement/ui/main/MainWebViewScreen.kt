@@ -196,4 +196,10 @@ class MainJSInterface(
             imm.showInputMethodPicker()
         }
     }
+
+    @JavascriptInterface
+    fun openCarrierBag() {
+        Log.d("MainJSInterface", "Opening carrier bag")
+        viewModel.openCarrierBag()
+    }
 }

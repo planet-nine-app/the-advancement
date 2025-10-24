@@ -48,6 +48,9 @@
             case 'magic':
                 renderMagicPanel(contentArea);
                 break;
+            case 'save':
+                renderSavePanel(contentArea);
+                break;
             case 'bdo':
                 renderBDOPanel(contentArea);
                 break;
@@ -165,6 +168,95 @@
             window.Android.castSpell(spellName);
         }
     };
+
+    // SAVE panel rendering
+    function renderSavePanel(container) {
+        // Get current BDO from clipboard or latest decoded BDO
+        const hasBDO = clipboardText && clipboardText.trim().length > 0;
+
+        // Collection icons mapping
+        const collectionIcons = {
+            'cookbook': '🍳',
+            'apothecary': '🧪',
+            'gallery': '🖼️',
+            'bookshelf': '📚',
+            'familiarPen': '🐾',
+            'machinery': '⚙️',
+            'metallics': '💎',
+            'music': '🎵',
+            'oracular': '🔮',
+            'greenHouse': '🌿',
+            'closet': '👔',
+            'games': '🎮',
+            'events': '🎫',
+            'contracts': '📜',
+            'stacks': '🏠'
+        };
+
+        // Determine collection from clipboard emojicode
+        let targetCollection = 'music'; // default
+        let collectionIcon = collectionIcons[targetCollection];
+
+        let html = `
+            <div id="savePanel">
+                <h3 class="panel-header save">SAVE - Save to Carrier Bag</h3>
+                <div class="save-info">
+                    ${hasBDO ?
+                        'Ready to save the current item to your carrier bag!' :
+                        'Copy an emojicode or decode a BDO first'}
+                </div>
+        `;
+
+        if (hasBDO) {
+            html += `
+                <div class="collection-preview">
+                    <div class="collection-icon-preview">${collectionIcon}</div>
+                    <div class="collection-name-preview">→ ${targetCollection}</div>
+                </div>
+            `;
+        }
+
+        html += `
+                <button class="save-button" ${!hasBDO ? 'disabled' : ''} onclick="saveToCarrierBag()">
+                    💾 Save to Carrier Bag
+                </button>
+            </div>
+        `;
+
+        container.innerHTML = html;
+    }
+
+    window.saveToCarrierBag = function() {
+        console.log('💾 Saving to carrier bag');
+        if (window.Android && window.Android.saveToCarrierBag) {
+            window.Android.saveToCarrierBag(clipboardText);
+        }
+    };
+
+    // Collection type mapping (matches iOS logic)
+    function determineCollection(bdoData) {
+        const type = bdoData.type || '';
+
+        // Type-to-collection mapping
+        if (type === 'recipe' || type === 'food') return 'cookbook';
+        if (type === 'potion' || type === 'remedy') return 'apothecary';
+        if (type === 'artwork' || type === 'image') return 'gallery';
+        if (type === 'book' || type === 'literature') return 'bookshelf';
+        if (type === 'pet' || type === 'familiar') return 'familiarPen';
+        if (type === 'tool' || type === 'machine') return 'machinery';
+        if (type === 'gem' || type === 'metal') return 'metallics';
+        if (type === 'music' || type === 'song' || type === 'canimus-feed') return 'music';
+        if (type === 'prophecy' || type === 'divination') return 'oracular';
+        if (type === 'plant' || type === 'botanical') return 'greenHouse';
+        if (type === 'clothing' || type === 'garment') return 'closet';
+        if (type === 'game' || type === 'entertainment') return 'games';
+        if (type === 'event' || type === 'popup') return 'events';
+        if (type === 'contract' || type === 'covenant') return 'contracts';
+        if (type === 'room' || type === 'space') return 'stacks';
+
+        // Default to appropriate collection based on content
+        return 'stacks';
+    }
 
     // BDO panel rendering
     function renderBDOPanel(container) {
