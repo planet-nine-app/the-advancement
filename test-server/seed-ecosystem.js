@@ -12,6 +12,7 @@ import sessionless from 'sessionless-node';
 import fetch from 'node-fetch';
 import crypto from 'crypto';
 import { events, generateEventSVG } from './examples/events.js';
+import { generateCanimusFeedBDO, sockpuppetCanimusFeed } from './examples/music/canimus-feed-bdo.js';
 
 // Configuration for test environment
 const BDO_URL = 'http://127.0.0.1:5114'; // BDO on Base 1
@@ -116,6 +117,36 @@ async function seedEvents() {
   }
 }
 
+// Seed Canimus feed as BDO
+async function seedCanimusFeed() {
+  console.log('\n🎵 Creating Canimus feed BDO...');
+
+  try {
+    const canimusBDO = generateCanimusFeedBDO(sockpuppetCanimusFeed);
+
+    // Create public BDO
+    const result = await bdoRequest('/bdo', 'POST', {
+      object: canimusBDO,
+      metadata: {
+        type: 'canimus-feed',
+        public: true,
+        description: canimusBDO.description
+      }
+    });
+
+    if (result.uuid || result.pubKey) {
+      console.log(`✅ Created Canimus feed: ${canimusBDO.title}`);
+      console.log(`   🎵 Feed URL: ${sockpuppetCanimusFeed.feedUrl}`);
+      console.log(`   🔑 UUID: ${result.uuid || 'N/A'}`);
+      console.log(`   🔑 PubKey: ${result.pubKey || 'N/A'}`);
+    } else {
+      console.log(`❌ Failed to create Canimus feed:`, result.error || result);
+    }
+  } catch (error) {
+    console.error(`❌ Error creating Canimus feed:`, error.message);
+  }
+}
+
 // Main seeding function
 async function main() {
   try {
@@ -124,10 +155,12 @@ async function main() {
     console.log(`  BDO: ${BDO_URL}`);
 
     await seedEvents();
+    await seedCanimusFeed();
 
     console.log('\n🎉 Ecosystem seeding completed!');
     console.log('\n📋 Summary:');
     console.log(`  Events created: ${events.length}`);
+    console.log(`  Canimus feeds created: 1`);
 
     console.log('\n🎫 Events with emojiShortcodes:');
     events.forEach(event => {
@@ -137,10 +170,17 @@ async function main() {
     });
 
     console.log('\n🎯 To test:');
-    console.log('  1. Copy an emojiShortcode (e.g., 🌮🎪🔥🎉🍹🎭🌶️✨)');
-    console.log('  2. Paste it in any app');
-    console.log('  3. Tap DEMOJI in AdvanceKey');
-    console.log('  4. Tap a ticket button to purchase!');
+    console.log('  Events:');
+    console.log('    1. Copy an emojiShortcode (e.g., 🌮🎪🔥🎉🍹🎭🌶️✨)');
+    console.log('    2. Paste it in any app');
+    console.log('    3. Tap DEMOJI in AdvanceKey');
+    console.log('    4. Tap a ticket button to purchase!');
+    console.log('\n  Canimus Feed:');
+    console.log('    1. View latest posted BDOs in AdvanceKey');
+    console.log('    2. Find the Sockpuppet Mix Tape');
+    console.log('    3. Tap "💾 Save Feed" button');
+    console.log('    4. Open carrier bag in main app');
+    console.log('    5. Tap music item to play in Dolores!');
 
   } catch (error) {
     console.error('❌ Ecosystem seeding failed:', error);
