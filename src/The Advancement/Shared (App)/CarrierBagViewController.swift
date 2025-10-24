@@ -137,19 +137,28 @@ class CarrierBagViewController: UIViewController, WKScriptMessageHandler, WKNavi
             return
         }
 
-        // Escape for JavaScript
-        let escapedJson = jsonString.replacingOccurrences(of: "\\", with: "\\\\")
-                                    .replacingOccurrences(of: "'", with: "\\'")
-                                    .replacingOccurrences(of: "\n", with: "\\n")
-                                    .replacingOccurrences(of: "\r", with: "\\r")
-
         let javascript = "window.updateCarrierBag(\(jsonString));"
 
-        webView.evaluateJavaScript(javascript) { result, error in
-            if let error = error {
-                NSLog("ADVANCEAPP: ❌ Error updating carrier bag in WebView: %@", error.localizedDescription)
-            } else {
-                NSLog("ADVANCEAPP: ✅ Carrier bag updated in WebView")
+        // Wait a bit to ensure WebView JavaScript is ready
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            guard let self = self else { return }
+
+            self.webView.evaluateJavaScript(javascript) { result, error in
+                if let error = error {
+                    NSLog("ADVANCEAPP: ❌ Error updating carrier bag in WebView: %@", error.localizedDescription)
+                    // Retry once if failed
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        self.webView.evaluateJavaScript(javascript) { _, retryError in
+                            if let retryError = retryError {
+                                NSLog("ADVANCEAPP: ❌ Retry also failed: %@", retryError.localizedDescription)
+                            } else {
+                                NSLog("ADVANCEAPP: ✅ Carrier bag updated in WebView (retry)")
+                            }
+                        }
+                    }
+                } else {
+                    NSLog("ADVANCEAPP: ✅ Carrier bag updated in WebView")
+                }
             }
         }
     }
@@ -177,22 +186,50 @@ class CarrierBagViewController: UIViewController, WKScriptMessageHandler, WKNavi
     // MARK: - Item Details
 
     private func showItemDetails(item: [String: Any], collectionName: String, index: Int) {
+        NSLog("ADVANCEAPP: 🎵 showItemDetails called - collection: %@", collectionName)
+        NSLog("ADVANCEAPP: 🎵 Item keys: %@", item.keys.joined(separator: ", "))
+
         // Special handling for music items - open audio player
         if collectionName == "music" {
-            // Try to get feedUrl from top level or metadata
+            // Debug: Print entire item structure
+            if let jsonData = try? JSONSerialization.data(withJSONObject: item, options: .prettyPrinted),
+               let jsonString = String(data: jsonData, encoding: .utf8) {
+                NSLog("ADVANCEAPP: 🎵 Full item structure:\n%@", jsonString)
+            }
+
+            // Try to get feedUrl from various possible locations
             let feedUrl: String? = {
+                // Try top level first
                 if let url = item["feedUrl"] as? String {
-                    return url
-                } else if let metadata = item["metadata"] as? [String: Any],
-                          let url = metadata["feedUrl"] as? String {
+                    NSLog("ADVANCEAPP: 🎵 Found feedUrl at top level: %@", url)
                     return url
                 }
+
+                // Try item.metadata.feedUrl
+                if let metadata = item["metadata"] as? [String: Any],
+                   let url = metadata["feedUrl"] as? String {
+                    NSLog("ADVANCEAPP: 🎵 Found feedUrl in metadata: %@", url)
+                    return url
+                }
+
+                // Try item.bdoData.metadata.feedUrl (AdvanceKey save format)
+                if let bdoData = item["bdoData"] as? [String: Any],
+                   let metadata = bdoData["metadata"] as? [String: Any],
+                   let url = metadata["feedUrl"] as? String {
+                    NSLog("ADVANCEAPP: 🎵 Found feedUrl in bdoData.metadata: %@", url)
+                    return url
+                }
+
+                NSLog("ADVANCEAPP: 🎵 No feedUrl found in any location!")
                 return nil
             }()
 
             if let feedUrl = feedUrl {
+                NSLog("ADVANCEAPP: 🎵 Opening music player with URL: %@", feedUrl)
                 openMusicPlayer(feedUrl: feedUrl, title: item["title"] as? String ?? "Music")
                 return
+            } else {
+                NSLog("ADVANCEAPP: ⚠️ Music item has no feedUrl, showing alert instead")
             }
         }
 
