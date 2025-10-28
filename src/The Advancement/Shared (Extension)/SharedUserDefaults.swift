@@ -184,6 +184,7 @@ struct SharedUserDefaults {
             "events": [],
             "contracts": [],
             "stacks": [],
+            "addresses": [],  // Shipping addresses for purchases
             "lastUpdated": ISO8601DateFormatter().string(from: Date())
         ]
     }

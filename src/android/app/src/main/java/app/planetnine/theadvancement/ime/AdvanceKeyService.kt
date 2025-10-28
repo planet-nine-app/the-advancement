@@ -209,6 +209,21 @@ class KeyboardJSInterface(
         android.util.Log.d("KeyboardJSInterface", "Save to carrier bag: $emojicode")
         viewModel?.saveToCarrierBag(emojicode)
     }
+
+    @android.webkit.JavascriptInterface
+    fun openCarrierBag() {
+        android.util.Log.d("KeyboardJSInterface", "Opening carrier bag")
+
+        // Open main app with carrier bag intent
+        try {
+            val intent = android.content.Intent(service.applicationContext, app.planetnine.theadvancement.ui.carrierbag.CarrierBagActivity::class.java).apply {
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            service.applicationContext.startActivity(intent)
+        } catch (e: Exception) {
+            android.util.Log.e("KeyboardJSInterface", "Failed to open carrier bag", e)
+        }
+    }
 }
 
 /**

@@ -127,6 +127,14 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
                     POST
                 </text>
             </g>
+
+            <!-- Keyboard Installation Notice (hidden by default) -->
+            <g id="keyboardNotice" class="button-group" opacity="0">
+                <rect x="10" y="25" width="80" height="6" rx="1" fill="rgba(251, 191, 36, 0.1)" stroke="#fbbf24" stroke-width="0.2" opacity="0.8"/>
+                <text x="50" y="29" text-anchor="middle" style="font-family: -apple-system; font-size: 2px; font-weight: 500; letter-spacing: 0.1px;" fill="#fbbf24" opacity="0.9">
+                    ⌨️ Enable AdvanceKey in Settings
+                </text>
+            </g>
         </g>
     </svg>
 
@@ -217,6 +225,32 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
                 action: 'openBag'
             });
         });
+
+        // Keyboard Notice click handler
+        document.getElementById('keyboardNotice').addEventListener('click', function() {
+            console.log('⌨️ Keyboard notice clicked');
+
+            // Send to Swift
+            webkit.messageHandlers.mainApp.postMessage({
+                action: 'openKeyboardSettings'
+            });
+        });
+
+        // Check keyboard installation status
+        function checkKeyboardInstallation() {
+            webkit.messageHandlers.mainApp.postMessage({
+                action: 'checkKeyboard'
+            });
+        }
+
+        // Function to show/hide keyboard notice
+        function setKeyboardNoticeVisible(visible) {
+            const notice = document.getElementById('keyboardNotice');
+            notice.setAttribute('opacity', visible ? '1' : '0');
+        }
+
+        // Check keyboard status on load
+        checkKeyboardInstallation();
 
         // Function called from Swift to add posted BDO to display
         function addPostedBDO(bdoData) {
@@ -311,6 +345,10 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             postBDO(text: text)
         } else if action == "openBag" {
             openCarrierBag()
+        } else if action == "checkKeyboard" {
+            checkKeyboardInstallation()
+        } else if action == "openKeyboardSettings" {
+            openKeyboardSettings()
         }
     }
 
@@ -324,6 +362,35 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
         navController.modalPresentationStyle = .fullScreen
 
         present(navController, animated: true)
+    }
+
+    // MARK: - Keyboard Installation Check
+
+    private func checkKeyboardInstallation() {
+        NSLog("⌨️ Checking keyboard installation status")
+
+        // Check for keyboard flag in shared UserDefaults (App Group)
+        let sharedDefaults = UserDefaults(suiteName: "group.app.planetnine.theadvancement")
+        let keyboardInstalled = sharedDefaults?.bool(forKey: "keyboardFirstUsed") ?? false
+
+        NSLog("⌨️ Keyboard installed: %@", keyboardInstalled ? "YES" : "NO")
+
+        // Update UI to show/hide notice
+        let jsCode = "setKeyboardNoticeVisible(\(!keyboardInstalled));"
+        webView.evaluateJavaScript(jsCode) { _, error in
+            if let error = error {
+                NSLog("⚠️ Failed to update keyboard notice: %@", error.localizedDescription)
+            }
+        }
+    }
+
+    private func openKeyboardSettings() {
+        NSLog("⌨️ Opening keyboard settings")
+
+        // Open Settings app to General > Keyboard > Keyboards
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
+        }
     }
 
     // MARK: - BDO Posting

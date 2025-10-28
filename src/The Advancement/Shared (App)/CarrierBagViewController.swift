@@ -58,13 +58,15 @@ class CarrierBagViewController: UIViewController, WKScriptMessageHandler, WKNavi
     deinit {
         NotificationCenter.default.removeObserver(self)
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "itemSelected")
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "addAddress")
     }
 
     private func setupWebView() {
         let contentController = WKUserContentController()
 
-        // Register message handler for item selection
+        // Register message handlers
         contentController.add(self, name: "itemSelected")
+        contentController.add(self, name: "addAddress")
 
         let config = WKWebViewConfiguration()
         config.userContentController = contentController
@@ -166,21 +168,29 @@ class CarrierBagViewController: UIViewController, WKScriptMessageHandler, WKNavi
     // MARK: - WKScriptMessageHandler
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.name == "itemSelected" else { return }
+        if message.name == "itemSelected" {
+            guard let messageBody = message.body as? [String: Any],
+                  let action = messageBody["action"] as? String,
+                  action == "select",
+                  let collectionName = messageBody["collection"] as? String,
+                  let index = messageBody["index"] as? Int,
+                  let item = messageBody["item"] as? [String: Any] else {
+                NSLog("ADVANCEAPP: ❌ Invalid item selection message")
+                return
+            }
 
-        guard let messageBody = message.body as? [String: Any],
-              let action = messageBody["action"] as? String,
-              action == "select",
-              let collectionName = messageBody["collection"] as? String,
-              let index = messageBody["index"] as? Int,
-              let item = messageBody["item"] as? [String: Any] else {
-            NSLog("ADVANCEAPP: ❌ Invalid item selection message")
-            return
+            NSLog("ADVANCEAPP: 📖 Item selected from %@: %@", collectionName, item["title"] as? String ?? "Unknown")
+
+            // Special handling for addresses
+            if collectionName == "addresses" {
+                showAddressDetails(address: item, index: index)
+            } else {
+                showItemDetails(item: item, collectionName: collectionName, index: index)
+            }
+        } else if message.name == "addAddress" {
+            NSLog("ADVANCEAPP: 📮 Add new address requested")
+            showAddressForm(address: nil, index: nil)
         }
-
-        NSLog("ADVANCEAPP: 📖 Item selected from %@: %@", collectionName, item["title"] as? String ?? "Unknown")
-
-        showItemDetails(item: item, collectionName: collectionName, index: index)
     }
 
     // MARK: - Item Details
@@ -338,6 +348,166 @@ class CarrierBagViewController: UIViewController, WKScriptMessageHandler, WKNavi
         return dateString
     }
 
+    // MARK: - Address Management
+
+    private func showAddressDetails(address: [String: Any], index: Int) {
+        NSLog("ADVANCEAPP: 📮 Showing address details at index %d", index)
+
+        let name = address["name"] as? String ?? "Address"
+        let recipientName = address["recipientName"] as? String ?? ""
+        let street = address["street"] as? String ?? ""
+        let street2 = address["street2"] as? String ?? ""
+        let city = address["city"] as? String ?? ""
+        let state = address["state"] as? String ?? ""
+        let zip = address["zip"] as? String ?? ""
+        let country = address["country"] as? String ?? "US"
+        let phone = address["phone"] as? String ?? ""
+        let isPrimary = address["isPrimary"] as? Bool ?? false
+
+        var message = "\(recipientName)\n"
+        message += "\(street)\n"
+        if !street2.isEmpty {
+            message += "\(street2)\n"
+        }
+        message += "\(city), \(state) \(zip)\n"
+        message += "\(country)\n"
+        if !phone.isEmpty {
+            message += "\nPhone: \(phone)"
+        }
+        if isPrimary {
+            message += "\n\n⭐️ Primary Address"
+        }
+
+        let alert = UIAlertController(title: name, message: message, preferredStyle: .alert)
+
+        // Edit button
+        alert.addAction(UIAlertAction(title: "Edit", style: .default) { [weak self] _ in
+            self?.showAddressForm(address: address, index: index)
+        })
+
+        // Set as Primary button (if not already primary)
+        if !isPrimary {
+            alert.addAction(UIAlertAction(title: "Set as Primary", style: .default) { [weak self] _ in
+                self?.setAddressAsPrimary(index: index)
+            })
+        }
+
+        // Delete button
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+            self?.removeAddress(index: index)
+        })
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+        present(alert, animated: true)
+    }
+
+    private func showAddressForm(address: [String: Any]?, index: Int?) {
+        NSLog("ADVANCEAPP: 📮 Showing address form (editing: %@)", address != nil ? "yes" : "no")
+
+        let formVC = AddressFormViewController()
+        formVC.existingAddress = address
+        formVC.addressIndex = index
+        formVC.onSave = { [weak self] updatedAddress in
+            self?.saveAddress(updatedAddress, at: index)
+        }
+
+        let navController = UINavigationController(rootViewController: formVC)
+        navController.modalPresentationStyle = .formSheet
+        present(navController, animated: true)
+    }
+
+    private func saveAddress(_ address: [String: Any], at index: Int?) {
+        NSLog("ADVANCEAPP: 📮 Saving address (index: %@)", index != nil ? String(index!) : "new")
+
+        guard var carrierBag = SharedUserDefaults.getCarrierBag() else {
+            NSLog("ADVANCEAPP: ❌ No carrier bag found")
+            return
+        }
+
+        var addresses = carrierBag["addresses"] as? [[String: Any]] ?? []
+
+        var addressToSave = address
+        addressToSave["id"] = addressToSave["id"] ?? UUID().uuidString
+        addressToSave["createdAt"] = addressToSave["createdAt"] ?? ISO8601DateFormatter().string(from: Date())
+
+        if let index = index, index >= 0 && index < addresses.count {
+            // Update existing address
+            addresses[index] = addressToSave
+            NSLog("ADVANCEAPP: ✅ Updated address at index %d", index)
+        } else {
+            // Add new address
+            // If this is the first address, make it primary
+            if addresses.isEmpty {
+                addressToSave["isPrimary"] = true
+            }
+            addresses.append(addressToSave)
+            NSLog("ADVANCEAPP: ✅ Added new address")
+        }
+
+        carrierBag["addresses"] = addresses
+        SharedUserDefaults.saveCarrierBag(carrierBag)
+
+        // Reload
+        loadCarrierBagData()
+    }
+
+    private func setAddressAsPrimary(index: Int) {
+        NSLog("ADVANCEAPP: 📮 Setting address at index %d as primary", index)
+
+        guard var carrierBag = SharedUserDefaults.getCarrierBag() else {
+            NSLog("ADVANCEAPP: ❌ No carrier bag found")
+            return
+        }
+
+        var addresses = carrierBag["addresses"] as? [[String: Any]] ?? []
+
+        // Remove primary from all addresses
+        for i in 0..<addresses.count {
+            addresses[i]["isPrimary"] = (i == index)
+        }
+
+        carrierBag["addresses"] = addresses
+        SharedUserDefaults.saveCarrierBag(carrierBag)
+
+        // Reload
+        loadCarrierBagData()
+
+        NSLog("ADVANCEAPP: ✅ Address set as primary")
+    }
+
+    private func removeAddress(index: Int) {
+        NSLog("ADVANCEAPP: 🗑️ Removing address at index %d", index)
+
+        guard var carrierBag = SharedUserDefaults.getCarrierBag() else {
+            NSLog("ADVANCEAPP: ❌ No carrier bag found")
+            return
+        }
+
+        var addresses = carrierBag["addresses"] as? [[String: Any]] ?? []
+
+        guard index >= 0 && index < addresses.count else {
+            NSLog("ADVANCEAPP: ❌ Invalid index")
+            return
+        }
+
+        let wasPrimary = addresses[index]["isPrimary"] as? Bool ?? false
+        addresses.remove(at: index)
+
+        // If we removed the primary address, make the first one primary
+        if wasPrimary && !addresses.isEmpty {
+            addresses[0]["isPrimary"] = true
+        }
+
+        carrierBag["addresses"] = addresses
+        SharedUserDefaults.saveCarrierBag(carrierBag)
+
+        // Reload
+        loadCarrierBagData()
+
+        NSLog("ADVANCEAPP: ✅ Address removed")
+    }
+
     // MARK: - Music Player
 
     private func openMusicPlayer(feedUrl: String, title: String) {
@@ -439,6 +609,322 @@ class MusicPlayerViewController: UIViewController, WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         NSLog("MUSICPLAYER: ❌ Failed to load audio player: %@", error.localizedDescription)
+    }
+}
+
+// MARK: - Address Form View Controller
+
+class AddressFormViewController: UIViewController, UITextFieldDelegate {
+    var existingAddress: [String: Any]?
+    var addressIndex: Int?
+    var onSave: (([String: Any]) -> Void)?
+
+    private var scrollView: UIScrollView!
+    private var contentView: UIView!
+
+    private var nameField: UITextField!
+    private var recipientNameField: UITextField!
+    private var streetField: UITextField!
+    private var street2Field: UITextField!
+    private var cityField: UITextField!
+    private var stateField: UITextField!
+    private var zipField: UITextField!
+    private var countryField: UITextField!
+    private var phoneField: UITextField!
+    private var isPrimarySwitch: UISwitch!
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        title = existingAddress != nil ? "Edit Address" : "Add Address"
+        view.backgroundColor = UIColor(red: 0.1, green: 0.0, blue: 0.2, alpha: 1.0)
+
+        // Navigation bar buttons
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem: .cancel,
+            target: self,
+            action: #selector(cancelTapped)
+        )
+
+        navigationItem.rightBarButtonItem = UIBarButtonItem(
+            barButtonSystemItem: .save,
+            target: self,
+            action: #selector(saveTapped)
+        )
+
+        setupUI()
+        populateFields()
+
+        // Keyboard handling
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillShow),
+            name: UIResponder.keyboardWillShowNotification,
+            object: nil
+        )
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(keyboardWillHide),
+            name: UIResponder.keyboardWillHideNotification,
+            object: nil
+        )
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    private func setupUI() {
+        // Scroll view for keyboard avoidance
+        scrollView = UIScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.keyboardDismissMode = .interactive
+        view.addSubview(scrollView)
+
+        contentView = UIView()
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(contentView)
+
+        NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
+        ])
+
+        // Create form fields
+        var yOffset: CGFloat = 20
+
+        // Name
+        addLabel("Address Name (e.g., Home, Work)", at: &yOffset)
+        nameField = addTextField(placeholder: "Home", at: &yOffset)
+
+        // Recipient Name
+        addLabel("Recipient Name", at: &yOffset)
+        recipientNameField = addTextField(placeholder: "John Doe", at: &yOffset)
+
+        // Street
+        addLabel("Street Address", at: &yOffset)
+        streetField = addTextField(placeholder: "123 Main St", at: &yOffset)
+
+        // Street 2
+        addLabel("Apt / Suite (Optional)", at: &yOffset)
+        street2Field = addTextField(placeholder: "Apt 4B", at: &yOffset)
+
+        // City
+        addLabel("City", at: &yOffset)
+        cityField = addTextField(placeholder: "San Francisco", at: &yOffset)
+
+        // State
+        addLabel("State / Province", at: &yOffset)
+        stateField = addTextField(placeholder: "CA", at: &yOffset)
+
+        // Zip
+        addLabel("ZIP / Postal Code", at: &yOffset)
+        zipField = addTextField(placeholder: "94102", at: &yOffset)
+        zipField.keyboardType = .numbersAndPunctuation
+
+        // Country
+        addLabel("Country", at: &yOffset)
+        countryField = addTextField(placeholder: "US", at: &yOffset)
+
+        // Phone
+        addLabel("Phone (Optional)", at: &yOffset)
+        phoneField = addTextField(placeholder: "+1-555-123-4567", at: &yOffset)
+        phoneField.keyboardType = .phonePad
+
+        // Primary switch
+        let primaryContainer = UIView()
+        primaryContainer.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(primaryContainer)
+
+        let primaryLabel = UILabel()
+        primaryLabel.text = "Set as Primary Address"
+        primaryLabel.textColor = .white
+        primaryLabel.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        primaryLabel.translatesAutoresizingMaskIntoConstraints = false
+        primaryContainer.addSubview(primaryLabel)
+
+        isPrimarySwitch = UISwitch()
+        isPrimarySwitch.translatesAutoresizingMaskIntoConstraints = false
+        primaryContainer.addSubview(isPrimarySwitch)
+
+        NSLayoutConstraint.activate([
+            primaryContainer.topAnchor.constraint(equalTo: contentView.topAnchor, constant: yOffset),
+            primaryContainer.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            primaryContainer.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            primaryContainer.heightAnchor.constraint(equalToConstant: 44),
+
+            primaryLabel.leadingAnchor.constraint(equalTo: primaryContainer.leadingAnchor),
+            primaryLabel.centerYAnchor.constraint(equalTo: primaryContainer.centerYAnchor),
+
+            isPrimarySwitch.trailingAnchor.constraint(equalTo: primaryContainer.trailingAnchor),
+            isPrimarySwitch.centerYAnchor.constraint(equalTo: primaryContainer.centerYAnchor),
+
+            contentView.bottomAnchor.constraint(equalTo: primaryContainer.bottomAnchor, constant: 20)
+        ])
+    }
+
+    private func addLabel(_ text: String, at yOffset: inout CGFloat) {
+        let label = UILabel()
+        label.text = text
+        label.textColor = UIColor(red: 0.65, green: 0.54, blue: 0.98, alpha: 1.0) // #a78bfa
+        label.font = UIFont.systemFont(ofSize: 13, weight: .medium)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(label)
+
+        NSLayoutConstraint.activate([
+            label.topAnchor.constraint(equalTo: contentView.topAnchor, constant: yOffset),
+            label.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            label.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20)
+        ])
+
+        yOffset += 26
+    }
+
+    private func addTextField(placeholder: String, at yOffset: inout CGFloat) -> UITextField {
+        let textField = UITextField()
+        textField.placeholder = placeholder
+        textField.textColor = .white
+        textField.backgroundColor = UIColor(white: 1.0, alpha: 0.1)
+        textField.layer.borderColor = UIColor(red: 0.91, green: 0.12, blue: 0.39, alpha: 0.3).cgColor
+        textField.layer.borderWidth = 1
+        textField.layer.cornerRadius = 8
+        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 44))
+        textField.leftViewMode = .always
+        textField.rightView = UIView(frame: CGRect(x: 0, y: 0, width: 12, height: 44))
+        textField.rightViewMode = .always
+        textField.returnKeyType = .next
+        textField.delegate = self
+        textField.autocapitalizationType = .words
+        textField.autocorrectionType = .no
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(textField)
+
+        NSLayoutConstraint.activate([
+            textField.topAnchor.constraint(equalTo: contentView.topAnchor, constant: yOffset),
+            textField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
+            textField.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            textField.heightAnchor.constraint(equalToConstant: 44)
+        ])
+
+        yOffset += 60
+
+        return textField
+    }
+
+    private func populateFields() {
+        guard let address = existingAddress else { return }
+
+        nameField.text = address["name"] as? String
+        recipientNameField.text = address["recipientName"] as? String
+        streetField.text = address["street"] as? String
+        street2Field.text = address["street2"] as? String
+        cityField.text = address["city"] as? String
+        stateField.text = address["state"] as? String
+        zipField.text = address["zip"] as? String
+        countryField.text = address["country"] as? String ?? "US"
+        phoneField.text = address["phone"] as? String
+        isPrimarySwitch.isOn = address["isPrimary"] as? Bool ?? false
+    }
+
+    @objc private func cancelTapped() {
+        NSLog("ADDRESSFORM: Cancel tapped")
+        dismiss(animated: true)
+    }
+
+    @objc private func saveTapped() {
+        NSLog("ADDRESSFORM: Save tapped")
+
+        // Validate required fields
+        guard let name = nameField.text, !name.isEmpty,
+              let recipientName = recipientNameField.text, !recipientName.isEmpty,
+              let street = streetField.text, !street.isEmpty,
+              let city = cityField.text, !city.isEmpty,
+              let state = stateField.text, !state.isEmpty,
+              let zip = zipField.text, !zip.isEmpty else {
+            let alert = UIAlertController(
+                title: "Missing Information",
+                message: "Please fill in all required fields (Name, Recipient, Street, City, State, ZIP)",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            present(alert, animated: true)
+            return
+        }
+
+        var address: [String: Any] = [
+            "name": name,
+            "recipientName": recipientName,
+            "street": street,
+            "street2": street2Field.text ?? "",
+            "city": city,
+            "state": state,
+            "zip": zip,
+            "country": countryField.text ?? "US",
+            "phone": phoneField.text ?? "",
+            "isPrimary": isPrimarySwitch.isOn
+        ]
+
+        // Preserve existing ID if editing
+        if let existingId = existingAddress?["id"] as? String {
+            address["id"] = existingId
+        }
+        if let existingCreatedAt = existingAddress?["createdAt"] as? String {
+            address["createdAt"] = existingCreatedAt
+        }
+
+        NSLog("ADDRESSFORM: Saving address: %@", name)
+
+        onSave?(address)
+        dismiss(animated: true)
+    }
+
+    // MARK: - UITextFieldDelegate
+
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        // Move to next field or dismiss keyboard
+        if textField == nameField {
+            recipientNameField.becomeFirstResponder()
+        } else if textField == recipientNameField {
+            streetField.becomeFirstResponder()
+        } else if textField == streetField {
+            street2Field.becomeFirstResponder()
+        } else if textField == street2Field {
+            cityField.becomeFirstResponder()
+        } else if textField == cityField {
+            stateField.becomeFirstResponder()
+        } else if textField == stateField {
+            zipField.becomeFirstResponder()
+        } else if textField == zipField {
+            countryField.becomeFirstResponder()
+        } else if textField == countryField {
+            phoneField.becomeFirstResponder()
+        } else {
+            textField.resignFirstResponder()
+        }
+        return false
+    }
+
+    // MARK: - Keyboard Handling
+
+    @objc private func keyboardWillShow(_ notification: Notification) {
+        guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+
+        let contentInsets = UIEdgeInsets(top: 0, left: 0, bottom: keyboardFrame.height, right: 0)
+        scrollView.contentInset = contentInsets
+        scrollView.scrollIndicatorInsets = contentInsets
+    }
+
+    @objc private func keyboardWillHide(_ notification: Notification) {
+        scrollView.contentInset = .zero
+        scrollView.scrollIndicatorInsets = .zero
     }
 }
 

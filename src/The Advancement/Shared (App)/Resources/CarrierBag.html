@@ -251,7 +251,8 @@
             { name: 'games', icon: '🎮', description: 'Entertainment and play' },
             { name: 'events', icon: '🎫', description: 'Gatherings and occasions' },
             { name: 'contracts', icon: '📜', description: 'Agreements and covenants' },
-            { name: 'stacks', icon: '🏠', description: 'Saved spaces and places' }
+            { name: 'stacks', icon: '🏠', description: 'Saved spaces and places' },
+            { name: 'addresses', icon: '📮', description: 'Shipping addresses' }
         ];
 
         // Render carrier bag
@@ -275,15 +276,38 @@
                     itemsHTML = `
                         <div class="collection-items">
                             ${items.map((item, index) => {
-                                const title = item.title || 'Untitled Item';
-                                const emojicode = item.emojicode || '';
+                                // Special handling for addresses
+                                let title, subtitle;
+                                if (collection.name === 'addresses') {
+                                    title = item.name || 'Address';
+                                    subtitle = `${item.recipientName || ''} • ${item.city || ''}`;
+                                    if (item.isPrimary) {
+                                        title = `⭐️ ${title}`;
+                                    }
+                                } else {
+                                    title = item.title || 'Untitled Item';
+                                    subtitle = item.emojicode || '';
+                                }
+
                                 return `
                                     <div class="collection-item" data-collection="${collection.name}" data-index="${index}">
                                         <div class="item-title">${title}</div>
-                                        ${emojicode ? `<div class="item-emojicode">${emojicode}</div>` : ''}
+                                        ${subtitle ? `<div class="item-emojicode">${subtitle}</div>` : ''}
                                     </div>
                                 `;
                             }).join('')}
+                        </div>
+                    `;
+                }
+
+                // Special handling for addresses collection - add "Add New" button
+                let addButtonHTML = '';
+                if (collection.name === 'addresses') {
+                    addButtonHTML = `
+                        <div class="collection-items">
+                            <div class="collection-item add-address-btn" style="text-align: center; font-weight: bold; color: #e91e63;">
+                                ➕ Add New Address
+                            </div>
                         </div>
                     `;
                 }
@@ -293,12 +317,21 @@
                     <div class="collection-name">${collection.name}</div>
                     <div class="collection-count">${items.length} ${items.length === 1 ? 'item' : 'items'}</div>
                     ${itemsHTML}
+                    ${collection.name === 'addresses' && items.length === 0 ? addButtonHTML : ''}
+                    ${collection.name === 'addresses' && items.length > 0 ? addButtonHTML : ''}
                 `;
 
                 // Add tap handler for items
                 card.querySelectorAll('.collection-item').forEach(itemEl => {
                     itemEl.addEventListener('click', (e) => {
                         e.stopPropagation();
+
+                        // Handle "Add New Address" button
+                        if (itemEl.classList.contains('add-address-btn')) {
+                            addNewAddress();
+                            return;
+                        }
+
                         const collectionName = itemEl.dataset.collection;
                         const index = parseInt(itemEl.dataset.index);
                         const item = items[index];
@@ -324,6 +357,20 @@
                     collection: collectionName,
                     index: index,
                     item: item
+                });
+            } else {
+                console.warn('⚠️ Swift message handler not available');
+            }
+        }
+
+        // Add new address
+        function addNewAddress() {
+            console.log('📮 Adding new address');
+
+            // Send message to Swift
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.addAddress) {
+                window.webkit.messageHandlers.addAddress.postMessage({
+                    action: 'add'
                 });
             } else {
                 console.warn('⚠️ Swift message handler not available');

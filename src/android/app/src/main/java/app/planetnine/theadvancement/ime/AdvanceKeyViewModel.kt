@@ -49,6 +49,9 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
     private val _postedBDOs = MutableStateFlow<List<PostedBDO>>(emptyList())
     val postedBDOs: StateFlow<List<PostedBDO>> = _postedBDOs.asStateFlow()
 
+    private val _errorMessage = MutableStateFlow<ErrorMessage?>(null)
+    val errorMessage: StateFlow<ErrorMessage?> = _errorMessage.asStateFlow()
+
     private val sessionless = Sessionless(context)
     private val gson = Gson()
     private val client = OkHttpClient.Builder()
@@ -110,13 +113,109 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
 
                 val bdo = fetchBDOByEmojicode(emojicode)
                 _decodedBDO.value = bdo
+                _errorMessage.value = null // Clear any previous errors
 
                 Log.d(TAG, "✅ BDO decoded successfully")
 
             } catch (e: Exception) {
                 Log.e(TAG, "❌ Failed to decode emojicode", e)
+
+                // Show user-friendly error based on environment
+                val errorMsg = createUserFriendlyError(
+                    exception = e,
+                    baseUrl = "${Configuration.bdoBaseURL}/emoji/$emojicode"
+                )
+                _errorMessage.value = errorMsg
             }
         }
+    }
+
+    /**
+     * Create user-friendly error message based on environment
+     */
+    private fun createUserFriendlyError(exception: Exception, baseUrl: String? = null): ErrorMessage {
+        val isProduction = Configuration.isProduction
+
+        if (isProduction) {
+            // User-friendly messages for production
+            val errorMessage = exception.message ?: ""
+
+            return when {
+                errorMessage.contains("Failed to fetch") ||
+                errorMessage.contains("Unable to resolve host") ||
+                errorMessage.contains("timeout") -> {
+                    ErrorMessage(
+                        title = "Connection Issue",
+                        message = """
+                            ⚠️ Unable to fetch content
+
+                            This keyboard needs network access permission to connect to Planet Nine services.
+
+                            Please check:
+                            • You have an internet connection
+                            • The keyboard has network permission enabled
+                            • You've allowed full access for AdvanceKey
+
+                            ${baseUrl?.let { "🌐 You can also check this content in a browser:\n$it" } ?: ""}
+                        """.trimIndent()
+                    )
+                }
+                errorMessage.contains("Empty response") ||
+                errorMessage.contains("Invalid") ||
+                errorMessage.contains("parse") -> {
+                    ErrorMessage(
+                        title = "Invalid Emojicode",
+                        message = """
+                            🎯 The emojicode format seems incorrect
+
+                            Valid formats:
+                            • 8 consecutive emojis (e.g., 🌍🔑💎🌟💎🎨🐉📌)
+                            • Emojis wrapped in sparkles (e.g., ✨🏰👑✨)
+
+                            Tips:
+                            • Make sure you've copied the entire emojicode
+                            • Check that it hasn't been modified
+                            • Try copying the emojicode again
+                        """.trimIndent()
+                    )
+                }
+                else -> {
+                    ErrorMessage(
+                        title = "Something Went Wrong",
+                        message = """
+                            ⚠️ Unable to decode emojicode
+
+                            Please make sure:
+                            • You have an internet connection
+                            • The emojicode is valid
+                            • The keyboard has network permission
+
+                            ${baseUrl?.let { "🌐 Try opening this in a browser:\n$it" } ?: ""}
+                        """.trimIndent()
+                    )
+                }
+            }
+        } else {
+            // Debug mode - show all details
+            return ErrorMessage(
+                title = "Error",
+                message = """
+                    ${exception.javaClass.simpleName}: ${exception.message}
+
+                    ${baseUrl?.let { "URL: $it\n" } ?: ""}
+
+                    Stack trace:
+                    ${exception.stackTraceToString().take(500)}
+                """.trimIndent()
+            )
+        }
+    }
+
+    /**
+     * Clear error message
+     */
+    fun clearError() {
+        _errorMessage.value = null
     }
 
     /**
@@ -163,7 +262,14 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
                 val signature = sessionless.sign(message)
                     ?: throw Exception("Failed to sign spell")
 
-                val result = resolveSpell(spellName, fountUUID, keys.publicKey, timestamp, signature)
+                // Get primary shipping address if available
+                val components = mutableMapOf<String, Any>()
+                getPrimaryShippingAddress()?.let { address ->
+                    Log.d(TAG, "📮 Including shipping address: ${address["name"]}")
+                    components["shippingAddress"] = address
+                }
+
+                val result = resolveSpell(spellName, fountUUID, keys.publicKey, timestamp, signature, components)
 
                 Log.d(TAG, "✅ Spell cast successfully: $result")
 
@@ -174,6 +280,37 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
     }
 
     /**
+     * Get primary shipping address from carrier bag
+     */
+    private fun getPrimaryShippingAddress(): Map<String, Any>? {
+        val carrierBagJson = prefs.getString(KEY_CARRIER_BAG, null) ?: return null
+
+        @Suppress("UNCHECKED_CAST")
+        val carrierBag = gson.fromJson(carrierBagJson, Map::class.java) as? Map<String, Any>
+            ?: return null
+
+        @Suppress("UNCHECKED_CAST")
+        val addresses = carrierBag["addresses"] as? List<Map<String, Any>> ?: return null
+
+        // Find primary address
+        val primaryAddress = addresses.firstOrNull { it["isPrimary"] as? Boolean == true }
+        if (primaryAddress != null) {
+            Log.d(TAG, "📮 Found primary address: ${primaryAddress["name"]}")
+            return primaryAddress
+        }
+
+        // If no primary, use first address
+        val firstAddress = addresses.firstOrNull()
+        if (firstAddress != null) {
+            Log.d(TAG, "📮 Using first address (no primary set): ${firstAddress["name"]}")
+            return firstAddress
+        }
+
+        Log.d(TAG, "📮 No addresses available")
+        return null
+    }
+
+    /**
      * Resolve spell through Fount
      */
     private suspend fun resolveSpell(
@@ -181,16 +318,21 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
         userUUID: String,
         pubKey: String,
         timestamp: String,
-        signature: String
+        signature: String,
+        components: Map<String, Any> = emptyMap()
     ): Map<String, Any> = withContext(Dispatchers.IO) {
         val url = Configuration.Fount.resolve(spellName)
 
-        val body = mapOf(
+        val body = mutableMapOf(
             "userUUID" to userUUID,
             "pubKey" to pubKey,
             "timestamp" to timestamp,
             "signature" to signature
         )
+
+        if (components.isNotEmpty()) {
+            body["components"] = components
+        }
 
         val request = Request.Builder()
             .url(url)
@@ -376,7 +518,7 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
     }
 
     /**
-     * Create empty carrier bag with all 15 collections
+     * Create empty carrier bag with all 16 collections
      */
     private fun createEmptyCarrierBag(): Map<String, Any> {
         return mapOf(
@@ -394,7 +536,16 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
             "games" to emptyList<Any>(),
             "events" to emptyList<Any>(),
             "contracts" to emptyList<Any>(),
-            "stacks" to emptyList<Any>()
+            "stacks" to emptyList<Any>(),
+            "addresses" to emptyList<Any>()  // Shipping addresses for purchases
         )
     }
 }
+
+/**
+ * Error message data class
+ */
+data class ErrorMessage(
+    val title: String,
+    val message: String
+)

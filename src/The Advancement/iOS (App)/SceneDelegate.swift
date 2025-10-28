@@ -33,6 +33,31 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.makeKeyAndVisible()
     }
 
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+        guard let url = URLContexts.first?.url else { return }
+
+        NSLog("🔗 Received URL: %@", url.absoluteString)
+
+        // Handle carrier bag URL from AdvanceKey
+        if url.scheme == "theadvancement" && url.host == "carrierbag" {
+            NSLog("🎒 Opening carrier bag from URL scheme")
+
+            // Get the root view controller
+            guard let rootViewController = window?.rootViewController else {
+                NSLog("❌ No root view controller found")
+                return
+            }
+
+            // If it's MainViewController, open carrier bag
+            if let mainVC = rootViewController as? MainViewController {
+                mainVC.openCarrierBag()
+                NSLog("✅ Opened carrier bag in MainViewController")
+            } else {
+                NSLog("⚠️ Root view controller is not MainViewController")
+            }
+        }
+    }
+
     private func createPlaceholderMainViewController() -> UIViewController {
         let vc = UIViewController()
         vc.view.backgroundColor = .systemBackground

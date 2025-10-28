@@ -202,4 +202,29 @@ class MainJSInterface(
         Log.d("MainJSInterface", "Opening carrier bag")
         viewModel.openCarrierBag()
     }
+
+    @JavascriptInterface
+    fun isKeyboardEnabled(): Boolean {
+        val imm = webView.context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE)
+            as android.view.inputmethod.InputMethodManager
+
+        val enabledImes = imm.enabledInputMethodList
+        val advanceKeyEnabled = enabledImes.any {
+            it.packageName == webView.context.packageName &&
+            it.serviceName.contains("AdvanceKeyService")
+        }
+
+        Log.d("MainJSInterface", "AdvanceKey enabled: $advanceKeyEnabled")
+        return advanceKeyEnabled
+    }
+
+    @JavascriptInterface
+    fun openKeyboardSettings() {
+        Log.d("MainJSInterface", "Opening keyboard settings")
+        webView.post {
+            val intent = android.content.Intent(android.provider.Settings.ACTION_INPUT_METHOD_SETTINGS)
+            intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+            webView.context.startActivity(intent)
+        }
+    }
 }

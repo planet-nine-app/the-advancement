@@ -31,6 +31,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Serve examples directory for SVG gallery
+app.use('/examples', express.static(path.join(__dirname, '../../allyabase/deployment/docker/examples')));
+
 // ========================================
 // Mock Data - In Production This Comes From Real Services
 // ========================================

@@ -288,6 +288,51 @@
             font-size: 32px;
             text-align: center;
         }
+
+        /* Carrier bag button */
+        #bag-button {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 40px;
+            background: rgba(236, 72, 153, 0.15);
+            border: 1px solid #ec4899;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 2000;
+            transition: all 0.3s ease;
+            animation: bagGlow 2.5s ease-in-out infinite;
+        }
+
+        #bag-button:active {
+            transform: translateX(-50%) scale(0.95);
+            background: rgba(236, 72, 153, 0.3);
+        }
+
+        #bag-button-text {
+            color: #ec4899;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        @keyframes bagGlow {
+            0%, 100% {
+                opacity: 0.7;
+                box-shadow: 0 0 5px rgba(236, 72, 153, 0.3);
+            }
+            50% {
+                opacity: 1;
+                box-shadow: 0 0 15px rgba(236, 72, 153, 0.6);
+            }
+        }
     </style>
 </head>
 <body>
@@ -305,6 +350,11 @@
         <div id="contentArea">
             <!-- Content will be dynamically inserted here -->
         </div>
+    </div>
+
+    <!-- Carrier bag button -->
+    <div id="bag-button" onclick="openCarrierBag()">
+        <div id="bag-button-text">🎒 BAG</div>
     </div>
 
     <script src="keyboard.js"></script>

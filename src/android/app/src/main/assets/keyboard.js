@@ -228,8 +228,116 @@
 
     window.saveToCarrierBag = function() {
         console.log('💾 Saving to carrier bag');
+
+        // Animate save
+        animateSaveToBag('music'); // Default to music collection
+
         if (window.Android && window.Android.saveToCarrierBag) {
             window.Android.saveToCarrierBag(clipboardText);
+        }
+    };
+
+    function animateSaveToBag(collection) {
+        try {
+            // Collection-specific emoji for visual feedback
+            const collectionEmojis = {
+                'cookbook': '🍪',
+                'bookshelf': '📚',
+                'contracts': '📜',
+                'stacks': '🏠',
+                'apothecary': '🧪',
+                'gallery': '🖼️',
+                'familiarPen': '🐾',
+                'machinery': '⚙️',
+                'metallics': '⚡',
+                'music': '🎵',
+                'oracular': '🔮',
+                'greenHouse': '🌱',
+                'closet': '👕',
+                'games': '🎮',
+                'events': '🎫'
+            };
+
+            // Get the save button position
+            const saveButton = document.querySelector('.save-button');
+            if (!saveButton) {
+                console.warn('No save button found to animate from');
+                return;
+            }
+
+            const saveRect = saveButton.getBoundingClientRect();
+
+            // Get the bag button position
+            const bagButton = document.getElementById('bag-button');
+            if (!bagButton) {
+                console.warn('No bag button found');
+                return;
+            }
+            const bagRect = bagButton.getBoundingClientRect();
+
+            // Create animation container with emoji
+            const animationContainer = document.createElement('div');
+            animationContainer.textContent = collectionEmojis[collection] || '💾';
+            animationContainer.style.position = 'fixed';
+            animationContainer.style.left = (saveRect.left + saveRect.width / 2 - 24) + 'px';
+            animationContainer.style.top = (saveRect.top + saveRect.height / 2 - 24) + 'px';
+            animationContainer.style.width = '48px';
+            animationContainer.style.height = '48px';
+            animationContainer.style.fontSize = '48px';
+            animationContainer.style.zIndex = '9999';
+            animationContainer.style.pointerEvents = 'none';
+            animationContainer.style.textAlign = 'center';
+            animationContainer.style.lineHeight = '48px';
+
+            document.body.appendChild(animationContainer);
+
+            // Calculate target position (center of bag button)
+            const targetX = bagRect.left + (bagRect.width / 2) - 24;
+            const targetY = bagRect.top + (bagRect.height / 2) - 24;
+
+            // Calculate translation needed
+            const translateX = targetX - (saveRect.left + saveRect.width / 2 - 24);
+            const translateY = targetY - (saveRect.top + saveRect.height / 2 - 24);
+
+            // Trigger animation
+            requestAnimationFrame(() => {
+                animationContainer.style.transition = 'all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                animationContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(0.1)`;
+                animationContainer.style.opacity = '0';
+            });
+
+            // Make bag button pulse
+            bagButton.style.transition = 'transform 0.3s ease';
+            bagButton.style.transform = 'translateX(-50%) scale(1.2)';
+
+            setTimeout(() => {
+                bagButton.style.transform = 'translateX(-50%) scale(1)';
+            }, 300);
+
+            // Remove animation container after animation completes
+            setTimeout(() => {
+                document.body.removeChild(animationContainer);
+                console.log(`✅ Animation complete - saved to ${collection}`);
+            }, 800);
+
+        } catch (error) {
+            console.error('Error animating save to bag:', error);
+        }
+    }
+
+    window.openCarrierBag = function() {
+        try {
+            console.log('🎒 Opening carrier bag from AdvanceKey');
+
+            // Call Android interface to open carrier bag
+            if (window.Android && window.Android.openCarrierBag) {
+                window.Android.openCarrierBag();
+            } else {
+                console.warn('Android.openCarrierBag not available');
+            }
+
+        } catch (error) {
+            console.error('Error opening carrier bag:', error);
         }
     };
 

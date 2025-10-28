@@ -227,6 +227,45 @@
         }
     }
 
+    // Keyboard installation notice
+    const keyboardNotice = document.getElementById('keyboardNotice');
+    if (keyboardNotice) {
+        keyboardNotice.addEventListener('click', function() {
+            console.log('⌨️ Keyboard notice clicked');
+
+            if (platform === 'android' && window.Android?.openKeyboardSettings) {
+                window.Android.openKeyboardSettings();
+            } else if (platform === 'ios' && window.webkit?.messageHandlers?.mainApp) {
+                window.webkit.messageHandlers.mainApp.postMessage({
+                    action: 'openKeyboardSettings'
+                });
+            }
+        });
+    }
+
+    // Check keyboard installation status
+    function checkKeyboardInstallation() {
+        if (platform === 'android' && window.Android?.isKeyboardEnabled) {
+            const isEnabled = window.Android.isKeyboardEnabled();
+            setKeyboardNoticeVisible(!isEnabled);
+        } else if (platform === 'ios' && window.webkit?.messageHandlers?.mainApp) {
+            window.webkit.messageHandlers.mainApp.postMessage({
+                action: 'checkKeyboard'
+            });
+        }
+    }
+
+    // Function to show/hide keyboard notice (called from native)
+    window.setKeyboardNoticeVisible = function(visible) {
+        if (keyboardNotice) {
+            keyboardNotice.setAttribute('opacity', visible ? '1' : '0');
+            console.log('⌨️ Keyboard notice visibility:', visible);
+        }
+    };
+
+    // Check keyboard status on load
+    checkKeyboardInstallation();
+
     function detectPlatform() {
         const ua = navigator.userAgent;
         if (/iPhone|iPad|iPod/.test(ua)) {

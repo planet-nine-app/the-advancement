@@ -9,6 +9,9 @@ package app.planetnine.theadvancement.config
  * Current environment: hitchhikers.*.allyabase.com
  */
 object Configuration {
+    // Environment: "production", "test", or "local"
+    const val ENVIRONMENT: String = "production"
+
     // Toggle this for local development
     const val USE_LOCAL_SERVICES: Boolean = false
 
@@ -19,6 +22,9 @@ object Configuration {
 
     // For local development (Android emulator uses 10.0.2.2 for host localhost)
     const val LOCAL_HOST: String = "10.0.2.2"
+
+    // Helper to check if running in production
+    val isProduction: Boolean get() = ENVIRONMENT == "production"
 
     private enum class Service(val serviceName: String) {
         BDO("bdo"),

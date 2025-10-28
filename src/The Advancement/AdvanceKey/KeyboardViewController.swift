@@ -50,11 +50,21 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         // Initialize sessionless for BDO requests
         sessionless = Sessionless()
 
+        // Mark keyboard as used (for main app installation check)
+        markKeyboardAsUsed()
+
         // setupDemojiButton()  // Removed - auto-detection enabled
         setupContractActionButton()
         setupWebView()
 
         NSLog("ADVANCEKEY: ✅ Demoji Keyboard ready (auto-detection enabled)")
+    }
+
+    private func markKeyboardAsUsed() {
+        // Set flag in shared UserDefaults so main app knows keyboard is installed
+        let sharedDefaults = UserDefaults(suiteName: "group.app.planetnine.theadvancement")
+        sharedDefaults?.set(true, forKey: "keyboardFirstUsed")
+        NSLog("ADVANCEKEY: ⌨️ Marked keyboard as used")
     }
 
     func setupDemojiButton() {
@@ -118,6 +128,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         contentController.add(self, name: "contractAuthorization")
         contentController.add(self, name: "purchase")
         contentController.add(self, name: "navigateToCard")
+        contentController.add(self, name: "openCarrierBag")
         webViewConfig.userContentController = contentController
 
         // Inject console.log override to capture messages
@@ -562,7 +573,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                     • BDO service is running on port 5114
                     • The emojicode exists in the database
                     • The BDO was created as a public BDO
-                    """)
+                    """, baseUrl: "\(bdoUrl)emoji/\(emojicode)")
                 }
             }
         }
@@ -591,7 +602,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                     Attempted to fetch:
                     bdoPubKey: \(bdoPubKey)
                     URL: \(bdoUrl)
-                    """)
+                    """, baseUrl: bdoUrl)
                 }
             }
         }
@@ -1043,12 +1054,56 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 svg.authorized .sign-button {
                     display: block;
                 }
+                /* Carrier bag button */
+                #bag-button {
+                    position: fixed;
+                    bottom: 10px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 120px;
+                    height: 40px;
+                    background: rgba(236, 72, 153, 0.15);
+                    border: 1px solid #ec4899;
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    z-index: 2000;
+                    transition: all 0.3s ease;
+                    animation: bagGlow 2.5s ease-in-out infinite;
+                }
+                #bag-button:active {
+                    transform: translateX(-50%) scale(0.95);
+                    background: rgba(236, 72, 153, 0.3);
+                }
+                #bag-button-text {
+                    color: #ec4899;
+                    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                    font-size: 14px;
+                    font-weight: 700;
+                    letter-spacing: 0.5px;
+                    text-align: center;
+                }
+                @keyframes bagGlow {
+                    0%, 100% {
+                        opacity: 0.7;
+                        box-shadow: 0 0 5px rgba(236, 72, 153, 0.3);
+                    }
+                    50% {
+                        opacity: 1;
+                        box-shadow: 0 0 15px rgba(236, 72, 153, 0.6);
+                    }
+                }
             </style>
         </head>
         <body>
             <div id="banner"></div>
             <div id="svg-container">
                 \(svg)
+            </div>
+            <div id="bag-button" onclick="openCarrierBag()">
+                <div id="bag-button-text">🎒 BAG</div>
             </div>
             <script>
                 // BDO data for spell handling
@@ -1330,6 +1385,9 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
                         console.log(`💾 Saving '${title}' to ${collection}`);
 
+                        // Animate BDO flying into carrier bag
+                        animateSaveToBag(collection);
+
                         // Send message to Swift to save to carrierBag
                         window.webkit.messageHandlers.saveToCarrierBag.postMessage({
                             action: 'saveToCarrierBag',
@@ -1339,7 +1397,61 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                             bdoData: bdo
                         });
 
-                        // Collection-specific success messages
+                    } catch (error) {
+                        console.error('Error saving to carrierBag:', error);
+                        alert('❌ Failed to save: ' + error.message);
+                    }
+                }
+
+                function animateSaveToBag(collection) {
+                    try {
+                        // Get the SVG element from the container
+                        const svgContainer = document.getElementById('svg-container');
+                        const originalSvg = svgContainer.querySelector('svg');
+
+                        if (!originalSvg) {
+                            console.warn('No SVG found to animate');
+                            return;
+                        }
+
+                        // Clone the SVG
+                        const clonedSvg = originalSvg.cloneNode(true);
+
+                        // Get position of original SVG
+                        const originalRect = originalSvg.getBoundingClientRect();
+
+                        // Get position of bag button
+                        const bagButton = document.getElementById('bag-button');
+                        const bagRect = bagButton.getBoundingClientRect();
+
+                        // Create container for animation
+                        const animationContainer = document.createElement('div');
+                        animationContainer.style.position = 'fixed';
+                        animationContainer.style.left = originalRect.left + 'px';
+                        animationContainer.style.top = originalRect.top + 'px';
+                        animationContainer.style.width = originalRect.width + 'px';
+                        animationContainer.style.height = originalRect.height + 'px';
+                        animationContainer.style.zIndex = '9999';
+                        animationContainer.style.pointerEvents = 'none';
+                        animationContainer.style.overflow = 'hidden';
+
+                        // Style the cloned SVG
+                        clonedSvg.style.width = '100%';
+                        clonedSvg.style.height = 'auto';
+                        clonedSvg.style.display = 'block';
+
+                        animationContainer.appendChild(clonedSvg);
+                        document.body.appendChild(animationContainer);
+
+                        // Calculate target position (center of bag button)
+                        const targetX = bagRect.left + (bagRect.width / 2) - (originalRect.width / 2);
+                        const targetY = bagRect.top + (bagRect.height / 2) - (originalRect.height / 2);
+
+                        // Calculate translation needed
+                        const translateX = targetX - originalRect.left;
+                        const translateY = targetY - originalRect.top;
+
+                        // Collection-specific emoji for visual feedback
                         const collectionEmojis = {
                             'cookbook': '🍪',
                             'bookshelf': '📚',
@@ -1358,12 +1470,41 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                             'events': '🎫'
                         };
 
-                        const emoji = collectionEmojis[collection] || '💾';
-                        alert(`${emoji} Saved to ${collection}!`);
+                        // Add emoji overlay
+                        const emojiOverlay = document.createElement('div');
+                        emojiOverlay.textContent = collectionEmojis[collection] || '💾';
+                        emojiOverlay.style.position = 'absolute';
+                        emojiOverlay.style.top = '50%';
+                        emojiOverlay.style.left = '50%';
+                        emojiOverlay.style.transform = 'translate(-50%, -50%)';
+                        emojiOverlay.style.fontSize = '48px';
+                        emojiOverlay.style.zIndex = '10000';
+                        emojiOverlay.style.pointerEvents = 'none';
+                        animationContainer.appendChild(emojiOverlay);
+
+                        // Trigger animation
+                        requestAnimationFrame(() => {
+                            animationContainer.style.transition = 'all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                            animationContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(0.1)`;
+                            animationContainer.style.opacity = '0';
+                        });
+
+                        // Make bag button pulse
+                        bagButton.style.transition = 'transform 0.3s ease';
+                        bagButton.style.transform = 'translateX(-50%) scale(1.2)';
+
+                        setTimeout(() => {
+                            bagButton.style.transform = 'translateX(-50%) scale(1)';
+                        }, 300);
+
+                        // Remove animation container after animation completes
+                        setTimeout(() => {
+                            document.body.removeChild(animationContainer);
+                            console.log(`✅ Animation complete - saved to ${collection}`);
+                        }, 800);
 
                     } catch (error) {
-                        console.error('Error saving to carrierBag:', error);
-                        alert('❌ Failed to save: ' + error.message);
+                        console.error('Error animating save to bag:', error);
                     }
                 }
 
@@ -1617,6 +1758,21 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                         alert('⚡ Unknown spell: ' + spell + '\\n\\nThis spell is not yet implemented.');
                     }
                 }
+
+                function openCarrierBag() {
+                    try {
+                        console.log('🎒 Opening carrier bag from AdvanceKey');
+
+                        // Send message to Swift to open carrier bag in main app
+                        window.webkit.messageHandlers.openCarrierBag.postMessage({
+                            action: 'openCarrierBag'
+                        });
+
+                    } catch (error) {
+                        console.error('Error opening carrier bag:', error);
+                        alert('❌ Failed to open carrier bag: ' + error.message);
+                    }
+                }
             </script>
         </body>
         </html>
@@ -1670,7 +1826,70 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         """
     }
 
-    func displayError(_ title: String, details: String) {
+    func displayError(_ title: String, details: String, baseUrl: String? = nil) {
+        // In production, show user-friendly messages
+        // In test/local, show debug details
+        let isProduction = Configuration.environment == "production"
+
+        let displayTitle: String
+        let displayDetails: String
+
+        if isProduction {
+            // User-friendly production messages
+            if title.contains("Fetch Failed") || title.contains("Network") || details.contains("URLSession") {
+                displayTitle = "Connection Issue"
+                displayDetails = """
+                ⚠️ Unable to fetch content
+
+                This keyboard needs "Allow Full Access" permission to connect to Planet Nine services.
+
+                To enable it:
+                1. Open Settings app
+                2. Go to General → Keyboard → Keyboards
+                3. Tap "AdvanceKey"
+                4. Turn ON "Allow Full Access"
+
+                This permission is required for the keyboard to:
+                • Decode emojicodes
+                • Fetch BDOs from Planet Nine
+                • Display content
+
+                \(baseUrl.map { "🌐 You can also check this content in Safari:\n\($0)" } ?? "")
+                """
+            } else if title.contains("Decode Failed") || title.contains("Invalid") {
+                displayTitle = "Invalid Emojicode"
+                displayDetails = """
+                🎯 The emojicode format seems incorrect
+
+                Valid formats:
+                • 8 consecutive emojis (e.g., 🌍🔑💎🌟💎🎨🐉📌)
+                • Emojis wrapped in sparkles (e.g., ✨🏰👑✨)
+
+                Tips:
+                • Make sure you've selected the entire emojicode
+                • Check that sparkles (✨) are included if needed
+                • Try copying the emojicode again
+                """
+            } else {
+                // Generic production error
+                displayTitle = "Something Went Wrong"
+                displayDetails = """
+                ⚠️ \(title)
+
+                Please make sure:
+                • "Allow Full Access" is enabled for AdvanceKey
+                • You have an internet connection
+                • The emojicode is valid
+
+                \(baseUrl.map { "🌐 Try opening this in Safari:\n\($0)" } ?? "")
+                """
+            }
+        } else {
+            // Debug mode - show all details
+            displayTitle = title
+            displayDetails = details
+        }
+
         let html = """
         <!DOCTYPE html>
         <html>
@@ -1701,19 +1920,23 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 .error-details {
                     white-space: pre-wrap;
                     line-height: 1.4;
-                    font-family: Monaco, 'Courier New', monospace;
-                    font-size: 10px;
+                    font-family: \(isProduction ? "-apple-system, BlinkMacSystemFont, sans-serif" : "Monaco, 'Courier New', monospace");
+                    font-size: \(isProduction ? "12px" : "10px");
                     background: #f8f9fa;
                     padding: 10px;
                     border-radius: 4px;
                     overflow-x: auto;
                 }
+                a {
+                    color: #0066cc;
+                    word-break: break-all;
+                }
             </style>
         </head>
         <body>
             <div class="error-container">
-                <div class="error-title">❌ \(title)</div>
-                <div class="error-details">\(details)</div>
+                <div class="error-title">❌ \(displayTitle)</div>
+                <div class="error-details">\(displayDetails)</div>
             </div>
         </body>
         </html>
@@ -1744,6 +1967,8 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             handlePurchaseMessage(message.body)
         } else if message.name == "navigateToCard" {
             handleNavigateToCardMessage(message.body)
+        } else if message.name == "openCarrierBag" {
+            handleOpenCarrierBagMessage(message.body)
         }
     }
 
@@ -2094,6 +2319,44 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 }
             }
         }
+    }
+
+    private func handleOpenCarrierBagMessage(_ messageBody: Any) {
+        NSLog("ADVANCEKEY: 🎒 Open carrier bag message received")
+
+        // Open the main app with carrier bag URL
+        // Note: Keyboard extensions can't directly open URLs, but we can request the system to do it
+        guard let url = URL(string: "theadvancement://carrierbag") else {
+            NSLog("ADVANCEKEY: ❌ Invalid carrier bag URL")
+            return
+        }
+
+        // Use the extensionContext to open URL in the containing app
+        var responder: UIResponder? = self as UIResponder
+        let selector = #selector(openURL(_:))
+
+        // Walk up the responder chain to find one that can open URLs
+        while responder != nil {
+            if let application = responder as? UIApplication {
+                application.perform(selector, with: url)
+                NSLog("ADVANCEKEY: ✅ Opening carrier bag in main app")
+                return
+            }
+            responder = responder?.next
+        }
+
+        // Fallback: try using openURL selector on the extension context
+        self.extensionContext?.open(url, completionHandler: { success in
+            if success {
+                NSLog("ADVANCEKEY: ✅ Successfully opened carrier bag URL")
+            } else {
+                NSLog("ADVANCEKEY: ❌ Failed to open carrier bag URL")
+            }
+        })
+    }
+
+    @objc func openURL(_ url: URL) {
+        // This is a selector placeholder for the responder chain
     }
 
     private func clearBanner() {
@@ -2493,6 +2756,29 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         NSLog("ADVANCEKEY: ✅ Successfully deducted %d MP", amount)
     }
 
+    private func getPrimaryShippingAddress() -> [String: Any]? {
+        guard let carrierBag = SharedUserDefaults.getCarrierBag(),
+              let addresses = carrierBag["addresses"] as? [[String: Any]] else {
+            NSLog("ADVANCEKEY: 📮 No addresses in carrier bag")
+            return nil
+        }
+
+        // Find primary address
+        if let primaryAddress = addresses.first(where: { $0["isPrimary"] as? Bool == true }) {
+            NSLog("ADVANCEKEY: 📮 Found primary address: %@", primaryAddress["name"] as? String ?? "Unknown")
+            return primaryAddress
+        }
+
+        // If no primary, use first address
+        if let firstAddress = addresses.first {
+            NSLog("ADVANCEKEY: 📮 Using first address (no primary set): %@", firstAddress["name"] as? String ?? "Unknown")
+            return firstAddress
+        }
+
+        NSLog("ADVANCEKEY: 📮 No addresses available")
+        return nil
+    }
+
     private func purchaseTicketWithMP(buyerUUID: String, ticketFlavor: String, mpCost: Int) async throws {
         NSLog("ADVANCEKEY: 🪄 Purchasing ticket with %d MP via arethaUserPurchase spell", mpCost)
         NSLog("ADVANCEKEY: 🎟️  Buyer UUID: %@", buyerUUID)
@@ -2510,6 +2796,19 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         let mp = true
         let ordinal = 0
 
+        // Get primary shipping address from carrier bag
+        var components: [String: Any] = [
+            "flavor": ticketFlavor,
+            "quantity": 1
+        ]
+
+        if let shippingAddress = getPrimaryShippingAddress() {
+            NSLog("ADVANCEKEY: 📮 Including shipping address: %@", shippingAddress["name"] as? String ?? "Unknown")
+            components["shippingAddress"] = shippingAddress
+        } else {
+            NSLog("ADVANCEKEY: ⚠️ No shipping address found in carrier bag")
+        }
+
         // Create spell payload
         let spell: [String: Any] = [
             "spell": spellName,
@@ -2518,10 +2817,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             "totalCost": mpCost,
             "mp": mp,
             "ordinal": ordinal,
-            "components": [
-                "flavor": ticketFlavor,
-                "quantity": 1
-            ]
+            "components": components
         ]
 
         // Sign the spell: timestamp + spell + casterUUID + totalCost + mp + ordinal
