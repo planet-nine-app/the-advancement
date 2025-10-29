@@ -950,18 +950,18 @@ app.get('/api/svg-examples', async (req, res) => {
             { dir: 'familiarPen', file: 'familiarPen.js', generators: ['generateFamiliarSVG'], data: 'familiarPenPosts' },
             { dir: 'gallery', file: 'gallery.js', generators: ['generateArtworkSVG'], data: 'galleryPosts' },
             { dir: 'games', file: 'games.js', generators: ['generateGameSVG'], data: 'gamesPosts' },
-            { dir: 'geometry', file: 'geometry.js', generators: ['generateGeometrySVG'], data: 'geometryPosts' },
+            { dir: 'geometry', file: 'geometry.js', generators: ['generateEuclidPostulatesSVG', 'generateNonEuclideanSVG', 'generateGeneralRelativitySVG', 'generateGravitationalLensingSVG'], data: 'geometryPosts' },
             { dir: 'greenHouse', file: 'greenHouse.js', generators: ['generatePlantSVG'], data: 'greenHousePosts' },
-            { dir: 'idothis', file: 'idothis.js', generators: ['generateIdoThisSVG'], data: 'idothisPosts' },
-            { dir: 'literary', file: 'literary.js', generators: ['generateBookSVG'], data: 'literaryPosts' },
+            { dir: 'idothis', file: 'idothis.js', generators: ['generateIdothisBookNowSVG'], data: 'idothisPosts' },
+            { dir: 'literary', file: 'literary.js', generators: ['generateBookTwoButtonSVG', 'generateLiteraryOneButtonSVG'], data: 'literaryPosts' },
             { dir: 'machinery', file: 'machinery.js', generators: ['generateMachinerySVG'], data: 'machineryPosts' },
-            { dir: 'metallics', file: 'metallics.js', generators: ['generateMetallicSVG'], data: 'metallicsPosts' },
-            { dir: 'music', file: 'music-bdo.js', generators: ['generateMusicSVG'], data: 'exampleMusicTracks' },
-            { dir: 'network-topology', file: 'network-topology.js', generators: ['generateNetworkTopologySVG'], data: 'networkTopologyPosts' },
-            { dir: 'oracular', file: 'oracular.js', generators: ['generateOracularSVG'], data: 'oracularPosts' },
-            { dir: 'popups', file: 'popups.js', generators: ['generatePopupSVG'], data: 'popupPosts' },
-            { dir: 'simulations', file: 'simulations.js', generators: ['generateSimulationSVG'], data: 'simulationsPosts' },
-            { dir: 'trading-cards', file: 'trading-cards.js', generators: ['generateTradingCardSVG'], data: 'tradingCardsPosts' }
+            { dir: 'metallics', file: 'metallics.js', generators: ['generateGemstoneSVG', 'generateJewelrySVG'], data: 'metallicsPosts' },
+            { dir: 'music', file: 'music-bdo.js', generators: ['generateMusicBDO', 'generateMirloBDO', 'generateBandcampBDO'], data: 'exampleMusicTracks' },
+            { dir: 'network-topology', file: 'network-topology.js', generators: ['generateHubSpokeSVG', 'generateFederatedNetworkSVG', 'generateFFXIVServersSVG', 'generateOverlayNetworkSVG'], data: 'networkTopologyPosts' },
+            { dir: 'oracular', file: 'oracular.js', generators: ['generateTarotSVG', 'generateAstrologySVG'], data: 'oracularPosts' },
+            { dir: 'popups', file: 'popups.js', generators: ['generatePopupTwoButtonSVG', 'generateLocationViewSVG'], data: 'popupPosts' },
+            { dir: 'simulations', file: 'simulations.js', generators: ['generateGalaxyCollisionSVG', 'generatePlanetNineSpaceshipSVG', 'generateOregonFoodBankSVG'], data: 'simulationsPosts' },
+            { dir: 'trading-cards', file: 'trading-cards.js', generators: ['generateSTEMPioneerCardSVG'], data: 'tradingCardsPosts' }
         ];
 
         for (const config of moduleConfigs) {
