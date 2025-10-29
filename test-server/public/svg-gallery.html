@@ -176,31 +176,7 @@
         <div class="stats" id="stats"></div>
     </div>
 
-    <script type="module">
-        // List of all example directories and their SVG generator functions
-        const examples = [
-            { dir: 'apothecary', module: '/examples/apothecary/apothecary.js', generators: ['generateCosmeticSVG', 'generateRemedySVG'], data: 'apothecaryPosts' },
-            { dir: 'bundles', module: '/examples/bundles/bundles.js', generators: ['generateBundleSVG'], data: 'bundlePosts' },
-            { dir: 'closet', module: '/examples/closet/closet.js', generators: ['generateClothingSVG'], data: 'closetPosts' },
-            { dir: 'cookbook', module: '/examples/cookbook/cookbook.js', generators: ['generateRecipeSVG'], data: 'cookbookPosts' },
-            { dir: 'events', module: '/examples/events/events.js', generators: ['generateEventSVG'], data: 'eventPosts' },
-            { dir: 'familiarPen', module: '/examples/familiarPen/familiarPen.js', generators: ['generateFamiliarSVG'], data: 'familiarPosts' },
-            { dir: 'gallery', module: '/examples/gallery/gallery.js', generators: ['generateArtworkSVG'], data: 'galleryPosts' },
-            { dir: 'games', module: '/examples/games/games.js', generators: ['generateGameSVG'], data: 'gamePosts' },
-            { dir: 'geometry', module: '/examples/geometry/geometry.js', generators: ['generateGeometrySVG'], data: 'geometryPosts' },
-            { dir: 'greenHouse', module: '/examples/greenHouse/greenHouse.js', generators: ['generatePlantSVG'], data: 'plantPosts' },
-            { dir: 'idothis', module: '/examples/idothis/idothis.js', generators: ['generateIdoThisSVG'], data: 'idoThisPosts' },
-            { dir: 'literary', module: '/examples/literary/literary.js', generators: ['generateBookSVG'], data: 'literaryPosts' },
-            { dir: 'machinery', module: '/examples/machinery/machinery.js', generators: ['generateMachinerySVG'], data: 'machineryPosts' },
-            { dir: 'metallics', module: '/examples/metallics/metallics.js', generators: ['generateMetallicSVG'], data: 'metallicPosts' },
-            { dir: 'music', module: '/examples/music/music-bdo.js', generators: ['generateMusicSVG'], data: 'musicPosts' },
-            { dir: 'network-topology', module: '/examples/network-topology/network-topology.js', generators: ['generateNetworkTopologySVG'], data: 'networkTopologyPosts' },
-            { dir: 'oracular', module: '/examples/oracular/oracular.js', generators: ['generateOracularSVG'], data: 'oracularPosts' },
-            { dir: 'popups', module: '/examples/popups/popups.js', generators: ['generatePopupSVG'], data: 'popupPosts' },
-            { dir: 'simulations', module: '/examples/simulations/simulations.js', generators: ['generateSimulationSVG'], data: 'simulationPosts' },
-            { dir: 'trading-cards', module: '/examples/trading-cards/trading-cards.js', generators: ['generateTradingCardSVG'], data: 'tradingCardPosts' }
-        ];
-
+    <script>
         const gallery = document.getElementById('gallery');
         const loading = document.getElementById('loading');
         const stats = document.getElementById('stats');
@@ -210,49 +186,20 @@
         let currentFilter = 'all';
 
         async function loadAndDisplaySVGs() {
-            let totalSvgs = 0;
-            const categories = new Set();
+            try {
+                // Fetch pre-generated SVGs from server
+                const response = await fetch('/api/svg-examples');
+                const data = await response.json();
 
-            for (const example of examples) {
-                try {
-                    const module = await import(example.module);
-                    const posts = module[example.data] || [];
-
-                    categories.add(example.dir);
-
-                    // For each post, generate SVG with each applicable generator
-                    for (const post of posts) {
-                        for (const generatorName of example.generators) {
-                            const generator = module[generatorName];
-                            if (generator) {
-                                try {
-                                    // Generate a dummy pubkey for display
-                                    const dummyPubKey = 'example_' + post.id;
-                                    const svgContent = generator(post, dummyPubKey);
-
-                                    allSvgs.push({
-                                        category: example.dir,
-                                        name: post.title || post.name || post.id,
-                                        generator: generatorName,
-                                        svgContent: svgContent,
-                                        path: example.module
-                                    });
-
-                                    totalSvgs++;
-                                } catch (err) {
-                                    console.error(`Error generating SVG for ${post.id}:`, err);
-                                }
-                            }
-                        }
-                    }
-                } catch (err) {
-                    console.error(`Error loading module ${example.module}:`, err);
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'error';
-                    errorDiv.textContent = `Failed to load ${example.dir}: ${err.message}`;
-                    gallery.appendChild(errorDiv);
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load SVG examples');
                 }
-            }
+
+                allSvgs = data.examples;
+                const totalSvgs = allSvgs.length;
+
+                // Get unique categories
+                const categories = new Set(allSvgs.map(svg => svg.category));
 
             // Create filter buttons
             const filterAll = document.createElement('button');
@@ -270,11 +217,16 @@
                 filterBar.appendChild(btn);
             });
 
-            // Display all SVGs
-            displaySvgs(allSvgs);
+                // Display all SVGs
+                displaySvgs(allSvgs);
 
-            loading.style.display = 'none';
-            stats.textContent = `Loaded ${totalSvgs} SVG examples from ${categories.size} categories`;
+                loading.style.display = 'none';
+                stats.textContent = `Loaded ${totalSvgs} SVG examples from ${categories.size} categories`;
+            } catch (err) {
+                loading.textContent = 'Error loading SVG examples: ' + err.message;
+                loading.style.color = '#ef4444';
+                console.error('Failed to load SVG examples:', err);
+            }
         }
 
         function displaySvgs(svgs) {
@@ -318,10 +270,7 @@
         }
 
         // Load everything on page load
-        loadAndDisplaySVGs().catch(err => {
-            loading.textContent = 'Error loading SVG examples: ' + err.message;
-            loading.style.color = '#ef4444';
-        });
+        loadAndDisplaySVGs();
     </script>
 </body>
 </html>

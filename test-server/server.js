@@ -932,6 +932,90 @@ app.get('/debug/spellbook', (req, res) => {
     });
 });
 
+// API: Get all SVG examples (generated server-side)
+app.get('/api/svg-examples', async (req, res) => {
+    console.log('🎨 Generating SVG examples...');
+
+    try {
+        const examples = [];
+        const examplesDir = path.join(__dirname, '../../allyabase/deployment/docker/examples');
+
+        // List of example modules to load
+        const moduleConfigs = [
+            { dir: 'apothecary', file: 'apothecary.js', generators: ['generateCosmeticSVG', 'generateRemedySVG'], data: 'apothecaryPosts' },
+            { dir: 'bundles', file: 'bundles.js', generators: ['generateBundleSVG'], data: 'bundlePosts' },
+            { dir: 'closet', file: 'closet.js', generators: ['generateClothingSVG'], data: 'closetPosts' },
+            { dir: 'cookbook', file: 'cookbook.js', generators: ['generateRecipeSVG'], data: 'cookbookPosts' },
+            { dir: 'events', file: 'events.js', generators: ['generateEventSVG'], data: 'eventPosts' },
+            { dir: 'familiarPen', file: 'familiarPen.js', generators: ['generateFamiliarSVG'], data: 'familiarPosts' },
+            { dir: 'gallery', file: 'gallery.js', generators: ['generateArtworkSVG'], data: 'galleryPosts' },
+            { dir: 'games', file: 'games.js', generators: ['generateGameSVG'], data: 'gamePosts' },
+            { dir: 'geometry', file: 'geometry.js', generators: ['generateGeometrySVG'], data: 'geometryPosts' },
+            { dir: 'greenHouse', file: 'greenHouse.js', generators: ['generatePlantSVG'], data: 'plantPosts' },
+            { dir: 'idothis', file: 'idothis.js', generators: ['generateIdoThisSVG'], data: 'idoThisPosts' },
+            { dir: 'literary', file: 'literary.js', generators: ['generateBookSVG'], data: 'literaryPosts' },
+            { dir: 'machinery', file: 'machinery.js', generators: ['generateMachinerySVG'], data: 'machineryPosts' },
+            { dir: 'metallics', file: 'metallics.js', generators: ['generateMetallicSVG'], data: 'metallicPosts' },
+            { dir: 'music', file: 'music-bdo.js', generators: ['generateMusicSVG'], data: 'musicPosts' },
+            { dir: 'network-topology', file: 'network-topology.js', generators: ['generateNetworkTopologySVG'], data: 'networkTopologyPosts' },
+            { dir: 'oracular', file: 'oracular.js', generators: ['generateOracularSVG'], data: 'oracularPosts' },
+            { dir: 'popups', file: 'popups.js', generators: ['generatePopupSVG'], data: 'popupPosts' },
+            { dir: 'simulations', file: 'simulations.js', generators: ['generateSimulationSVG'], data: 'simulationPosts' },
+            { dir: 'trading-cards', file: 'trading-cards.js', generators: ['generateTradingCardSVG'], data: 'tradingCardPosts' }
+        ];
+
+        for (const config of moduleConfigs) {
+            try {
+                const modulePath = path.join(examplesDir, config.dir, config.file);
+                const module = await import('file://' + modulePath);
+
+                const posts = module[config.data] || [];
+
+                for (const post of posts) {
+                    for (const generatorName of config.generators) {
+                        const generator = module[generatorName];
+                        if (generator) {
+                            try {
+                                // Generate a dummy pubkey for display
+                                const dummyPubKey = 'example_' + post.id;
+                                const svgContent = generator(post, dummyPubKey);
+
+                                examples.push({
+                                    category: config.dir,
+                                    name: post.title || post.name || post.id,
+                                    generator: generatorName,
+                                    svgContent: svgContent,
+                                    path: `${config.dir}/${config.file}`
+                                });
+                            } catch (err) {
+                                console.error(`Error generating SVG for ${post.id}:`, err.message);
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error(`Error loading module ${config.dir}/${config.file}:`, err.message);
+            }
+        }
+
+        console.log(`✅ Generated ${examples.length} SVG examples from ${moduleConfigs.length} categories`);
+
+        res.json({
+            success: true,
+            count: examples.length,
+            examples: examples
+        });
+
+    } catch (error) {
+        console.error('Failed to generate SVG examples:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to generate SVG examples',
+            details: error.message
+        });
+    }
+});
+
 // ========================================
 // MAGIC Gateway Integration
 // ========================================
