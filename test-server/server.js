@@ -960,8 +960,9 @@ app.get('/api/svg-examples', async (req, res) => {
             { dir: 'network-topology', file: 'network-topology.js', generators: ['generateHubSpokeSVG', 'generateFederatedNetworkSVG', 'generateFFXIVServersSVG', 'generateOverlayNetworkSVG'], data: 'networkTopologyPosts' },
             { dir: 'oracular', file: 'oracular.js', generators: ['generateTarotSVG', 'generateAstrologySVG'], data: 'oracularPosts' },
             { dir: 'popups', file: 'popups.js', generators: ['generatePopupTwoButtonSVG', 'generateLocationViewSVG'], data: 'popupPosts' },
-            { dir: 'simulations', file: 'simulations.js', generators: ['generateGalaxyCollisionSVG', 'generatePlanetNineSpaceshipSVG', 'generateOregonFoodBankSVG'], data: 'simulationsPosts' },
-            { dir: 'trading-cards', file: 'trading-cards.js', generators: ['generateSTEMPioneerCardSVG'], data: 'tradingCardsPosts' }
+            { dir: 'simulations', file: 'simulations.js', generators: ['generateGalaxyCollisionSVG', 'generatePlanetNineSpaceshipSVG'], data: 'simulationsPosts' },
+            { dir: 'trading-cards', file: 'trading-cards.js', generators: ['generateSTEMPioneerCardSVG'], data: 'tradingCardsPosts' },
+            { dir: 'food-banks', file: 'food-banks.js', generators: ['generateFoodBankSVG'], data: 'foodBanksPosts' }
         ];
 
         for (const config of moduleConfigs) {
