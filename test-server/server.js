@@ -949,7 +949,7 @@ app.get('/api/svg-examples', async (req, res) => {
             { dir: 'events', file: 'events.js', generators: ['generateEventSVG'], data: 'events' },
             { dir: 'familiarPen', file: 'familiarPen.js', generators: ['generateFamiliarSVG'], data: 'familiarPenPosts' },
             { dir: 'gallery', file: 'gallery.js', generators: ['generateArtworkSVG'], data: 'galleryPosts' },
-            { dir: 'games', file: 'games.js', generators: ['generateGameSVG'], data: 'gamesPosts' },
+            { dir: 'games', file: 'games.js', generators: ['generateGameSVG', 'generateFTPSVG'], data: 'gamesPosts' },
             { dir: 'geometry', file: 'geometry.js', generators: ['generateEuclidPostulatesSVG', 'generateNonEuclideanSVG', 'generateGeneralRelativitySVG', 'generateGravitationalLensingSVG'], data: 'geometryPosts' },
             { dir: 'greenHouse', file: 'greenHouse.js', generators: ['generatePlantSVG'], data: 'greenHousePosts' },
             { dir: 'idothis', file: 'idothis.js', generators: ['generateIdothisBookNowSVG'], data: 'idothisPosts' },
@@ -981,13 +981,16 @@ app.get('/api/svg-examples', async (req, res) => {
                                 const dummyPubKey = 'example_' + post.id;
                                 const svgContent = generator(post, dummyPubKey);
 
-                                examples.push({
-                                    category: config.dir,
-                                    name: post.title || post.name || post.id,
-                                    generator: generatorName,
-                                    svgContent: svgContent,
-                                    path: `${config.dir}/${config.file}`
-                                });
+                                // Skip if generator returned null (wrong type for this generator)
+                                if (svgContent) {
+                                    examples.push({
+                                        category: config.dir,
+                                        name: post.title || post.name || post.id,
+                                        generator: generatorName,
+                                        svgContent: svgContent,
+                                        path: `${config.dir}/${config.file}`
+                                    });
+                                }
                             } catch (err) {
                                 console.error(`Error generating SVG for ${post.id}:`, err.message);
                             }
