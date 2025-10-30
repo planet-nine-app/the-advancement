@@ -1,0 +1,167 @@
+/* Custom Dark Purple Theme for Federated Wiki */
+
+/* Main background */
+body {
+  background: linear-gradient(135deg, #1a0033 0%, #2d1b4e 100%) !important;
+  color: #7fff7f !important;
+}
+
+/* Page container */
+.main {
+  background: rgba(45, 27, 78, 0.8) !important;
+}
+
+/* Individual page styling */
+.page {
+  background: rgba(26, 0, 51, 0.9) !important;
+  border: 1px solid #4a2a6a !important;
+  box-shadow: 0 0 20px rgba(127, 255, 127, 0.2) !important;
+}
+
+/* Page title */
+.page h1,
+.page .header h1 {
+  color: #7fff7f !important;
+  text-shadow: 0 0 10px rgba(127, 255, 127, 0.5) !important;
+}
+
+/* Paragraph text */
+.page p,
+.page .item p {
+  color: #a8ffa8 !important;
+  text-shadow: 0 0 5px rgba(127, 255, 127, 0.3) !important;
+}
+
+/* Links */
+a {
+  color: #66ff66 !important;
+  text-shadow: 0 0 8px rgba(102, 255, 102, 0.6) !important;
+}
+
+a:hover {
+  color: #7fff7f !important;
+  text-shadow: 0 0 15px rgba(127, 255, 127, 0.8) !important;
+}
+
+/* Footer */
+.footer {
+  background: rgba(26, 0, 51, 0.95) !important;
+  border-top: 1px solid #4a2a6a !important;
+  color: #7fff7f !important;
+}
+
+/* Journal (page history) */
+.journal {
+  background: rgba(26, 0, 51, 0.9) !important;
+}
+
+.action {
+  border-left: 3px solid #4a2a6a !important;
+}
+
+.action:hover {
+  background: rgba(74, 42, 106, 0.3) !important;
+}
+
+/* Fork indicator */
+.fork {
+  color: #7fff7f !important;
+}
+
+/* Item styling */
+.item {
+  background: rgba(26, 0, 51, 0.5) !important;
+  border: 1px solid rgba(74, 42, 106, 0.5) !important;
+  color: #a8ffa8 !important;
+}
+
+.item:hover {
+  background: rgba(45, 27, 78, 0.6) !important;
+  box-shadow: 0 0 10px rgba(127, 255, 127, 0.2) !important;
+}
+
+/* Code blocks */
+pre,
+code {
+  background: rgba(0, 0, 0, 0.5) !important;
+  color: #66ff66 !important;
+  border: 1px solid #4a2a6a !important;
+  text-shadow: 0 0 3px rgba(102, 255, 102, 0.4) !important;
+}
+
+/* Buttons */
+button,
+.button {
+  background: linear-gradient(135deg, #4a2a6a 0%, #2d1b4e 100%) !important;
+  color: #7fff7f !important;
+  border: 1px solid #7fff7f !important;
+  text-shadow: 0 0 5px rgba(127, 255, 127, 0.5) !important;
+}
+
+button:hover,
+.button:hover {
+  background: linear-gradient(135deg, #5a3a7a 0%, #3d2b5e 100%) !important;
+  box-shadow: 0 0 15px rgba(127, 255, 127, 0.4) !important;
+}
+
+/* Input fields */
+input[type="text"],
+textarea {
+  background: rgba(0, 0, 0, 0.5) !important;
+  color: #7fff7f !important;
+  border: 1px solid #4a2a6a !important;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+  border-color: #7fff7f !important;
+  box-shadow: 0 0 10px rgba(127, 255, 127, 0.3) !important;
+}
+
+/* Twin pages (multiple pages side by side) */
+.twin {
+  border-left: 2px solid #4a2a6a !important;
+}
+
+/* Search results */
+.search-results {
+  background: rgba(26, 0, 51, 0.95) !important;
+  border: 1px solid #4a2a6a !important;
+}
+
+/* Lineup (pages opened) */
+.lineup {
+  background: transparent !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(26, 0, 51, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #4a2a6a 0%, #2d1b4e 100%);
+  border: 1px solid #7fff7f;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a3a7a 0%, #3d2b5e 100%);
+  box-shadow: 0 0 10px rgba(127, 255, 127, 0.5);
+}
+
+/* Selection highlight */
+::selection {
+  background: rgba(127, 255, 127, 0.3) !important;
+  color: #7fff7f !important;
+}
+
+/* Plugin-specific: Allyabase */
+.allyabase-item {
+  background: rgba(26, 0, 51, 0.8) !important;
+  border: 1px solid #7fff7f !important;
+  box-shadow: 0 0 15px rgba(127, 255, 127, 0.3) !important;
+}

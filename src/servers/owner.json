@@ -1,0 +1,11 @@
+{
+  "name": "foo",
+  "sessionlessKeys": {
+    "pubKey": "024bc82893148021e2da8aa42db9cbc769fa51876f084b7748a4fedd759a88d5",
+    "privateKey": "f260c66f2a1ec8d6db677550a17ccdba0f3cd1fa132df4521414b76ab8519ad4"
+  },
+  "pubKey": "024bc82893148021e2da8aa42db9cbc769fa51876f084b7748a4fedd759a88d5",
+  "locationEmoji": "☮️💚🏴‍☠️",
+  "federationEmoji": "💚",
+  "domain": "bbb.allyabase.com"
+}
