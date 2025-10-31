@@ -1,11 +1,11 @@
 {
-  "name": "foo",
+  "name": "planetnineisaspaceship",
   "sessionlessKeys": {
-    "pubKey": "024bc82893148021e2da8aa42db9cbc769fa51876f084b7748a4fedd759a88d5",
-    "privateKey": "f260c66f2a1ec8d6db677550a17ccdba0f3cd1fa132df4521414b76ab8519ad4"
+    "pubKey": "025bfdbff040e38e48901d6cc26f11ba988cbdfbafc82197ae87012d98fa4c37",
+    "privateKey": "0833b77e24453498b70f403758bc791f83ff348319d663c317c9fd4fc06c4ff3"
   },
-  "pubKey": "024bc82893148021e2da8aa42db9cbc769fa51876f084b7748a4fedd759a88d5",
-  "locationEmoji": "☮️💚🏴‍☠️",
+  "pubKey": "025bfdbff040e38e48901d6cc26f11ba988cbdfbafc82197ae87012d98fa4c37",
+  "locationEmoji": "🇵🇷🐸✨",
   "federationEmoji": "💚",
-  "domain": "bbb.allyabase.com"
+  "domain": "eljunque.allyabase.com"
 }

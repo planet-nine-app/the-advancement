@@ -48,7 +48,7 @@ ufw --force enable
 ufw default deny incoming
 ufw default allow outgoing
 ufw allow 22/tcp comment 'SSH'
-ufw allow 80/tcp comment 'HTTP for Let'\''s Encrypt'
+ufw allow 80/tcp comment 'HTTP for certbot'
 ufw allow 443/tcp comment 'HTTPS'
 ufw --force reload
 echo "✅ Firewall configured (ports 22, 80, and 443 open)"
@@ -69,14 +69,16 @@ npm install -g wiki --silent
 # Install wiki-plugin-allyabase into wiki's node_modules
 echo "📦 Installing wiki-plugin-allyabase..."
 WIKI_PATH=$(npm root -g)/wiki/node_modules
-mkdir -p "$WIKI_PATH/wiki-plugin-allyabase"
-cd "$WIKI_PATH/wiki-plugin-allyabase"
-npm install wiki-plugin-allyabase --silent
+mkdir -p "$WIKI_PATH"
+# Install using npm in the wiki directory (not in the plugin subdirectory)
+cd /root
+npm install --prefix "$WIKI_PATH/.." wiki-plugin-allyabase --silent 2>/dev/null || true
 
 # Setup wiki directory
 echo "📁 Setting up wiki directory..."
 mkdir -p /root/.wiki/status
 mkdir -p /root/.wiki/client
+mkdir -p /root/.wiki/pages
 
 # Copy owner.json (this will be uploaded separately)
 if [ -f /tmp/owner.json ]; then
@@ -87,11 +89,43 @@ else
 fi
 
 # Copy custom CSS (this will be uploaded separately)
+# Fedwiki serves CSS from the wiki-client package, so we need to put it there
 if [ -f /tmp/custom-style.css ]; then
-  cp /tmp/custom-style.css /root/.wiki/client/style.css
-  echo "✅ Custom dark purple theme installed"
+  # Ensure we're in a stable directory
+  cd /root
+
+  # Put it in .wiki/client directory (fedwiki serves this as /client/)
+  cp /tmp/custom-style.css /root/.wiki/client/custom-style.css
+
+  # Also try to inject it into wiki-client's HTML template
+  WIKI_CLIENT_PATH=$(npm root -g 2>/dev/null)/wiki/node_modules/wiki-client
+
+  if [ -d "$WIKI_CLIENT_PATH" ]; then
+    # Try different possible HTML template locations
+    for html_file in "$WIKI_CLIENT_PATH/default.html" "$WIKI_CLIENT_PATH/views/static.html" "$WIKI_CLIENT_PATH/client/views/static.html"; do
+      if [ -f "$html_file" ]; then
+        # Backup original
+        cp "$html_file" "$html_file.backup"
+
+        # Add our custom CSS link before </head>
+        sed -i 's|</head>|  <link rel="stylesheet" href="/client/custom-style.css">\n</head>|' "$html_file"
+        echo "✅ Custom dark purple theme injected into $(basename $html_file)"
+        break
+      fi
+    done
+  fi
+
+  echo "✅ Custom CSS file placed in .wiki/client/"
 else
   echo "ℹ️  No custom CSS found - using default wiki theme"
+fi
+
+# Copy Welcome Visitors page (this will be uploaded separately)
+if [ -f /tmp/welcome-visitors.json ]; then
+  cp /tmp/welcome-visitors.json /root/.wiki/pages/welcome-visitors
+  echo "✅ Welcome Visitors page installed"
+else
+  echo "ℹ️  No Welcome Visitors page found"
 fi
 
 # Create systemd service for wiki (running on localhost:3000)

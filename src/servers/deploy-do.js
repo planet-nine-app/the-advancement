@@ -270,6 +270,13 @@ async function setupWiki(ip, ownerData, sshKeyPath = null) {
       console.log('✅ Uploaded custom dark purple theme');
     }
 
+    // Upload Welcome Visitors page
+    const welcomePath = path.join(__dirname, 'welcome-visitors.json');
+    if (fs.existsSync(welcomePath)) {
+      await ssh.putFile(welcomePath, '/tmp/welcome-visitors.json');
+      console.log('✅ Uploaded Welcome Visitors page');
+    }
+
     // Upload and execute setup script
     const setupScriptPath = path.join(__dirname, 'setup-wiki.sh');
     await ssh.putFile(setupScriptPath, '/tmp/setup-wiki.sh');

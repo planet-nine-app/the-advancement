@@ -962,7 +962,8 @@ app.get('/api/svg-examples', async (req, res) => {
             { dir: 'popups', file: 'popups.js', generators: ['generatePopupTwoButtonSVG', 'generateLocationViewSVG'], data: 'popupPosts' },
             { dir: 'simulations', file: 'simulations.js', generators: ['generateGalaxyCollisionSVG', 'generatePlanetNineSpaceshipSVG'], data: 'simulationsPosts' },
             { dir: 'trading-cards', file: 'trading-cards.js', generators: ['generateSTEMPioneerCardSVG'], data: 'tradingCardsPosts' },
-            { dir: 'food-banks', file: 'food-banks.js', generators: ['generateFoodBankSVG'], data: 'foodBanksPosts' }
+            { dir: 'food-banks', file: 'food-banks.js', generators: ['generateFoodBankSVG', 'generateSNAPBenefitsSVG', 'generateSNAPProcessSVG'], data: 'foodBanksPosts' },
+            { dir: 'social', file: 'social.js', generators: ['generateMarketplaceSVG', 'generateTravelingMerchantSVG'], data: 'socialPosts' }
         ];
 
         for (const config of moduleConfigs) {

@@ -150,6 +150,18 @@ open http://localhost:3456
   - `AdvanceKeyService.kt` - InputMethodService with WebView integration
   - `KeyboardJSInterface.kt` - JavaScript-to-Android bridge
 
+### ✅ **Federated Wiki Auto-Deployment** (October 2025)
+- **Single-Command Deployment**: Deploy production-ready federated wiki instances to Digital Ocean
+- **SSL Automation**: Automatic Let's Encrypt certificate acquisition and auto-renewal
+- **DNS Configuration**: Automatic A record creation for custom domains
+- **Custom Theming**: Dark purple theme with glowing green text
+- **Welcome Page**: Pre-configured landing page explaining allyabase and federation
+- **Production Security**: UFW firewall, SSH keys, HTTPS-only access
+- **Allyabase Integration**: Pre-installed wiki-plugin-allyabase for launching Planet Nine bases
+- **Sessionless Owner Config**: Interactive configuration with cryptographic key generation
+- **Port Separation**: Wiki on port 4000 (allyabase uses 3000) to avoid conflicts
+- **Project Management**: Automatic droplet assignment to Digital Ocean projects
+
 ## File Structure
 
 ```
@@ -167,6 +179,16 @@ the-advancement/
 ├── test-server/                # Complete test environment
 ├── resources/                  # Assets (ficus.jpg, etc.)
 └── src/
+    ├── servers/                # Federated wiki deployment
+    │   ├── CLAUDE.md           # Deployment system documentation
+    │   ├── deploy-do.js        # Digital Ocean deployment orchestration
+    │   ├── configure-owner.js  # Interactive owner configuration
+    │   ├── setup-wiki.sh       # Server-side setup script
+    │   ├── custom-style.css    # Dark purple theme
+    │   ├── welcome-visitors.json # Landing page
+    │   ├── do-token.json       # API token (gitignored)
+    │   ├── owner.json          # Owner config (gitignored)
+    │   └── package.json        # Dependencies
     ├── extensions/
     │   ├── chrome/             # Chrome extension
     │   ├── safari/             # Safari extension + native app
@@ -197,6 +219,7 @@ the-advancement/
 - **AdvanceKey Enhanced Display**: BDO visualization with embedded 3D tour iframes
 - **Test Environment**: Comprehensive testing infrastructure
 - **Android App**: Native Android app with WebView-based main screen and AdvanceKey IME keyboard
+- **Federated Wiki Auto-Deployment**: Single-command production wiki deployment with SSL, DNS, and custom theming
 
 ### 🚧 In Development
 - **Chrome Extension**: Manifest v3 update and feature parity with Safari

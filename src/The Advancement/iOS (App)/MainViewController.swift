@@ -354,7 +354,7 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
 
     // MARK: - Carrier Bag
 
-    private func openCarrierBag() {
+    public func openCarrierBag() {
         NSLog("🎒 Opening Carrier Bag")
 
         let carrierBagVC = CarrierBagViewController()
