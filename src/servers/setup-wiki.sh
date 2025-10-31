@@ -66,24 +66,37 @@ echo "✅ npm version: $(npm --version)"
 echo "📦 Installing wiki..."
 npm install -g wiki --silent
 
-# Install wiki-plugin-allyabase into wiki's node_modules
+# Install wiki-plugin-allyabase and wiki-security-sessionless into wiki's node_modules
 echo "📦 Installing wiki-plugin-allyabase..."
 WIKI_PATH=$(npm root -g)/wiki/node_modules
 mkdir -p "$WIKI_PATH"
 # Install using npm in the wiki directory (not in the plugin subdirectory)
 cd /root
 npm install --prefix "$WIKI_PATH/.." wiki-plugin-allyabase --silent 2>/dev/null || true
+echo "📦 Installing wiki-security-sessionless..."
+npm install --prefix "$WIKI_PATH/.." wiki-security-sessionless --silent 2>/dev/null || true
 
 # Setup wiki directory
 echo "📁 Setting up wiki directory..."
 mkdir -p /root/.wiki/status
 mkdir -p /root/.wiki/client
 mkdir -p /root/.wiki/pages
+mkdir -p /root/security
 
 # Copy owner.json (this will be uploaded separately)
 if [ -f /tmp/owner.json ]; then
   cp /tmp/owner.json /root/.wiki/status/owner.json
   echo "✅ Owner configuration installed"
+
+  # Extract pubKey from owner.json and create security/owner.json
+  OWNER_PUBKEY=$(node -pe "JSON.parse(require('fs').readFileSync('/tmp/owner.json', 'utf8')).pubKey")
+  echo "{\"pubKey\": \"$OWNER_PUBKEY\"}" > /root/security/owner.json
+  echo "✅ Security owner.json created with pubKey"
+
+  # Generate cookieSecret
+  COOKIE_SECRET=$(openssl rand -hex 32)
+  echo "$COOKIE_SECRET" > /root/security/cookieSecret
+  echo "✅ Cookie secret generated"
 else
   echo "⚠️  No owner.json found - wiki will run in public mode"
 fi
@@ -128,9 +141,34 @@ else
   echo "ℹ️  No Welcome Visitors page found"
 fi
 
-# Create systemd service for wiki (running on localhost:3000)
+# Create systemd service for wiki (running on localhost:4000)
 echo "⚙️  Creating systemd service..."
-cat > /etc/systemd/system/wiki.service <<'EOF'
+
+# Determine security arguments based on whether owner.json was provided
+if [ -f /root/security/owner.json ]; then
+  # Read the cookie secret
+  COOKIE_SECRET=$(cat /root/security/cookieSecret)
+
+  cat > /etc/systemd/system/wiki.service <<EOF
+[Unit]
+Description=Federated Wiki
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root
+ExecStart=/usr/bin/wiki --security_type=sessionless --security=./security --cookieSecret=$COOKIE_SECRET --session_duration=10 --port 4000
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  echo "✅ Wiki service configured with sessionless security"
+else
+  # Fallback to legacy security if no owner.json
+  cat > /etc/systemd/system/wiki.service <<'EOF'
 [Unit]
 Description=Federated Wiki
 After=network.target
@@ -146,13 +184,19 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 EOF
+  echo "✅ Wiki service configured with legacy security"
+fi
 
 # Enable and start wiki service
 systemctl daemon-reload
 systemctl enable wiki
 systemctl start wiki
 
-echo "✅ Wiki service started on localhost:4000"
+if [ -f /root/security/owner.json ]; then
+  echo "✅ Wiki service started on localhost:4000 (sessionless security)"
+else
+  echo "✅ Wiki service started on localhost:4000 (legacy security)"
+fi
 
 # Configure nginx (basic HTTP server for certbot challenge)
 echo "⚙️  Configuring nginx..."

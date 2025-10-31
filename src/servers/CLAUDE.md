@@ -207,21 +207,59 @@ This page appears at the root URL and serves as the landing page for new visitor
 ### Directory Structure on Droplet
 ```
 /root/
-└── .wiki/
-    ├── status/
-    │   └── owner.json          # Wiki owner configuration
-    ├── client/
-    │   └── custom-style.css    # Custom theme (served at /client/)
-    └── pages/
-        └── welcome-visitors     # Landing page (JSON format)
+├── .wiki/
+│   ├── status/
+│   │   └── owner.json          # Wiki owner configuration (full)
+│   ├── client/
+│   │   └── custom-style.css    # Custom theme (served at /client/)
+│   └── pages/
+│       └── welcome-visitors     # Landing page (JSON format)
+└── security/
+    ├── owner.json               # Sessionless owner pubKey only
+    └── cookieSecret             # Generated session cookie secret
 
 /usr/lib/node_modules/
 └── wiki/
     └── node_modules/
         ├── wiki-plugin-allyabase/
+        ├── wiki-security-sessionless/
         └── wiki-client/
             └── default.html     # Modified to include custom CSS
 ```
+
+### Sessionless Security Setup
+
+The deployment automatically configures wiki-security-sessionless for passwordless authentication:
+
+**Security Directory (`/root/security/`):**
+- `owner.json` - Contains only the owner's public key:
+  ```json
+  {"pubKey": "025bfdbff040e38e48901d6cc26f11ba988cbdfbafc82197ae87012d98fa4c37"}
+  ```
+- `cookieSecret` - Random 64-character hex string for session cookies
+
+**Wiki Launch Arguments:**
+```bash
+/usr/bin/wiki \
+  --security_type=sessionless \
+  --security=./security \
+  --cookieSecret=<64-char-hex> \
+  --session_duration=10 \
+  --port 4000
+```
+
+**Authentication Flow:**
+1. User visits wiki
+2. Wiki challenges with nonce
+3. User signs nonce with private key (stored in browser/extension)
+4. wiki-security-sessionless verifies signature against owner.json pubKey
+5. Session created with 10-day duration
+
+**Benefits:**
+- No passwords to remember or leak
+- Cryptographic authentication
+- Works with Planet Nine browser extensions
+- Compatible with Sessionless ecosystem
 
 ### SSL Certificate Flow
 
@@ -351,6 +389,11 @@ For SSL to work, your domain must be:
 - `ufw` - Uncomplicated Firewall
 - `nodejs` - Node.js runtime (v20 LTS)
 - `npm` - Node package manager
+
+### Wiki Packages (installed via npm)
+- `wiki` - Federated wiki server
+- `wiki-plugin-allyabase` - Planet Nine base launcher plugin
+- `wiki-security-sessionless` - Sessionless cryptographic authentication
 
 ## Integration with Planet Nine
 
