@@ -948,7 +948,7 @@ app.get('/api/svg-examples', async (req, res) => {
             { dir: 'cookbook', file: 'cookbook.js', generators: ['generateRecipeSVG'], data: 'cookbookPosts' },
             { dir: 'events', file: 'events.js', generators: ['generateEventSVG'], data: 'events' },
             { dir: 'familiarPen', file: 'familiarPen.js', generators: ['generateFamiliarSVG'], data: 'familiarPenPosts' },
-            { dir: 'gallery', file: 'gallery.js', generators: ['generateArtworkSVG'], data: 'galleryPosts' },
+            { dir: 'gallery', file: 'gallery.js', generators: ['generateArtworkSVG', 'generateMarketplaceLogosSVG', 'generatePoliticalArtSVG', 'generateDiscoveryPathwaysSVG', 'generateFriendsIllustrationSVG'], data: 'galleryPosts' },
             { dir: 'games', file: 'games.js', generators: ['generateGameSVG', 'generateFTPSVG'], data: 'gamesPosts' },
             { dir: 'geometry', file: 'geometry.js', generators: ['generateEuclidPostulatesSVG', 'generateNonEuclideanSVG', 'generateGeneralRelativitySVG', 'generateGravitationalLensingSVG'], data: 'geometryPosts' },
             { dir: 'greenHouse', file: 'greenHouse.js', generators: ['generatePlantSVG'], data: 'greenHousePosts' },
@@ -963,7 +963,8 @@ app.get('/api/svg-examples', async (req, res) => {
             { dir: 'simulations', file: 'simulations.js', generators: ['generateGalaxyCollisionSVG', 'generatePlanetNineSpaceshipSVG'], data: 'simulationsPosts' },
             { dir: 'trading-cards', file: 'trading-cards.js', generators: ['generateSTEMPioneerCardSVG'], data: 'tradingCardsPosts' },
             { dir: 'food-banks', file: 'food-banks.js', generators: ['generateFoodBankSVG', 'generateSNAPBenefitsSVG', 'generateSNAPProcessSVG'], data: 'foodBanksPosts' },
-            { dir: 'social', file: 'social.js', generators: ['generateMarketplaceSVG', 'generateTravelingMerchantSVG'], data: 'socialPosts' }
+            { dir: 'social', file: 'social.js', generators: ['generateMarketplaceSVG', 'generateTravelingMerchantSVG'], data: 'socialPosts' },
+            { dir: 'system-design', file: 'system-design.js', generators: ['generateStackLayersSVG', 'generateStackFlowSVG', 'generateAllyabaseInfrastructureSVG', 'generateAllyabaseDeveloperSVG', 'generateNullaryConceptSVG', 'generateNullaryPhilosophySVG'], data: 'systemDesigns' }
         ];
 
         for (const config of moduleConfigs) {

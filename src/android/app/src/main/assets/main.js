@@ -193,6 +193,20 @@
         }
     });
 
+    // PAYMENT button click handler
+    document.getElementById('paymentButton').addEventListener('click', function() {
+        console.log('💳 PAYMENT button clicked');
+
+        // Send to native code
+        if (platform === 'ios' && window.webkit?.messageHandlers?.mainApp) {
+            window.webkit.messageHandlers.mainApp.postMessage({
+                action: 'openPaymentMethods'
+            });
+        } else if (platform === 'android' && window.Android?.openPaymentMethods) {
+            window.Android.openPaymentMethods();
+        }
+    });
+
     // Keyboard switch button (Android only)
     const keyboardSwitchButton = document.getElementById('keyboardSwitchButton');
     if (keyboardSwitchButton) {

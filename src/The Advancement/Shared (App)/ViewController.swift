@@ -56,12 +56,14 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         let cookbookButton = createNavigationButton(title: "🍪 Cookbook", action: #selector(showCookbook))
         let instantiationButton = createNavigationButton(title: "⚡ Instantiation", action: #selector(showInstantiation))
         let carrierBagButton = createNavigationButton(title: "🎒 Carrier Bag", action: #selector(showCarrierBag))
+        let paymentButton = createNavigationButton(title: "💳 Payment", action: #selector(showPaymentMethods))
         let nexusButton = createNavigationButton(title: "🌐 Nexus", action: #selector(showNexus))
         let nfcButton = createNavigationButton(title: "📱 NFC Keys", action: #selector(showNFC))
 
         stackView.addArrangedSubview(cookbookButton)
         stackView.addArrangedSubview(instantiationButton)
         stackView.addArrangedSubview(carrierBagButton)
+        stackView.addArrangedSubview(paymentButton)
         stackView.addArrangedSubview(nexusButton)
         stackView.addArrangedSubview(nfcButton)
 
@@ -110,6 +112,14 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 
         let carrierBagVC = CarrierBagViewController()
         let navController = UINavigationController(rootViewController: carrierBagVC)
+        present(navController, animated: true)
+    }
+
+    @objc private func showPaymentMethods() {
+        NSLog("ADVANCEAPP: 💳 Showing payment methods")
+
+        let paymentVC = PaymentMethodViewController()
+        let navController = UINavigationController(rootViewController: paymentVC)
         present(navController, animated: true)
     }
 

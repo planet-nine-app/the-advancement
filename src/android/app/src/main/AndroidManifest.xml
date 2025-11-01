@@ -42,6 +42,13 @@
             android:label="Carrier Bag"
             android:theme="@style/Theme.TheAdvancement" />
 
+        <!-- Payment Methods Activity -->
+        <activity
+            android:name=".ui.payment.PaymentMethodActivity"
+            android:exported="false"
+            android:label="Payment Methods"
+            android:theme="@style/Theme.TheAdvancement" />
+
         <!-- AdvanceKey IME Service -->
         <service
             android:name=".ime.AdvanceKeyService"

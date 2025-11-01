@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Method</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a0033 0%, #330066 100%);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #a78bfa;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .card-form {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(233, 30, 99, 0.3);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        #payment-element {
+            margin-bottom: 20px;
+        }
+
+        .button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            color: #a78bfa;
+        }
+
+        .loading.visible {
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(167, 139, 250, 0.3);
+            border-top-color: #a78bfa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.visible {
+            display: block;
+        }
+
+        .message.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            color: #4caf50;
+        }
+
+        .message.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.5);
+            color: #f44336;
+        }
+
+        .saved-cards {
+            margin-top: 30px;
+        }
+
+        .saved-cards h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #a78bfa;
+        }
+
+        .card-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(167, 139, 250, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-info {
+            flex: 1;
+        }
+
+        .card-brand {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 14px;
+            color: #e91e63;
+        }
+
+        .card-last4 {
+            color: white;
+            font-size: 16px;
+            margin: 4px 0;
+        }
+
+        .card-exp {
+            color: #a78bfa;
+            font-size: 12px;
+        }
+
+        .delete-button {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid #f44336;
+            color: #f44336;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(167, 139, 250, 0.2);
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            color: #a78bfa;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #e91e63;
+            border-bottom-color: #e91e63;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .issued-card-item {
+            background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%);
+            border: none;
+            position: relative;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .issued-card-item .card-brand {
+            color: white;
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .issued-card-item .card-last4 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin: 8px 0;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .action-button {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(233, 30, 99, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .form-input::placeholder {
+            color: rgba(167, 139, 250, 0.5);
+        }
+
+        .transaction-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(167, 139, 250, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .transaction-merchant {
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .transaction-amount {
+            color: #f44336;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .transaction-amount.approved {
+            color: #4caf50;
+        }
+
+        .transaction-date {
+            color: #a78bfa;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .transaction-status {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .transaction-status.approved {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+
+        .transaction-status.declined {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💳 Payment Methods</h1>
+        <p class="subtitle">Save cards or get your own Planet Nine card for the unbanked</p>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('save')">Save Cards</button>
+            <button class="tab" onclick="switchTab('issue')">Get Your Own Card</button>
+            <button class="tab" onclick="switchTab('receive')">Receive Payments</button>
+        </div>
+
+        <div id="success-message" class="message success"></div>
+        <div id="error-message" class="message error"></div>
+
+        <!-- Save Cards Tab -->
+        <div id="save-tab" class="tab-content active">
+            <div class="card-form">
+                <form id="payment-form">
+                    <div id="payment-element"></div>
+                    <button id="submit-button" class="button" type="submit">
+                        Save Card
+                    </button>
+                </form>
+            </div>
+
+            <div class="saved-cards">
+                <h2>Saved Cards</h2>
+                <div id="cards-list">
+                    <p style="color: #a78bfa; font-size: 14px;">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Get Your Own Card Tab -->
+        <div id="issue-tab" class="tab-content">
+            <div class="card-form">
+                <h2 style="font-size: 18px; margin-bottom: 15px; color: #a78bfa;">💳 Planet Nine Virtual Card</h2>
+                <p style="color: #a78bfa; font-size: 14px; margin-bottom: 10px;">
+                    Banking for the unbanked. Get your own virtual debit card - use it anywhere online, instantly.
+                </p>
+                <p style="color: #4caf50; font-size: 12px; margin-bottom: 20px;">
+                    ✓ Only 10¢ to create • ✓ First $500k transactions FREE • ✓ Instant activation
+                </p>
+
+                <div id="cardholder-setup" style="display: none;">
+                    <button class="button" onclick="showCardholderForm()">
+                        📝 Complete Setup to Get Card
+                    </button>
+                </div>
+
+                <div id="card-ready" style="display: none;">
+                    <button class="button" onclick="issueVirtualCard()">
+                        🌐 Get Virtual Card (Instant - 10¢)
+                    </button>
+                    <div style="margin-top: 16px; padding: 12px; background: rgba(167, 139, 250, 0.1); border-radius: 8px; border: 1px solid rgba(167, 139, 250, 0.3);">
+                        <div style="font-size: 13px; color: #a78bfa; margin-bottom: 8px;">Set Spending Limit:</div>
+                        <input type="number" id="spending-limit" value="1000" min="100" max="50000" step="100"
+                               style="width: 100%; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(233, 30, 99, 0.3); border-radius: 6px; color: white; font-size: 14px;">
+                        <div style="font-size: 11px; color: #a78bfa; margin-top: 4px;">Monthly limit in USD (minimum $100)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="saved-cards">
+                <h2>Your Virtual Cards</h2>
+                <div id="issued-cards-list">
+                    <p style="color: #a78bfa; font-size: 14px;">Loading...</p>
+                </div>
+            </div>
+
+            <div class="saved-cards">
+                <h2>Recent Transactions</h2>
+                <div id="transactions-list">
+                    <p style="color: #a78bfa; font-size: 14px;">No transactions yet</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Receive Payments Tab -->
+        <div id="receive-tab" class="tab-content">
+            <div class="card-form">
+                <h2 style="font-size: 18px; margin-bottom: 15px; color: #a78bfa;">💰 Receive Payments</h2>
+                <p style="color: #a78bfa; font-size: 14px; margin-bottom: 20px;">
+                    Set up your seller account to receive affiliate payouts from product sales across the Planet Nine network.
+                </p>
+
+                <div id="account-not-setup" style="display: none;">
+                    <div style="background: rgba(233, 30, 99, 0.1); border: 1px solid rgba(233, 30, 99, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                        <div style="font-size: 14px; color: #e91e63; margin-bottom: 8px;">⚠️ Seller Account Required</div>
+                        <div style="font-size: 12px; color: #a78bfa;">You need to complete Stripe onboarding to receive payments from affiliate sales.</div>
+                    </div>
+
+                    <button class="button" onclick="createConnectedAccount()">
+                        🏦 Set Up Seller Account (via Stripe)
+                    </button>
+
+                    <div style="margin-top: 16px; padding: 12px; background: rgba(167, 139, 250, 0.1); border-radius: 8px; border: 1px solid rgba(167, 139, 250, 0.3);">
+                        <div style="font-size: 12px; color: #a78bfa; line-height: 1.6;">
+                            <strong>What you'll need:</strong><br>
+                            • Personal identification (SSN or Tax ID)<br>
+                            • Bank account information<br>
+                            • Business details (if applicable)<br>
+                            <br>
+                            <strong>How it works:</strong><br>
+                            1. Click "Set Up Seller Account" above<br>
+                            2. Complete Stripe's secure onboarding form<br>
+                            3. Return here to see your account status<br>
+                            4. Start receiving affiliate payouts!
+                        </div>
+                    </div>
+                </div>
+
+                <div id="account-setup" style="display: none;">
+                    <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                        <div style="font-size: 14px; color: #4caf50; margin-bottom: 8px;">✓ Seller Account Active</div>
+                        <div style="font-size: 12px; color: #a78bfa;">Your account is ready to receive affiliate payouts!</div>
+                    </div>
+
+                    <div id="account-details" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(167, 139, 250, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                        <div style="font-size: 13px; color: #a78bfa; margin-bottom: 12px;"><strong>Account Details</strong></div>
+                        <div id="account-info" style="font-size: 12px; color: white; line-height: 1.8;">
+                            <div>Status: <span id="account-status" style="color: #4caf50;">Active</span></div>
+                            <div>Payouts Enabled: <span id="payouts-enabled" style="color: #4caf50;">Yes</span></div>
+                            <div>Charges Enabled: <span id="charges-enabled" style="color: #4caf50;">Yes</span></div>
+                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(167, 139, 250, 0.2);">
+                                Account ID: <span id="account-id" style="color: #a78bfa; font-family: monospace; font-size: 11px;">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="button" onclick="refreshAccountLink()" style="margin-bottom: 8px;">
+                        🔄 Refresh Onboarding Link
+                    </button>
+
+                    <div style="margin-top: 12px; padding: 12px; background: rgba(167, 139, 250, 0.1); border-radius: 8px; border: 1px solid rgba(167, 139, 250, 0.3);">
+                        <div style="font-size: 12px; color: #a78bfa; line-height: 1.6;">
+                            💡 <strong>About Affiliate Payments:</strong><br>
+                            When someone purchases a product you've duplicated (with 10% affiliate commission), your share is automatically transferred to this account. Payments typically arrive within 2-3 business days.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="account-pending" style="display: none;">
+                    <div style="background: rgba(241, 196, 15, 0.1); border: 1px solid rgba(241, 196, 15, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                        <div style="font-size: 14px; color: #f1c40f; margin-bottom: 8px;">⏳ Onboarding Pending</div>
+                        <div style="font-size: 12px; color: #a78bfa;">You've started the onboarding process but haven't completed it yet.</div>
+                    </div>
+
+                    <button class="button" onclick="refreshAccountLink()">
+                        🔗 Continue Onboarding
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Processing...</p>
+        </div>
+    </div>
+
+    <script>
+        let currentTab = 'save';
+        let stripe;
+        let elements;
+        let setupIntentClientSecret;
+
+        // Android bridge helper - calls Kotlin methods
+        function callAndroid(method, params = {}) {
+            return new Promise((resolve, reject) => {
+                if (!window.Android || !window.Android[method]) {
+                    reject(new Error(`Android method ${method} not available`));
+                    return;
+                }
+
+                try {
+                    const result = window.Android[method](JSON.stringify(params));
+                    const parsed = JSON.parse(result);
+
+                    if (parsed.error) {
+                        reject(new Error(parsed.error));
+                    } else {
+                        resolve(parsed);
+                    }
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            document.getElementById(`${tab}-tab`).classList.add('active');
+
+            // Load data for new tab
+            if (tab === 'issue') {
+                checkCardholderStatus();
+                loadIssuedCards();
+                loadTransactions();
+            } else if (tab === 'receive') {
+                checkConnectedAccountStatus();
+            }
+        }
+
+        async function loadTransactions() {
+            try {
+                const response = await callAndroid('getTransactions');
+
+                if (response && response.transactions && response.transactions.length > 0) {
+                    displayTransactions(response.transactions);
+                } else {
+                    document.getElementById('transactions-list').innerHTML =
+                        '<p style="color: #a78bfa; font-size: 14px;">No transactions yet</p>';
+                }
+            } catch (error) {
+                console.error('Failed to load transactions:', error);
+                document.getElementById('transactions-list').innerHTML =
+                    '<p style="color: #a78bfa; font-size: 14px;">No transactions yet</p>';
+            }
+        }
+
+        function displayTransactions(transactions) {
+            const listEl = document.getElementById('transactions-list');
+
+            listEl.innerHTML = transactions.slice(0, 10).map(tx => `
+                <div class="transaction-item">
+                    <div>
+                        <div class="transaction-merchant">${tx.merchant || 'Unknown Merchant'}</div>
+                        <div class="transaction-date">${formatTransactionDate(tx.created)}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="transaction-amount ${tx.status === 'approved' ? 'approved' : ''}">${tx.status === 'approved' ? '-' : ''}$${(tx.amount / 100).toFixed(2)}</div>
+                        <span class="transaction-status ${tx.status}">${tx.status}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatTransactionDate(timestamp) {
+            const date = new Date(timestamp * 1000);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+
+            return date.toLocaleDateString();
+        }
+
+        async function checkCardholderStatus() {
+            try {
+                const status = await callAndroid('getCardholderStatus');
+
+                if (status.hasCardholder) {
+                    document.getElementById('cardholder-setup').style.display = 'none';
+                    document.getElementById('card-ready').style.display = 'block';
+                } else {
+                    document.getElementById('cardholder-setup').style.display = 'block';
+                    document.getElementById('card-ready').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Failed to check cardholder status:', error);
+                document.getElementById('cardholder-setup').style.display = 'block';
+                document.getElementById('card-ready').style.display = 'none';
+            }
+        }
+
+        function showCardholderForm() {
+            const html = `
+                <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; border: 1px solid rgba(233, 30, 99, 0.3);">
+                    <h3 style="color: #a78bfa; margin-bottom: 16px;">Cardholder Information</h3>
+                    <input type="text" id="first-name" placeholder="First Name" class="form-input">
+                    <input type="text" id="last-name" placeholder="Last Name" class="form-input">
+                    <input type="email" id="email" placeholder="Email" class="form-input">
+                    <input type="tel" id="phone" placeholder="Phone (+1...)" class="form-input">
+
+                    <h4 style="color: #a78bfa; margin: 16px 0 8px;">Date of Birth</h4>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="number" id="dob-month" placeholder="MM" min="1" max="12" class="form-input" style="flex: 1;">
+                        <input type="number" id="dob-day" placeholder="DD" min="1" max="31" class="form-input" style="flex: 1;">
+                        <input type="number" id="dob-year" placeholder="YYYY" min="1900" max="2010" class="form-input" style="flex: 2;">
+                    </div>
+
+                    <h4 style="color: #a78bfa; margin: 16px 0 8px;">Billing Address</h4>
+                    <input type="text" id="address-line1" placeholder="Street Address" class="form-input">
+                    <input type="text" id="address-line2" placeholder="Apt/Suite (optional)" class="form-input">
+                    <input type="text" id="city" placeholder="City" class="form-input">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="state" placeholder="State" class="form-input" style="flex: 1;">
+                        <input type="text" id="postal-code" placeholder="ZIP" class="form-input" style="flex: 1;">
+                    </div>
+
+                    <button class="button" onclick="submitCardholderInfo()" style="margin-top: 16px;">
+                        Complete Setup
+                    </button>
+                    <button onclick="closeCardholderForm()" style="margin-top: 8px; width: 100%; padding: 12px; background: none; border: 1px solid rgba(167, 139, 250, 0.3); border-radius: 8px; color: #a78bfa; cursor: pointer;">
+                        Cancel
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('cardholder-setup').innerHTML = html;
+            document.getElementById('cardholder-setup').style.display = 'block';
+        }
+
+        function closeCardholderForm() {
+            document.getElementById('cardholder-setup').innerHTML = '<button class="button" onclick="showCardholderForm()">📝 Complete Setup to Get Card</button>';
+        }
+
+        async function submitCardholderInfo() {
+            const info = {
+                firstName: document.getElementById('first-name').value,
+                lastName: document.getElementById('last-name').value,
+                name: document.getElementById('first-name').value + ' ' + document.getElementById('last-name').value,
+                email: document.getElementById('email').value,
+                phoneNumber: document.getElementById('phone').value,
+                dob: {
+                    month: parseInt(document.getElementById('dob-month').value),
+                    day: parseInt(document.getElementById('dob-day').value),
+                    year: parseInt(document.getElementById('dob-year').value)
+                },
+                address: {
+                    line1: document.getElementById('address-line1').value,
+                    line2: document.getElementById('address-line2').value,
+                    city: document.getElementById('city').value,
+                    state: document.getElementById('state').value,
+                    postal_code: document.getElementById('postal-code').value,
+                    country: 'US'
+                }
+            };
+
+            // Validate
+            if (!info.firstName || !info.lastName || !info.email || !info.dob.month || !info.address.line1) {
+                showError('Please fill in all required fields');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                await callAndroid('createCardholder', { individualInfo: info });
+                showSuccess('Setup complete! You can now get your virtual card.');
+                closeCardholderForm();
+                checkCardholderStatus();
+            } catch (error) {
+                showError('Setup failed: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function issueVirtualCard() {
+            const spendingLimit = parseInt(document.getElementById('spending-limit').value) * 100; // Convert to cents
+
+            if (!confirm(`Issue a virtual Planet Nine card with $${spendingLimit/100}/month limit?\n\nCost: 10¢ (charged to your account)`)) {
+                return;
+            }
+
+            try {
+                showLoading(true);
+                const result = await callAndroid('issueVirtualCard', { spendingLimit });
+                showSuccess(`Virtual card issued! •••• ${result.last4}`);
+                loadIssuedCards();
+                loadTransactions();
+            } catch (error) {
+                showError('Failed to issue card: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadIssuedCards() {
+            try {
+                const response = await callAndroid('getIssuedCards');
+
+                if (response && response.cards && response.cards.length > 0) {
+                    displayIssuedCards(response.cards);
+                } else {
+                    document.getElementById('issued-cards-list').innerHTML =
+                        '<p style="color: #a78bfa; font-size: 14px;">No cards issued yet</p>';
+                }
+            } catch (error) {
+                console.error('Failed to load issued cards:', error);
+                document.getElementById('issued-cards-list').innerHTML =
+                    '<p style="color: #a78bfa; font-size: 14px;">No cards issued yet</p>';
+            }
+        }
+
+        function displayIssuedCards(cards) {
+            const listEl = document.getElementById('issued-cards-list');
+
+            if (cards.length === 0) {
+                listEl.innerHTML = '<p style="color: #a78bfa; font-size: 14px;">No cards yet - issue your first virtual card above!</p>';
+                return;
+            }
+
+            listEl.innerHTML = cards.map(card => {
+                const limitFormatted = card.spendingLimit ? `$${(card.spendingLimit / 100).toFixed(0)}/mo limit` : '';
+
+                return `
+                <div class="issued-card-item">
+                    <div class="card-brand">PLANET NINE • ${card.brand?.toUpperCase() || 'VIRTUAL'}</div>
+                    <div class="card-last4">•••• •••• •••• ${card.last4}</div>
+                    <div class="card-exp">Expires ${card.expMonth}/${card.expYear} • ${limitFormatted}</div>
+                    <div class="card-actions">
+                        <button class="action-button" onclick="viewCardDetails('${card.cardId}')">View Details</button>
+                        ${card.status === 'active' ?
+                            `<button class="action-button" onclick="freezeCard('${card.cardId}')">Freeze</button>` :
+                            `<button class="action-button" onclick="unfreezeCard('${card.cardId}')">Unfreeze</button>`
+                        }
+                        <button class="action-button" onclick="cancelCard('${card.cardId}')">Cancel</button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        async function viewCardDetails(cardId) {
+            try {
+                showLoading(true);
+                const details = await callAndroid('getCardDetails', { cardId });
+
+                alert(`Card Details:\n\nNumber: ${details.number}\nCVC: ${details.cvc}\nExpires: ${details.expMonth}/${details.expYear}`);
+            } catch (error) {
+                showError('Failed to get card details: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function freezeCard(cardId) {
+            try {
+                showLoading(true);
+                await callAndroid('updateCardStatus', { cardId, status: 'inactive' });
+                showSuccess('Card frozen - no new transactions will be approved');
+                loadIssuedCards();
+            } catch (error) {
+                showError('Failed to freeze card: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function unfreezeCard(cardId) {
+            try {
+                showLoading(true);
+                await callAndroid('updateCardStatus', { cardId, status: 'active' });
+                showSuccess('Card unfrozen - transactions enabled');
+                loadIssuedCards();
+            } catch (error) {
+                showError('Failed to unfreeze card: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function cancelCard(cardId) {
+            if (!confirm('Cancel this card permanently? This cannot be undone and you will need to issue a new card.')) {
+                return;
+            }
+
+            try {
+                showLoading(true);
+                await callAndroid('updateCardStatus', { cardId, status: 'canceled' });
+                showSuccess('Card canceled permanently');
+                loadIssuedCards();
+            } catch (error) {
+                showError('Failed to cancel card: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Initialize Stripe and SetupIntent
+        async function initialize() {
+            try {
+                showLoading(true);
+
+                // Get SetupIntent from Android
+                const response = await callAndroid('createSetupIntent');
+
+                if (!response || !response.clientSecret) {
+                    throw new Error('Failed to create SetupIntent');
+                }
+
+                setupIntentClientSecret = response.clientSecret;
+                const publishableKey = response.publishableKey;
+
+                // Initialize Stripe
+                stripe = Stripe(publishableKey);
+
+                // Create Stripe Elements
+                const appearance = {
+                    theme: 'night',
+                    variables: {
+                        colorPrimary: '#e91e63',
+                        colorBackground: '#1a0033',
+                        colorText: '#ffffff',
+                        colorDanger: '#f44336',
+                        fontFamily: 'Roboto, sans-serif',
+                        borderRadius: '8px',
+                    },
+                };
+
+                elements = stripe.elements({
+                    clientSecret: setupIntentClientSecret,
+                    appearance: appearance,
+                });
+
+                const paymentElement = elements.create('payment');
+                paymentElement.mount('#payment-element');
+
+                showLoading(false);
+
+                // Load saved cards
+                loadSavedCards();
+
+            } catch (error) {
+                showError('Failed to initialize: ' + error.message);
+                showLoading(false);
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('payment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!stripe || !elements) {
+                showError('Stripe not initialized');
+                return;
+            }
+
+            showLoading(true);
+            clearMessages();
+
+            try {
+                // Confirm the setup
+                const { error, setupIntent } = await stripe.confirmSetup({
+                    elements,
+                    confirmParams: {
+                        return_url: 'https://planetnine.app/payment-success',
+                    },
+                    redirect: 'if_required',
+                });
+
+                if (error) {
+                    showError(error.message);
+                    showLoading(false);
+                    return;
+                }
+
+                if (setupIntent.status === 'succeeded') {
+                    // Notify Android that card was saved
+                    await callAndroid('setupIntentSucceeded', {
+                        setupIntentId: setupIntent.id,
+                        paymentMethodId: setupIntent.payment_method
+                    });
+
+                    showSuccess('Card saved successfully!');
+
+                    // Reload cards list
+                    setTimeout(() => {
+                        loadSavedCards();
+                        // Reset form
+                        elements.unmount();
+                        initialize();
+                    }, 1500);
+                } else {
+                    showError('Card setup failed. Please try again.');
+                }
+
+                showLoading(false);
+
+            } catch (error) {
+                showError('An error occurred: ' + error.message);
+                showLoading(false);
+            }
+        });
+
+        // Load saved cards from Android
+        async function loadSavedCards() {
+            try {
+                const response = await callAndroid('getSavedCards');
+
+                if (response && response.cards && response.cards.length > 0) {
+                    displayCards(response.cards);
+                } else {
+                    document.getElementById('cards-list').innerHTML =
+                        '<p style="color: #a78bfa; font-size: 14px;">No saved cards yet</p>';
+                }
+            } catch (error) {
+                console.error('Failed to load saved cards:', error);
+                document.getElementById('cards-list').innerHTML =
+                    '<p style="color: #a78bfa; font-size: 14px;">No saved cards yet</p>';
+            }
+        }
+
+        // Display cards in the UI
+        function displayCards(cards) {
+            const cardsListEl = document.getElementById('cards-list');
+
+            if (cards.length === 0) {
+                cardsListEl.innerHTML = '<p style="color: #a78bfa; font-size: 14px;">No saved cards yet</p>';
+                return;
+            }
+
+            cardsListEl.innerHTML = cards.map((card, index) => `
+                <div class="card-item">
+                    <div class="card-info">
+                        <div class="card-brand">${card.brand || 'Card'}</div>
+                        <div class="card-last4">•••• ${card.last4}</div>
+                        <div class="card-exp">Expires ${card.exp_month}/${card.exp_year}</div>
+                    </div>
+                    <button class="delete-button" onclick="deleteCard('${card.id}')">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        // Delete a saved card
+        async function deleteCard(paymentMethodId) {
+            if (!confirm('Are you sure you want to delete this card?')) {
+                return;
+            }
+
+            try {
+                showLoading(true);
+                await callAndroid('deletePaymentMethod', { paymentMethodId });
+                showSuccess('Card deleted successfully');
+                loadSavedCards();
+            } catch (error) {
+                showError('Failed to delete card: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // UI helpers
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('visible', show);
+            document.getElementById('submit-button').disabled = show;
+        }
+
+        function showSuccess(message) {
+            const el = document.getElementById('success-message');
+            el.textContent = message;
+            el.classList.add('visible');
+            setTimeout(() => el.classList.remove('visible'), 5000);
+        }
+
+        function showError(message) {
+            const el = document.getElementById('error-message');
+            el.textContent = message;
+            el.classList.add('visible');
+            setTimeout(() => el.classList.remove('visible'), 5000);
+        }
+
+        function clearMessages() {
+            document.getElementById('success-message').classList.remove('visible');
+            document.getElementById('error-message').classList.remove('visible');
+        }
+
+        // Connected Account Management
+        async function checkConnectedAccountStatus() {
+            try {
+                const status = await callAndroid('getConnectedAccountStatus');
+
+                // Hide all states first
+                document.getElementById('account-not-setup').style.display = 'none';
+                document.getElementById('account-setup').style.display = 'none';
+                document.getElementById('account-pending').style.display = 'none';
+
+                if (!status || !status.hasAccount) {
+                    // No account created yet
+                    document.getElementById('account-not-setup').style.display = 'block';
+                } else if (status.detailsSubmitted && status.chargesEnabled && status.payoutsEnabled) {
+                    // Account fully onboarded
+                    document.getElementById('account-setup').style.display = 'block';
+                    updateAccountDetails(status);
+                } else {
+                    // Account created but onboarding incomplete
+                    document.getElementById('account-pending').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Failed to check account status:', error);
+                // Show setup screen on error
+                document.getElementById('account-not-setup').style.display = 'block';
+                document.getElementById('account-setup').style.display = 'none';
+                document.getElementById('account-pending').style.display = 'none';
+            }
+        }
+
+        function updateAccountDetails(status) {
+            // Update status text
+            const statusText = status.detailsSubmitted && status.chargesEnabled && status.payoutsEnabled
+                ? 'Active'
+                : 'Incomplete';
+            const statusColor = statusText === 'Active' ? '#4caf50' : '#f1c40f';
+            document.getElementById('account-status').textContent = statusText;
+            document.getElementById('account-status').style.color = statusColor;
+
+            // Update payouts enabled
+            const payoutsText = status.payoutsEnabled ? 'Yes' : 'No';
+            const payoutsColor = status.payoutsEnabled ? '#4caf50' : '#f44336';
+            document.getElementById('payouts-enabled').textContent = payoutsText;
+            document.getElementById('payouts-enabled').style.color = payoutsColor;
+
+            // Update charges enabled
+            const chargesText = status.chargesEnabled ? 'Yes' : 'No';
+            const chargesColor = status.chargesEnabled ? '#4caf50' : '#f44336';
+            document.getElementById('charges-enabled').textContent = chargesText;
+            document.getElementById('charges-enabled').style.color = chargesColor;
+
+            // Update account ID
+            if (status.accountId) {
+                const truncatedId = status.accountId.substring(0, 12) + '...';
+                document.getElementById('account-id').textContent = truncatedId;
+            }
+        }
+
+        async function createConnectedAccount() {
+            try {
+                showLoading(true);
+                const result = await callAndroid('createConnectedAccount', { accountType: 'express' });
+
+                if (result && result.accountLink) {
+                    showSuccess('Opening Stripe onboarding in browser...');
+
+                    // Open the account link in external browser
+                    setTimeout(() => {
+                        window.open(result.accountLink, '_blank');
+                    }, 1000);
+
+                    // Refresh status after a delay to check if user completed onboarding
+                    setTimeout(() => {
+                        checkConnectedAccountStatus();
+                    }, 3000);
+                } else {
+                    showError('Failed to create account: No onboarding link received');
+                }
+            } catch (error) {
+                showError('Failed to create account: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function refreshAccountLink() {
+            try {
+                showLoading(true);
+                const result = await callAndroid('refreshAccountLink');
+
+                if (result && result.accountLink) {
+                    showSuccess('Opening Stripe onboarding in browser...');
+
+                    // Open the account link in external browser
+                    setTimeout(() => {
+                        window.open(result.accountLink, '_blank');
+                    }, 1000);
+
+                    // Refresh status after a delay
+                    setTimeout(() => {
+                        checkConnectedAccountStatus();
+                    }, 3000);
+                } else {
+                    showError('Failed to refresh link: No onboarding link received');
+                }
+            } catch (error) {
+                showError('Failed to refresh link: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Initialize on load
+        initialize();
+    </script>
+</body>
+</html>

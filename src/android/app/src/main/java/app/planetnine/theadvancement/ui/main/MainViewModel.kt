@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import app.planetnine.theadvancement.config.Configuration
 import app.planetnine.theadvancement.crypto.Sessionless
 import app.planetnine.theadvancement.ui.carrierbag.CarrierBagActivity
+import app.planetnine.theadvancement.ui.payment.PaymentMethodActivity
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -336,6 +337,22 @@ class MainViewModel(private val context: Context) : ViewModel() {
             context.startActivity(intent)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to open carrier bag", e)
+        }
+    }
+
+    /**
+     * Open payment methods activity
+     */
+    fun openPaymentMethods() {
+        Log.d(TAG, "💳 Opening payment methods")
+
+        try {
+            val intent = Intent(context, PaymentMethodActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            context.startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to open payment methods", e)
         }
     }
 }

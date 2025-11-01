@@ -80,7 +80,7 @@ const moduleConfigs = [
   { dir: 'cookbook', file: 'cookbook.js', generators: ['generateRecipeSVG'], data: 'cookbookPosts' },
   { dir: 'events', file: 'events.js', generators: ['generateEventSVG'], data: 'events' },
   { dir: 'familiarPen', file: 'familiarPen.js', generators: ['generateFamiliarSVG'], data: 'familiarPenPosts' },
-  { dir: 'gallery', file: 'gallery.js', generators: ['generateArtworkSVG'], data: 'galleryPosts' },
+  { dir: 'gallery', file: 'gallery.js', generators: ['generateArtworkSVG', 'generateMarketplaceLogosSVG', 'generatePoliticalArtSVG'], data: 'galleryPosts' },
   { dir: 'games', file: 'games.js', generators: ['generateGameSVG', 'generateFTPSVG'], data: 'gamesPosts' },
   { dir: 'geometry', file: 'geometry.js', generators: ['generateEuclidPostulatesSVG', 'generateNonEuclideanSVG', 'generateGeneralRelativitySVG', 'generateGravitationalLensingSVG'], data: 'geometryPosts' },
   { dir: 'greenHouse', file: 'greenHouse.js', generators: ['generatePlantSVG'], data: 'greenHousePosts' },

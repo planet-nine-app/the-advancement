@@ -57,6 +57,17 @@ open http://localhost:3456
 - **Home Base Coordination**: Payment routing through user's selected Planet Nine base
 - **Cross-Base Commerce**: Purchase from any Planet Nine base
 
+### ✅ **Stripe Connected Accounts for Sellers** (October 2025)
+- **Receive Payments Tab**: Dedicated UI in iOS/Android apps for seller account setup
+- **Express Account Creation**: Create Stripe Express Connected Accounts via Addie backend
+- **Onboarding Flow**: Seamless Stripe onboarding with automatic link generation
+- **Account Status Tracking**: Real-time status of details submission, charges, and payouts
+- **Three-State UI**: Not Setup → Pending Onboarding → Active Account
+- **Affiliate Commission Support**: Enable 10% affiliate payouts from product sales
+- **Transfer Processing**: Automatic fund distribution to Connected Accounts post-payment
+- **SharedPreferences Storage**: Account IDs persisted across app sessions (Android)
+- **UserDefaults Storage**: Account IDs persisted via standard storage (iOS)
+
 ### ✅ **Ad Covering System** (September 2025)
 - **Dual Mode Experience**: Peaceful ficus plants OR interactive slime monsters
 - **Real-Time Detection**: MutationObserver-based ad scanning
@@ -157,8 +168,9 @@ open http://localhost:3456
 - **Custom Theming**: Dark purple theme with glowing green text
 - **Welcome Page**: Pre-configured landing page explaining allyabase and federation
 - **Production Security**: UFW firewall, SSH keys, HTTPS-only access
+- **Sessionless Authentication**: wiki-security-sessionless with automatic configuration and cookie secret generation
 - **Allyabase Integration**: Pre-installed wiki-plugin-allyabase for launching Planet Nine bases
-- **Sessionless Owner Config**: Interactive configuration with cryptographic key generation
+- **Cryptographic Owner Config**: Interactive configuration with Sessionless key generation
 - **Port Separation**: Wiki on port 4000 (allyabase uses 3000) to avoid conflicts
 - **Project Management**: Automatic droplet assignment to Digital Ocean projects
 
@@ -219,7 +231,7 @@ the-advancement/
 - **AdvanceKey Enhanced Display**: BDO visualization with embedded 3D tour iframes
 - **Test Environment**: Comprehensive testing infrastructure
 - **Android App**: Native Android app with WebView-based main screen and AdvanceKey IME keyboard
-- **Federated Wiki Auto-Deployment**: Single-command production wiki deployment with SSL, DNS, and custom theming
+- **Federated Wiki Auto-Deployment**: Single-command production wiki deployment with SSL, DNS, sessionless auth, and custom theming
 
 ### 🚧 In Development
 - **Chrome Extension**: Manifest v3 update and feature parity with Safari
@@ -711,6 +723,256 @@ java.lang.IllegalStateException: ViewTreeLifecycleOwner not found from android.w
 - JavaScript enables dynamic content updates
 - Same architecture as main app (consistency)
 - Hardware acceleration for smooth rendering
+
+## Stripe Connected Accounts Implementation
+
+### Overview
+
+The Advancement iOS and Android apps include a complete Stripe Connected Account system enabling users to receive affiliate commissions and product sales revenue. This is critical for the Alice → Bob → Carl affiliate flow where Bob (affiliate) and Carl (creator) need to receive payments.
+
+### Architecture
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  The Advancement App (iOS/Android)                       │
+│  PaymentMethodViewController / PaymentMethodActivity      │
+└────────────────────┬─────────────────────────────────────┘
+                     │
+                     ▼ HTTPS
+┌──────────────────────────────────────────────────────────┐
+│  Addie Backend (Payment Processing Service)              │
+│  /processor/stripe/create-account                        │
+│  /processor/stripe/account/status                        │
+│  /processor/stripe/account/refresh-link                  │
+└────────────────────┬─────────────────────────────────────┘
+                     │
+                     ▼ Stripe API
+┌──────────────────────────────────────────────────────────┐
+│  Stripe Express Connected Accounts                       │
+│  - KYC verification                                      │
+│  - Bank account linking                                  │
+│  - Transfer capabilities                                 │
+└──────────────────────────────────────────────────────────┘
+```
+
+### iOS Implementation
+
+**PaymentMethodViewController.swift** (`src/The Advancement/Shared (App)/PaymentMethodViewController.swift`):
+
+**Three New Methods** (Lines 870-1040):
+```swift
+// Create Stripe Connected Account
+private func createConnectedAccount(params: [String: Any], messageId: Any) {
+    // Signs request with Sessionless authentication
+    // Calls POST /processor/stripe/create-account
+    // Stores accountId in UserDefaults
+    // Returns accountId + accountLink for onboarding
+}
+
+// Get Connected Account Status
+private func getConnectedAccountStatus(messageId: Any) {
+    // Calls GET /processor/stripe/account/status
+    // Returns hasAccount, detailsSubmitted, chargesEnabled, payoutsEnabled
+}
+
+// Refresh Account Onboarding Link
+private func refreshAccountLink(messageId: Any) {
+    // Calls POST /processor/stripe/account/refresh-link
+    // Requires stored accountId from UserDefaults
+    // Returns fresh onboarding URL
+}
+```
+
+**Message Handler Integration** (Lines 173-180):
+```swift
+case "createConnectedAccount":
+    createConnectedAccount(params: params, messageId: messageId)
+case "getConnectedAccountStatus":
+    getConnectedAccountStatus(messageId: messageId)
+case "refreshAccountLink":
+    refreshAccountLink(messageId: messageId)
+```
+
+**PaymentMethod.html** (`src/The Advancement/Shared (App)/Resources/PaymentMethod.html`):
+
+**Three-State UI** (Lines 436-511):
+1. **Account Not Setup**: Shows setup button + instructions
+2. **Account Pending**: Shows continue onboarding button
+3. **Account Active**: Shows account details with status indicators
+
+**JavaScript Functions** (Lines 1047-1157):
+```javascript
+async function checkConnectedAccountStatus() {
+    // Calls Swift backend via callSwift()
+    // Updates UI based on account state
+}
+
+async function createConnectedAccount() {
+    // Creates Express account
+    // Opens onboarding link in Safari
+}
+
+async function refreshAccountLink() {
+    // Refreshes onboarding URL
+    // Reopens Stripe onboarding flow
+}
+```
+
+### Android Implementation
+
+**PaymentMethodActivity.kt** (`src/android/app/src/main/java/.../ui/payment/PaymentMethodActivity.kt`):
+
+**Three Suspend Functions** (Lines 509-610):
+```kotlin
+suspend fun createConnectedAccount(paramsJson: String): String {
+    // Signs request with Sessionless authentication
+    // Calls POST /processor/stripe/create-account
+    // Stores accountId in SharedPreferences
+    // Returns accountId + accountLink
+}
+
+suspend fun getConnectedAccountStatus(): String {
+    // Calls GET /processor/stripe/account/status
+    // Returns account status details
+}
+
+suspend fun refreshAccountLink(): String {
+    // Calls POST /processor/stripe/account/refresh-link
+    // Returns fresh onboarding link
+}
+```
+
+**JavaScript Interface** (Lines 716-741):
+```kotlin
+@JavascriptInterface
+fun createConnectedAccount(paramsJson: String): String {
+    var result = ""
+    kotlinx.coroutines.runBlocking {
+        result = activity.createConnectedAccount(paramsJson)
+    }
+    return result
+}
+
+@JavascriptInterface
+fun getConnectedAccountStatus(paramsJson: String): String {
+    // Similar pattern for status checking
+}
+
+@JavascriptInterface
+fun refreshAccountLink(paramsJson: String): String {
+    // Similar pattern for link refreshing
+}
+```
+
+**PaymentMethod.html** (`src/android/app/src/main/assets/PaymentMethod.html`):
+
+Same three-state UI and JavaScript functions as iOS, but calls `callAndroid()` instead of `callSwift()`:
+
+```javascript
+async function createConnectedAccount() {
+    const result = await callAndroid('createConnectedAccount', { accountType: 'express' });
+    if (result && result.accountLink) {
+        window.open(result.accountLink, '_blank');
+    }
+}
+```
+
+### Addie Backend Endpoints
+
+**Stripe Processor** (`addie/src/server/node/src/processors/stripe.js`):
+
+**POST /processor/stripe/create-account**:
+- Creates Stripe Express Connected Account
+- Generates onboarding link with account setup flow
+- Returns `{ accountId, accountLink }`
+
+**GET /processor/stripe/account/status**:
+- Retrieves account from stored accountId
+- Returns status flags:
+  - `hasAccount`: Boolean
+  - `detailsSubmitted`: Boolean
+  - `chargesEnabled`: Boolean
+  - `payoutsEnabled`: Boolean
+  - `accountId`: String
+
+**POST /processor/stripe/account/refresh-link**:
+- Generates fresh onboarding link for existing account
+- Used when user needs to complete KYC or update details
+- Returns `{ accountLink }`
+
+**POST /payment/:paymentIntentId/process-transfers** (Lines 680-774):
+- Called after payment confirmation
+- Reads payee metadata from payment intent
+- Creates Stripe transfers to Connected Accounts
+- Distributes funds (90% creator, 10% affiliate)
+
+### User Flow
+
+**1. Initial Setup (Bob wants to receive affiliate commissions)**:
+```
+User opens The Advancement app
+→ Taps "Receive Payments" tab
+→ Sees "Account Not Setup" state
+→ Taps "Set Up Seller Account"
+→ App creates Connected Account via Addie
+→ Opens Stripe onboarding in browser
+→ User completes KYC (name, address, bank account)
+→ Returns to app
+→ Status changes to "Active"
+```
+
+**2. Receiving Payments (Carl purchases from Bob's affiliate link)**:
+```
+Carl makes $50 purchase via Bob's link
+→ Payment intent created with payee metadata:
+   - Bob: $5 (10% affiliate)
+   - Creator: $45 (90% revenue)
+→ Carl completes payment via Stripe
+→ Backend calls /payment/:id/process-transfers
+→ Transfers created to Bob's and Creator's accounts
+→ Funds arrive in 2-3 business days
+```
+
+**3. Status Checking**:
+```
+User returns to "Receive Payments" tab
+→ App calls getConnectedAccountStatus()
+→ Shows account details:
+   - Status: Active
+   - Charges Enabled: Yes
+   - Payouts Enabled: Yes
+   - Account ID: acct_...
+```
+
+### Storage
+
+**iOS (UserDefaults)**:
+```swift
+UserDefaults.standard.set(accountId, forKey: "stripe_connected_account_id")
+```
+
+**Android (SharedPreferences)**:
+```kotlin
+val prefs = getSharedPreferences("the_advancement", Context.MODE_PRIVATE)
+prefs.edit().putString("stripe_connected_account_id", accountId).apply()
+```
+
+### Testing
+
+Comprehensive integration tests available in Sharon:
+```bash
+cd sharon
+npm run test:the-advancement
+```
+
+**Test Coverage**:
+- ✅ Create Connected Accounts for sellers
+- ✅ Generate and refresh onboarding links
+- ✅ Check account status
+- ✅ Create payment intents with affiliate splits
+- ✅ Process transfers to Connected Accounts
+
+See `/sharon/tests/the-advancement/README.md` for complete test documentation.
 
 ## Integration with Planet Nine Ecosystem
 

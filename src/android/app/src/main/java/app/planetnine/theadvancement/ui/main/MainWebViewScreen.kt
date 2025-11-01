@@ -204,6 +204,12 @@ class MainJSInterface(
     }
 
     @JavascriptInterface
+    fun openPaymentMethods() {
+        Log.d("MainJSInterface", "Opening payment methods")
+        viewModel.openPaymentMethods()
+    }
+
+    @JavascriptInterface
     fun isKeyboardEnabled(): Boolean {
         val imm = webView.context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE)
             as android.view.inputmethod.InputMethodManager
