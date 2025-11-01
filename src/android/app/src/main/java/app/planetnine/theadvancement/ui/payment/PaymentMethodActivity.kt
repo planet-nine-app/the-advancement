@@ -507,13 +507,14 @@ class PaymentMethodActivity : ComponentActivity() {
     }
 
     /**
-     * Create Stripe Connected Account
+     * Save Payout Card for receiving affiliate payouts
      */
-    suspend fun createConnectedAccount(paramsJson: String): String {
-        Log.d(TAG, "🏦 Creating Stripe Connected Account...")
+    suspend fun savePayoutCard(paramsJson: String): String {
+        Log.d(TAG, "💳 Saving payout card...")
 
         val params = gson.fromJson(paramsJson, Map::class.java)
-        val accountType = params["accountType"] as? String ?: "express"
+        val paymentMethodId = params["paymentMethodId"] as? String
+            ?: return gson.toJson(mapOf("error" to "Missing paymentMethodId"))
 
         val keys = sessionless.getKeys()
         if (keys == null) {
@@ -521,7 +522,7 @@ class PaymentMethodActivity : ComponentActivity() {
         }
 
         val timestamp = System.currentTimeMillis().toString()
-        val message = timestamp + keys.publicKey
+        val message = timestamp + keys.publicKey + paymentMethodId
         val signature = signMessage(message)
 
         if (signature == null) {
@@ -532,30 +533,30 @@ class PaymentMethodActivity : ComponentActivity() {
             "timestamp" to timestamp,
             "pubKey" to keys.publicKey,
             "signature" to signature,
-            "accountType" to accountType
+            "paymentMethodId" to paymentMethodId
         )
 
-        val result = makeAuthenticatedRequest("/processor/stripe/create-account", "POST", body)
+        val result = makeAuthenticatedRequest("/payout-card/save", "POST", body)
 
-        // Store account ID if returned
-        if (result["accountId"] != null) {
+        // Store payout card ID if returned
+        if (result["payoutCardId"] != null) {
             val prefs = getSharedPreferences("the_advancement", Context.MODE_PRIVATE)
-            prefs.edit().putString("stripe_connected_account_id", result["accountId"] as String).apply()
-            Log.d(TAG, "💳 Saved connected account ID")
+            prefs.edit().putString("stripe_payout_card_id", result["payoutCardId"] as String).apply()
+            Log.d(TAG, "💳 Saved payout card ID")
         }
 
         return gson.toJson(result)
     }
 
     /**
-     * Get Connected Account status
+     * Get Payout Card status
      */
-    suspend fun getConnectedAccountStatus(): String {
-        Log.d(TAG, "🔍 Checking connected account status...")
+    suspend fun getPayoutCardStatus(): String {
+        Log.d(TAG, "🔍 Checking payout card status...")
 
         val keys = sessionless.getKeys()
         if (keys == null) {
-            return gson.toJson(mapOf("hasAccount" to false))
+            return gson.toJson(mapOf("hasPayoutCard" to false))
         }
 
         val timestamp = System.currentTimeMillis().toString()
@@ -563,49 +564,12 @@ class PaymentMethodActivity : ComponentActivity() {
         val signature = signMessage(message)
 
         if (signature == null) {
-            return gson.toJson(mapOf("hasAccount" to false))
+            return gson.toJson(mapOf("hasPayoutCard" to false))
         }
 
-        val endpoint = "/processor/stripe/account/status?timestamp=$timestamp&pubKey=${keys.publicKey}&signature=$signature"
+        val endpoint = "/payout-card/status?timestamp=$timestamp&pubKey=${keys.publicKey}&signature=$signature"
         val result = makeAuthenticatedRequest(endpoint, "GET")
 
-        return gson.toJson(result)
-    }
-
-    /**
-     * Refresh Connected Account onboarding link
-     */
-    suspend fun refreshAccountLink(): String {
-        Log.d(TAG, "🔄 Refreshing account link...")
-
-        val prefs = getSharedPreferences("the_advancement", Context.MODE_PRIVATE)
-        val accountId = prefs.getString("stripe_connected_account_id", null)
-
-        if (accountId == null) {
-            return gson.toJson(mapOf("error" to "No connected account found"))
-        }
-
-        val keys = sessionless.getKeys()
-        if (keys == null) {
-            return gson.toJson(mapOf("error" to "Authentication required"))
-        }
-
-        val timestamp = System.currentTimeMillis().toString()
-        val message = timestamp + keys.publicKey + accountId
-        val signature = signMessage(message)
-
-        if (signature == null) {
-            return gson.toJson(mapOf("error" to "Failed to sign request"))
-        }
-
-        val body = mapOf(
-            "timestamp" to timestamp,
-            "pubKey" to keys.publicKey,
-            "signature" to signature,
-            "accountId" to accountId
-        )
-
-        val result = makeAuthenticatedRequest("/processor/stripe/account/refresh-link", "POST", body)
         return gson.toJson(result)
     }
 
@@ -714,28 +678,19 @@ class PaymentMethodActivity : ComponentActivity() {
         }
 
         @JavascriptInterface
-        fun createConnectedAccount(paramsJson: String): String {
+        fun savePayoutCard(paramsJson: String): String {
             var result = ""
             kotlinx.coroutines.runBlocking {
-                result = activity.createConnectedAccount(paramsJson)
+                result = activity.savePayoutCard(paramsJson)
             }
             return result
         }
 
         @JavascriptInterface
-        fun getConnectedAccountStatus(paramsJson: String): String {
+        fun getPayoutCardStatus(paramsJson: String): String {
             var result = ""
             kotlinx.coroutines.runBlocking {
-                result = activity.getConnectedAccountStatus()
-            }
-            return result
-        }
-
-        @JavascriptInterface
-        fun refreshAccountLink(paramsJson: String): String {
-            var result = ""
-            kotlinx.coroutines.runBlocking {
-                result = activity.refreshAccountLink()
+                result = activity.getPayoutCardStatus()
             }
             return result
         }

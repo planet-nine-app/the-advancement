@@ -170,14 +170,11 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         case "getTransactions":
             getTransactions(messageId: messageId)
 
-        case "createConnectedAccount":
-            createConnectedAccount(params: params, messageId: messageId)
+        case "savePayoutCard":
+            savePayoutCard(params: params, messageId: messageId)
 
-        case "getConnectedAccountStatus":
-            getConnectedAccountStatus(messageId: messageId)
-
-        case "refreshAccountLink":
-            refreshAccountLink(messageId: messageId)
+        case "getPayoutCardStatus":
+            getPayoutCardStatus(messageId: messageId)
 
         default:
             sendResponse(messageId: messageId, error: "Unknown method: \(method)")
@@ -867,10 +864,15 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         }.resume()
     }
 
-    // MARK: - Connected Account Methods
+    // MARK: - Payout Card Methods (for receiving affiliate commissions)
 
-    private func createConnectedAccount(params: [String: Any], messageId: Any) {
-        NSLog("PAYMENTMETHOD: 🏦 Creating Stripe Connected Account...")
+    private func savePayoutCard(params: [String: Any], messageId: Any) {
+        guard let paymentMethodId = params["paymentMethodId"] as? String else {
+            sendResponse(messageId: messageId, error: "Missing paymentMethodId")
+            return
+        }
+
+        NSLog("PAYMENTMETHOD: 💳 Saving payout card: %@", paymentMethodId)
 
         guard let homeBase = getHomeBaseURL(),
               let keys = SharedUserDefaults.getSessionlessKeys(),
@@ -879,12 +881,11 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
             return
         }
 
-        let accountType = params["accountType"] as? String ?? "express"
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
-        let endpoint = "\(homeBase)/processor/stripe/create-account"
+        let endpoint = "\(homeBase)/payout-card/save"
 
-        // Sign request
-        let message = timestamp + pubKey
+        // Sign request (timestamp + pubKey + paymentMethodId)
+        let message = timestamp + pubKey + paymentMethodId
         guard let signature = signMessage(message) else {
             sendResponse(messageId: messageId, error: "Failed to sign request")
             return
@@ -899,7 +900,7 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
             "timestamp": timestamp,
             "pubKey": pubKey,
             "signature": signature,
-            "accountType": accountType
+            "paymentMethodId": paymentMethodId
         ]
 
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
@@ -908,7 +909,7 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
             guard let self = self else { return }
 
             if let error = error {
-                NSLog("PAYMENTMETHOD: ❌ Failed to create connected account: %@", error.localizedDescription)
+                NSLog("PAYMENTMETHOD: ❌ Failed to save payout card: %@", error.localizedDescription)
                 self.sendResponse(messageId: messageId, error: error.localizedDescription)
                 return
             }
@@ -925,35 +926,35 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
                 return
             }
 
-            // Store account ID
-            if let accountId = json["accountId"] as? String {
-                UserDefaults.standard.set(accountId, forKey: "stripe_connected_account_id")
-                NSLog("PAYMENTMETHOD: 💳 Saved connected account ID: %@", accountId)
+            // Store payout card ID
+            if let payoutCardId = json["payoutCardId"] as? String {
+                UserDefaults.standard.set(payoutCardId, forKey: "stripe_payout_card_id")
+                NSLog("PAYMENTMETHOD: 💳 Saved payout card ID: %@", payoutCardId)
             }
 
-            NSLog("PAYMENTMETHOD: ✅ Connected account created successfully")
+            NSLog("PAYMENTMETHOD: ✅ Payout card saved successfully")
             self.sendResponse(messageId: messageId, result: json)
         }.resume()
     }
 
-    private func getConnectedAccountStatus(messageId: Any) {
-        NSLog("PAYMENTMETHOD: 🔍 Checking connected account status...")
+    private func getPayoutCardStatus(messageId: Any) {
+        NSLog("PAYMENTMETHOD: 🔍 Checking payout card status...")
 
         guard let homeBase = getHomeBaseURL(),
               let keys = SharedUserDefaults.getSessionlessKeys(),
               let pubKey = keys["publicKey"] as? String else {
-            sendResponse(messageId: messageId, result: ["hasAccount": false])
+            sendResponse(messageId: messageId, result: ["hasPayoutCard": false])
             return
         }
 
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
         let message = timestamp + pubKey
         guard let signature = signMessage(message) else {
-            sendResponse(messageId: messageId, result: ["hasAccount": false])
+            sendResponse(messageId: messageId, result: ["hasPayoutCard": false])
             return
         }
 
-        let endpoint = "\(homeBase)/processor/stripe/account/status?timestamp=\(timestamp)&pubKey=\(pubKey)&signature=\(signature)"
+        let endpoint = "\(homeBase)/payout-card/status?timestamp=\(timestamp)&pubKey=\(pubKey)&signature=\(signature)"
 
         var request = URLRequest(url: URL(string: endpoint)!)
         request.httpMethod = "GET"
@@ -962,78 +963,19 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
             guard let self = self else { return }
 
             if let error = error {
-                NSLog("PAYMENTMETHOD: ⚠️ Failed to check account status: %@", error.localizedDescription)
-                self.sendResponse(messageId: messageId, result: ["hasAccount": false])
+                NSLog("PAYMENTMETHOD: ⚠️ Failed to check payout card status: %@", error.localizedDescription)
+                self.sendResponse(messageId: messageId, result: ["hasPayoutCard": false])
                 return
             }
 
             guard let data = data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                 NSLog("PAYMENTMETHOD: ⚠️ Invalid response")
-                self.sendResponse(messageId: messageId, result: ["hasAccount": false])
+                self.sendResponse(messageId: messageId, result: ["hasPayoutCard": false])
                 return
             }
 
-            NSLog("PAYMENTMETHOD: ✅ Got connected account status")
-            self.sendResponse(messageId: messageId, result: json)
-        }.resume()
-    }
-
-    private func refreshAccountLink(messageId: Any) {
-        NSLog("PAYMENTMETHOD: 🔄 Refreshing account link...")
-
-        guard let homeBase = getHomeBaseURL(),
-              let keys = SharedUserDefaults.getSessionlessKeys(),
-              let pubKey = keys["publicKey"] as? String,
-              let accountId = UserDefaults.standard.string(forKey: "stripe_connected_account_id") else {
-            sendResponse(messageId: messageId, error: "No connected account found")
-            return
-        }
-
-        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
-        let endpoint = "\(homeBase)/processor/stripe/account/refresh-link"
-
-        let message = timestamp + pubKey + accountId
-        guard let signature = signMessage(message) else {
-            sendResponse(messageId: messageId, error: "Failed to sign request")
-            return
-        }
-
-        var request = URLRequest(url: URL(string: endpoint)!)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let body: [String: Any] = [
-            "timestamp": timestamp,
-            "pubKey": pubKey,
-            "signature": signature,
-            "accountId": accountId
-        ]
-
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            guard let self = self else { return }
-
-            if let error = error {
-                NSLog("PAYMENTMETHOD: ❌ Failed to refresh account link: %@", error.localizedDescription)
-                self.sendResponse(messageId: messageId, error: error.localizedDescription)
-                return
-            }
-
-            guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                NSLog("PAYMENTMETHOD: ❌ Invalid response")
-                self.sendResponse(messageId: messageId, error: "Invalid server response")
-                return
-            }
-
-            if let errorMsg = json["error"] as? String {
-                self.sendResponse(messageId: messageId, error: errorMsg)
-                return
-            }
-
-            NSLog("PAYMENTMETHOD: ✅ Account link refreshed")
+            NSLog("PAYMENTMETHOD: ✅ Got payout card status")
             self.sendResponse(messageId: messageId, result: json)
         }.resume()
     }

@@ -57,16 +57,16 @@ open http://localhost:3456
 - **Home Base Coordination**: Payment routing through user's selected Planet Nine base
 - **Cross-Base Commerce**: Purchase from any Planet Nine base
 
-### ✅ **Stripe Connected Accounts for Sellers** (October 2025)
-- **Receive Payments Tab**: Dedicated UI in iOS/Android apps for seller account setup
-- **Express Account Creation**: Create Stripe Express Connected Accounts via Addie backend
-- **Onboarding Flow**: Seamless Stripe onboarding with automatic link generation
-- **Account Status Tracking**: Real-time status of details submission, charges, and payouts
-- **Three-State UI**: Not Setup → Pending Onboarding → Active Account
+### ✅ **Stripe Payout Cards for Sellers** (November 2025)
+- **Receive Payments Tab**: Dedicated UI in iOS/Android apps for instant payout setup
+- **Direct Debit Card Payouts**: Save debit cards to receive affiliate commissions
+- **Instant Setup**: No KYC onboarding required - select card and start receiving payouts
+- **Works with Issued Cards**: Planet Nine virtual cards can receive payouts
+- **Two-State UI**: Not Setup (select card) → Setup (instant payouts active)
 - **Affiliate Commission Support**: Enable 10% affiliate payouts from product sales
-- **Transfer Processing**: Automatic fund distribution to Connected Accounts post-payment
-- **SharedPreferences Storage**: Account IDs persisted across app sessions (Android)
-- **UserDefaults Storage**: Account IDs persisted via standard storage (iOS)
+- **Instant Transfer Processing**: Automatic fund distribution to payout cards (~30 minutes)
+- **SharedPreferences Storage**: Payout card IDs persisted across app sessions (Android)
+- **UserDefaults Storage**: Payout card IDs persisted via standard storage (iOS)
 
 ### ✅ **Ad Covering System** (September 2025)
 - **Dual Mode Experience**: Peaceful ficus plants OR interactive slime monsters
@@ -724,97 +724,109 @@ java.lang.IllegalStateException: ViewTreeLifecycleOwner not found from android.w
 - Same architecture as main app (consistency)
 - Hardware acceleration for smooth rendering
 
-## Stripe Connected Accounts Implementation
+## Stripe Payout Cards Implementation (November 2025)
 
 ### Overview
 
-The Advancement iOS and Android apps include a complete Stripe Connected Account system enabling users to receive affiliate commissions and product sales revenue. This is critical for the Alice → Bob → Carl affiliate flow where Bob (affiliate) and Carl (creator) need to receive payments.
+The Advancement iOS and Android apps provide direct debit card payout functionality enabling users to receive instant affiliate commissions (~30 minutes) without complex KYC onboarding. This replaces the previous Stripe Connected Accounts approach with a simpler, faster payout method that works seamlessly with both external debit cards and Planet Nine issued virtual cards.
+
+**Critical for Affiliate Flow**: Alice → Bob → Carl where Bob (affiliate) and Carl (creator) need to receive payments instantly.
 
 ### Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│  The Advancement App (iOS/Android)                       │
-│  PaymentMethodViewController / PaymentMethodActivity      │
-└────────────────────┬─────────────────────────────────────┘
-                     │
-                     ▼ HTTPS
-┌──────────────────────────────────────────────────────────┐
-│  Addie Backend (Payment Processing Service)              │
-│  /processor/stripe/create-account                        │
-│  /processor/stripe/account/status                        │
-│  /processor/stripe/account/refresh-link                  │
-└────────────────────┬─────────────────────────────────────┘
-                     │
-                     ▼ Stripe API
-┌──────────────────────────────────────────────────────────┐
-│  Stripe Express Connected Accounts                       │
-│  - KYC verification                                      │
-│  - Bank account linking                                  │
-│  - Transfer capabilities                                 │
-└──────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│  The Advancement App (iOS/Android)                     │
+│  - Select debit card for payouts                       │
+│  - Check payout card status                            │
+└───────────────────┬────────────────────────────────────┘
+                    │ Sessionless Auth
+                    ▼
+┌────────────────────────────────────────────────────────┐
+│  Addie Backend                                         │
+│  POST /payout-card/save                                │
+│  GET /payout-card/status                               │
+│  POST /payment/:id/process-transfers                   │
+└───────────────────┬────────────────────────────────────┘
+                    │ Stripe API
+                    ▼
+┌────────────────────────────────────────────────────────┐
+│  Stripe Platform                                       │
+│  - Direct Debit Card Transfers                         │
+│  - Instant Payouts (~30 minutes)                       │
+│  - Works with Stripe Issued Cards                      │
+└────────────────────────────────────────────────────────┘
 ```
 
 ### iOS Implementation
 
 **PaymentMethodViewController.swift** (`src/The Advancement/Shared (App)/PaymentMethodViewController.swift`):
 
-**Three New Methods** (Lines 870-1040):
+**Two Payout Card Methods** (Lines 867-981):
 ```swift
-// Create Stripe Connected Account
-private func createConnectedAccount(params: [String: Any], messageId: Any) {
+// Save Payout Card
+private func savePayoutCard(params: [String: Any], messageId: Any) {
+    guard let paymentMethodId = params["paymentMethodId"] as? String else {
+        sendResponse(messageId: messageId, error: "Missing paymentMethodId")
+        return
+    }
+
     // Signs request with Sessionless authentication
-    // Calls POST /processor/stripe/create-account
-    // Stores accountId in UserDefaults
-    // Returns accountId + accountLink for onboarding
+    // Signature: timestamp + pubKey + paymentMethodId
+    // Calls POST /payout-card/save
+    // Stores payoutCardId in UserDefaults
+    // Returns payoutCardId + last4 + brand + expiry
 }
 
-// Get Connected Account Status
-private func getConnectedAccountStatus(messageId: Any) {
-    // Calls GET /processor/stripe/account/status
-    // Returns hasAccount, detailsSubmitted, chargesEnabled, payoutsEnabled
-}
-
-// Refresh Account Onboarding Link
-private func refreshAccountLink(messageId: Any) {
-    // Calls POST /processor/stripe/account/refresh-link
-    // Requires stored accountId from UserDefaults
-    // Returns fresh onboarding URL
+// Get Payout Card Status
+private func getPayoutCardStatus(messageId: Any) {
+    // Signature: timestamp + pubKey
+    // Calls GET /payout-card/status
+    // Returns hasPayoutCard + card details if exists
 }
 ```
 
-**Message Handler Integration** (Lines 173-180):
+**Message Handler Integration** (Lines 173-176):
 ```swift
-case "createConnectedAccount":
-    createConnectedAccount(params: params, messageId: messageId)
-case "getConnectedAccountStatus":
-    getConnectedAccountStatus(messageId: messageId)
-case "refreshAccountLink":
-    refreshAccountLink(messageId: messageId)
+case "savePayoutCard":
+    savePayoutCard(params: params, messageId: messageId)
+case "getPayoutCardStatus":
+    getPayoutCardStatus(messageId: messageId)
 ```
 
 **PaymentMethod.html** (`src/The Advancement/Shared (App)/Resources/PaymentMethod.html`):
 
-**Three-State UI** (Lines 436-511):
-1. **Account Not Setup**: Shows setup button + instructions
-2. **Account Pending**: Shows continue onboarding button
-3. **Account Active**: Shows account details with status indicators
+**Two-State UI** (Lines 436-491):
+1. **Payout Card Not Setup**:
+   - Shows available debit cards
+   - "Use for Payouts" buttons on each card
+   - Instructions about instant payouts
 
-**JavaScript Functions** (Lines 1047-1157):
+2. **Payout Card Setup**:
+   - Shows active payout card details
+   - Card brand, last4, expiration
+   - "Instant payouts enabled" message
+   - Refresh button to check status
+
+**JavaScript Functions** (Lines 1027-1161):
 ```javascript
-async function checkConnectedAccountStatus() {
+async function checkPayoutCardStatus() {
     // Calls Swift backend via callSwift()
-    // Updates UI based on account state
+    // Updates UI: payout-card-not-setup or payout-card-setup
+    // Loads available cards if not setup
 }
 
-async function createConnectedAccount() {
-    // Creates Express account
-    // Opens onboarding link in Safari
+async function selectPayoutCard(paymentMethodId) {
+    // Confirms with user
+    // Calls savePayoutCard() via Swift
+    // Shows success message
+    // Refreshes status display
 }
 
-async function refreshAccountLink() {
-    // Refreshes onboarding URL
-    // Reopens Stripe onboarding flow
+async function loadAvailableCards() {
+    // Fetches saved payment methods
+    // Filters for debit cards only
+    // Displays cards with "Use for Payouts" buttons
 }
 ```
 
@@ -822,58 +834,89 @@ async function refreshAccountLink() {
 
 **PaymentMethodActivity.kt** (`src/android/app/src/main/java/.../ui/payment/PaymentMethodActivity.kt`):
 
-**Three Suspend Functions** (Lines 509-610):
+**Two Suspend Functions** (Lines 509-574):
 ```kotlin
-suspend fun createConnectedAccount(paramsJson: String): String {
-    // Signs request with Sessionless authentication
-    // Calls POST /processor/stripe/create-account
-    // Stores accountId in SharedPreferences
-    // Returns accountId + accountLink
+suspend fun savePayoutCard(paramsJson: String): String {
+    Log.d(TAG, "💳 Saving payout card...")
+
+    val params = gson.fromJson(paramsJson, Map::class.java)
+    val paymentMethodId = params["paymentMethodId"] as? String
+        ?: return gson.toJson(mapOf("error" to "Missing paymentMethodId"))
+
+    val keys = sessionless.getKeys()
+    val timestamp = System.currentTimeMillis().toString()
+
+    // Signature: timestamp + keys.publicKey + paymentMethodId
+    val signature = signMessage(timestamp + keys.publicKey + paymentMethodId)
+
+    val body = mapOf(
+        "timestamp" to timestamp,
+        "pubKey" to keys.publicKey,
+        "signature" to signature,
+        "paymentMethodId" to paymentMethodId
+    )
+
+    val result = makeAuthenticatedRequest("/payout-card/save", "POST", body)
+
+    // Store payout card ID in SharedPreferences
+    if (result["payoutCardId"] != null) {
+        val prefs = getSharedPreferences("the_advancement", Context.MODE_PRIVATE)
+        prefs.edit().putString("stripe_payout_card_id", result["payoutCardId"] as String).apply()
+    }
+
+    return gson.toJson(result)
 }
 
-suspend fun getConnectedAccountStatus(): String {
-    // Calls GET /processor/stripe/account/status
-    // Returns account status details
-}
+suspend fun getPayoutCardStatus(): String {
+    Log.d(TAG, "🔍 Checking payout card status...")
 
-suspend fun refreshAccountLink(): String {
-    // Calls POST /processor/stripe/account/refresh-link
-    // Returns fresh onboarding link
+    val keys = sessionless.getKeys()
+    val timestamp = System.currentTimeMillis().toString()
+
+    // Signature: timestamp + keys.publicKey
+    val signature = signMessage(timestamp + keys.publicKey)
+
+    val endpoint = "/payout-card/status?timestamp=$timestamp&pubKey=${keys.publicKey}&signature=$signature"
+    val result = makeAuthenticatedRequest(endpoint, "GET")
+
+    return gson.toJson(result)
 }
 ```
 
-**JavaScript Interface** (Lines 716-741):
+**JavaScript Interface** (Lines 716-729):
 ```kotlin
 @JavascriptInterface
-fun createConnectedAccount(paramsJson: String): String {
+fun savePayoutCard(paramsJson: String): String {
     var result = ""
     kotlinx.coroutines.runBlocking {
-        result = activity.createConnectedAccount(paramsJson)
+        result = activity.savePayoutCard(paramsJson)
     }
     return result
 }
 
 @JavascriptInterface
-fun getConnectedAccountStatus(paramsJson: String): String {
-    // Similar pattern for status checking
-}
-
-@JavascriptInterface
-fun refreshAccountLink(paramsJson: String): String {
-    // Similar pattern for link refreshing
+fun getPayoutCardStatus(paramsJson: String): String {
+    var result = ""
+    kotlinx.coroutines.runBlocking {
+        result = activity.getPayoutCardStatus()
+    }
+    return result
 }
 ```
 
 **PaymentMethod.html** (`src/android/app/src/main/assets/PaymentMethod.html`):
 
-Same three-state UI and JavaScript functions as iOS, but calls `callAndroid()` instead of `callSwift()`:
+Same two-state UI and JavaScript functions as iOS, but calls `callAndroid()` instead of `callSwift()`:
 
 ```javascript
-async function createConnectedAccount() {
-    const result = await callAndroid('createConnectedAccount', { accountType: 'express' });
-    if (result && result.accountLink) {
-        window.open(result.accountLink, '_blank');
-    }
+async function checkPayoutCardStatus() {
+    const status = await callAndroid('getPayoutCardStatus');
+    // Same UI logic as iOS
+}
+
+async function selectPayoutCard(paymentMethodId) {
+    const result = await callAndroid('savePayoutCard', { paymentMethodId });
+    // Same success handling as iOS
 }
 ```
 
@@ -881,30 +924,168 @@ async function createConnectedAccount() {
 
 **Stripe Processor** (`addie/src/server/node/src/processors/stripe.js`):
 
-**POST /processor/stripe/create-account**:
-- Creates Stripe Express Connected Account
-- Generates onboarding link with account setup flow
-- Returns `{ accountId, accountLink }`
+**POST /payout-card/save** (Lines 672-735):
+```javascript
+app.post('/payout-card/save', async (req, res) => {
+  try {
+    const { timestamp, pubKey, signature, paymentMethodId } = req.body;
 
-**GET /processor/stripe/account/status**:
-- Retrieves account from stored accountId
-- Returns status flags:
-  - `hasAccount`: Boolean
-  - `detailsSubmitted`: Boolean
-  - `chargesEnabled`: Boolean
-  - `payoutsEnabled`: Boolean
-  - `accountId`: String
+    // Verify signature: timestamp + pubKey + paymentMethodId
+    if(!sessionless.verifySignature(signature, timestamp + pubKey + paymentMethodId, pubKey)) {
+      res.status(403);
+      return res.send({error: 'Auth error'});
+    }
 
-**POST /processor/stripe/account/refresh-link**:
-- Generates fresh onboarding link for existing account
-- Used when user needs to complete KYC or update details
-- Returns `{ accountLink }`
+    // Get or create user
+    let foundUser = await user.getUserByPublicKey(pubKey);
+    if(!foundUser) {
+      foundUser = await user.putUser({ pubKey });
+    }
 
-**POST /payment/:paymentIntentId/process-transfers** (Lines 680-774):
-- Called after payment confirmation
-- Reads payee metadata from payment intent
-- Creates Stripe transfers to Connected Accounts
-- Distributes funds (90% creator, 10% affiliate)
+    // Save payout card (validates debit card only)
+    const result = await stripe.savePayoutCard(foundUser, paymentMethodId);
+    res.send(result);
+  } catch(err) {
+    res.status(404);
+    res.send({error: err.message || 'Failed to save payout card'});
+  }
+});
+```
+
+**GET /payout-card/status** (Lines 737-770):
+```javascript
+app.get('/payout-card/status', async (req, res) => {
+  try {
+    const { timestamp, pubKey, signature } = req.query;
+
+    // Verify signature: timestamp + pubKey
+    if(!sessionless.verifySignature(signature, timestamp + pubKey, pubKey)) {
+      res.status(403);
+      return res.send({error: 'Auth error'});
+    }
+
+    const foundUser = await user.getUserByPublicKey(pubKey);
+    if(!foundUser) {
+      res.status(404);
+      return res.send({error: 'User not found'});
+    }
+
+    const result = await stripe.getPayoutCard(foundUser);
+    res.send(result);
+  } catch(err) {
+    res.status(404);
+    res.send({error: err.message || 'Failed to check payout card status'});
+  }
+});
+```
+
+**POST /payment/:paymentIntentId/process-transfers** (Lines 801-873):
+```javascript
+app.post('/payment/:paymentIntentId/process-transfers', async (req, res) => {
+  try {
+    // Verify payment succeeded
+    const paymentIntent = await stripeSDK.paymentIntents.retrieve(paymentIntentId);
+    if(paymentIntent.status !== 'succeeded') {
+      return res.send({error: 'Payment not yet succeeded'});
+    }
+
+    // Read payee metadata from payment intent
+    const payeeCount = parseInt(paymentIntent.metadata.payee_count || '0');
+    const transfers = [];
+
+    for(let i = 0; i < payeeCount; i++) {
+      const pubKey = paymentIntent.metadata[`payee_${i}_pubkey`];
+      const amount = parseInt(paymentIntent.metadata[`payee_${i}_amount`]);
+
+      // Look up payee's saved payout card
+      const payeeUser = await user.getUserByPublicKey(pubKey);
+      if(!payeeUser.stripePayoutCardId) {
+        console.warn(`⚠️ Payee ${pubKey} does not have a payout card saved, skipping transfer`);
+        continue;
+      }
+
+      // Create direct transfer to debit card (instant payout ~30 minutes)
+      const transfer = await stripeSDK.transfers.create({
+        amount: amount,
+        currency: 'usd',
+        destination: payeeUser.stripePayoutCardId,  // Payment method ID
+        description: `Affiliate payout from ${paymentIntentId}`
+      });
+
+      transfers.push({
+        pubKey: pubKey,
+        amount: amount,
+        transferId: transfer.id,
+        destination: payeeUser.stripePayoutCardId
+      });
+    }
+
+    res.send({
+      success: true,
+      transfers: transfers,
+      paymentIntentId: paymentIntentId,
+      totalTransfers: transfers.length
+    });
+  } catch(err) {
+    res.status(500);
+    res.send({error: err.message || 'Failed to process transfers'});
+  }
+});
+```
+
+**Stripe Processor Functions** (`stripe.js` lines 681-751):
+```javascript
+savePayoutCard: async (foundUser, paymentMethodId) => {
+  try {
+    const paymentMethod = await stripeSDK.paymentMethods.retrieve(paymentMethodId);
+
+    // Validate debit card or issued card
+    if(paymentMethod.card.funding !== 'debit' && !paymentMethod.card.issuer) {
+      return {
+        success: false,
+        error: 'Only debit cards can be used as payout destinations'
+      };
+    }
+
+    // Save to user record
+    foundUser.stripePayoutCardId = paymentMethodId;
+    await user.saveUser(foundUser);
+
+    return {
+      success: true,
+      payoutCardId: paymentMethodId,
+      last4: paymentMethod.card.last4,
+      brand: paymentMethod.card.brand,
+      expMonth: paymentMethod.card.exp_month,
+      expYear: paymentMethod.card.exp_year
+    };
+  } catch(err) {
+    return { success: false, error: err.message };
+  }
+},
+
+getPayoutCard: async (foundUser) => {
+  try {
+    if(!foundUser.stripePayoutCardId) {
+      return { success: true, hasPayoutCard: false };
+    }
+
+    const paymentMethod = await stripeSDK.paymentMethods.retrieve(foundUser.stripePayoutCardId);
+
+    return {
+      success: true,
+      hasPayoutCard: true,
+      payoutCardId: foundUser.stripePayoutCardId,
+      last4: paymentMethod.card.last4,
+      brand: paymentMethod.card.brand,
+      expMonth: paymentMethod.card.exp_month,
+      expYear: paymentMethod.card.exp_year
+    };
+  } catch(err) {
+    return { success: false, error: err.message };
+  }
+}
+```
 
 ### User Flow
 
@@ -912,49 +1093,77 @@ async function createConnectedAccount() {
 ```
 User opens The Advancement app
 → Taps "Receive Payments" tab
-→ Sees "Account Not Setup" state
-→ Taps "Set Up Seller Account"
-→ App creates Connected Account via Addie
-→ Opens Stripe onboarding in browser
-→ User completes KYC (name, address, bank account)
-→ Returns to app
-→ Status changes to "Active"
+→ Sees "Payout Card Not Setup" state
+→ Views list of available debit cards
+→ Taps "Use for Payouts" on preferred card
+→ Instant setup complete (~1 second)
+→ Status changes to "Setup" with card details
+→ Ready to receive payouts immediately
 ```
 
-**2. Receiving Payments (Carl purchases from Bob's affiliate link)**:
+**2. Receiving Payments (Alice purchases from Bob's affiliate link)**:
 ```
-Carl makes $50 purchase via Bob's link
+Alice makes $50 purchase via Bob's link
 → Payment intent created with payee metadata:
    - Bob: $5 (10% affiliate)
-   - Creator: $45 (90% revenue)
-→ Carl completes payment via Stripe
+   - Carl: $45 (90% revenue)
+→ Alice completes payment via Stripe
 → Backend calls /payment/:id/process-transfers
-→ Transfers created to Bob's and Creator's accounts
-→ Funds arrive in 2-3 business days
+→ Direct transfers created to payout cards:
+   - $5 → Bob's saved debit card
+   - $45 → Carl's saved debit card
+→ Funds arrive in ~30 minutes (instant payout)
 ```
 
 **3. Status Checking**:
 ```
 User returns to "Receive Payments" tab
-→ App calls getConnectedAccountStatus()
-→ Shows account details:
-   - Status: Active
-   - Charges Enabled: Yes
-   - Payouts Enabled: Yes
-   - Account ID: acct_...
+→ App calls getPayoutCardStatus()
+→ Shows payout card details:
+   - Brand: Visa
+   - Last 4: 4242
+   - Expires: 12/2025
+   - Status: Instant payouts enabled
 ```
+
+### Payment Intent Metadata Format
+
+When creating payment intents with affiliate splits, payee information is stored in metadata:
+
+```javascript
+{
+  "payee_count": "2",
+  "payee_0_pubkey": "02a1b2c3...",  // Bob's pubKey
+  "payee_0_amount": "500",           // $5 in cents
+  "payee_1_pubkey": "02d4e5f6...",  // Carl's pubKey
+  "payee_1_amount": "4500"           // $45 in cents
+}
+```
+
+This metadata is read by `/payment/:id/process-transfers` to execute the instant payouts after payment confirmation.
 
 ### Storage
 
 **iOS (UserDefaults)**:
 ```swift
-UserDefaults.standard.set(accountId, forKey: "stripe_connected_account_id")
+UserDefaults.standard.set(payoutCardId, forKey: "stripe_payout_card_id")
 ```
 
 **Android (SharedPreferences)**:
 ```kotlin
 val prefs = getSharedPreferences("the_advancement", Context.MODE_PRIVATE)
-prefs.edit().putString("stripe_connected_account_id", accountId).apply()
+prefs.edit().putString("stripe_payout_card_id", payoutCardId).apply()
+```
+
+**Addie User Record**:
+```javascript
+{
+  uuid: "user-uuid",
+  pubKey: "02a1b2c3...",
+  stripeCustomerId: "cus_...",      // For making purchases
+  stripePayoutCardId: "pm_...",     // For receiving payouts (debit card)
+  stripeCardholderId: "ich_..."     // For virtual cards
+}
 ```
 
 ### Testing
@@ -966,13 +1175,29 @@ npm run test:the-advancement
 ```
 
 **Test Coverage**:
-- ✅ Create Connected Accounts for sellers
-- ✅ Generate and refresh onboarding links
-- ✅ Check account status
-- ✅ Create payment intents with affiliate splits
-- ✅ Process transfers to Connected Accounts
+- ✅ Check payout card status (initially empty)
+- ✅ Save debit cards as payout destinations
+- ✅ Validate debit-only restriction
+- ✅ Create payment intents with payee splits
+- ✅ Process instant transfers to payout cards
+- ✅ Handle missing payout cards gracefully
 
-See `/sharon/tests/the-advancement/README.md` for complete test documentation.
+See `/sharon/tests/the-advancement/payment-flows.test.js` and `/sharon/tests/the-advancement/README.md` for complete test documentation.
+
+### Benefits over Connected Accounts
+
+1. **Instant Setup**: No KYC onboarding required (~1 second vs 5-10 minutes)
+2. **Faster Payouts**: ~30 minutes vs 2-3 business days
+3. **Works with Issued Cards**: Planet Nine virtual cards can receive payouts immediately
+4. **Simpler UX**: 2-state UI (setup/not setup) vs 3-state (not setup/pending/active)
+5. **Lower Barrier**: Unbanked users with issued cards can receive payouts without traditional banking
+
+### Trade-offs
+
+- **Higher Fees**: 1.5% per payout vs 0.25% for Connected Accounts
+- **US-Only**: Direct debit card transfers only work in the US (acceptable for beta)
+
+**Decision**: The improved UX and instant setup justify the higher fees for our affiliate use case. Users can receive their first payout within 30 minutes of setup, compared to 2-3 days with Connected Accounts.
 
 ## Integration with Planet Nine Ecosystem
 

@@ -395,74 +395,54 @@
             <div class="card-form">
                 <h2 style="font-size: 18px; margin-bottom: 15px; color: #a78bfa;">💰 Receive Payments</h2>
                 <p style="color: #a78bfa; font-size: 14px; margin-bottom: 20px;">
-                    Set up your seller account to receive affiliate payouts from product sales across the Planet Nine network.
+                    Choose a debit card to receive instant affiliate payouts (30 minutes) from product sales across Planet Nine.
                 </p>
 
-                <div id="account-not-setup" style="display: none;">
-                    <div style="background: rgba(233, 30, 99, 0.1); border: 1px solid rgba(233, 30, 99, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-                        <div style="font-size: 14px; color: #e91e63; margin-bottom: 8px;">⚠️ Seller Account Required</div>
-                        <div style="font-size: 12px; color: #a78bfa;">You need to complete Stripe onboarding to receive payments from affiliate sales.</div>
-                    </div>
-
-                    <button class="button" onclick="createConnectedAccount()">
-                        🏦 Set Up Seller Account (via Stripe)
-                    </button>
-
-                    <div style="margin-top: 16px; padding: 12px; background: rgba(167, 139, 250, 0.1); border-radius: 8px; border: 1px solid rgba(167, 139, 250, 0.3);">
-                        <div style="font-size: 12px; color: #a78bfa; line-height: 1.6;">
-                            <strong>What you'll need:</strong><br>
-                            • Personal identification (SSN or Tax ID)<br>
-                            • Bank account information<br>
-                            • Business details (if applicable)<br>
-                            <br>
-                            <strong>How it works:</strong><br>
-                            1. Click "Set Up Seller Account" above<br>
-                            2. Complete Stripe's secure onboarding form<br>
-                            3. Return here to see your account status<br>
-                            4. Start receiving affiliate payouts!
-                        </div>
-                    </div>
-                </div>
-
-                <div id="account-setup" style="display: none;">
+                <div id="payout-card-setup" style="display: none;">
                     <div style="background: rgba(76, 175, 80, 0.1); border: 1px solid rgba(76, 175, 80, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-                        <div style="font-size: 14px; color: #4caf50; margin-bottom: 8px;">✓ Seller Account Active</div>
-                        <div style="font-size: 12px; color: #a78bfa;">Your account is ready to receive affiliate payouts!</div>
+                        <div style="font-size: 14px; color: #4caf50; margin-bottom: 8px;">✅ Payout Card Active</div>
+                        <div style="font-size: 12px; color: #a78bfa;">Ready to receive instant payouts!</div>
                     </div>
 
-                    <div id="account-details" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(167, 139, 250, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-                        <div style="font-size: 13px; color: #a78bfa; margin-bottom: 12px;"><strong>Account Details</strong></div>
-                        <div id="account-info" style="font-size: 12px; color: white; line-height: 1.8;">
-                            <div>Status: <span id="account-status" style="color: #4caf50;">Active</span></div>
-                            <div>Payouts Enabled: <span id="payouts-enabled" style="color: #4caf50;">Yes</span></div>
-                            <div>Charges Enabled: <span id="charges-enabled" style="color: #4caf50;">Yes</span></div>
-                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(167, 139, 250, 0.2);">
-                                Account ID: <span id="account-id" style="color: #a78bfa; font-family: monospace; font-size: 11px;">Loading...</span>
-                            </div>
+                    <div id="payout-card-details" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(167, 139, 250, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                        <div style="font-size: 13px; color: #a78bfa; margin-bottom: 12px;"><strong>Payout Destination</strong></div>
+                        <div id="payout-info" style="font-size: 12px; color: white; line-height: 1.8;">
+                            <div><span id="payout-brand" style="color: #e91e63; text-transform: uppercase;">VISA</span> •••• <span id="payout-last4">4242</span></div>
+                            <div style="color: #a78bfa;">Expires <span id="payout-exp">12/25</span></div>
                         </div>
                     </div>
-
-                    <button class="button" onclick="refreshAccountLink()" style="margin-bottom: 8px;">
-                        🔄 Refresh Onboarding Link
-                    </button>
 
                     <div style="margin-top: 12px; padding: 12px; background: rgba(167, 139, 250, 0.1); border-radius: 8px; border: 1px solid rgba(167, 139, 250, 0.3);">
                         <div style="font-size: 12px; color: #a78bfa; line-height: 1.6;">
-                            💡 <strong>About Affiliate Payments:</strong><br>
-                            When someone purchases a product you've duplicated (with 10% affiliate commission), your share is automatically transferred to this account. Payments typically arrive within 2-3 business days.
+                            ⚡ <strong>Instant Payouts:</strong><br>
+                            When someone purchases a product you've duplicated (with 10% affiliate commission), your share is automatically transferred to this debit card. <strong>Funds arrive in ~30 minutes!</strong>
                         </div>
                     </div>
                 </div>
 
-                <div id="account-pending" style="display: none;">
-                    <div style="background: rgba(241, 196, 15, 0.1); border: 1px solid rgba(241, 196, 15, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-                        <div style="font-size: 14px; color: #f1c40f; margin-bottom: 8px;">⏳ Onboarding Pending</div>
-                        <div style="font-size: 12px; color: #a78bfa;">You've started the onboarding process but haven't completed it yet.</div>
+                <div id="payout-card-not-setup" style="display: none;">
+                    <div style="background: rgba(233, 30, 99, 0.1); border: 1px solid rgba(233, 30, 99, 0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                        <div style="font-size: 14px; color: #e91e63; margin-bottom: 8px;">💳 Choose Payout Card</div>
+                        <div style="font-size: 12px; color: #a78bfa;">Select a debit card from your saved cards or issued cards to receive affiliate payouts.</div>
                     </div>
 
-                    <button class="button" onclick="refreshAccountLink()">
-                        🔗 Continue Onboarding
-                    </button>
+                    <div style="margin-bottom: 16px;">
+                        <div style="font-size: 13px; color: #a78bfa; margin-bottom: 12px;"><strong>Your Saved Cards</strong></div>
+                        <div id="payout-cards-list" style="max-height: 200px; overflow-y: auto;">
+                            <p style="color: #a78bfa; font-size: 14px;">Loading cards...</p>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 16px; padding: 12px; background: rgba(167, 139, 250, 0.1); border-radius: 8px; border: 1px solid rgba(167, 139, 250, 0.3);">
+                        <div style="font-size: 12px; color: #a78bfa; line-height: 1.6;">
+                            💡 <strong>How it works:</strong><br>
+                            1. Choose a debit card from above<br>
+                            2. Click "Use for Payouts"<br>
+                            3. That's it! Start earning affiliate commissions<br>
+                            <br>
+                            <strong>Note:</strong> Only debit cards can receive payouts. Your Planet Nine issued cards work perfectly!
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -519,7 +499,7 @@
                 loadIssuedCards();
                 loadTransactions();
             } else if (tab === 'receive') {
-                checkConnectedAccountStatus();
+                checkPayoutCardStatus();
             }
         }
 
@@ -983,113 +963,137 @@
             document.getElementById('error-message').classList.remove('visible');
         }
 
-        // Connected Account Management
-        async function checkConnectedAccountStatus() {
-            try {
-                const status = await callAndroid('getConnectedAccountStatus');
-
-                // Hide all states first
-                document.getElementById('account-not-setup').style.display = 'none';
-                document.getElementById('account-setup').style.display = 'none';
-                document.getElementById('account-pending').style.display = 'none';
-
-                if (!status || !status.hasAccount) {
-                    // No account created yet
-                    document.getElementById('account-not-setup').style.display = 'block';
-                } else if (status.detailsSubmitted && status.chargesEnabled && status.payoutsEnabled) {
-                    // Account fully onboarded
-                    document.getElementById('account-setup').style.display = 'block';
-                    updateAccountDetails(status);
-                } else {
-                    // Account created but onboarding incomplete
-                    document.getElementById('account-pending').style.display = 'block';
-                }
-            } catch (error) {
-                console.error('Failed to check account status:', error);
-                // Show setup screen on error
-                document.getElementById('account-not-setup').style.display = 'block';
-                document.getElementById('account-setup').style.display = 'none';
-                document.getElementById('account-pending').style.display = 'none';
-            }
-        }
-
-        function updateAccountDetails(status) {
-            // Update status text
-            const statusText = status.detailsSubmitted && status.chargesEnabled && status.payoutsEnabled
-                ? 'Active'
-                : 'Incomplete';
-            const statusColor = statusText === 'Active' ? '#4caf50' : '#f1c40f';
-            document.getElementById('account-status').textContent = statusText;
-            document.getElementById('account-status').style.color = statusColor;
-
-            // Update payouts enabled
-            const payoutsText = status.payoutsEnabled ? 'Yes' : 'No';
-            const payoutsColor = status.payoutsEnabled ? '#4caf50' : '#f44336';
-            document.getElementById('payouts-enabled').textContent = payoutsText;
-            document.getElementById('payouts-enabled').style.color = payoutsColor;
-
-            // Update charges enabled
-            const chargesText = status.chargesEnabled ? 'Yes' : 'No';
-            const chargesColor = status.chargesEnabled ? '#4caf50' : '#f44336';
-            document.getElementById('charges-enabled').textContent = chargesText;
-            document.getElementById('charges-enabled').style.color = chargesColor;
-
-            // Update account ID
-            if (status.accountId) {
-                const truncatedId = status.accountId.substring(0, 12) + '...';
-                document.getElementById('account-id').textContent = truncatedId;
-            }
-        }
-
-        async function createConnectedAccount() {
+        // Payout Card Management
+        async function checkPayoutCardStatus() {
             try {
                 showLoading(true);
-                const result = await callAndroid('createConnectedAccount', { accountType: 'express' });
+                const status = await callAndroid('getPayoutCardStatus');
 
-                if (result && result.accountLink) {
-                    showSuccess('Opening Stripe onboarding in browser...');
+                // Hide both states first
+                document.getElementById('payout-card-not-setup').style.display = 'none';
+                document.getElementById('payout-card-setup').style.display = 'none';
 
-                    // Open the account link in external browser
-                    setTimeout(() => {
-                        window.open(result.accountLink, '_blank');
-                    }, 1000);
-
-                    // Refresh status after a delay to check if user completed onboarding
-                    setTimeout(() => {
-                        checkConnectedAccountStatus();
-                    }, 3000);
+                if (!status || !status.hasPayoutCard) {
+                    // No payout card saved yet
+                    document.getElementById('payout-card-not-setup').style.display = 'block';
+                    loadAvailableCards();
                 } else {
-                    showError('Failed to create account: No onboarding link received');
+                    // Payout card is setup
+                    document.getElementById('payout-card-setup').style.display = 'block';
+                    updatePayoutCardDetails(status);
                 }
             } catch (error) {
-                showError('Failed to create account: ' + error.message);
+                console.error('Failed to check payout card status:', error);
+                // Default to showing not setup state
+                document.getElementById('payout-card-not-setup').style.display = 'block';
+                document.getElementById('payout-card-setup').style.display = 'none';
             } finally {
                 showLoading(false);
             }
         }
 
-        async function refreshAccountLink() {
+        function updatePayoutCardDetails(status) {
+            // Update payout card display
+            document.getElementById('payout-brand').textContent = (status.brand || 'CARD').toUpperCase();
+            document.getElementById('payout-last4').textContent = status.last4 || '****';
+            document.getElementById('payout-exp').textContent = status.expMonth + '/' + status.expYear;
+        }
+
+        async function loadAvailableCards() {
+            try {
+                // Load saved cards
+                const savedCardsResponse = await callAndroid('getSavedCards');
+
+                // Load issued cards
+                const issuedCardsResponse = await callAndroid('getIssuedCards');
+
+                const allCards = [];
+
+                // Add saved cards (only debit cards)
+                if (savedCardsResponse && savedCardsResponse.cards) {
+                    savedCardsResponse.cards.forEach(card => {
+                        if (card.funding === 'debit') {
+                            allCards.push({
+                                id: card.id,
+                                brand: card.brand,
+                                last4: card.last4,
+                                expMonth: card.exp_month,
+                                expYear: card.exp_year,
+                                type: 'saved'
+                            });
+                        }
+                    });
+                }
+
+                // Add issued cards (all are debit cards)
+                if (issuedCardsResponse && issuedCardsResponse.cards) {
+                    issuedCardsResponse.cards.forEach(card => {
+                        if (card.status === 'active') {
+                            allCards.push({
+                                id: card.cardId,
+                                brand: 'PLANET NINE',
+                                last4: card.last4,
+                                expMonth: card.expMonth,
+                                expYear: card.expYear,
+                                type: 'issued'
+                            });
+                        }
+                    });
+                }
+
+                displayAvailableCards(allCards);
+            } catch (error) {
+                console.error('Failed to load available cards:', error);
+                document.getElementById('payout-cards-list').innerHTML =
+                    '<p style="color: #f44336; font-size: 14px;">Failed to load cards. Please try again.</p>';
+            }
+        }
+
+        function displayAvailableCards(cards) {
+            const listEl = document.getElementById('payout-cards-list');
+
+            if (cards.length === 0) {
+                listEl.innerHTML = '<p style="color: #a78bfa; font-size: 14px;">No debit cards available. Please add a debit card or get a Planet Nine virtual card first.</p>';
+                return;
+            }
+
+            listEl.innerHTML = cards.map(card => `
+                <div class="card-item" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                    <div class="card-info">
+                        <div class="card-brand">${card.brand}</div>
+                        <div class="card-last4">•••• ${card.last4}</div>
+                        <div class="card-exp">Expires ${card.expMonth}/${card.expYear}</div>
+                    </div>
+                    <button
+                        class="button"
+                        style="width: auto; padding: 8px 16px; font-size: 13px;"
+                        onclick="selectPayoutCard('${card.id}')">
+                        Use for Payouts
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function selectPayoutCard(paymentMethodId) {
+            if (!confirm('Use this card as your payout destination?\n\nFuture affiliate commissions will be sent to this card.')) {
+                return;
+            }
+
             try {
                 showLoading(true);
-                const result = await callAndroid('refreshAccountLink');
+                const result = await callAndroid('savePayoutCard', { paymentMethodId });
 
-                if (result && result.accountLink) {
-                    showSuccess('Opening Stripe onboarding in browser...');
-
-                    // Open the account link in external browser
+                if (result && result.success) {
+                    showSuccess('Payout card saved! You can now receive affiliate commissions.');
+                    // Refresh status to show the active state
                     setTimeout(() => {
-                        window.open(result.accountLink, '_blank');
-                    }, 1000);
-
-                    // Refresh status after a delay
-                    setTimeout(() => {
-                        checkConnectedAccountStatus();
-                    }, 3000);
+                        checkPayoutCardStatus();
+                    }, 1500);
                 } else {
-                    showError('Failed to refresh link: No onboarding link received');
+                    showError(result.error || 'Failed to save payout card. Please try again.');
                 }
             } catch (error) {
-                showError('Failed to refresh link: ' + error.message);
+                showError('Failed to save payout card: ' + error.message);
             } finally {
                 showLoading(false);
             }
