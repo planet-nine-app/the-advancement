@@ -95,7 +95,8 @@ const moduleConfigs = [
   { dir: 'simulations', file: 'simulations.js', generators: ['generateGalaxyCollisionSVG', 'generatePlanetNineSpaceshipSVG'], data: 'simulationsPosts' },
   { dir: 'trading-cards', file: 'trading-cards.js', generators: ['generateSTEMPioneerCardSVG'], data: 'tradingCardsPosts' },
   { dir: 'food-banks', file: 'food-banks.js', generators: ['generateFoodBankSVG', 'generateSNAPBenefitsSVG', 'generateSNAPProcessSVG'], data: 'foodBanksPosts' },
-  { dir: 'social', file: 'social.js', generators: ['generateMarketplaceSVG', 'generateTravelingMerchantSVG'], data: 'socialPosts' }
+  { dir: 'social', file: 'social.js', generators: ['generateMarketplaceSVG', 'generateTravelingMerchantSVG'], data: 'socialPosts' },
+  { dir: 'products', file: 'products.js', generators: ['generateProductSVG'], data: 'productsPosts' }
 ];
 
 // Determine which base(s) a category should be seeded to
@@ -196,6 +197,14 @@ async function seedAllExamples() {
             created: new Date().toISOString(),
             ...post // Include all original post data
           };
+
+          // For products, ensure price/payees structure is preserved
+          if (config.dir === 'products') {
+            bdoData.price = post.price;
+            bdoData.currency = post.currency;
+            bdoData.creator = post.creator;
+            bdoData.payees = post.payees || [];
+          }
 
           // Generate emojiShortcode if appropriate
           const metadata = {

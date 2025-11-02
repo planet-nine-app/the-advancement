@@ -1509,17 +1509,25 @@
                 }
                 
                 // Extract purchase details
-                const { amount, productId, price, name } = spellComponents;
+                const { amount, productId, price, name, currency, payees, creator, productName } = spellComponents;
                 const purchaseAmount = amount || price;
-                
+
                 if (!purchaseAmount || !productId) {
                     console.error('❌ Purchase spell missing required data');
                     alert('⚠️ Purchase spell error - missing amount/price or productId');
                     return;
                 }
-                
+
                 console.log(`💰 [CONTENT] Purchase request - $${purchaseAmount/100}, productId: ${productId}`);
-                
+
+                // Log payees if present
+                if (payees && Array.isArray(payees) && payees.length > 0) {
+                    console.log(`🔗 [CONTENT] Affiliate purchase detected - ${payees.length} affiliate(s)`);
+                    payees.forEach((payee, i) => {
+                        console.log(`   Affiliate ${i+1}: $${payee.amount/100} to ${payee.pubKey.substring(0, 20)}...`);
+                    });
+                }
+
                 // Visual feedback - flash purple briefly
                 const originalFill = element.getAttribute('fill') || element.style.backgroundColor;
                 if (element.tagName === 'rect' || element.tagName === 'circle') {
@@ -1527,10 +1535,17 @@
                 } else {
                     element.style.backgroundColor = '#9b59b6';
                 }
-                
+
                 // Step 1: Get payment intent from Addie via extension
                 console.log('💳 [CONTENT] Step 1: Requesting payment intent from extension...');
-                const paymentIntentResult = await this.createAddiePaymentIntent(purchaseAmount, productId);
+                const paymentIntentResult = await this.createAddiePaymentIntent(
+                    purchaseAmount,
+                    productId,
+                    currency || 'usd',
+                    payees || [],
+                    creator,
+                    productName || name
+                );
                 
                 if (!paymentIntentResult.success) {
                     throw new Error(`Payment intent failed: ${paymentIntentResult.error}`);
@@ -1578,18 +1593,26 @@
             }
         }
 
-        async createAddiePaymentIntent(amount, productId) {
+        async createAddiePaymentIntent(amount, productId, currency = 'usd', payees = [], creator = null, productName = null) {
             console.log('💳 [CONTENT] Creating Addie payment intent via signed request...');
-            
+
             try {
                 console.log(`💳 Creating Addie payment intent for $${amount/100} (${productId})`);
-                
+
+                // Log affiliate details
+                if (payees.length > 0) {
+                    console.log(`🔗 Including ${payees.length} affiliate payee(s) in payment intent`);
+                }
+
                 // Create signed request via Swift (like BDO)
                 const message = {
                     type: 'createAddiePaymentIntent',
                     amount: amount,
-                    currency: 'usd',
-                    productId: productId
+                    currency: currency,
+                    productId: productId,
+                    payees: payees,
+                    creator: creator,
+                    productName: productName
                 };
                 
                 let response;

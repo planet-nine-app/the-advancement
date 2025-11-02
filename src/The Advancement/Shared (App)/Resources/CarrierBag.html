@@ -160,6 +160,26 @@
             color: #ff6090;
         }
 
+        .affiliate-button {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: linear-gradient(135deg, #2ECC71, #27AE60);
+            border: 2px solid #27AE60;
+            border-radius: 8px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .affiliate-button:active {
+            background: linear-gradient(135deg, #27AE60, #2ECC71);
+            transform: scale(0.98);
+            box-shadow: 0 0 12px rgba(46, 204, 113, 0.6);
+        }
+
         /* Empty state */
         .collection-empty {
             text-align: center;
@@ -277,7 +297,7 @@
                         <div class="collection-items">
                             ${items.map((item, index) => {
                                 // Special handling for addresses
-                                let title, subtitle;
+                                let title, subtitle, affiliateButton = '';
                                 if (collection.name === 'addresses') {
                                     title = item.name || 'Address';
                                     subtitle = `${item.recipientName || ''} • ${item.city || ''}`;
@@ -287,12 +307,22 @@
                                 } else {
                                     title = item.title || 'Untitled Item';
                                     subtitle = item.emojicode || '';
+
+                                    // Check if this is a product item (has price and payees)
+                                    if (item.price && item.payees && Array.isArray(item.payees)) {
+                                        affiliateButton = `
+                                            <div class="affiliate-button" data-collection="${collection.name}" data-index="${index}">
+                                                🔗 Create Affiliate Link
+                                            </div>
+                                        `;
+                                    }
                                 }
 
                                 return `
                                     <div class="collection-item" data-collection="${collection.name}" data-index="${index}">
                                         <div class="item-title">${title}</div>
                                         ${subtitle ? `<div class="item-emojicode">${subtitle}</div>` : ''}
+                                        ${affiliateButton}
                                     </div>
                                 `;
                             }).join('')}
@@ -339,6 +369,18 @@
                     });
                 });
 
+                // Add tap handler for affiliate buttons
+                card.querySelectorAll('.affiliate-button').forEach(buttonEl => {
+                    buttonEl.addEventListener('click', (e) => {
+                        e.stopPropagation();
+
+                        const collectionName = buttonEl.dataset.collection;
+                        const index = parseInt(buttonEl.dataset.index);
+                        const item = items[index];
+                        createAffiliateLink(collectionName, item, index);
+                    });
+                });
+
                 grid.appendChild(card);
             });
 
@@ -371,6 +413,47 @@
             if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.addAddress) {
                 window.webkit.messageHandlers.addAddress.postMessage({
                     action: 'add'
+                });
+            } else {
+                console.warn('⚠️ Swift message handler not available');
+            }
+        }
+
+        // Create affiliate link for a product
+        function createAffiliateLink(collectionName, item, index) {
+            console.log('🔗 Creating affiliate link for product:', item.title);
+
+            // Validate product has required fields
+            if (!item.price || !item.payees || !Array.isArray(item.payees)) {
+                console.error('❌ Item is not a valid product (missing price or payees)');
+                return;
+            }
+
+            // Calculate affiliate commission: 10% of total price
+            const affiliateAmount = Math.floor(item.price * 0.10);
+
+            // Create new payees array by copying existing payees and adding user as affiliate
+            // Note: Creator is NOT in payees array - they get remaining amount after affiliates
+            const newPayees = [
+                ...item.payees,  // Copy any existing affiliates
+                { pubKey: 'USER_PUBKEY_PLACEHOLDER', amount: affiliateAmount }  // Add this user as 10% affiliate
+            ];
+
+            // Prepare affiliate product data
+            const affiliateProduct = {
+                ...item,
+                payees: newPayees,
+                isAffiliateLink: true,
+                originalEmojicode: item.emojicode
+            };
+
+            // Send message to Swift to create new BDO with updated payees
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.createAffiliateBDO) {
+                window.webkit.messageHandlers.createAffiliateBDO.postMessage({
+                    action: 'createAffiliate',
+                    collection: collectionName,
+                    index: index,
+                    product: affiliateProduct
                 });
             } else {
                 console.warn('⚠️ Swift message handler not available');

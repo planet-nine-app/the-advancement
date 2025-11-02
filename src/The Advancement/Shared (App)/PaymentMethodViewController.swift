@@ -117,6 +117,19 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         dismiss(animated: true)
     }
 
+    // Public method to switch tabs from external callers
+    public func switchToTab(_ tabName: String) {
+        NSLog("PAYMENTMETHOD: 📑 Switching to tab: %@", tabName)
+        let jsCode = "if (typeof switchToTab === 'function') { switchToTab('\(tabName)'); }"
+        webView.evaluateJavaScript(jsCode) { _, error in
+            if let error = error {
+                NSLog("PAYMENTMETHOD: ⚠️ Failed to switch tab: %@", error.localizedDescription)
+            } else {
+                NSLog("PAYMENTMETHOD: ✅ Tab switched successfully")
+            }
+        }
+    }
+
     // MARK: - WKScriptMessageHandler
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -204,8 +217,8 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         ]
 
         // Try to get user's pubKey and sign the request
-        if let keys = SharedUserDefaults.getSessionlessKeys(),
-           let pubKey = keys["publicKey"] as? String {
+        if let keys = sessionless.getKeys() {
+            let pubKey = keys.publicKey
 
             // Sign the request
             let message = timestamp + pubKey
@@ -294,8 +307,7 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
 
         // Try to fetch from Stripe API
         guard let homeBase = getHomeBaseURL(),
-              let keys = SharedUserDefaults.getSessionlessKeys(),
-              let pubKey = keys["publicKey"] as? String else {
+              let keys = sessionless.getKeys() else {
             // Fallback to local storage
             NSLog("PAYMENTMETHOD: ⚠️ No authentication, using local storage (%d cards)", savedCards.count)
             sendResponse(messageId: messageId, result: [
@@ -303,6 +315,7 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
             ])
             return
         }
+        let pubKey = keys.publicKey
 
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
         let endpoint = "\(homeBase)/saved-payment-methods?timestamp=\(timestamp)&processor=stripe&pubKey=\(pubKey)"
@@ -380,12 +393,12 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
 
         // Try to delete from Stripe
         guard let homeBase = getHomeBaseURL(),
-              let keys = SharedUserDefaults.getSessionlessKeys(),
-              let pubKey = keys["publicKey"] as? String else {
+              let keys = sessionless.getKeys() else {
             NSLog("PAYMENTMETHOD: ⚠️ No authentication, deleted locally only")
             sendResponse(messageId: messageId, result: ["success": true])
             return
         }
+        let pubKey = keys.publicKey
 
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
         let endpoint = "\(homeBase)/saved-payment-methods/\(paymentMethodId)?timestamp=\(timestamp)&processor=stripe&pubKey=\(pubKey)"
@@ -413,11 +426,11 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         NSLog("PAYMENTMETHOD: 🌐 Issuing virtual card...")
 
         guard let homeBase = getHomeBaseURL(),
-              let keys = SharedUserDefaults.getSessionlessKeys(),
-              let pubKey = keys["publicKey"] as? String else {
+              let keys = sessionless.getKeys() else {
             sendResponse(messageId: messageId, error: "Authentication required")
             return
         }
+        let pubKey = keys.publicKey
 
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
         let endpoint = "\(homeBase)/issuing/card/virtual"
@@ -476,11 +489,11 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         NSLog("PAYMENTMETHOD: 📬 Issuing physical card...")
 
         guard let homeBase = getHomeBaseURL(),
-              let keys = SharedUserDefaults.getSessionlessKeys(),
-              let pubKey = keys["publicKey"] as? String else {
+              let keys = sessionless.getKeys() else {
             sendResponse(messageId: messageId, error: "Authentication required")
             return
         }
+        let pubKey = keys.publicKey
 
         // Get shipping address from CarrierBag
         guard let carrierBag = SharedUserDefaults.getCarrierBag(),
@@ -547,11 +560,11 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         NSLog("PAYMENTMETHOD: 📋 Getting issued cards...")
 
         guard let homeBase = getHomeBaseURL(),
-              let keys = SharedUserDefaults.getSessionlessKeys(),
-              let pubKey = keys["publicKey"] as? String else {
+              let keys = sessionless.getKeys() else {
             sendResponse(messageId: messageId, result: ["cards": []])
             return
         }
+        let pubKey = keys.publicKey
 
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
         let message = timestamp + pubKey
@@ -595,11 +608,11 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         NSLog("PAYMENTMETHOD: 🔍 Getting card details for: %@", cardId)
 
         guard let homeBase = getHomeBaseURL(),
-              let keys = SharedUserDefaults.getSessionlessKeys(),
-              let pubKey = keys["publicKey"] as? String else {
+              let keys = sessionless.getKeys() else {
             sendResponse(messageId: messageId, error: "Authentication required")
             return
         }
+        let pubKey = keys.publicKey
 
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
         let message = timestamp + pubKey + cardId
@@ -649,11 +662,11 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         NSLog("PAYMENTMETHOD: 🔄 Updating card status: %@ -> %@", cardId, status)
 
         guard let homeBase = getHomeBaseURL(),
-              let keys = SharedUserDefaults.getSessionlessKeys(),
-              let pubKey = keys["publicKey"] as? String else {
+              let keys = sessionless.getKeys() else {
             sendResponse(messageId: messageId, error: "Authentication required")
             return
         }
+        let pubKey = keys.publicKey
 
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
         let endpoint = "\(homeBase)/issuing/card/\(cardId)/status"
@@ -717,11 +730,11 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         NSLog("PAYMENTMETHOD: 👤 Creating cardholder: %@", name)
 
         guard let homeBase = getHomeBaseURL(),
-              let keys = SharedUserDefaults.getSessionlessKeys(),
-              let pubKey = keys["publicKey"] as? String else {
+              let keys = sessionless.getKeys() else {
             sendResponse(messageId: messageId, error: "Authentication required")
             return
         }
+        let pubKey = keys.publicKey
 
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
         let endpoint = "\(homeBase)/issuing/cardholder"
@@ -781,11 +794,11 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         NSLog("PAYMENTMETHOD: 🔍 Checking cardholder status...")
 
         guard let homeBase = getHomeBaseURL(),
-              let keys = SharedUserDefaults.getSessionlessKeys(),
-              let pubKey = keys["publicKey"] as? String else {
+              let keys = sessionless.getKeys() else {
             sendResponse(messageId: messageId, result: ["hasCardholder": false])
             return
         }
+        let pubKey = keys.publicKey
 
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
         let message = timestamp + pubKey
@@ -825,11 +838,11 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         NSLog("PAYMENTMETHOD: 📊 Getting transactions...")
 
         guard let homeBase = getHomeBaseURL(),
-              let keys = SharedUserDefaults.getSessionlessKeys(),
-              let pubKey = keys["publicKey"] as? String else {
+              let keys = sessionless.getKeys() else {
             sendResponse(messageId: messageId, result: ["transactions": []])
             return
         }
+        let pubKey = keys.publicKey
 
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
         let message = timestamp + pubKey
@@ -875,11 +888,11 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         NSLog("PAYMENTMETHOD: 💳 Saving payout card: %@", paymentMethodId)
 
         guard let homeBase = getHomeBaseURL(),
-              let keys = SharedUserDefaults.getSessionlessKeys(),
-              let pubKey = keys["publicKey"] as? String else {
+              let keys = sessionless.getKeys() else {
             sendResponse(messageId: messageId, error: "Authentication required")
             return
         }
+        let pubKey = keys.publicKey
 
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
         let endpoint = "\(homeBase)/payout-card/save"
@@ -941,11 +954,11 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         NSLog("PAYMENTMETHOD: 🔍 Checking payout card status...")
 
         guard let homeBase = getHomeBaseURL(),
-              let keys = SharedUserDefaults.getSessionlessKeys(),
-              let pubKey = keys["publicKey"] as? String else {
+              let keys = sessionless.getKeys() else {
             sendResponse(messageId: messageId, result: ["hasPayoutCard": false])
             return
         }
+        let pubKey = keys.publicKey
 
         let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
         let message = timestamp + pubKey

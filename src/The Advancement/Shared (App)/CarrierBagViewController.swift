@@ -59,6 +59,7 @@ class CarrierBagViewController: UIViewController, WKScriptMessageHandler, WKNavi
         NotificationCenter.default.removeObserver(self)
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "itemSelected")
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "addAddress")
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "createAffiliateBDO")
     }
 
     private func setupWebView() {
@@ -67,6 +68,7 @@ class CarrierBagViewController: UIViewController, WKScriptMessageHandler, WKNavi
         // Register message handlers
         contentController.add(self, name: "itemSelected")
         contentController.add(self, name: "addAddress")
+        contentController.add(self, name: "createAffiliateBDO")
 
         let config = WKWebViewConfiguration()
         config.userContentController = contentController
@@ -190,6 +192,17 @@ class CarrierBagViewController: UIViewController, WKScriptMessageHandler, WKNavi
         } else if message.name == "addAddress" {
             NSLog("ADVANCEAPP: 📮 Add new address requested")
             showAddressForm(address: nil, index: nil)
+        } else if message.name == "createAffiliateBDO" {
+            guard let messageBody = message.body as? [String: Any],
+                  let action = messageBody["action"] as? String,
+                  action == "createAffiliate",
+                  let product = messageBody["product"] as? [String: Any] else {
+                NSLog("ADVANCEAPP: ❌ Invalid createAffiliateBDO message")
+                return
+            }
+
+            NSLog("ADVANCEAPP: 🔗 Creating affiliate BDO for product: %@", product["title"] as? String ?? "Unknown")
+            createAffiliateBDO(product: product)
         }
     }
 
@@ -506,6 +519,167 @@ class CarrierBagViewController: UIViewController, WKScriptMessageHandler, WKNavi
         loadCarrierBagData()
 
         NSLog("ADVANCEAPP: ✅ Address removed")
+    }
+
+    // MARK: - Affiliate BDO Creation
+
+    private func createAffiliateBDO(product: [String: Any]) {
+        NSLog("ADVANCEAPP: 🔗 Starting affiliate BDO creation...")
+
+        // Get user's pub key from Sessionless
+        let sessionless = Sessionless()
+        guard let keys = sessionless.getKeys() else {
+            NSLog("ADVANCEAPP: ❌ No public key found")
+            showAlert(title: "Error", message: "Unable to get your public key. Please restart the app.")
+            return
+        }
+        let pubKey = keys.publicKey
+
+        NSLog("ADVANCEAPP: 🔗 User pubKey: %@", String(pubKey.prefix(20)))
+
+        // Replace USER_PUBKEY_PLACEHOLDER with actual pubKey
+        var affiliateProduct = product
+        if var payees = affiliateProduct["payees"] as? [[String: Any]] {
+            for i in 0..<payees.count {
+                if let payeePubKey = payees[i]["pubKey"] as? String, payeePubKey == "USER_PUBKEY_PLACEHOLDER" {
+                    payees[i]["pubKey"] = pubKey
+                    NSLog("ADVANCEAPP: 🔗 Replaced placeholder with user's pubKey")
+                }
+            }
+            affiliateProduct["payees"] = payees
+        }
+
+        // Generate new keypair for the affiliate BDO
+        guard let fountKeys = sessionless.getKeys() else {
+            NSLog("ADVANCEAPP: ❌ Failed to get sessionless keys")
+            showAlert(title: "Error", message: "Failed to get sessionless keys.")
+            return
+        }
+
+        guard let newKeys = sessionless.generateKeys() else {
+            NSLog("ADVANCEAPP: ❌ Failed to generate new keypair")
+            showAlert(title: "Error", message: "Failed to generate new keypair.")
+            return
+        }
+        let newPubKey = newKeys.publicKey
+        NSLog("ADVANCEAPP: 🔗 Generated new keypair for affiliate BDO: %@", String(newPubKey.prefix(20)))
+
+        // Re-generate SVG with updated payees
+        // Note: This requires access to the product SVG generation function
+        // For now, we'll just update the payees in the product data
+        // TODO: Re-generate SVG with spell-components containing updated payees
+
+        // Create BDO via Fount
+        let fountUUID = UserDefaults.standard.string(forKey: "fount_uuid") ?? ""
+        let timestamp = String(Int64(Date().timeIntervalSince1970 * 1000))
+
+        // Sign the create BDO request
+        let message = timestamp + fountUUID + newPubKey
+        guard let signature = sessionless.sign(message: message) else {
+            NSLog("ADVANCEAPP: ❌ Failed to sign message")
+            showAlert(title: "Error", message: "Failed to sign request.")
+            return
+        }
+
+        // Prepare BDO data
+        let bdoData: [String: Any] = [
+            "title": affiliateProduct["title"] ?? "Product",
+            "description": affiliateProduct["description"] ?? "",
+            "type": "product",
+            "price": affiliateProduct["price"] ?? 0,
+            "currency": affiliateProduct["currency"] ?? "usd",
+            "payees": affiliateProduct["payees"] ?? [],
+            "isAffiliateLink": true,
+            "originalEmojicode": affiliateProduct["originalEmojicode"] ?? ""
+        ]
+
+        let requestBody: [String: Any] = [
+            "timestamp": timestamp,
+            "uuid": fountUUID,
+            "pubKey": newPubKey,
+            "signature": signature,
+            "data": bdoData,
+            "getSignedMessage": false,
+            "saveToUser": false
+        ]
+
+        // Call Fount to create BDO
+        let fountUrl = Configuration.fountBaseURL
+        guard let url = URL(string: "\(fountUrl)/user/\(fountUUID)/bdo") else {
+            NSLog("ADVANCEAPP: ❌ Invalid URL")
+            return
+        }
+
+        NSLog("ADVANCEAPP: 🔗 Creating BDO at: %@", url.absoluteString)
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        } catch {
+            NSLog("ADVANCEAPP: ❌ Failed to serialize request: %@", error.localizedDescription)
+            return
+        }
+
+        // Show loading indicator
+        let loadingAlert = UIAlertController(title: "Creating Affiliate Link", message: "Please wait...", preferredStyle: .alert)
+        present(loadingAlert, animated: true)
+
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                loadingAlert.dismiss(animated: true) {
+                    guard let self = self else { return }
+
+                    if let error = error {
+                        NSLog("ADVANCEAPP: ❌ Network error: %@", error.localizedDescription)
+                        self.showAlert(title: "Error", message: "Network error: \(error.localizedDescription)")
+                        return
+                    }
+
+                    guard let data = data else {
+                        NSLog("ADVANCEAPP: ❌ No data received")
+                        self.showAlert(title: "Error", message: "No data received from server.")
+                        return
+                    }
+
+                    // Parse response
+                    do {
+                        if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                            NSLog("ADVANCEAPP: 🔗 BDO created successfully")
+
+                            // Get emojicode from response
+                            let emojicode = json["emojicode"] as? String ?? "Unknown"
+                            let bdoPubKey = json["pubKey"] as? String ?? newPubKey
+
+                            NSLog("ADVANCEAPP: 🔗 New emojicode: %@", emojicode)
+
+                            // Show success message with emojicode
+                            let successMessage = "Your affiliate link has been created!\n\nEmojicode: \(emojicode)\n\nShare this emojicode with others. When they purchase using it, you'll receive 10% commission!"
+
+                            let alert = UIAlertController(title: "✅ Affiliate Link Created", message: successMessage, preferredStyle: .alert)
+                            alert.addAction(UIAlertAction(title: "Copy Emojicode", style: .default) { _ in
+                                UIPasteboard.general.string = emojicode
+                                NSLog("ADVANCEAPP: 📋 Copied emojicode to clipboard")
+                            })
+                            alert.addAction(UIAlertAction(title: "Done", style: .default))
+
+                            self.present(alert, animated: true)
+                        }
+                    } catch {
+                        NSLog("ADVANCEAPP: ❌ Failed to parse response: %@", error.localizedDescription)
+                        self.showAlert(title: "Error", message: "Failed to parse server response.")
+                    }
+                }
+            }
+        }.resume()
+    }
+
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
     }
 
     // MARK: - Music Player

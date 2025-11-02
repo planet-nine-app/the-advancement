@@ -101,6 +101,19 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             THE ADVANCEMENT
         </text>
 
+        <!-- Post Button (top left) -->
+        <g id="postPaymentButton" class="button-group">
+            <ellipse cx="15" cy="15" rx="12" ry="9" fill="rgba(233, 30, 99, 0.2)" stroke="#e91e63" stroke-width="0.3" filter="url(#pinkGlow)">
+                <animate attributeName="opacity" values="0.6;1;0.6" dur="2.5s" repeatCount="indefinite"/>
+            </ellipse>
+            <text x="15" y="13" text-anchor="middle" style="font-family: -apple-system; font-size: 1.8px; font-weight: 700; letter-spacing: 0.1px;" fill="#e91e63" filter="url(#pinkGlow)">
+                Push me
+            </text>
+            <text x="15" y="17" text-anchor="middle" style="font-family: -apple-system; font-size: 1.8px; font-weight: 700; letter-spacing: 0.1px;" fill="#e91e63" filter="url(#pinkGlow)">
+                to post
+            </text>
+        </g>
+
         <!-- Carrier Bag Button (top right) -->
         <g id="bagButton" class="button-group">
             <ellipse cx="85" cy="15" rx="12" ry="9" fill="rgba(233, 30, 99, 0.2)" stroke="#e91e63" stroke-width="0.3" filter="url(#pinkGlow)">
@@ -128,10 +141,10 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
                 </text>
             </g>
 
-            <!-- Keyboard Installation Notice (hidden by default) -->
+            <!-- Keyboard Installation Notice (hidden by default, moved down 20 units) -->
             <g id="keyboardNotice" class="button-group" opacity="0">
-                <rect x="10" y="25" width="80" height="6" rx="1" fill="rgba(251, 191, 36, 0.1)" stroke="#fbbf24" stroke-width="0.2" opacity="0.8"/>
-                <text x="50" y="29" text-anchor="middle" style="font-family: -apple-system; font-size: 2px; font-weight: 500; letter-spacing: 0.1px;" fill="#fbbf24" opacity="0.9">
+                <rect x="10" y="45" width="80" height="6" rx="1" fill="rgba(251, 191, 36, 0.1)" stroke="#fbbf24" stroke-width="0.2" opacity="0.8"/>
+                <text x="50" y="49" text-anchor="middle" style="font-family: -apple-system; font-size: 2px; font-weight: 500; letter-spacing: 0.1px;" fill="#fbbf24" opacity="0.9">
                     ⌨️ Enable AdvanceKey in Settings
                 </text>
             </g>
@@ -206,14 +219,21 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
 
             console.log('📤 Posting text:', text);
 
-            // Send to Swift
+            // Check if user has a card first
             webkit.messageHandlers.mainApp.postMessage({
-                action: 'post',
+                action: 'checkCard',
                 text: text
             });
+        });
 
-            // Clear input
-            textInput.value = '';
+        // Post Payment button click handler
+        document.getElementById('postPaymentButton').addEventListener('click', function() {
+            console.log('💳 Push me to post button clicked');
+
+            // Send to Swift
+            webkit.messageHandlers.mainApp.postMessage({
+                action: 'openPayment'
+            });
         });
 
         // BAG button click handler
@@ -251,6 +271,101 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
 
         // Check keyboard status on load
         checkKeyboardInstallation();
+
+        // Function to show "no dice" animation and arrow
+        function showNoDiceAnimation() {
+            console.log('🎲 Showing no dice animation');
+
+            // Create "no dice" text element
+            const noDice = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            noDice.setAttribute('x', '50');
+            noDice.setAttribute('y', '115');
+            noDice.setAttribute('text-anchor', 'middle');
+            noDice.setAttribute('style', 'font-family: -apple-system; font-size: 4px; font-weight: 700; fill: #f44336; filter: url(#pinkGlow);');
+            noDice.textContent = 'no dice';
+
+            document.getElementById('mainSVG').appendChild(noDice);
+
+            // Animate falling with gravity
+            let y = 115;
+            let velocity = 0;
+            const gravity = 0.5;
+            const ground = 135;
+
+            const fallInterval = setInterval(() => {
+                velocity += gravity;
+                y += velocity;
+
+                if (y >= ground) {
+                    y = ground;
+                    velocity = -velocity * 0.5; // Bounce with energy loss
+
+                    if (Math.abs(velocity) < 0.5) {
+                        clearInterval(fallInterval);
+                        // Fade out after settling
+                        setTimeout(() => {
+                            noDice.remove();
+                        }, 1500);
+                    }
+                }
+
+                noDice.setAttribute('y', y);
+            }, 20);
+
+            // Create arrow pointing to card button
+            const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            arrow.setAttribute('id', 'arrow-indicator');
+
+            // Arrow path (pointing up-left towards card button)
+            const arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            arrowPath.setAttribute('d', 'M 50 110 Q 30 90 15 30');
+            arrowPath.setAttribute('stroke', '#e91e63');
+            arrowPath.setAttribute('stroke-width', '0.5');
+            arrowPath.setAttribute('fill', 'none');
+            arrowPath.setAttribute('stroke-dasharray', '2,1');
+            arrowPath.setAttribute('filter', 'url(#pinkGlow)');
+
+            // Arrowhead
+            const arrowHead = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            arrowHead.setAttribute('points', '15,30 13,33 17,33');
+            arrowHead.setAttribute('fill', '#e91e63');
+            arrowHead.setAttribute('filter', 'url(#pinkGlow)');
+
+            arrow.appendChild(arrowPath);
+            arrow.appendChild(arrowHead);
+
+            document.getElementById('mainSVG').appendChild(arrow);
+
+            // Animate arrow growing
+            let scale = 0;
+            const growInterval = setInterval(() => {
+                scale += 0.05;
+                if (scale >= 1) {
+                    scale = 1;
+                    clearInterval(growInterval);
+
+                    // Pulse the arrow
+                    let opacity = 1;
+                    let direction = -0.05;
+                    const pulseInterval = setInterval(() => {
+                        opacity += direction;
+                        if (opacity <= 0.3 || opacity >= 1) {
+                            direction = -direction;
+                        }
+                        arrow.setAttribute('opacity', opacity);
+                    }, 50);
+
+                    // Remove arrow after a few seconds
+                    setTimeout(() => {
+                        clearInterval(pulseInterval);
+                        arrow.remove();
+                    }, 3000);
+                }
+
+                arrow.setAttribute('transform', `scale(${scale})`);
+                arrow.setAttribute('transform-origin', '15 30');
+            }, 20);
+        }
 
         // Function called from Swift to add posted BDO to display
         function addPostedBDO(bdoData) {
@@ -341,14 +456,44 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             return
         }
 
-        if action == "post", let text = messageBody["text"] as? String {
+        if action == "checkCard", let text = messageBody["text"] as? String {
+            checkCardBeforePosting(text: text)
+        } else if action == "post", let text = messageBody["text"] as? String {
             postBDO(text: text)
         } else if action == "openBag" {
             openCarrierBag()
+        } else if action == "openPayment" {
+            openPaymentMethods()
         } else if action == "checkKeyboard" {
             checkKeyboardInstallation()
         } else if action == "openKeyboardSettings" {
             openKeyboardSettings()
+        }
+    }
+
+    // MARK: - Card Check
+
+    private func checkCardBeforePosting(text: String) {
+        NSLog("💳 Checking if user has saved cards...")
+
+        // Check if user has any saved cards in UserDefaults
+        let hasSavedCards = UserDefaults.standard.data(forKey: "stripe_saved_cards") != nil
+
+        if hasSavedCards {
+            NSLog("✅ User has cards, proceeding with post")
+            postBDO(text: text)
+        } else {
+            NSLog("❌ No cards found, showing animation")
+            showNoDiceAnimation()
+        }
+    }
+
+    private func showNoDiceAnimation() {
+        let jsCode = "showNoDiceAnimation();"
+        webView.evaluateJavaScript(jsCode) { _, error in
+            if let error = error {
+                NSLog("⚠️ Failed to show no dice animation: %@", error.localizedDescription)
+            }
         }
     }
 
@@ -359,6 +504,18 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
 
         let carrierBagVC = CarrierBagViewController()
         let navController = UINavigationController(rootViewController: carrierBagVC)
+        navController.modalPresentationStyle = .fullScreen
+
+        present(navController, animated: true)
+    }
+
+    // MARK: - Payment Methods
+
+    private func openPaymentMethods() {
+        NSLog("💳 Opening Payment Methods")
+
+        let paymentVC = PaymentMethodViewController()
+        let navController = UINavigationController(rootViewController: paymentVC)
         navController.modalPresentationStyle = .fullScreen
 
         present(navController, animated: true)
@@ -387,10 +544,30 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
     private func openKeyboardSettings() {
         NSLog("⌨️ Opening keyboard settings")
 
-        // Open Settings app to General > Keyboard > Keyboards
-        if let url = URL(string: UIApplication.openSettingsURLString) {
-            UIApplication.shared.open(url)
-        }
+        // Show alert with helpful hint
+        let alert = UIAlertController(
+            title: "⌨️ Enable AdvanceKey",
+            message: "We can't link you directly to KEYBOARDS, but we believe in you...GENERALly.",
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: "Take Me There", style: .default) { _ in
+            // Open Settings app
+            if let url = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(url) { success in
+                    if success {
+                        NSLog("✅ Opened Settings app")
+                        // User will need to navigate: Settings > General > Keyboard > Keyboards
+                    } else {
+                        NSLog("❌ Failed to open Settings app")
+                    }
+                }
+            }
+        })
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+
+        present(alert, animated: true)
     }
 
     // MARK: - BDO Posting

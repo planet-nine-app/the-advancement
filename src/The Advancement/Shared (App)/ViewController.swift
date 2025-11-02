@@ -56,14 +56,21 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         let cookbookButton = createNavigationButton(title: "🍪 Cookbook", action: #selector(showCookbook))
         let instantiationButton = createNavigationButton(title: "⚡ Instantiation", action: #selector(showInstantiation))
         let carrierBagButton = createNavigationButton(title: "🎒 Carrier Bag", action: #selector(showCarrierBag))
-        let paymentButton = createNavigationButton(title: "💳 Payment", action: #selector(showPaymentMethods))
+
+        // Prominent Stripe payment buttons
+        let saveCardsButton = createNavigationButton(title: "💳 Save Cards", action: #selector(showPaymentMethods), backgroundColor: UIColor(red: 0.91, green: 0.12, blue: 0.39, alpha: 1.0))
+        let issueCardsButton = createNavigationButton(title: "🏦 Issue Cards", action: #selector(showPaymentMethods), backgroundColor: UIColor(red: 0.91, green: 0.12, blue: 0.39, alpha: 1.0))
+        let receivePaymentsButton = createNavigationButton(title: "💰 Receive $$", action: #selector(showPaymentMethods), backgroundColor: UIColor(red: 0.91, green: 0.12, blue: 0.39, alpha: 1.0))
+
         let nexusButton = createNavigationButton(title: "🌐 Nexus", action: #selector(showNexus))
         let nfcButton = createNavigationButton(title: "📱 NFC Keys", action: #selector(showNFC))
 
         stackView.addArrangedSubview(cookbookButton)
         stackView.addArrangedSubview(instantiationButton)
         stackView.addArrangedSubview(carrierBagButton)
-        stackView.addArrangedSubview(paymentButton)
+        stackView.addArrangedSubview(saveCardsButton)
+        stackView.addArrangedSubview(issueCardsButton)
+        stackView.addArrangedSubview(receivePaymentsButton)
         stackView.addArrangedSubview(nexusButton)
         stackView.addArrangedSubview(nfcButton)
 
@@ -71,19 +78,19 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         NSLayoutConstraint.activate([
             stackView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
             stackView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -20),
-            stackView.widthAnchor.constraint(equalToConstant: 150)
+            stackView.widthAnchor.constraint(equalToConstant: 180)
         ])
 
         NSLog("ADVANCEAPP: 🧭 Added floating navigation buttons")
     }
 
-    private func createNavigationButton(title: String, action: Selector) -> UIButton {
+    private func createNavigationButton(title: String, action: Selector, backgroundColor: UIColor? = nil) -> UIButton {
         let button = UIButton(type: .system)
         button.setTitle(title, for: .normal)
-        button.backgroundColor = UIColor.systemBlue
+        button.backgroundColor = backgroundColor ?? UIColor.systemBlue
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 22
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        button.titleLabel?.font = UIFont.systemFont(ofSize: 13, weight: .bold)
         button.heightAnchor.constraint(equalToConstant: 44).isActive = true
         button.addTarget(self, action: action, for: .touchUpInside)
         return button
