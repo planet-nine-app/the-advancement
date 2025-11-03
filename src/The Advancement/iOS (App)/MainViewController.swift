@@ -16,11 +16,36 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        NSLog("MAINVC: 🎬 viewDidLoad called")
+
         // Make view extend to full screen
         view.backgroundColor = .black
 
         setupWebView()
         loadMainPage()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+
+        NSLog("MAINVC: 👀 viewWillAppear called")
+
+        // Don't update button here - wait for WebView to finish loading
+        // updatePostButtonAppearance() will be called from webView(_:didFinish:)
+    }
+
+    // MARK: - WKNavigationDelegate
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        NSLog("MAINVC: 🌐 WebView finished loading")
+
+        // Fetch cards from backend, then update button appearance
+        Task {
+            await fetchCardsFromBackend()
+            await MainActor.run {
+                updatePostButtonAppearance()
+            }
+        }
     }
 
     override var prefersStatusBarHidden: Bool {
@@ -463,7 +488,7 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
         } else if action == "openBag" {
             openCarrierBag()
         } else if action == "openPayment" {
-            openPaymentMethods()
+            handlePaymentButtonClick()
         } else if action == "checkKeyboard" {
             checkKeyboardInstallation()
         } else if action == "openKeyboardSettings" {
@@ -473,19 +498,250 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
 
     // MARK: - Card Check
 
+    private func fetchCardsFromBackend() async {
+        NSLog("MAINVC: 📡 Fetching cards from Addie backend...")
+
+        guard let homeBase = getHomeBaseURL() else {
+            NSLog("MAINVC: ⚠️ No home base URL configured")
+            return
+        }
+
+        let sessionless = Sessionless()
+        guard let keys = sessionless.getKeys() else {
+            NSLog("MAINVC: ⚠️ No sessionless keys available")
+            return
+        }
+
+        // Get user UUID from Addie
+        // First we need to get/create the user by pubKey
+        guard let userUUID = await getOrCreateAddieUser(pubKey: keys.publicKey) else {
+            NSLog("MAINVC: ⚠️ Failed to get user UUID")
+            return
+        }
+
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let message = timestamp + userUUID
+        guard let signature = sessionless.sign(message: message) else {
+            NSLog("MAINVC: ⚠️ Failed to sign request")
+            return
+        }
+
+        let endpoint = "\(homeBase)/saved-payment-methods?uuid=\(userUUID)&timestamp=\(timestamp)&processor=stripe&signature=\(signature)"
+
+        guard let url = URL(string: endpoint) else {
+            NSLog("MAINVC: ⚠️ Invalid URL: \(endpoint)")
+            return
+        }
+
+        NSLog("MAINVC: 📡 Fetching from: \(url.absoluteString)")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                NSLog("MAINVC: ⚠️ Invalid response type")
+                return
+            }
+
+            NSLog("MAINVC: 📡 Response status: \(httpResponse.statusCode)")
+
+            if let responseString = String(data: data, encoding: .utf8) {
+                NSLog("MAINVC: 📦 Response body: \(responseString)")
+            }
+
+            guard httpResponse.statusCode == 200 else {
+                NSLog("MAINVC: ⚠️ Failed to fetch cards: HTTP \(httpResponse.statusCode)")
+                return
+            }
+
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let paymentMethods = json["paymentMethods"] as? [[String: Any]] {
+                NSLog("MAINVC: ✅ Fetched \(paymentMethods.count) payment methods from backend")
+
+                // Save to UserDefaults
+                if let cardsData = try? JSONSerialization.data(withJSONObject: paymentMethods) {
+                    UserDefaults.standard.set(cardsData, forKey: "stripe_saved_cards")
+                    NSLog("MAINVC: 💾 Saved cards to UserDefaults")
+                } else {
+                    NSLog("MAINVC: ⚠️ Failed to serialize cards")
+                }
+            } else {
+                NSLog("MAINVC: ⚠️ Failed to parse payment methods from response")
+            }
+        } catch {
+            NSLog("MAINVC: ⚠️ Error fetching cards: \(error.localizedDescription)")
+        }
+    }
+
+    private func getOrCreateAddieUser(pubKey: String) async -> String? {
+        // Check if we already have an Addie UUID cached in UserDefaults
+        if let cachedUUID = UserDefaults.standard.string(forKey: "addie_user_uuid") {
+            NSLog("MAINVC: ✅ Using cached Addie UUID: \(cachedUUID)")
+            return cachedUUID
+        }
+
+        guard let homeBase = getHomeBaseURL() else {
+            return nil
+        }
+
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let message = timestamp + pubKey
+
+        let sessionless = Sessionless()
+        guard let signature = sessionless.sign(message: message) else {
+            NSLog("MAINVC: ⚠️ Failed to sign user creation request")
+            return nil
+        }
+
+        let endpoint = "\(homeBase)/user/create"
+        guard let url = URL(string: endpoint) else {
+            return nil
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "pubKey": pubKey,
+            "timestamp": timestamp,
+            "signature": signature
+        ]
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+            let (data, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                NSLog("MAINVC: ⚠️ Failed to create/get Addie user")
+                return nil
+            }
+
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let uuid = json["uuid"] as? String {
+                NSLog("MAINVC: ✅ Got Addie user UUID: \(uuid)")
+
+                // Cache the UUID in UserDefaults for future use
+                UserDefaults.standard.set(uuid, forKey: "addie_user_uuid")
+                NSLog("MAINVC: 💾 Cached Addie UUID in UserDefaults")
+
+                return uuid
+            }
+        } catch {
+            NSLog("MAINVC: ⚠️ Error getting Addie user: \(error.localizedDescription)")
+        }
+
+        return nil
+    }
+
+    private func getHomeBaseURL() -> String? {
+        // Use Configuration to get the Addie base URL
+        return Configuration.addieBaseURL
+    }
+
+    private func updatePostButtonAppearance() {
+        NSLog("MAINVC: 🎨 Updating post button appearance...")
+
+        let hasCards = checkIfUserHasCards()
+
+        if hasCards {
+            NSLog("MAINVC: ✅ User has cards - updating button to green")
+            // Change button to green gradient
+            let jsCode = """
+            (function() {
+                const button = document.getElementById('postPaymentButton');
+                const ellipse = button.querySelector('ellipse');
+                const texts = button.querySelectorAll('text');
+
+                // Update ellipse to green
+                ellipse.setAttribute('fill', 'rgba(16, 185, 129, 0.2)');
+                ellipse.setAttribute('stroke', '#10b981');
+                ellipse.setAttribute('filter', 'url(#greenGlow)');
+
+                // Update text to green
+                texts.forEach(text => {
+                    text.setAttribute('fill', '#10b981');
+                    text.setAttribute('filter', 'url(#greenGlow)');
+                });
+
+                // Update text content
+                texts[0].textContent = 'Post';
+                texts[1].textContent = 'away';
+
+                console.log('✅ Updated button to green (user has cards)');
+            })();
+            """
+            webView.evaluateJavaScript(jsCode) { _, error in
+                if let error = error {
+                    NSLog("MAINVC: ⚠️ Failed to update button color: %@", error.localizedDescription)
+                }
+            }
+        } else {
+            NSLog("MAINVC: ⚠️ User has no cards - keeping button red")
+            // Button is already red/pink by default, just log
+        }
+    }
+
     private func checkCardBeforePosting(text: String) {
         NSLog("💳 Checking if user has saved cards...")
 
-        // Check if user has any saved cards in UserDefaults
-        let hasSavedCards = UserDefaults.standard.data(forKey: "stripe_saved_cards") != nil
+        let hasCards = checkIfUserHasCards()
 
-        if hasSavedCards {
+        if hasCards {
             NSLog("✅ User has cards, proceeding with post")
             postBDO(text: text)
         } else {
             NSLog("❌ No cards found, showing animation")
             showNoDiceAnimation()
         }
+    }
+
+    private func checkIfUserHasCards() -> Bool {
+        NSLog("🔍 Checking if user has cards...")
+
+        // Check for saved payment methods (credit/debit cards)
+        if let cardsData = UserDefaults.standard.data(forKey: "stripe_saved_cards") {
+            NSLog("📊 Found stripe_saved_cards data in UserDefaults")
+            if let cards = try? JSONSerialization.jsonObject(with: cardsData) as? [[String: Any]] {
+                NSLog("💳 Saved payment methods count: %d", cards.count)
+                if !cards.isEmpty {
+                    NSLog("✅ User has saved payment methods")
+                    // Log details of first card for debugging
+                    if let firstCard = cards.first {
+                        NSLog("📝 First card: %@", firstCard.description)
+                    }
+                    return true
+                }
+            } else {
+                NSLog("⚠️ Failed to parse stripe_saved_cards data")
+            }
+        } else {
+            NSLog("ℹ️ No stripe_saved_cards data found in UserDefaults")
+        }
+
+        // Check for issued virtual cards
+        if let issuedCardsData = UserDefaults.standard.data(forKey: "stripe_issued_cards") {
+            NSLog("📊 Found stripe_issued_cards data in UserDefaults")
+            if let issuedCards = try? JSONSerialization.jsonObject(with: issuedCardsData) as? [[String: Any]] {
+                NSLog("💳 Issued virtual cards count: %d", issuedCards.count)
+                if !issuedCards.isEmpty {
+                    NSLog("✅ User has issued virtual cards")
+                    // Log details of first card for debugging
+                    if let firstCard = issuedCards.first {
+                        NSLog("📝 First virtual card: %@", firstCard.description)
+                    }
+                    return true
+                }
+            } else {
+                NSLog("⚠️ Failed to parse stripe_issued_cards data")
+            }
+        } else {
+            NSLog("ℹ️ No stripe_issued_cards data found in UserDefaults")
+        }
+
+        NSLog("❌ User has no cards (neither payment methods nor issued cards)")
+        return false
     }
 
     private func showNoDiceAnimation() {
@@ -510,6 +766,30 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
     }
 
     // MARK: - Payment Methods
+
+    private func handlePaymentButtonClick() {
+        NSLog("💳 Payment button clicked - checking card status...")
+
+        let hasCards = checkIfUserHasCards()
+
+        if hasCards {
+            NSLog("✅ User has cards - opening CardDisplayViewController")
+            openCardDisplay()
+        } else {
+            NSLog("⚠️ User has no cards - opening PaymentMethodViewController to add card")
+            openPaymentMethods()
+        }
+    }
+
+    private func openCardDisplay() {
+        NSLog("💳 Opening Card Display")
+
+        let cardDisplayVC = CardDisplayViewController()
+        let navController = UINavigationController(rootViewController: cardDisplayVC)
+        navController.modalPresentationStyle = .fullScreen
+
+        present(navController, animated: true)
+    }
 
     private func openPaymentMethods() {
         NSLog("💳 Opening Payment Methods")

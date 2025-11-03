@@ -228,6 +228,8 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
     }
 
     private func updateStatusIndicator() {
+        NSLog("ADVANCEAPP: 🔄 Updating status indicator...")
+
         // Check if user has any saved cards
         let hasCards = checkIfUserHasCards()
 
@@ -264,12 +266,49 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
     }
 
     private func checkIfUserHasCards() -> Bool {
-        // Check if user has any saved cards in UserDefaults
-        if let cardsData = UserDefaults.standard.data(forKey: "stripe_saved_cards"),
-           let cards = try? JSONSerialization.jsonObject(with: cardsData) as? [[String: Any]],
-           !cards.isEmpty {
-            return true
+        NSLog("ADVANCEAPP: 🔍 Checking if user has cards...")
+
+        // Check for saved payment methods (credit/debit cards)
+        if let cardsData = UserDefaults.standard.data(forKey: "stripe_saved_cards") {
+            NSLog("ADVANCEAPP: 📊 Found stripe_saved_cards data in UserDefaults")
+            if let cards = try? JSONSerialization.jsonObject(with: cardsData) as? [[String: Any]] {
+                NSLog("ADVANCEAPP: 💳 Saved payment methods count: %d", cards.count)
+                if !cards.isEmpty {
+                    NSLog("ADVANCEAPP: ✅ User has saved payment methods")
+                    // Log details of first card for debugging
+                    if let firstCard = cards.first {
+                        NSLog("ADVANCEAPP: 📝 First card: %@", firstCard.description)
+                    }
+                    return true
+                }
+            } else {
+                NSLog("ADVANCEAPP: ⚠️ Failed to parse stripe_saved_cards data")
+            }
+        } else {
+            NSLog("ADVANCEAPP: ℹ️ No stripe_saved_cards data found in UserDefaults")
         }
+
+        // Check for issued virtual cards
+        if let issuedCardsData = UserDefaults.standard.data(forKey: "stripe_issued_cards") {
+            NSLog("ADVANCEAPP: 📊 Found stripe_issued_cards data in UserDefaults")
+            if let issuedCards = try? JSONSerialization.jsonObject(with: issuedCardsData) as? [[String: Any]] {
+                NSLog("ADVANCEAPP: 💳 Issued virtual cards count: %d", issuedCards.count)
+                if !issuedCards.isEmpty {
+                    NSLog("ADVANCEAPP: ✅ User has issued virtual cards")
+                    // Log details of first card for debugging
+                    if let firstCard = issuedCards.first {
+                        NSLog("ADVANCEAPP: 📝 First virtual card: %@", firstCard.description)
+                    }
+                    return true
+                }
+            } else {
+                NSLog("ADVANCEAPP: ⚠️ Failed to parse stripe_issued_cards data")
+            }
+        } else {
+            NSLog("ADVANCEAPP: ℹ️ No stripe_issued_cards data found in UserDefaults")
+        }
+
+        NSLog("ADVANCEAPP: ❌ User has no cards (neither payment methods nor issued cards)")
         return false
     }
 #endif

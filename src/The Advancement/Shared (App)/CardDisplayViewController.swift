@@ -111,11 +111,25 @@ class CardDisplayViewController: UIViewController {
         title = "💳 My Card"
         view.backgroundColor = UIColor(red: 0.1, green: 0.0, blue: 0.2, alpha: 1.0)
 
+        // Add back/close button
+        navigationItem.leftBarButtonItem = UIBarButtonItem(
+            title: "← Back",
+            style: .plain,
+            target: self,
+            action: #selector(backButtonTapped)
+        )
+        navigationItem.leftBarButtonItem?.tintColor = UIColor(red: 0.91, green: 0.12, blue: 0.39, alpha: 1.0)
+
         setupUI()
         loadCards()
 
         addCardButton.addTarget(self, action: #selector(addCardTapped), for: .touchUpInside)
         switchCardButton.addTarget(self, action: #selector(switchCardTapped), for: .touchUpInside)
+    }
+
+    @objc private func backButtonTapped() {
+        NSLog("CARDDISPLAY: ← Back button tapped")
+        dismiss(animated: true)
     }
 
     override func viewWillAppear(_ animated: Bool) {
