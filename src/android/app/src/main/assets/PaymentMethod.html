@@ -256,6 +256,12 @@
             font-size: 14px;
         }
 
+        .form-input:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
         .form-input::placeholder {
             color: rgba(167, 139, 250, 0.5);
         }
@@ -353,7 +359,7 @@
                     Banking for the unbanked. Get your own virtual debit card - use it anywhere online, instantly.
                 </p>
                 <p style="color: #4caf50; font-size: 12px; margin-bottom: 20px;">
-                    ✓ Only 10¢ to create • ✓ First $500k transactions FREE • ✓ Instant activation
+                    ✓ Free to create • ✓ First $500k transactions FREE • ✓ Instant activation
                 </p>
 
                 <div id="cardholder-setup" style="display: none;">
@@ -364,7 +370,7 @@
 
                 <div id="card-ready" style="display: none;">
                     <button class="button" onclick="issueVirtualCard()">
-                        🌐 Get Virtual Card (Instant - 10¢)
+                        🌐 Get Virtual Card (Instant)
                     </button>
                     <div style="margin-top: 16px; padding: 12px; background: rgba(167, 139, 250, 0.1); border-radius: 8px; border: 1px solid rgba(167, 139, 250, 0.3);">
                         <div style="font-size: 13px; color: #a78bfa; margin-bottom: 8px;">Set Spending Limit:</div>
@@ -596,6 +602,11 @@
                         <input type="text" id="postal-code" placeholder="ZIP" class="form-input" style="flex: 1;">
                     </div>
 
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 16px 0; cursor: pointer;">
+                        <input type="checkbox" id="tos-acceptance" required style="width: 20px; height: 20px;">
+                        <span style="font-size: 14px; color: #a78bfa;">I agree to the <a href="https://stripe.com/legal/issuing/cardholder-terms" target="_blank" style="color: #e91e63; text-decoration: underline;">Stripe Issuing Terms</a></span>
+                    </label>
+
                     <button class="button" onclick="submitCardholderInfo()" style="margin-top: 16px;">
                         Complete Setup
                     </button>
@@ -614,6 +625,33 @@
         }
 
         async function submitCardholderInfo() {
+            // Check TOS acceptance
+            const tosAccepted = document.getElementById('tos-acceptance').checked;
+            if (!tosAccepted) {
+                showError('Please accept the Stripe Issuing Terms to continue');
+                return;
+            }
+
+            // Build address object, only including line2 if it's not empty
+            const line1 = document.getElementById('address-line1').value;
+            const line2 = document.getElementById('address-line2').value.trim();
+            const city = document.getElementById('city').value;
+            const state = document.getElementById('state').value;
+            const postalCode = document.getElementById('postal-code').value;
+
+            const address = {
+                line1: line1,
+                city: city,
+                state: state,
+                postal_code: postalCode,
+                country: 'US'
+            };
+
+            // Only include line2 if it's not empty (Stripe requirement)
+            if (line2) {
+                address.line2 = line2;
+            }
+
             const info = {
                 firstName: document.getElementById('first-name').value,
                 lastName: document.getElementById('last-name').value,
@@ -625,14 +663,8 @@
                     day: parseInt(document.getElementById('dob-day').value),
                     year: parseInt(document.getElementById('dob-year').value)
                 },
-                address: {
-                    line1: document.getElementById('address-line1').value,
-                    line2: document.getElementById('address-line2').value,
-                    city: document.getElementById('city').value,
-                    state: document.getElementById('state').value,
-                    postal_code: document.getElementById('postal-code').value,
-                    country: 'US'
-                }
+                address: address
+                // tosAcceptance constructed by backend with actual IP
             };
 
             // Validate
@@ -657,7 +689,7 @@
         async function issueVirtualCard() {
             const spendingLimit = parseInt(document.getElementById('spending-limit').value) * 100; // Convert to cents
 
-            if (!confirm(`Issue a virtual Planet Nine card with $${spendingLimit/100}/month limit?\n\nCost: 10¢ (charged to your account)`)) {
+            if (!confirm(`Issue a virtual Planet Nine card with $${spendingLimit/100}/month limit?`)) {
                 return;
             }
 
@@ -797,7 +829,7 @@
                 const appearance = {
                     theme: 'night',
                     variables: {
-                        colorPrimary: '#e91e63',
+                        colorPrimary: '#10b981',  // Green for focus/active state
                         colorBackground: '#1a0033',
                         colorText: '#ffffff',
                         colorDanger: '#f44336',

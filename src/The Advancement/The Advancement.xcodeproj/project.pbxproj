@@ -90,6 +90,7 @@
 			membershipExceptions = (
 				"/Localized: Resources/Main.html",
 				Assets.xcassets,
+				CardDisplayViewController.swift,
 				CarrierBagViewController.swift,
 				Configuration.swift,
 				CookbookViewController.swift,

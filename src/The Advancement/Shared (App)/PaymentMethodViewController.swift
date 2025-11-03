@@ -41,6 +41,7 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
 
     deinit {
         webView.configuration.userContentController.removeScriptMessageHandler(forName: "paymentMethod")
+        webView.configuration.userContentController.removeScriptMessageHandler(forName: "consoleLog")
     }
 
     private func setupWebView() {
@@ -49,8 +50,55 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         // Register message handler
         contentController.add(self, name: "paymentMethod")
 
+        // Register console.log handler
+        contentController.add(self, name: "consoleLog")
+
+        // Inject console.log override
+        let consoleScript = """
+        (function() {
+            var originalLog = console.log;
+            var originalError = console.error;
+            var originalWarn = console.warn;
+
+            console.log = function() {
+                var args = Array.prototype.slice.call(arguments);
+                window.webkit.messageHandlers.consoleLog.postMessage({
+                    level: 'log',
+                    message: args.map(String).join(' ')
+                });
+                originalLog.apply(console, arguments);
+            };
+
+            console.error = function() {
+                var args = Array.prototype.slice.call(arguments);
+                window.webkit.messageHandlers.consoleLog.postMessage({
+                    level: 'error',
+                    message: args.map(String).join(' ')
+                });
+                originalError.apply(console, arguments);
+            };
+
+            console.warn = function() {
+                var args = Array.prototype.slice.call(arguments);
+                window.webkit.messageHandlers.consoleLog.postMessage({
+                    level: 'warn',
+                    message: args.map(String).join(' ')
+                });
+                originalWarn.apply(console, arguments);
+            };
+        })();
+        """
+
+        let userScript = WKUserScript(source: consoleScript, injectionTime: .atDocumentStart, forMainFrameOnly: true)
+        contentController.addUserScript(userScript)
+
         let config = WKWebViewConfiguration()
         config.userContentController = contentController
+
+        // Allow JavaScript
+        let preferences = WKWebpagePreferences()
+        preferences.allowsContentJavaScript = true
+        config.defaultWebpagePreferences = preferences
 
         webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
@@ -69,14 +117,14 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
             webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
 
-        // Load HTML
-        if let htmlPath = Bundle.main.path(forResource: "PaymentMethod", ofType: "html"),
-           let htmlString = try? String(contentsOfFile: htmlPath, encoding: .utf8) {
-            let baseURL = URL(fileURLWithPath: htmlPath).deletingLastPathComponent()
-            webView.loadHTMLString(htmlString, baseURL: baseURL)
-            NSLog("PAYMENTMETHOD: 💳 Loaded PaymentMethod.html")
+        // Load HTML - use loadFileURL to avoid sandboxing issues with Stripe.js
+        if let htmlPath = Bundle.main.path(forResource: "PaymentMethod", ofType: "html") {
+            let htmlURL = URL(fileURLWithPath: htmlPath)
+            let accessURL = htmlURL.deletingLastPathComponent()
+            webView.loadFileURL(htmlURL, allowingReadAccessTo: accessURL)
+            NSLog("PAYMENTMETHOD: 💳 Loaded PaymentMethod.html from file URL")
         } else {
-            NSLog("PAYMENTMETHOD: ❌ Failed to load PaymentMethod.html")
+            NSLog("PAYMENTMETHOD: ❌ Failed to find PaymentMethod.html")
         }
     }
 
@@ -133,6 +181,23 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
     // MARK: - WKScriptMessageHandler
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        // Handle console.log messages
+        if message.name == "consoleLog" {
+            if let logData = message.body as? [String: Any],
+               let level = logData["level"] as? String,
+               let logMessage = logData["message"] as? String {
+                switch level {
+                case "error":
+                    NSLog("🌐 WebView [ERROR]: %@", logMessage)
+                case "warn":
+                    NSLog("🌐 WebView [WARN]: %@", logMessage)
+                default:
+                    NSLog("🌐 WebView [LOG]: %@", logMessage)
+                }
+            }
+            return
+        }
+
         guard message.name == "paymentMethod" else { return }
 
         guard let messageBody = message.body as? [String: Any],
@@ -253,7 +318,8 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
 
             guard let data = data,
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let clientSecret = json["clientSecret"] as? String else {
+                  let clientSecret = json["clientSecret"] as? String,
+                  let publishableKey = json["publishableKey"] as? String else {
                 NSLog("PAYMENTMETHOD: ❌ Invalid response from server")
                 self.sendResponse(messageId: messageId, error: "Invalid server response")
                 return
@@ -267,10 +333,11 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
             }
 
             NSLog("PAYMENTMETHOD: ✅ SetupIntent created successfully")
+            NSLog("PAYMENTMETHOD: 🔑 Using publishable key: %@", String(publishableKey.prefix(20)))
 
             self.sendResponse(messageId: messageId, result: [
                 "clientSecret": clientSecret,
-                "publishableKey": self.stripePublishableKey
+                "publishableKey": publishableKey  // Use the key from Addie's response
             ])
         }.resume()
     }
@@ -510,15 +577,20 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let shippingAddress: [String: Any] = [
+        // Build shipping address, only including line2 if it's not empty (Stripe requirement)
+        var shippingAddress: [String: Any] = [
             "name": primaryAddress["recipientName"] as? String ?? "",
             "line1": primaryAddress["street"] as? String ?? "",
-            "line2": primaryAddress["street2"] as? String ?? "",
             "city": primaryAddress["city"] as? String ?? "",
             "state": primaryAddress["state"] as? String ?? "",
             "postal_code": primaryAddress["zip"] as? String ?? "",
             "country": primaryAddress["country"] as? String ?? "US"
         ]
+
+        // Only include line2 if it's not empty (Stripe doesn't allow empty strings for this field)
+        if let line2 = primaryAddress["street2"] as? String, !line2.isEmpty {
+            shippingAddress["line2"] = line2
+        }
 
         let body: [String: Any] = [
             "timestamp": timestamp,
@@ -718,6 +790,8 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
 
     private func createCardholder(params: [String: Any], messageId: Any) {
         guard let individualInfo = params["individualInfo"] as? [String: Any],
+              let firstName = individualInfo["firstName"] as? String,
+              let lastName = individualInfo["lastName"] as? String,
               let name = individualInfo["name"] as? String,
               let email = individualInfo["email"] as? String,
               let phoneNumber = individualInfo["phoneNumber"] as? String,
@@ -754,6 +828,8 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
             "pubKey": pubKey,
             "signature": signature,
             "individualInfo": [
+                "firstName": firstName,
+                "lastName": lastName,
                 "name": name,
                 "email": email,
                 "phoneNumber": phoneNumber,
@@ -1005,8 +1081,8 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
             return stored
         }
 
-        // Default to localhost for development
-        return "http://127.0.0.1:7243"
+        // Default to Configuration's Addie URL (respects environment setting)
+        return Configuration.addieBaseURL
     }
 
     private func sendResponse(messageId: Any, result: [String: Any]? = nil, error: String? = nil) {
@@ -1025,15 +1101,22 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
                 response["error"] = error
             }
 
+            NSLog("PAYMENTMETHOD: 🔄 Sending response to WebView - messageId: %@", String(describing: messageId))
+
             if let jsonData = try? JSONSerialization.data(withJSONObject: response),
                let jsonString = String(data: jsonData, encoding: .utf8) {
+                NSLog("PAYMENTMETHOD: 📤 Response JSON: %@", String(jsonString.prefix(200)))
                 let javascript = "window.dispatchEvent(new MessageEvent('message', { data: \(jsonString) }));"
 
                 self.webView.evaluateJavaScript(javascript) { _, error in
                     if let error = error {
                         NSLog("PAYMENTMETHOD: ❌ Failed to send response: %@", error.localizedDescription)
+                    } else {
+                        NSLog("PAYMENTMETHOD: ✅ Response sent successfully to WebView")
                     }
                 }
+            } else {
+                NSLog("PAYMENTMETHOD: ❌ Failed to serialize response JSON")
             }
         }
     }

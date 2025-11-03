@@ -68,6 +68,18 @@ open http://localhost:3456
 - **SharedPreferences Storage**: Payout card IDs persisted across app sessions (Android)
 - **UserDefaults Storage**: Payout card IDs persisted via standard storage (iOS)
 
+### ✅ **Stripe Issuing Virtual Cards for the Unbanked** (November 2025)
+- **Virtual Debit Cards**: Issue Stripe virtual cards to users without traditional bank accounts
+- **KYC Onboarding**: Collect required cardholder information (name, DOB, address, phone, email)
+- **TOS Acceptance**: Stripe Issuing Terms acceptance with IP and timestamp tracking
+- **Conditional Fields**: Address line2 conditionally omitted if empty (Stripe requirement)
+- **Backend IP Extraction**: Real user IP captured from request headers for TOS compliance
+- **Multi-Platform Forms**: Identical HTML forms for iOS and Android with firstName/lastName fields
+- **Swift Bridge**: PaymentMethodViewController extracts and forwards all required fields to backend
+- **Green Focus States**: Input fields use Planet Nine green (#10b981) instead of blue
+- **Test Keys Support**: Stripe test keys configured in Docker container for development
+- **Complete Flow**: HTML form → Swift/Kotlin → Backend → Stripe Issuing API
+
 ### ✅ **Ad Covering System** (September 2025)
 - **Dual Mode Experience**: Peaceful ficus plants OR interactive slime monsters
 - **Real-Time Detection**: MutationObserver-based ad scanning
@@ -723,6 +735,410 @@ java.lang.IllegalStateException: ViewTreeLifecycleOwner not found from android.w
 - JavaScript enables dynamic content updates
 - Same architecture as main app (consistency)
 - Hardware acceleration for smooth rendering
+
+## Stripe Issuing Virtual Cards Implementation (November 2025)
+
+### Overview
+
+The Advancement iOS and Android apps provide Stripe Issuing virtual card functionality enabling users without traditional bank accounts to receive virtual debit cards. This system collects required KYC information through a multi-step HTML form and creates Stripe cardholders with proper TOS acceptance tracking.
+
+### Architecture
+
+```
+┌────────────────────────────────────────────────────────┐
+│  The Advancement App (iOS/Android)                     │
+│  - Collect cardholder information                      │
+│  - HTML form with firstName, lastName, DOB, address    │
+│  - TOS acceptance checkbox                             │
+└───────────────────┬────────────────────────────────────┘
+                    │ Swift/Kotlin Bridge
+                    ▼
+┌────────────────────────────────────────────────────────┐
+│  PaymentMethodViewController / PaymentMethodActivity   │
+│  - Extract firstName, lastName from individualInfo     │
+│  - Forward complete data to backend                    │
+└───────────────────┬────────────────────────────────────┘
+                    │ Sessionless Auth + IP
+                    ▼
+┌────────────────────────────────────────────────────────┐
+│  Addie Backend                                         │
+│  POST /issuing/cardholder                              │
+│  - Extract real user IP from headers                   │
+│  - Build tosAcceptance with timestamp + IP             │
+│  - Conditionally include line2 if not empty            │
+└───────────────────┬────────────────────────────────────┘
+                    │ Stripe Issuing API
+                    ▼
+┌────────────────────────────────────────────────────────┐
+│  Stripe Platform                                       │
+│  - Create cardholder                                   │
+│  - Issue virtual debit card                            │
+│  - Validate all required fields                        │
+└────────────────────────────────────────────────────────┘
+```
+
+### Required Fields
+
+Stripe Issuing requires the following fields for cardholder creation:
+
+**Individual Information**:
+- `firstName` - First name (required)
+- `lastName` - Last name (required)
+- `name` - Full name (required)
+- `email` - Email address (required)
+- `phoneNumber` - Phone number (required)
+- `dob` - Date of birth with day, month, year (required)
+
+**Billing Address**:
+- `line1` - Street address (required)
+- `line2` - Apartment/suite (optional, must be omitted if empty)
+- `city` - City (required)
+- `state` - State (required)
+- `postal_code` - ZIP code (required)
+- `country` - Country code, defaults to 'US' (required)
+
+**TOS Acceptance**:
+- `date` - Unix timestamp of acceptance (required)
+- `ip` - User's real IP address (required)
+
+### iOS Implementation
+
+**PaymentMethod.html** (`src/The Advancement/Shared (App)/Resources/PaymentMethod.html`):
+
+**HTML Form Fields**:
+```html
+<!-- Name Fields -->
+<input type="text" id="first-name" placeholder="First Name" required>
+<input type="text" id="last-name" placeholder="Last Name" required>
+
+<!-- Contact Fields -->
+<input type="email" id="email" placeholder="Email" required>
+<input type="tel" id="phone" placeholder="Phone Number" required>
+
+<!-- Date of Birth -->
+<input type="number" id="dob-month" placeholder="MM" min="1" max="12">
+<input type="number" id="dob-day" placeholder="DD" min="1" max="31">
+<input type="number" id="dob-year" placeholder="YYYY" min="1900">
+
+<!-- Address Fields -->
+<input type="text" id="address-line1" placeholder="Street Address" required>
+<input type="text" id="address-line2" placeholder="Apt/Suite (optional)">
+<input type="text" id="city" placeholder="City" required>
+<input type="text" id="state" placeholder="State" required>
+<input type="text" id="postal-code" placeholder="ZIP Code" required>
+
+<!-- TOS Acceptance -->
+<label>
+    <input type="checkbox" id="tos-acceptance" required>
+    <span>I agree to the <a href="https://stripe.com/legal/issuing/cardholder-terms">Stripe Issuing Terms</a></span>
+</label>
+```
+
+**JavaScript Payload Construction**:
+```javascript
+async function submitCardRequest() {
+    // Check TOS acceptance
+    const tosAccepted = document.getElementById('tos-acceptance').checked;
+    if (!tosAccepted) {
+        showIssueError('Please accept the Stripe Issuing Terms to continue');
+        return;
+    }
+
+    // Build address object, only including line2 if not empty
+    const line1 = document.getElementById('address-line1').value;
+    const line2 = document.getElementById('address-line2').value.trim();
+    const city = document.getElementById('city').value;
+    const state = document.getElementById('state').value;
+    const postalCode = document.getElementById('postal-code').value;
+
+    const address = {
+        line1: line1,
+        city: city,
+        state: state,
+        postal_code: postalCode,
+        country: 'US'
+    };
+
+    // Only include line2 if it's not empty (Stripe requirement)
+    if (line2) {
+        address.line2 = line2;
+    }
+
+    const info = {
+        firstName: document.getElementById('first-name').value,
+        lastName: document.getElementById('last-name').value,
+        name: document.getElementById('first-name').value + ' ' + document.getElementById('last-name').value,
+        email: document.getElementById('email').value,
+        phoneNumber: document.getElementById('phone').value,
+        dob: {
+            month: parseInt(document.getElementById('dob-month').value),
+            day: parseInt(document.getElementById('dob-day').value),
+            year: parseInt(document.getElementById('dob-year').value)
+        },
+        address: address
+        // tosAcceptance constructed by backend with actual IP
+    };
+
+    await callSwift('createCardholder', { individualInfo: info });
+}
+```
+
+**Input Focus Color** (Lines 201-205):
+```css
+.form-input:focus {
+    outline: none;
+    border-color: #10b981;  /* Planet Nine green */
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+```
+
+**PaymentMethodViewController.swift** (`src/The Advancement/Shared (App)/PaymentMethodViewController.swift`):
+
+**createCardholder Method** (Lines 791-839):
+```swift
+private func createCardholder(params: [String: Any], messageId: Any) {
+    guard let individualInfo = params["individualInfo"] as? [String: Any],
+          let firstName = individualInfo["firstName"] as? String,  // EXTRACT
+          let lastName = individualInfo["lastName"] as? String,    // EXTRACT
+          let name = individualInfo["name"] as? String,
+          let email = individualInfo["email"] as? String,
+          let phoneNumber = individualInfo["phoneNumber"] as? String,
+          let dob = individualInfo["dob"] as? [String: Int],
+          let address = individualInfo["address"] as? [String: String] else {
+        sendResponse(messageId: messageId, error: "Missing or invalid individual info")
+        return
+    }
+
+    NSLog("PAYMENTMETHOD: 👤 Creating cardholder: %@", name)
+
+    guard let homeBase = getHomeBaseURL(),
+          let keys = sessionless.getKeys() else {
+        sendResponse(messageId: messageId, error: "Authentication required")
+        return
+    }
+    let pubKey = keys.publicKey
+
+    let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+    let endpoint = "\(homeBase)/issuing/cardholder"
+
+    let message = timestamp + pubKey
+    guard let signature = signMessage(message) else {
+        sendResponse(messageId: messageId, error: "Failed to sign request")
+        return
+    }
+
+    var request = URLRequest(url: URL(string: endpoint)!)
+    request.httpMethod = "POST"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+    let body: [String: Any] = [
+        "timestamp": timestamp,
+        "pubKey": pubKey,
+        "signature": signature,
+        "individualInfo": [
+            "firstName": firstName,    // FORWARD
+            "lastName": lastName,      // FORWARD
+            "name": name,
+            "email": email,
+            "phoneNumber": phoneNumber,
+            "dob": dob,
+            "address": address
+        ]
+    ]
+
+    // Send request to backend...
+}
+```
+
+### Android Implementation
+
+**PaymentMethod.html** (`src/android/app/src/main/assets/PaymentMethod.html`):
+
+Identical HTML form and JavaScript as iOS version, but calls `callAndroid()` instead of `callSwift()`.
+
+### Backend Implementation
+
+**addie.js** (`addie/src/server/node/addie.js`):
+
+**POST /issuing/cardholder Endpoint** (Lines 422-443):
+```javascript
+app.post('/issuing/cardholder', async (req, res) => {
+  try {
+    const body = req.body;
+    const timestamp = body.timestamp;
+    const pubKey = body.pubKey;
+    const signature = body.signature;
+    const individualInfo = body.individualInfo;
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;  // EXTRACT IP
+
+    const message = timestamp + pubKey;
+
+    if(!signature || !sessionless.verifySignature(signature, message, pubKey)) {
+      res.status(403);
+      return res.send({error: 'Auth error'});
+    }
+
+    let foundUser = await user.getUserByPublicKey(pubKey);
+    if(!foundUser) {
+      foundUser = await user.putUser({ pubKey });
+    }
+
+    const result = await stripe.createCardholder(foundUser, individualInfo, ip);  // PASS IP
+
+    console.log('Cardholder created:', result.cardholderId);
+    res.send(result);
+  } catch(err) {
+    console.error('Error creating cardholder:', err);
+    res.status(404);
+    res.send({error: err.message || 'Failed to create cardholder'});
+  }
+});
+```
+
+**stripe.js** (`addie/src/server/node/src/processors/stripe.js`):
+
+**createCardholder Function** (Lines 400-444):
+```javascript
+createCardholder: async (foundUser, individualInfo, ip) => {
+  try {
+    const { name, email, phoneNumber, address } = individualInfo;
+
+    // Build billing address, only including line2 if it exists (Stripe requirement)
+    const billingAddress = {
+      line1: address.line1,
+      city: address.city,
+      state: address.state,
+      postal_code: address.postal_code,
+      country: address.country || 'US'
+    };
+
+    // Only include line2 if it's not empty (Stripe doesn't allow null or empty string)
+    if (address.line2 && address.line2.trim()) {
+      billingAddress.line2 = address.line2;
+    }
+
+    // Build TOS acceptance with actual user IP
+    const tosAcceptance = {
+      date: Math.floor(Date.now() / 1000),
+      ip: ip || '0.0.0.0'
+    };
+
+    // Create Stripe Issuing Cardholder
+    const cardholder = await stripeSDK.issuing.cardholders.create({
+      type: 'individual',
+      name: name,
+      email: email,
+      phone_number: phoneNumber,
+      billing: {
+        address: billingAddress
+      },
+      individual: {
+        first_name: individualInfo.firstName,
+        last_name: individualInfo.lastName,
+        dob: {
+          day: individualInfo.dob.day,
+          month: individualInfo.dob.month,
+          year: individualInfo.dob.year
+        }
+      },
+      tos_acceptance: tosAcceptance,
+      status: 'active'
+    });
+
+    // Save cardholder ID to user record
+    foundUser.stripeCardholderId = cardholder.id;
+    await user.saveUser(foundUser);
+
+    return {
+      success: true,
+      cardholderId: cardholder.id,
+      status: cardholder.status
+    };
+  } catch(err) {
+    console.error('Error creating cardholder:', err);
+    return { success: false, error: err.message };
+  }
+}
+```
+
+### Key Implementation Details
+
+**1. Conditional line2 Field Handling**:
+- Frontend: Only includes `line2` in address object if not empty
+- Backend: Only includes `line2` in billingAddress if not empty string
+- Stripe Requirement: Optional fields must be completely omitted, not null or empty string
+
+**2. TOS Acceptance Construction**:
+- Frontend: Validates checkbox is checked, doesn't send tosAcceptance object
+- Backend: Constructs tosAcceptance with real user IP from request headers
+- IP Extraction: `req.headers['x-forwarded-for'] || req.socket.remoteAddress`
+
+**3. firstName/lastName Flow**:
+- HTML Form: Separate input fields for firstName and lastName
+- JavaScript: Combines into `name` field, keeps firstName/lastName separate
+- Swift/Kotlin: Extracts firstName/lastName from individualInfo dictionary
+- Backend: Receives both fields and passes to Stripe Issuing API
+
+**4. Green Focus Color**:
+- Changed from default blue to Planet Nine green (#10b981)
+- Applied to all text input focus states
+- Consistent branding across payment forms
+
+### Testing with Test Keys
+
+Stripe test keys configured in Docker container ecosystem.config.js:
+
+```javascript
+{
+  name: 'addie',
+  env: {
+    STRIPE_KEY: 'sk_test_...',
+    STRIPE_PUBLISHING_KEY: 'pk_test_...'
+  }
+}
+```
+
+### Error Handling
+
+**Empty line2 Error**:
+```
+You passed an empty string for 'billing[address][line2]'. We assume empty values are an attempt to unset a parameter; however 'billing[address][line2]' cannot be unset.
+```
+**Fix**: Conditionally build address object, only include line2 if not empty.
+
+**Missing firstName/lastName Error**:
+```
+The cardholder must provide a first and last name.
+```
+**Fix**: Extract firstName and lastName in Swift bridge and forward to backend.
+
+**Missing TOS Acceptance Error**:
+```
+The cardholder must agree to the user terms and privacy policy.
+```
+**Fix**: Construct tosAcceptance in backend with real user IP from request headers.
+
+### Storage
+
+Cardholder IDs are stored in Addie user records:
+
+```javascript
+{
+  uuid: "user-uuid",
+  pubKey: "02a1b2c3...",
+  stripeCustomerId: "cus_...",      // For making purchases
+  stripePayoutCardId: "pm_...",     // For receiving payouts
+  stripeCardholderId: "ich_..."     // For virtual cards
+}
+```
+
+### Benefits
+
+1. **Financial Inclusion**: Users without bank accounts can receive virtual debit cards
+2. **Instant Issuance**: Cards created immediately after cardholder approval
+3. **Real KYC**: Proper identity verification with required fields
+4. **TOS Compliance**: Legally binding acceptance with IP and timestamp tracking
+5. **Multi-Platform**: Same functionality on iOS and Android
 
 ## Stripe Payout Cards Implementation (November 2025)
 

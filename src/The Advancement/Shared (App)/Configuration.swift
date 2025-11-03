@@ -11,8 +11,8 @@ public struct Configuration {
     // MARK: - Environment Configuration
 
     /// Environment mode: "production", "test", or "local"
-    public static let environment: String = "production"  // Change to "test" for local testing
-    //public static let environment: String = "test"  // Change to "test" for local testing
+    //public static let environment: String = "production"  // Change to "test" for local testing
+    public static let environment: String = "test"  // Change to "test" for local testing
 
     /// Test base number (1, 2, or 3) - only used when environment = "test"
     public static let testBaseNumber: Int = 1

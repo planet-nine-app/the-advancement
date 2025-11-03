@@ -22,6 +22,32 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 
     @IBOutlet var webView: WKWebView!
 
+#if os(iOS)
+    // Status indicator views
+    private let statusContainerView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = .clear
+        return view
+    }()
+
+    private let statusCircle: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.cornerRadius = 15
+        view.clipsToBounds = true
+        return view
+    }()
+
+    private let statusLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = UIFont.systemFont(ofSize: 14, weight: .semibold)
+        label.textColor = .label
+        return label
+    }()
+#endif
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -32,6 +58,9 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 
         // Add floating navigation buttons since there's no navigation controller
         addFloatingNavigationButtons()
+
+        // Add status indicator
+        addStatusIndicator()
 #endif
 
         self.webView.configuration.userContentController.add(self, name: "controller")
@@ -41,6 +70,14 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 
         self.webView.loadFileURL(Bundle.main.url(forResource: "Main", withExtension: "html")!, allowingReadAccessTo: Bundle.main.resourceURL!)
     }
+
+#if os(iOS)
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // Update status indicator when view appears (in case cards were added)
+        updateStatusIndicator()
+    }
+#endif
 
 #if os(iOS)
     private func addFloatingNavigationButtons() {
@@ -57,10 +94,11 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         let instantiationButton = createNavigationButton(title: "⚡ Instantiation", action: #selector(showInstantiation))
         let carrierBagButton = createNavigationButton(title: "🎒 Carrier Bag", action: #selector(showCarrierBag))
 
-        // Prominent Stripe payment buttons
-        let saveCardsButton = createNavigationButton(title: "💳 Save Cards", action: #selector(showPaymentMethods), backgroundColor: UIColor(red: 0.91, green: 0.12, blue: 0.39, alpha: 1.0))
-        let issueCardsButton = createNavigationButton(title: "🏦 Issue Cards", action: #selector(showPaymentMethods), backgroundColor: UIColor(red: 0.91, green: 0.12, blue: 0.39, alpha: 1.0))
-        let receivePaymentsButton = createNavigationButton(title: "💰 Receive $$", action: #selector(showPaymentMethods), backgroundColor: UIColor(red: 0.91, green: 0.12, blue: 0.39, alpha: 1.0))
+        // Prominent card display button
+        let myCardButton = createNavigationButton(title: "💳 My Card", action: #selector(showMyCard), backgroundColor: UIColor(red: 0.91, green: 0.12, blue: 0.39, alpha: 1.0))
+
+        // Payment management buttons
+        let manageCardsButton = createNavigationButton(title: "⚙️ Manage Cards", action: #selector(showPaymentMethods), backgroundColor: UIColor(red: 0.61, green: 0.15, blue: 0.69, alpha: 1.0))
 
         let nexusButton = createNavigationButton(title: "🌐 Nexus", action: #selector(showNexus))
         let nfcButton = createNavigationButton(title: "📱 NFC Keys", action: #selector(showNFC))
@@ -68,9 +106,8 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         stackView.addArrangedSubview(cookbookButton)
         stackView.addArrangedSubview(instantiationButton)
         stackView.addArrangedSubview(carrierBagButton)
-        stackView.addArrangedSubview(saveCardsButton)
-        stackView.addArrangedSubview(issueCardsButton)
-        stackView.addArrangedSubview(receivePaymentsButton)
+        stackView.addArrangedSubview(myCardButton)
+        stackView.addArrangedSubview(manageCardsButton)
         stackView.addArrangedSubview(nexusButton)
         stackView.addArrangedSubview(nfcButton)
 
@@ -122,11 +159,21 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         present(navController, animated: true)
     }
 
+    @objc private func showMyCard() {
+        NSLog("ADVANCEAPP: 💳 Showing my card display")
+
+        let cardDisplayVC = CardDisplayViewController()
+        let navController = UINavigationController(rootViewController: cardDisplayVC)
+        navController.modalPresentationStyle = .fullScreen
+        present(navController, animated: true)
+    }
+
     @objc private func showPaymentMethods() {
-        NSLog("ADVANCEAPP: 💳 Showing payment methods")
+        NSLog("ADVANCEAPP: ⚙️ Showing payment methods management")
 
         let paymentVC = PaymentMethodViewController()
         let navController = UINavigationController(rootViewController: paymentVC)
+        navController.modalPresentationStyle = .fullScreen
         present(navController, animated: true)
     }
 
@@ -144,6 +191,86 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         let nfcVC = NFCViewController()
         let navController = UINavigationController(rootViewController: nfcVC)
         present(navController, animated: true)
+    }
+
+    private func addStatusIndicator() {
+        // Add container to view
+        view.addSubview(statusContainerView)
+        statusContainerView.addSubview(statusCircle)
+        statusContainerView.addSubview(statusLabel)
+
+        // Setup constraints for container (top-left corner)
+        NSLayoutConstraint.activate([
+            statusContainerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            statusContainerView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 20),
+            statusContainerView.heightAnchor.constraint(equalToConstant: 30)
+        ])
+
+        // Setup constraints for circle
+        NSLayoutConstraint.activate([
+            statusCircle.leadingAnchor.constraint(equalTo: statusContainerView.leadingAnchor),
+            statusCircle.centerYAnchor.constraint(equalTo: statusContainerView.centerYAnchor),
+            statusCircle.widthAnchor.constraint(equalToConstant: 30),
+            statusCircle.heightAnchor.constraint(equalToConstant: 30)
+        ])
+
+        // Setup constraints for label
+        NSLayoutConstraint.activate([
+            statusLabel.leadingAnchor.constraint(equalTo: statusCircle.trailingAnchor, constant: 8),
+            statusLabel.centerYAnchor.constraint(equalTo: statusContainerView.centerYAnchor),
+            statusLabel.trailingAnchor.constraint(equalTo: statusContainerView.trailingAnchor)
+        ])
+
+        // Initial state
+        updateStatusIndicator()
+
+        NSLog("ADVANCEAPP: 🎨 Status indicator added to top-left")
+    }
+
+    private func updateStatusIndicator() {
+        // Check if user has any saved cards
+        let hasCards = checkIfUserHasCards()
+
+        if hasCards {
+            // Active state: green and purple gradient circle with "Post away"
+            let gradientLayer = CAGradientLayer()
+            gradientLayer.colors = [
+                UIColor(red: 0.16, green: 0.73, blue: 0.51, alpha: 1.0).cgColor, // #10b981 - Green
+                UIColor(red: 0.61, green: 0.15, blue: 0.69, alpha: 1.0).cgColor  // #9c27b0 - Purple
+            ]
+            gradientLayer.startPoint = CGPoint(x: 0, y: 0)
+            gradientLayer.endPoint = CGPoint(x: 1, y: 1)
+            gradientLayer.frame = CGRect(x: 0, y: 0, width: 30, height: 30)
+            gradientLayer.cornerRadius = 15
+
+            // Remove existing gradient layers
+            statusCircle.layer.sublayers?.removeAll(where: { $0 is CAGradientLayer })
+            statusCircle.layer.insertSublayer(gradientLayer, at: 0)
+
+            statusLabel.text = "Post away"
+            statusLabel.textColor = UIColor(red: 0.16, green: 0.73, blue: 0.51, alpha: 1.0)
+
+            NSLog("ADVANCEAPP: ✅ Status indicator updated to 'Post away' (user has cards)")
+        } else {
+            // Inactive state: gray circle with "Set up payment"
+            statusCircle.layer.sublayers?.removeAll(where: { $0 is CAGradientLayer })
+            statusCircle.backgroundColor = UIColor.systemGray4
+
+            statusLabel.text = "Set up payment"
+            statusLabel.textColor = .systemGray
+
+            NSLog("ADVANCEAPP: ⚠️ Status indicator updated to 'Set up payment' (no cards)")
+        }
+    }
+
+    private func checkIfUserHasCards() -> Bool {
+        // Check if user has any saved cards in UserDefaults
+        if let cardsData = UserDefaults.standard.data(forKey: "stripe_saved_cards"),
+           let cards = try? JSONSerialization.jsonObject(with: cardsData) as? [[String: Any]],
+           !cards.isEmpty {
+            return true
+        }
+        return false
     }
 #endif
 

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://js.stripe.com https://m.stripe.com https://*.stripe.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; style-src 'self' 'unsafe-inline'; frame-src https://js.stripe.com https://m.stripe.com https://*.stripe.com; connect-src 'self' https://api.stripe.com https://m.stripe.com https://*.stripe.com http://127.0.0.1:*;">
     <title>Payment Method</title>
     <script src="https://js.stripe.com/v3/"></script>
     <style>
@@ -197,6 +198,12 @@
             font-size: 14px;
         }
 
+        .form-input:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
         .form-input::placeholder {
             color: rgba(167, 139, 250, 0.5);
         }
@@ -259,7 +266,7 @@
             <div class="info-box">
                 <strong>Planet Nine Virtual Card</strong><br>
                 Get your own virtual debit card - use it anywhere online, instantly.<br><br>
-                ✓ Only 10¢ to create<br>
+                ✓ Free to create<br>
                 ✓ Instant activation<br>
                 ✓ Set your own spending limit
             </div>
@@ -301,9 +308,12 @@
         // Initialize Stripe for "I have a card" flow
         async function initializeStripe() {
             try {
+                console.log('💳 Initializing Stripe...');
                 showLoading(true);
 
+                console.log('💳 Calling createSetupIntent...');
                 const response = await callSwift('createSetupIntent');
+                console.log('💳 SetupIntent response:', response);
 
                 if (!response || !response.clientSecret) {
                     throw new Error('Failed to create SetupIntent');
@@ -311,13 +321,15 @@
 
                 setupIntentClientSecret = response.clientSecret;
                 const publishableKey = response.publishableKey;
+                console.log('💳 Got clientSecret and publishableKey');
 
                 stripe = Stripe(publishableKey);
+                console.log('💳 Stripe initialized');
 
                 const appearance = {
                     theme: 'night',
                     variables: {
-                        colorPrimary: '#e91e63',
+                        colorPrimary: '#10b981',  // Green for focus/active state
                         colorBackground: '#1a0033',
                         colorText: '#ffffff',
                         colorDanger: '#f44336',
@@ -330,13 +342,47 @@
                     clientSecret: setupIntentClientSecret,
                     appearance: appearance,
                 });
+                console.log('💳 Elements created');
 
                 const paymentElement = elements.create('payment');
+
+                // Listen for load errors
+                let hasLoadError = false;
+                paymentElement.on('loaderror', (event) => {
+                    console.error('⚠️ Payment element load error:', JSON.stringify(event));
+                    hasLoadError = true;
+
+                    // Show warning but don't prevent usage
+                    const warningDiv = document.createElement('div');
+                    warningDiv.className = 'info-box';
+                    warningDiv.style.borderColor = '#ff9800';
+                    warningDiv.style.color = '#ff9800';
+                    warningDiv.innerHTML = `
+                        ⚠️ <strong>Sandbox Warning</strong><br>
+                        Stripe Elements detected a sandbox restriction. If the form doesn't appear or work properly,
+                        you may need to use the Safari extension or Android app for payment method setup.
+                    `;
+                    document.querySelector('.card-form').insertBefore(warningDiv, document.getElementById('payment-element'));
+                });
+
+                paymentElement.on('ready', () => {
+                    console.log('✅ Payment element is ready and visible!');
+                    if (!hasLoadError) {
+                        // Form loaded successfully without errors
+                        console.log('✅ No load errors - form should be fully functional');
+                    } else {
+                        console.log('⚠️ Form is ready but had load errors - functionality may be limited');
+                    }
+                });
+
                 paymentElement.mount('#payment-element');
+                console.log('💳 Payment element mounted');
 
                 showLoading(false);
+                console.log('✅ Stripe initialization complete');
 
             } catch (error) {
+                console.error('❌ Stripe initialization error:', error);
                 showError('Failed to initialize: ' + error.message);
                 showLoading(false);
             }
@@ -409,6 +455,7 @@
 
                     <h4 style="color: #a78bfa; margin: 16px 0 12px; font-size: 16px;">Address</h4>
                     <input type="text" id="address-line1" placeholder="Street Address" class="form-input" required>
+                    <input type="text" id="address-line2" placeholder="Apt, Suite, Unit (optional)" class="form-input">
                     <input type="text" id="city" placeholder="City" class="form-input" required>
                     <div style="display: flex; gap: 8px;">
                         <input type="text" id="state" placeholder="State" class="form-input" style="flex: 1;" required>
@@ -419,8 +466,13 @@
                     <input type="number" id="spending-limit" value="1000" min="100" max="50000" step="100" class="form-input">
                     <div style="font-size: 12px; color: #a78bfa; margin-bottom: 16px;">Monthly limit in USD (minimum $100)</div>
 
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 16px 0; cursor: pointer;">
+                        <input type="checkbox" id="tos-acceptance" required style="width: 20px; height: 20px;">
+                        <span style="font-size: 14px; color: #a78bfa;">I agree to the <a href="https://stripe.com/legal/issuing/cardholder-terms" target="_blank" style="color: #e91e63; text-decoration: underline;">Stripe Issuing Terms</a></span>
+                    </label>
+
                     <button class="button" onclick="submitCardRequest()">
-                        Get My Card (10¢)
+                        Get My Card
                     </button>
                 </div>
             `;
@@ -430,6 +482,33 @@
 
         // Submit "I need a card" request
         async function submitCardRequest() {
+            // Check TOS acceptance
+            const tosAccepted = document.getElementById('tos-acceptance').checked;
+            if (!tosAccepted) {
+                showIssueError('Please accept the Stripe Issuing Terms to continue');
+                return;
+            }
+
+            // Build address object, only including line2 if it's not empty
+            const line1 = document.getElementById('address-line1').value;
+            const line2 = document.getElementById('address-line2').value.trim();
+            const city = document.getElementById('city').value;
+            const state = document.getElementById('state').value;
+            const postalCode = document.getElementById('postal-code').value;
+
+            const address = {
+                line1: line1,
+                city: city,
+                state: state,
+                postal_code: postalCode,
+                country: 'US'
+            };
+
+            // Only include line2 if it's not empty (Stripe requirement)
+            if (line2) {
+                address.line2 = line2;
+            }
+
             const info = {
                 firstName: document.getElementById('first-name').value,
                 lastName: document.getElementById('last-name').value,
@@ -441,14 +520,8 @@
                     day: parseInt(document.getElementById('dob-day').value),
                     year: parseInt(document.getElementById('dob-year').value)
                 },
-                address: {
-                    line1: document.getElementById('address-line1').value,
-                    line2: '',
-                    city: document.getElementById('city').value,
-                    state: document.getElementById('state').value,
-                    postal_code: document.getElementById('postal-code').value,
-                    country: 'US'
-                }
+                address: address
+                // tosAcceptance constructed by backend with actual IP
             };
 
             const spendingLimit = parseInt(document.getElementById('spending-limit').value) * 100;
@@ -485,31 +558,46 @@
         function callSwift(method, params = {}) {
             return new Promise((resolve, reject) => {
                 const messageId = Date.now() + Math.random();
+                console.log(`🔵 callSwift: ${method}, messageId: ${messageId}`);
 
                 const responseHandler = (event) => {
+                    console.log('🔵 Received message event:', event);
+                    console.log('🔵 event.data:', event.data);
+                    console.log('🔵 Looking for messageId:', messageId);
+
                     if (event.data && event.data.messageId === messageId) {
+                        console.log('🟢 MessageId matched! Processing response...');
                         window.removeEventListener('message', responseHandler);
                         if (event.data.error) {
+                            console.error('🔴 Error in response:', event.data.error);
                             reject(new Error(event.data.error));
                         } else {
+                            console.log('🟢 Success! Result:', event.data.result);
                             resolve(event.data.result);
                         }
+                    } else {
+                        console.log('🟡 MessageId did not match or data missing');
                     }
                 };
 
                 window.addEventListener('message', responseHandler);
+                console.log('🔵 Added message event listener');
 
                 if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.paymentMethod) {
+                    console.log('🔵 Posting message to Swift...');
                     window.webkit.messageHandlers.paymentMethod.postMessage({
                         method,
                         params,
                         messageId
                     });
+                    console.log('🔵 Message posted to Swift');
                 } else {
+                    console.error('🔴 Swift message handler not available');
                     reject(new Error('Swift message handler not available'));
                 }
 
                 setTimeout(() => {
+                    console.log('🔴 Request timeout after 30s');
                     window.removeEventListener('message', responseHandler);
                     reject(new Error('Request timeout'));
                 }, 30000);
