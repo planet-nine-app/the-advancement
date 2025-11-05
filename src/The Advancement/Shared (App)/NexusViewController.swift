@@ -381,7 +381,7 @@ class NexusViewController: UIViewController, WKNavigationDelegate, WKScriptMessa
 
     private func storePaymentMethodForKeyboard(_ paymentMethod: [String: Any]) {
         // Store payment method data in shared UserDefaults for keyboard extension access
-        let userDefaults = UserDefaults(suiteName: "group.com.planetnine.the-advancement")
+        let userDefaults = UserDefaults(suiteName: "group.com.planetnine.Planet-Nine")
 
         // Store the payment method with a timestamp
         var storedMethods = userDefaults?.array(forKey: "stored_payment_methods") as? [[String: Any]] ?? []
@@ -820,7 +820,7 @@ class NexusViewController: UIViewController, WKNavigationDelegate, WKScriptMessa
             NSLog("ADVANCEAPP: 🔄 Using stored Addie UUID: %@", uuid)
 
             // Also store in shared UserDefaults for cross-app access
-            let sharedDefaults = UserDefaults(suiteName: "group.com.planetnine.the-advancement")
+            let sharedDefaults = UserDefaults(suiteName: "group.com.planetnine.Planet-Nine")
             sharedDefaults?.set(uuid, forKey: "user_uuid")
 
             return uuid

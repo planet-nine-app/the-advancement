@@ -186,6 +186,17 @@ open http://localhost:3456
 - **Port Separation**: Wiki on port 4000 (allyabase uses 3000) to avoid conflicts
 - **Project Management**: Automatic droplet assignment to Digital Ocean projects
 
+### ✅ **AdvanceKey Share Button** (January 2025)
+- **Affiliate Link Creation**: Tap share button to create shareable BDO with 10% affiliate commission
+- **Automatic Payee Adjustment**: Original payees scaled to 90% total, affiliate gets 10%
+- **Temporary Key Generation**: New sessionless keypair for each shared BDO (never saved)
+- **Public BDO Creation**: Automatically makes BDO public to generate human-memorable emojicode
+- **Clickable Emojicode**: Tap to copy emojicode to clipboard with visual confirmation
+- **CarrierBag Storage**: Shared links automatically saved to "store" collection
+- **Multi-Platform**: Identical implementation on iOS and Android
+- **BDO Service Integration**: Proper authentication with "The Advancement" hash
+- **Complete Flow**: Create copy → Add affiliate payee → Generate keys → Create BDO user → Make public → Get emojicode → Save to store
+
 ## File Structure
 
 ```
@@ -1614,6 +1625,541 @@ See `/sharon/tests/the-advancement/payment-flows.test.js` and `/sharon/tests/the
 - **US-Only**: Direct debit card transfers only work in the US (acceptable for beta)
 
 **Decision**: The improved UX and instant setup justify the higher fees for our affiliate use case. Users can receive their first payout within 30 minutes of setup, compared to 2-3 days with Connected Accounts.
+
+## AdvanceKey Share Button Implementation (January 2025)
+
+### Overview
+
+The share button in AdvanceKey enables users to create affiliate links for any BDO they're viewing. When tapped, it creates a new public BDO with the user's pubKey added as a 10% commission affiliate, generates a human-memorable emojicode for sharing, and saves the link to the user's carrierBag "store" collection.
+
+### Architecture
+
+```
+┌─────────────────────────────┐
+│  User Views BDO             │
+│  Taps Share Button          │
+└─────────────┬───────────────┘
+              │
+              ▼
+┌─────────────────────────────┐
+│  1. Copy BDO Data           │
+│  2. Adjust Payees           │
+│     - Affiliate: 10%        │
+│     - Originals: 90% total  │
+└─────────────┬───────────────┘
+              │
+              ▼
+┌─────────────────────────────┐
+│  3. Generate Temp Keys      │
+│     (NOT saved to keychain) │
+└─────────────┬───────────────┘
+              │
+              ▼
+┌─────────────────────────────┐
+│  4. Create BDO User         │
+│     PUT /user/create        │
+│     Hash: "The Advancement" │
+│     Sig: timestamp+pubKey+h │
+└─────────────┬───────────────┘
+              │
+              ▼
+┌─────────────────────────────┐
+│  5. Make BDO Public         │
+│     PUT /user/:uuid/bdo     │
+│     Sig: timestamp+uuid+h   │
+│     public: true            │
+└─────────────┬───────────────┘
+              │
+              ▼
+┌─────────────────────────────┐
+│  6. Get Emojicode           │
+│     💚🌍🔑💎🌟💎🎨🐉📌     │
+└─────────────┬───────────────┘
+              │
+              ▼
+┌─────────────────────────────┐
+│  7. Save to Store           │
+│     carrierBag["store"]     │
+└─────────────┬───────────────┘
+              │
+              ▼
+┌─────────────────────────────┐
+│  8. Display Emojicode       │
+│     (Tap to copy)           │
+└─────────────────────────────┘
+```
+
+### iOS Implementation
+
+**KeyboardViewController.swift** (`src/The Advancement/AdvanceKey/KeyboardViewController.swift`):
+
+#### Key Methods
+
+**1. handleShareBDOMessage** (Lines 2612-2650)
+```swift
+private func handleShareBDOMessage(_ body: Any) {
+    guard let messageDict = body as? [String: Any],
+          let bdoData = messageDict["bdo"] as? [String: Any],
+          let title = messageDict["title"] as? String else {
+        NSLog("ADVANCEKEY: ❌ Invalid share BDO message format")
+        return
+    }
+
+    NSLog("ADVANCEKEY: 🔗 Share button tapped for: %@", title)
+
+    // Check if user has saved payment methods
+    Task {
+        do {
+            let hasSavedCard = await loadStoredPaymentMethods()
+            if !hasSavedCard {
+                await showError(message: "Please save a payment method before creating affiliate links")
+                return
+            }
+
+            // Create copy of BDO with affiliate payee
+            var newBDOData = bdoData
+
+            // Add affiliate payee (10% commission)
+            if var payees = newBDOData["payees"] as? [[String: Any]] {
+                // ... adjust payees
+            }
+
+            // Create shareable BDO with emojicode
+            let emojicode = try await createShareableBDO(bdoData: newBDOData, title: title)
+
+            // Save to carrierBag "store" collection
+            await saveToCarrierBagStore(bdoData: newBDOData, emojicode: emojicode, title: title)
+
+            // Present the emojicode
+            await presentEmojicode(emojicode: emojicode, title: title)
+        } catch {
+            NSLog("ADVANCEKEY: ❌ Share failed: %@", error.localizedDescription)
+        }
+    }
+}
+```
+
+**2. createShareableBDO** (Lines 2754-2848)
+```swift
+private func createShareableBDO(bdoData: [String: Any], title: String) async throws -> String {
+    NSLog("ADVANCEKEY: 🏗️ Creating new BDO with affiliate payee")
+
+    // 1. Generate NEW sessionless keys for the BDO (DO NOT SAVE)
+    guard let bdoKeys = sessionless.generateKeys() else {
+        throw NSError(domain: "CryptoError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to generate BDO keys"])
+    }
+
+    let bdoPubKey = bdoKeys.publicKey
+    NSLog("ADVANCEKEY: 🔑 Generated new BDO keys: %@", String(bdoPubKey.prefix(16)))
+
+    // 2. Create BDO user with the new keys
+    let bdoBaseURL = Configuration.bdoBaseURL
+    let createUserEndpoint = Configuration.BDO.createUser()
+
+    let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+    let hash = "The Advancement"
+    let message = timestamp + bdoPubKey + hash  // timestamp + pubKey + hash
+    guard let signature = signWithKeys(message: message, privateKey: bdoKeys.privateKey) else {
+        throw NSError(domain: "SignatureError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to sign BDO user creation"])
+    }
+
+    var createUserRequest = URLRequest(url: URL(string: createUserEndpoint)!)
+    createUserRequest.httpMethod = "PUT"
+    createUserRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+    let createUserBody: [String: Any] = [
+        "timestamp": timestamp,
+        "pubKey": bdoPubKey,
+        "signature": signature,
+        "hash": hash,
+        "bdo": bdoData
+    ]
+
+    createUserRequest.httpBody = try JSONSerialization.data(withJSONObject: createUserBody)
+
+    let (createData, createResponse) = try await URLSession.shared.data(for: createUserRequest)
+
+    guard let httpResponse = createResponse as? HTTPURLResponse,
+          httpResponse.statusCode == 201 || httpResponse.statusCode == 200,
+          let json = try? JSONSerialization.jsonObject(with: createData) as? [String: Any],
+          let bdoUUID = json["uuid"] as? String else {
+        throw NSError(domain: "BDOError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to create BDO user"])
+    }
+
+    NSLog("ADVANCEKEY: ✅ BDO user created: %@", bdoUUID)
+
+    // 3. Update BDO to make it PUBLIC (this generates the emojicode)
+    let updateTimestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+    let updateMessage = updateTimestamp + bdoUUID + hash  // timestamp + uuid + hash
+    guard let updateSignature = signWithKeys(message: updateMessage, privateKey: bdoKeys.privateKey) else {
+        throw NSError(domain: "SignatureError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to sign BDO update"])
+    }
+
+    let updateEndpoint = Configuration.BDO.putBDO(userUUID: bdoUUID)
+    var updateRequest = URLRequest(url: URL(string: updateEndpoint)!)
+    updateRequest.httpMethod = "PUT"
+    updateRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+    let updateBody: [String: Any] = [
+        "timestamp": updateTimestamp,
+        "pubKey": bdoPubKey,
+        "signature": updateSignature,
+        "hash": hash,
+        "bdo": bdoData,
+        "public": true  // This triggers emojicode generation
+    ]
+
+    updateRequest.httpBody = try JSONSerialization.data(withJSONObject: updateBody)
+
+    let (updateData, updateResponse) = try await URLSession.shared.data(for: updateRequest)
+
+    guard let updateHttpResponse = updateResponse as? HTTPURLResponse,
+          updateHttpResponse.statusCode == 200,
+          let updateJson = try? JSONSerialization.jsonObject(with: updateData) as? [String: Any],
+          let emojicode = updateJson["emojiShortcode"] as? String else {
+        throw NSError(domain: "BDOError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to make BDO public"])
+    }
+
+    NSLog("ADVANCEKEY: ✅ BDO made public with emojicode: %@", emojicode)
+
+    return emojicode
+}
+```
+
+**3. signWithKeys** (Lines 2735-2752)
+```swift
+private func signWithKeys(message: String, privateKey: String) -> String? {
+    NSLog("ADVANCEKEY: 🖊️ Signing with custom keys...")
+
+    guard let signJS = sessionless.jsContext?.objectForKeyedSubscript("globalThis")?.objectForKeyedSubscript("sessionless")?.objectForKeyedSubscript("sign") else {
+        NSLog("ADVANCEKEY: ❌ Cannot sign: signJS not available")
+        return nil
+    }
+
+    guard let signaturejs = signJS.call(withArguments: [message, privateKey]) else {
+        NSLog("ADVANCEKEY: ❌ Failed to call signJS")
+        return nil
+    }
+
+    let signature = signaturejs.toString()
+    NSLog("ADVANCEKEY: ✅ Message signed successfully")
+    return signature
+}
+```
+
+**4. presentEmojicode** (Lines 2851-2888)
+```swift
+private func presentEmojicode(emojicode: String, title: String) async {
+    NSLog("ADVANCEKEY: 🎨 Presenting emojicode: %@", emojicode)
+
+    await MainActor.run {
+        self.textDocumentProxy.insertText(emojicode)
+
+        let successHTML = """
+        <div style="padding: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-align: center; font-family: -apple-system; border-radius: 12px; margin: 10px;">
+            <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+            <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">Shareable Link Created!</div>
+            <div style="font-size: 14px; margin-bottom: 12px;">\(title)</div>
+            <div onclick="copyEmojicode()" style="font-size: 16px; font-family: monospace; background: rgba(255,255,255,0.2); padding: 8px; border-radius: 6px; cursor: pointer;">
+                \(emojicode)
+            </div>
+            <div style="font-size: 11px; margin-top: 8px; opacity: 0.7;">👆 Tap to copy</div>
+            <div style="font-size: 12px; margin-top: 12px; opacity: 0.9;">You'll earn 10% affiliate commission on purchases made through this link!</div>
+        </div>
+        <script>
+        function copyEmojicode() {
+            navigator.clipboard.writeText('\(emojicode)').then(() => {
+                window.webkit.messageHandlers.advanceKey.postMessage({
+                    action: 'emojicodeCopied',
+                    emojicode: '\(emojicode)'
+                });
+            });
+        }
+        </script>
+        """
+
+        self.resultWebView.evaluateJavaScript("document.body.innerHTML = `\(successHTML)`", completionHandler: nil)
+    }
+}
+```
+
+**5. saveToCarrierBagStore** (Lines 2920-2933)
+```swift
+private func saveToCarrierBagStore(bdoData: [String: Any], emojicode: String, title: String) async {
+    NSLog("ADVANCEKEY: 💼 Saving shared BDO to carrierBag store collection")
+
+    var itemToSave = bdoData
+    itemToSave["emojicode"] = emojicode
+    itemToSave["title"] = title
+    itemToSave["sharedAt"] = ISO8601DateFormatter().string(from: Date())
+    itemToSave["type"] = "shared-link"
+
+    SharedUserDefaults.addToCarrierBagCollection("store", item: itemToSave)
+    NSLog("ADVANCEKEY: ✅ Saved shared BDO to store collection")
+}
+```
+
+**SharedUserDefaults.swift** (`src/The Advancement/Shared (Extension)/SharedUserDefaults.swift`):
+
+Added "store" collection to carrierBag (Line 187):
+```swift
+static func createEmptyCarrierBag() -> [String: Any] {
+    return [
+        // ... other collections
+        "store": [],  // Shared affiliate links
+        "addresses": []
+    ]
+}
+```
+
+### Android Implementation
+
+**AdvanceKeyViewModel.kt** (`src/android/app/src/main/java/.../ime/AdvanceKeyViewModel.kt`):
+
+#### Key Methods
+
+**1. createAffiliateBDO** (Lines 497-595)
+```kotlin
+fun createAffiliateBDO(bdoJson: String, onSuccess: (String) -> Unit) {
+    viewModelScope.launch {
+        try {
+            Log.d(TAG, "🔗 Creating affiliate BDO")
+
+            // Parse original BDO
+            val originalBDO = gson.fromJson(bdoJson, Map::class.java) as Map<String, Any>
+
+            // Get user keys
+            val keys = sessionless.getKeys() ?: throw Exception("User keys not found")
+
+            // Get original BDO data and payees
+            val bdo = originalBDO["bdo"] as? Map<String, Any> ?: throw Exception("No BDO data")
+            val originalPayees = (bdo["payees"] as? List<Map<String, Any>>) ?: emptyList()
+
+            // Calculate affiliate payee (10% commission)
+            val affiliatePercent = 10
+            val affiliatePayee = mapOf(
+                "pubKey" to keys.publicKey,
+                "addieURL" to homeBase,
+                "percent" to affiliatePercent,
+                "signature" to sessionless.sign(keys.publicKey + homeBase + affiliatePercent)
+            )
+
+            // Adjust original payees to 90% total
+            val adjustedPayees = originalPayees.map { payee ->
+                val originalPercent = (payee["percent"] as? Number)?.toInt() ?: 100
+                val adjustedPercent = (originalPercent * 0.9).toInt()
+                payee.toMutableMap().apply { put("percent", adjustedPercent) }
+            }
+
+            // New payees array: [affiliate (10%), ...adjusted originals (90% total)]
+            val newPayees = listOf(affiliatePayee) + adjustedPayees
+
+            val newBDOData = bdo.toMutableMap().apply {
+                put("payees", newPayees)
+            }
+
+            // Generate new keys for the affiliate BDO (separate Sessionless instance)
+            val tempSessionless = Sessionless(context)
+            val affiliateBDOKeys = tempSessionless.generateKeys()
+
+            val hash = "The Advancement"
+
+            // Create BDO using BDO service
+            val createResult = createBDO(affiliateBDOKeys, hash, newBDOData, tempSessionless)
+            val newBDOUUID = createResult["uuid"] as? String ?: throw Exception("No UUID")
+
+            // Make BDO public to get emojicode
+            val publicResult = updateBDOPublic(newBDOUUID, affiliateBDOKeys, hash, newBDOData, tempSessionless)
+            val emojicode = publicResult["emojiShortcode"] as? String ?: throw Exception("No emojicode")
+
+            Log.d(TAG, "✅ Affiliate BDO created with emojicode: $emojicode")
+
+            // Save to carrierBag "store" collection
+            saveToCarrierBagStore(newBDOData, emojicode, bdo["title"] as? String ?: "Untitled")
+
+            // Call success callback
+            withContext(Dispatchers.Main) {
+                onSuccess(emojicode)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Failed to create affiliate BDO", e)
+        }
+    }
+}
+```
+
+**2. createBDO** (Lines 594-630)
+```kotlin
+private suspend fun createBDO(
+    keys: Sessionless.Keys,
+    hash: String,
+    bdoData: Map<String, Any>,
+    sessionlessInstance: Sessionless
+): Map<String, Any> = withContext(Dispatchers.IO) {
+    val url = "${Configuration.bdoBaseURL}/user/create"
+
+    val timestamp = System.currentTimeMillis().toString()
+    val message = timestamp + keys.publicKey + hash
+    val signature = sessionlessInstance.sign(message) ?: throw Exception("Failed to sign")
+
+    val body = mapOf(
+        "timestamp" to timestamp,
+        "pubKey" to keys.publicKey,
+        "hash" to hash,
+        "signature" to signature,
+        "bdo" to bdoData
+    )
+
+    val request = Request.Builder()
+        .url(url)
+        .put(gson.toJson(body).toRequestBody("application/json".toMediaType()))
+        .build()
+
+    client.newCall(request).execute().use { response ->
+        if (!response.isSuccessful) {
+            throw Exception("Failed to create BDO: ${response.body?.string()}")
+        }
+        gson.fromJson(response.body?.string(), Map::class.java) as Map<String, Any>
+    }
+}
+```
+
+**3. updateBDOPublic** (Lines 635-677)
+```kotlin
+private suspend fun updateBDOPublic(
+    uuid: String,
+    keys: Sessionless.Keys,
+    hash: String,
+    bdoData: Map<String, Any>,
+    sessionlessInstance: Sessionless
+): Map<String, Any> = withContext(Dispatchers.IO) {
+    val url = "${Configuration.bdoBaseURL}/user/$uuid/bdo"
+
+    val timestamp = System.currentTimeMillis().toString()
+    val message = timestamp + uuid + hash  // timestamp + uuid + hash (NOT pubKey!)
+    val signature = sessionlessInstance.sign(message) ?: throw Exception("Failed to sign")
+
+    val body = mapOf(
+        "timestamp" to timestamp,
+        "pubKey" to keys.publicKey,
+        "hash" to hash,
+        "signature" to signature,
+        "bdo" to bdoData,
+        "public" to true
+    )
+
+    val request = Request.Builder()
+        .url(url)
+        .post(gson.toJson(body).toRequestBody("application/json".toMediaType()))
+        .build()
+
+    client.newCall(request).execute().use { response ->
+        if (!response.isSuccessful) {
+            throw Exception("Failed to update BDO: ${response.body?.string()}")
+        }
+        gson.fromJson(response.body?.string(), Map::class.java) as Map<String, Any>
+    }
+}
+```
+
+**4. saveToCarrierBagStore** (Lines 600-637)
+```kotlin
+private suspend fun saveToCarrierBagStore(bdoData: Map<String, Any>, emojicode: String, title: String) {
+    Log.d(TAG, "💼 Saving shared BDO to carrierBag store collection")
+
+    val carrierBagJson = prefs.getString(KEY_CARRIER_BAG, null)
+    val carrierBag = if (carrierBagJson != null) {
+        gson.fromJson(carrierBagJson, Map::class.java).toMutableMap() as MutableMap<String, Any>
+    } else {
+        createEmptyCarrierBag().toMutableMap()
+    }
+
+    val storeItems = (carrierBag["store"] as? List<Map<String, Any>>)?.toMutableList() ?: mutableListOf()
+
+    val item = mapOf(
+        "title" to title,
+        "type" to "shared-link",
+        "emojicode" to emojicode,
+        "bdoData" to bdoData,
+        "sharedAt" to System.currentTimeMillis()
+    )
+
+    storeItems.add(0, item)
+    carrierBag["store"] = storeItems
+
+    val updatedJson = gson.toJson(carrierBag)
+    prefs.edit().putString(KEY_CARRIER_BAG, updatedJson).apply()
+
+    Log.d(TAG, "✅ Saved shared BDO to store collection (${storeItems.size} items)")
+}
+```
+
+**5. createEmptyCarrierBag** (Lines 707-727)
+```kotlin
+private fun createEmptyCarrierBag(): Map<String, Any> {
+    return mapOf(
+        // ... other collections
+        "store" to emptyList<Any>(),  // Shared affiliate links
+        "addresses" to emptyList<Any>()
+    )
+}
+```
+
+### Authentication Details
+
+#### Critical Signature Messages
+
+The BDO service requires specific signature message formats:
+
+**1. Creating BDO User** (PUT /user/create):
+```
+message = timestamp + pubKey + hash
+```
+
+**2. Updating BDO** (PUT /user/:uuid/bdo):
+```
+message = timestamp + uuid + hash
+```
+
+**Note**: The second signature uses `uuid` instead of `pubKey`. This was a critical bug fix during implementation.
+
+#### Hash Value
+
+All BDO operations use the hash value: `"The Advancement"`
+
+This hash is specific to The Advancement app and is used for authentication with the BDO service.
+
+### User Flow
+
+1. **User views a BDO** in AdvanceKey keyboard
+2. **Taps share button** next to the bag button
+3. **System checks** for saved payment method
+4. **Creates copy** of BDO with adjusted payees:
+   - User gets 10% affiliate commission
+   - Original payees split remaining 90%
+5. **Generates temporary keys** (never saved)
+6. **Creates BDO user** with new keys and hash
+7. **Makes BDO public** to trigger emojicode generation
+8. **Displays emojicode** with tap-to-copy functionality
+9. **Saves to store** collection in carrierBag
+10. **User shares** emojicode via text/social media
+
+### Benefits
+
+- **Instant Affiliate Links**: Create shareable links in seconds
+- **No Manual Setup**: Automatic payee calculation and BDO creation
+- **Human-Memorable**: Emojicodes are easier to share than long keys
+- **Persistent Storage**: All shared links saved to carrierBag
+- **Cross-Platform**: Identical functionality on iOS and Android
+- **Privacy-Preserving**: Temporary keys never saved to device
+
+### Implementation Notes
+
+1. **Temporary Keys**: Each shared BDO gets unique sessionless keys that are NOT saved to keychain
+2. **Payee Signatures**: Affiliate payee quad is signed with user's main keys
+3. **Public BDOs**: Setting `public: true` triggers automatic emojicode generation
+4. **Store Collection**: Added new "store" collection to carrierBag for affiliate links
+5. **Error Handling**: Graceful failures with user-friendly error messages
 
 ## Integration with Planet Nine Ecosystem
 

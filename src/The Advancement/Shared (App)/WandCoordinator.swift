@@ -26,7 +26,7 @@ class WandCoordinator {
 
     // MARK: - Private Properties
 
-    private let defaults = UserDefaults(suiteName: "group.app.planetnine.theadvancement")
+    private let defaults = UserDefaults(suiteName: "group.com.planetnine.Planet-Nine")
     private let knownWandsKey = "knownWands"
 
     // MARK: - Public Properties

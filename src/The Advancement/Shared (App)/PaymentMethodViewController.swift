@@ -129,8 +129,8 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
     }
 
     private func loadCustomerInfo() {
-        // Try to load saved customer ID from UserDefaults
-        if let savedCustomerId = UserDefaults.standard.string(forKey: "stripe_customer_id") {
+        // Try to load saved customer ID from SharedUserDefaults (App Group)
+        if let savedCustomerId = SharedUserDefaults.shared.string(forKey: "stripe_customer_id") {
             customerId = savedCustomerId
             NSLog("PAYMENTMETHOD: 💳 Loaded customer ID: %@", savedCustomerId)
         } else {
@@ -142,11 +142,11 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
     }
 
     private func loadSavedCards() {
-        // Load from UserDefaults for now (in production, fetch from Stripe API)
-        if let cardsData = UserDefaults.standard.data(forKey: "stripe_saved_cards"),
+        // Load from SharedUserDefaults (App Group) for keyboard extension access
+        if let cardsData = SharedUserDefaults.shared.data(forKey: "stripe_saved_cards"),
            let cards = try? JSONSerialization.jsonObject(with: cardsData) as? [[String: Any]] {
             savedCards = cards
-            NSLog("PAYMENTMETHOD: 💳 Loaded %d saved cards", cards.count)
+            NSLog("PAYMENTMETHOD: 💳 Loaded %d saved cards from SharedUserDefaults", cards.count)
         } else {
             savedCards = []
             NSLog("PAYMENTMETHOD: 💳 No saved cards found")
@@ -155,8 +155,9 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
 
     private func saveSavedCards() {
         if let cardsData = try? JSONSerialization.data(withJSONObject: savedCards) {
-            UserDefaults.standard.set(cardsData, forKey: "stripe_saved_cards")
-            NSLog("PAYMENTMETHOD: 💳 Saved %d cards to UserDefaults", savedCards.count)
+            SharedUserDefaults.shared.set(cardsData, forKey: "stripe_saved_cards")
+            SharedUserDefaults.shared.synchronize()
+            NSLog("PAYMENTMETHOD: 💳 Saved %d cards to SharedUserDefaults", savedCards.count)
         }
     }
 
@@ -325,11 +326,12 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
                 return
             }
 
-            // Save customer ID if returned
+            // Save customer ID if returned (use SharedUserDefaults for keyboard access)
             if let customerId = json["customerId"] as? String {
                 self.customerId = customerId
-                UserDefaults.standard.set(customerId, forKey: "stripe_customer_id")
-                NSLog("PAYMENTMETHOD: 💳 Saved customer ID: %@", customerId)
+                SharedUserDefaults.shared.set(customerId, forKey: "stripe_customer_id")
+                SharedUserDefaults.shared.synchronize()
+                NSLog("PAYMENTMETHOD: 💳 Saved customer ID to SharedUserDefaults: %@", customerId)
             }
 
             NSLog("PAYMENTMETHOD: ✅ SetupIntent created successfully")
@@ -352,21 +354,197 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         NSLog("PAYMENTMETHOD: ✅ SetupIntent succeeded: %@", setupIntentId)
         NSLog("PAYMENTMETHOD: 💳 Payment method ID: %@", paymentMethodId)
 
-        // Fetch payment method details from Stripe
-        // For now, we'll create a placeholder entry
-        let newCard: [String: Any] = [
-            "id": paymentMethodId,
-            "brand": "visa", // TODO: Fetch from Stripe API
-            "last4": "4242", // TODO: Fetch from Stripe API
-            "exp_month": "12",
-            "exp_year": "2025",
-            "isDefault": savedCards.isEmpty // First card is default
+        guard let homeBase = getHomeBaseURL(),
+              let keys = sessionless.getKeys() else {
+            NSLog("PAYMENTMETHOD: ⚠️ No authentication, cannot update payment method")
+            sendResponse(messageId: messageId, error: "Authentication required")
+            return
+        }
+
+        let pubKey = keys.publicKey
+
+        // CRITICAL: First update the payment method to set allow_redisplay = 'always'
+        // This must happen BEFORE fetching payment methods
+        NSLog("PAYMENTMETHOD: 🔄 Updating payment method allow_redisplay to 'always'...")
+
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let updateMessage = timestamp + pubKey + paymentMethodId
+        guard let updateSignature = signMessage(updateMessage) else {
+            NSLog("PAYMENTMETHOD: ❌ Failed to sign update request")
+            sendResponse(messageId: messageId, error: "Failed to sign request")
+            return
+        }
+
+        let updateEndpoint = "\(homeBase)/processor/stripe/payment-method/\(paymentMethodId)/allow-redisplay"
+        var updateRequest = URLRequest(url: URL(string: updateEndpoint)!)
+        updateRequest.httpMethod = "POST"
+        updateRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let updateBody: [String: Any] = [
+            "timestamp": timestamp,
+            "pubKey": pubKey,
+            "signature": updateSignature
         ]
 
-        savedCards.append(newCard)
-        saveSavedCards()
+        updateRequest.httpBody = try? JSONSerialization.data(withJSONObject: updateBody)
 
-        sendResponse(messageId: messageId, result: ["success": true])
+        URLSession.shared.dataTask(with: updateRequest) { [weak self] data, response, error in
+            guard let self = self else { return }
+
+            if let error = error {
+                NSLog("PAYMENTMETHOD: ❌ Failed to update payment method: %@", error.localizedDescription)
+                self.sendResponse(messageId: messageId, error: error.localizedDescription)
+                return
+            }
+
+            guard let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                NSLog("PAYMENTMETHOD: ❌ Invalid response from update endpoint")
+                self.sendResponse(messageId: messageId, error: "Invalid server response")
+                return
+            }
+
+            guard let success = json["success"] as? Bool, success else {
+                NSLog("PAYMENTMETHOD: ❌ Failed to update allow_redisplay")
+                if let errorMsg = json["error"] as? String {
+                    self.sendResponse(messageId: messageId, error: errorMsg)
+                } else {
+                    self.sendResponse(messageId: messageId, error: "Failed to update payment method")
+                }
+                return
+            }
+
+            NSLog("PAYMENTMETHOD: ✅ Payment method updated with allow_redisplay: always")
+
+            // Now get or create Addie user UUID and fetch payment methods
+            self.getOrCreateAddieUser(pubKey: pubKey) { [weak self] userUUID in
+                guard let self = self, let uuid = userUUID else {
+                    NSLog("PAYMENTMETHOD: ❌ Failed to get user UUID")
+                    self?.sendResponse(messageId: messageId, error: "Failed to get user UUID")
+                    return
+                }
+
+                // Fetch saved payment methods from backend
+                let fetchTimestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+                let message = fetchTimestamp + uuid
+                guard let signature = self.signMessage(message) else {
+                    NSLog("PAYMENTMETHOD: ❌ Failed to sign request")
+                    self.sendResponse(messageId: messageId, error: "Failed to sign request")
+                    return
+                }
+
+                let endpoint = "\(homeBase)/saved-payment-methods?uuid=\(uuid)&timestamp=\(fetchTimestamp)&processor=stripe&signature=\(signature)"
+
+                var request = URLRequest(url: URL(string: endpoint)!)
+                request.httpMethod = "GET"
+
+                URLSession.shared.dataTask(with: request) { data, response, error in
+                    if let error = error {
+                        NSLog("PAYMENTMETHOD: ❌ Failed to fetch payment methods: %@", error.localizedDescription)
+                        self.sendResponse(messageId: messageId, error: error.localizedDescription)
+                        return
+                    }
+
+                    guard let data = data,
+                          let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                          let paymentMethods = json["paymentMethods"] as? [[String: Any]] else {
+                        NSLog("PAYMENTMETHOD: ❌ Invalid response from backend")
+                        self.sendResponse(messageId: messageId, error: "Invalid server response")
+                        return
+                    }
+
+                    NSLog("PAYMENTMETHOD: ✅ Fetched %d payment methods from backend", paymentMethods.count)
+
+                    // Convert to card format and save to SharedUserDefaults
+                    let cards = paymentMethods.compactMap { pm -> [String: Any]? in
+                        guard let card = pm["card"] as? [String: Any],
+                              let last4 = card["last4"],
+                              let brand = card["brand"],
+                              let expMonth = card["exp_month"],
+                              let expYear = card["exp_year"],
+                              let id = pm["id"] as? String else {
+                            return nil
+                        }
+
+                        return [
+                            "id": id,
+                            "brand": brand,
+                            "last4": last4,
+                            "exp_month": String(describing: expMonth),
+                            "exp_year": String(describing: expYear),
+                            "isDefault": false
+                        ]
+                    }
+
+                    self.savedCards = cards
+                    self.saveSavedCards()
+
+                    NSLog("PAYMENTMETHOD: 💾 Saved %d cards to SharedUserDefaults", cards.count)
+
+                    // Post notification that cards were updated and close this view
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: NSNotification.Name("PaymentCardsSaved"), object: nil)
+                        NSLog("PAYMENTMETHOD: 📢 Posted PaymentCardsSaved notification")
+
+                        // Dismiss this view and trigger navigation to CardDisplayViewController
+                        self.dismiss(animated: true) {
+                            NotificationCenter.default.post(name: NSNotification.Name("ShowCardDisplay"), object: nil)
+                            NSLog("PAYMENTMETHOD: 📢 Posted ShowCardDisplay notification after dismiss")
+                        }
+                    }
+
+                    self.sendResponse(messageId: messageId, result: ["success": true])
+                }.resume()
+            }
+        }.resume()
+    }
+
+    private func getOrCreateAddieUser(pubKey: String, completion: @escaping (String?) -> Void) {
+        // Check cache first
+        if let cachedUUID = UserDefaults.standard.string(forKey: "addie_user_uuid") {
+            NSLog("PAYMENTMETHOD: ✅ Using cached Addie UUID: %@", cachedUUID)
+            completion(cachedUUID)
+            return
+        }
+
+        guard let homeBase = getHomeBaseURL() else {
+            completion(nil)
+            return
+        }
+
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let message = timestamp + pubKey
+        guard let signature = signMessage(message) else {
+            completion(nil)
+            return
+        }
+
+        let endpoint = "\(homeBase)/user/create"
+        var request = URLRequest(url: URL(string: endpoint)!)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "pubKey": pubKey,
+            "timestamp": timestamp,
+            "signature": signature
+        ]
+
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let uuid = json["uuid"] as? String else {
+                NSLog("PAYMENTMETHOD: ❌ Failed to get/create Addie user")
+                completion(nil)
+                return
+            }
+
+            NSLog("PAYMENTMETHOD: ✅ Got Addie UUID: %@", uuid)
+            UserDefaults.standard.set(uuid, forKey: "addie_user_uuid")
+            completion(uuid)
+        }.resume()
     }
 
     private func getSavedCards(messageId: Any) {
@@ -1015,10 +1193,11 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
                 return
             }
 
-            // Store payout card ID
+            // Store payout card ID in SharedUserDefaults so keyboard extension can access it
             if let payoutCardId = json["payoutCardId"] as? String {
-                UserDefaults.standard.set(payoutCardId, forKey: "stripe_payout_card_id")
-                NSLog("PAYMENTMETHOD: 💳 Saved payout card ID: %@", payoutCardId)
+                SharedUserDefaults.shared.set(payoutCardId, forKey: "stripe_payout_card_id")
+                SharedUserDefaults.shared.synchronize()
+                NSLog("PAYMENTMETHOD: 💳 Saved payout card ID to SharedUserDefaults: %@", payoutCardId)
             }
 
             NSLog("PAYMENTMETHOD: ✅ Payout card saved successfully")

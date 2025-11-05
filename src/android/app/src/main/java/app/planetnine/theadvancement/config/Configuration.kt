@@ -16,7 +16,7 @@ object Configuration {
     const val USE_LOCAL_SERVICES: Boolean = false
 
     // For production
-    const val SUBDOMAIN: String = "hitchhikers"
+    const val SUBDOMAIN: String = "plr"
     const val BASE_DOMAIN: String = "allyabase.com"
     const val USE_HTTPS: Boolean = true
 

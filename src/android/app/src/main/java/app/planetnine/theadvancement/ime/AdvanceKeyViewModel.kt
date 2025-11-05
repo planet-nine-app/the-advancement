@@ -80,7 +80,7 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
                 if (clipData != null && clipData.itemCount > 0) {
                     val text = clipData.getItemAt(0).text?.toString() ?: ""
 
-                    // Check if it looks like an emojicode (8 emoji characters)
+                    // Check if it looks like an emojicode (9 emoji characters)
                     if (isEmojicode(text)) {
                         _clipboardText.value = text
                         Log.d(TAG, "Detected emojicode in clipboard: $text")
@@ -93,12 +93,12 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
     }
 
     /**
-     * Check if text looks like an emojicode (8 emoji characters)
+     * Check if text looks like an emojicode (9 emoji characters)
      */
     private fun isEmojicode(text: String): Boolean {
-        // Rough check: emojicodes are typically 8-32 characters (8 emojis in UTF-16)
+        // Rough check: emojicodes are typically 9-36 characters (9 emojis in UTF-16)
         val trimmed = text.trim()
-        return trimmed.length in 8..32 && trimmed.any { it.code > 0x1F000 }
+        return trimmed.length in 9..36 && trimmed.any { it.code > 0x1F000 }
     }
 
     /**
@@ -169,7 +169,7 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
                             🎯 The emojicode format seems incorrect
 
                             Valid formats:
-                            • 8 consecutive emojis (e.g., 🌍🔑💎🌟💎🎨🐉📌)
+                            • 9 consecutive emojis (e.g., 🌍🔑💎🌟💎🎨🐉📌🎯)
                             • Emojis wrapped in sparkles (e.g., ✨🏰👑✨)
 
                             Tips:
@@ -492,6 +492,235 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
     }
 
     /**
+     * Create affiliate BDO with user as 10% commission payee
+     */
+    fun createAffiliateBDO(bdoJson: String, onSuccess: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                Log.d(TAG, "🔗 Creating affiliate BDO")
+
+                // Parse original BDO
+                @Suppress("UNCHECKED_CAST")
+                val originalBDO = gson.fromJson(bdoJson, Map::class.java) as Map<String, Any>
+
+                // Get user keys
+                val keys = sessionless.getKeys()
+                    ?: throw Exception("User keys not found")
+
+                // Get original BDO data
+                @Suppress("UNCHECKED_CAST")
+                val bdo = originalBDO["bdo"] as? Map<String, Any>
+                    ?: throw Exception("No BDO data in response")
+
+                val originalPubKey = originalBDO["pubKey"] as? String
+                    ?: throw Exception("No pubKey in response")
+
+                // Get original payees
+                @Suppress("UNCHECKED_CAST")
+                val originalPayees = (bdo["payees"] as? List<Map<String, Any>>) ?: emptyList()
+
+                // Get home base URL for Addie
+                val homeBase = prefs.getString("home_base_url", null)
+                    ?: Configuration.addieBaseURL
+
+                // Calculate affiliate payee (10% commission)
+                val affiliatePercent = 10
+                val affiliatePubKey = keys.publicKey
+                val affiliateAddieURL = homeBase
+
+                // Create signature for affiliate payee quad
+                val affiliateMessage = affiliatePubKey + affiliateAddieURL + affiliatePercent
+                val affiliateSignature = sessionless.sign(affiliateMessage)
+                    ?: throw Exception("Failed to sign affiliate payee")
+
+                val affiliatePayee = mapOf(
+                    "pubKey" to affiliatePubKey,
+                    "addieURL" to affiliateAddieURL,
+                    "percent" to affiliatePercent,
+                    "signature" to affiliateSignature
+                )
+
+                // Adjust original payees to 90% total
+                val adjustedPayees = originalPayees.map { payee ->
+                    @Suppress("UNCHECKED_CAST")
+                    val originalPercent = (payee["percent"] as? Number)?.toInt() ?: 100
+                    val adjustedPercent = (originalPercent * 0.9).toInt()
+
+                    payee.toMutableMap().apply {
+                        put("percent", adjustedPercent)
+                    }
+                }
+
+                // New payees array: [affiliate (10%), ...adjusted originals (90% total)]
+                val newPayees = listOf(affiliatePayee) + adjustedPayees
+
+                // Create new BDO with updated payees
+                val newBDOData = bdo.toMutableMap().apply {
+                    put("payees", newPayees)
+                }
+
+                // Generate new keys for the affiliate BDO (create separate Sessionless instance)
+                val tempSessionless = Sessionless(context)
+                val affiliateBDOKeys = tempSessionless.generateKeys()
+
+                // Hash for BDO authentication
+                val hash = "The Advancement"
+
+                // Create BDO using BDO service
+                val createResult = createBDO(affiliateBDOKeys, hash, newBDOData, tempSessionless)
+
+                val newBDOUUID = createResult["uuid"] as? String
+                    ?: throw Exception("No UUID in create response")
+
+                // Make BDO public to get emojicode
+                val publicResult = updateBDOPublic(newBDOUUID, affiliateBDOKeys, hash, newBDOData, tempSessionless)
+
+                val emojicode = publicResult["emojiShortcode"] as? String
+                    ?: throw Exception("No emojicode generated")
+
+                Log.d(TAG, "✅ Affiliate BDO created with emojicode: $emojicode")
+
+                // Save to carrierBag "store" collection
+                saveToCarrierBagStore(newBDOData, emojicode, bdo["title"] as? String ?: bdo["name"] as? String ?: "Untitled")
+
+                // Call success callback with emojicode
+                withContext(Dispatchers.Main) {
+                    onSuccess(emojicode)
+                }
+
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Failed to create affiliate BDO", e)
+            }
+        }
+    }
+
+    /**
+     * Save shared BDO to carrierBag "store" collection
+     */
+    private suspend fun saveToCarrierBagStore(bdoData: Map<String, Any>, emojicode: String, title: String) {
+        Log.d(TAG, "💼 Saving shared BDO to carrierBag store collection")
+
+        // Load current carrier bag
+        val carrierBagJson = prefs.getString(KEY_CARRIER_BAG, null)
+        val carrierBag = if (carrierBagJson != null) {
+            @Suppress("UNCHECKED_CAST")
+            gson.fromJson(carrierBagJson, Map::class.java).toMutableMap() as MutableMap<String, Any>
+        } else {
+            createEmptyCarrierBag().toMutableMap()
+        }
+
+        // Get store collection
+        @Suppress("UNCHECKED_CAST")
+        val storeItems = (carrierBag["store"] as? List<Map<String, Any>>)?.toMutableList()
+            ?: mutableListOf()
+
+        // Create item to save with emojicode
+        val item = mapOf(
+            "title" to title,
+            "type" to "shared-link",
+            "emojicode" to emojicode,
+            "bdoData" to bdoData,
+            "sharedAt" to System.currentTimeMillis()
+        )
+
+        // Add to beginning of store collection
+        storeItems.add(0, item)
+
+        // Update carrier bag
+        carrierBag["store"] = storeItems
+
+        // Save to SharedPreferences
+        val updatedJson = gson.toJson(carrierBag)
+        prefs.edit().putString(KEY_CARRIER_BAG, updatedJson).apply()
+
+        Log.d(TAG, "✅ Saved shared BDO to store collection (${storeItems.size} items)")
+    }
+
+    /**
+     * Create BDO using BDO service
+     */
+    private suspend fun createBDO(
+        keys: Sessionless.Keys,
+        hash: String,
+        bdoData: Map<String, Any>,
+        sessionlessInstance: Sessionless
+    ): Map<String, Any> = withContext(Dispatchers.IO) {
+        val url = "${Configuration.bdoBaseURL}/user/create"
+
+        val timestamp = System.currentTimeMillis().toString()
+        val message = timestamp + keys.publicKey + hash
+        val signature = sessionlessInstance.sign(message)
+            ?: throw Exception("Failed to sign create request")
+
+        val body = mapOf(
+            "timestamp" to timestamp,
+            "pubKey" to keys.publicKey,
+            "hash" to hash,
+            "signature" to signature,
+            "bdo" to bdoData
+        )
+
+        val request = Request.Builder()
+            .url(url)
+            .put(gson.toJson(body).toRequestBody("application/json".toMediaType()))
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                throw Exception("Failed to create BDO: ${response.body?.string()}")
+            }
+
+            val responseBody = response.body?.string()
+                ?: throw Exception("Empty response")
+
+            gson.fromJson(responseBody, Map::class.java) as Map<String, Any>
+        }
+    }
+
+    /**
+     * Update BDO to public status
+     */
+    private suspend fun updateBDOPublic(
+        uuid: String,
+        keys: Sessionless.Keys,
+        hash: String,
+        bdoData: Map<String, Any>,
+        sessionlessInstance: Sessionless
+    ): Map<String, Any> = withContext(Dispatchers.IO) {
+        val url = "${Configuration.bdoBaseURL}/user/$uuid/bdo"
+
+        val timestamp = System.currentTimeMillis().toString()
+        val message = timestamp + uuid + hash
+        val signature = sessionlessInstance.sign(message)
+            ?: throw Exception("Failed to sign update request")
+
+        val body = mapOf(
+            "timestamp" to timestamp,
+            "pubKey" to keys.publicKey,
+            "hash" to hash,
+            "signature" to signature,
+            "bdo" to bdoData,
+            "public" to true
+        )
+
+        val request = Request.Builder()
+            .url(url)
+            .post(gson.toJson(body).toRequestBody("application/json".toMediaType()))
+            .build()
+
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                throw Exception("Failed to update BDO: ${response.body?.string()}")
+            }
+
+            val responseBody = response.body?.string()
+                ?: throw Exception("Empty response")
+
+            gson.fromJson(responseBody, Map::class.java) as Map<String, Any>
+        }
+    }
+
+    /**
      * Determine collection from BDO type
      */
     private fun determineCollection(bdo: Map<String, Any>): String {
@@ -518,7 +747,7 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
     }
 
     /**
-     * Create empty carrier bag with all 16 collections
+     * Create empty carrier bag with all collections
      */
     private fun createEmptyCarrierBag(): Map<String, Any> {
         return mapOf(
@@ -537,6 +766,7 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
             "events" to emptyList<Any>(),
             "contracts" to emptyList<Any>(),
             "stacks" to emptyList<Any>(),
+            "store" to emptyList<Any>(),  // Shared affiliate links
             "addresses" to emptyList<Any>()  // Shipping addresses for purchases
         )
     }

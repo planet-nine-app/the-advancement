@@ -224,6 +224,25 @@ class KeyboardJSInterface(
             android.util.Log.e("KeyboardJSInterface", "Failed to open carrier bag", e)
         }
     }
+
+    @android.webkit.JavascriptInterface
+    fun createAffiliateBDO(bdoJson: String) {
+        android.util.Log.d("KeyboardJSInterface", "Creating affiliate BDO")
+        viewModel?.createAffiliateBDO(bdoJson) { emojicode ->
+            // Call JavaScript callback with affiliate emojicode
+            webView.post {
+                webView.evaluateJavascript("window.onAffiliateCreated('$emojicode')", null)
+            }
+        }
+    }
+
+    @android.webkit.JavascriptInterface
+    fun copyToClipboard(text: String) {
+        android.util.Log.d("KeyboardJSInterface", "Copying to clipboard: $text")
+        val clipboard = service.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+        val clip = android.content.ClipData.newPlainText("Affiliate Emojicode", text)
+        clipboard.setPrimaryClip(clip)
+    }
 }
 
 /**

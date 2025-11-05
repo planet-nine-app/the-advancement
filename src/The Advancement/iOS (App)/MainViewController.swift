@@ -23,6 +23,28 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
 
         setupWebView()
         loadMainPage()
+
+        // Listen for card save notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleCardsSaved),
+            name: NSNotification.Name("PaymentCardsSaved"),
+            object: nil
+        )
+        NSLog("MAINVC: 👂 Listening for PaymentCardsSaved notifications")
+
+        // Listen for show card display notifications
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleShowCardDisplay),
+            name: NSNotification.Name("ShowCardDisplay"),
+            object: nil
+        )
+        NSLog("MAINVC: 👂 Listening for ShowCardDisplay notifications")
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -32,6 +54,23 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
 
         // Don't update button here - wait for WebView to finish loading
         // updatePostButtonAppearance() will be called from webView(_:didFinish:)
+    }
+
+    @objc private func handleCardsSaved() {
+        NSLog("MAINVC: 🔔 Received PaymentCardsSaved notification - updating button")
+
+        // Fetch cards from backend and update button appearance
+        Task {
+            await fetchCardsFromBackend()
+            await MainActor.run {
+                updatePostButtonAppearance()
+            }
+        }
+    }
+
+    @objc private func handleShowCardDisplay() {
+        NSLog("MAINVC: 🔔 Received ShowCardDisplay notification - opening CardDisplayViewController")
+        openCardDisplay()
     }
 
     // MARK: - WKNavigationDelegate
@@ -554,19 +593,78 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
                 return
             }
 
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let paymentMethods = json["paymentMethods"] as? [[String: Any]] {
-                NSLog("MAINVC: ✅ Fetched \(paymentMethods.count) payment methods from backend")
+            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                let paymentMethods = json["paymentMethods"] as? [[String: Any]] ?? []
+                let issuedCards = json["issuedCards"] as? [[String: Any]] ?? []
 
-                // Save to UserDefaults
-                if let cardsData = try? JSONSerialization.data(withJSONObject: paymentMethods) {
-                    UserDefaults.standard.set(cardsData, forKey: "stripe_saved_cards")
-                    NSLog("MAINVC: 💾 Saved cards to UserDefaults")
+                NSLog("MAINVC: ✅ Fetched \(paymentMethods.count) payment methods and \(issuedCards.count) issued cards from backend")
+
+                // Convert payment methods to simple card format (same as PaymentMethodViewController)
+                let convertedCards = paymentMethods.compactMap { pm -> [String: Any]? in
+                    guard let card = pm["card"] as? [String: Any],
+                          let last4 = card["last4"],
+                          let brand = card["brand"],
+                          let expMonth = card["exp_month"],
+                          let expYear = card["exp_year"],
+                          let id = pm["id"] as? String else {
+                        return nil
+                    }
+
+                    return [
+                        "id": id,
+                        "brand": brand,
+                        "last4": last4,
+                        "exp_month": String(describing: expMonth),
+                        "exp_year": String(describing: expYear),
+                        "isDefault": false
+                    ]
+                }
+
+                var allCards: [[String: Any]] = convertedCards
+
+                // Add issued cards with a marker to distinguish them
+                for var issuedCard in issuedCards {
+                    // Map issued card fields to payment method format
+                    issuedCard["id"] = issuedCard["cardId"]  // Use cardId as id
+                    issuedCard["isIssuedCard"] = true  // Marker to identify issued cards
+                    allCards.append(issuedCard)
+                }
+
+                NSLog("MAINVC: 💳 Combined total: \(allCards.count) cards")
+
+                // Check if we already have locally saved cards
+                var localCardCount = 0
+                if let sharedDefaults = UserDefaults(suiteName: "group.com.planetnine.Planet-Nine"),
+                   let existingCardsData = sharedDefaults.data(forKey: "stripe_saved_cards"),
+                   let existingCards = try? JSONSerialization.jsonObject(with: existingCardsData) as? [[String: Any]] {
+                    localCardCount = existingCards.count
+                    NSLog("MAINVC: 📋 Found \(localCardCount) locally saved cards")
+                }
+
+                // Only overwrite if backend has cards, otherwise keep local cards
+                if allCards.count > 0 || localCardCount == 0 {
+                    // Save combined array to shared App Group UserDefaults
+                    if let cardsData = try? JSONSerialization.data(withJSONObject: allCards) {
+                        // Save to shared UserDefaults so AdvanceKey can access
+                        if let sharedDefaults = UserDefaults(suiteName: "group.com.planetnine.Planet-Nine") {
+                            sharedDefaults.set(cardsData, forKey: "stripe_saved_cards")
+                            sharedDefaults.synchronize()
+                            NSLog("MAINVC: 💾 Saved \(allCards.count) cards to shared UserDefaults")
+                        } else {
+                            NSLog("MAINVC: ⚠️ Failed to access shared UserDefaults")
+                        }
+
+                        // Also save to standard UserDefaults for backward compatibility
+                        UserDefaults.standard.set(cardsData, forKey: "stripe_saved_cards")
+                        UserDefaults.standard.synchronize()
+                    } else {
+                        NSLog("MAINVC: ⚠️ Failed to serialize cards")
+                    }
                 } else {
-                    NSLog("MAINVC: ⚠️ Failed to serialize cards")
+                    NSLog("MAINVC: ℹ️ Keeping \(localCardCount) locally saved cards (backend returned empty)")
                 }
             } else {
-                NSLog("MAINVC: ⚠️ Failed to parse payment methods from response")
+                NSLog("MAINVC: ⚠️ Failed to parse response from backend")
             }
         } catch {
             NSLog("MAINVC: ⚠️ Error fetching cards: \(error.localizedDescription)")
@@ -807,7 +905,7 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
         NSLog("⌨️ Checking keyboard installation status")
 
         // Check for keyboard flag in shared UserDefaults (App Group)
-        let sharedDefaults = UserDefaults(suiteName: "group.app.planetnine.theadvancement")
+        let sharedDefaults = UserDefaults(suiteName: "group.com.planetnine.Planet-Nine")
         let keyboardInstalled = sharedDefaults?.bool(forKey: "keyboardFirstUsed") ?? false
 
         NSLog("⌨️ Keyboard installed: %@", keyboardInstalled ? "YES" : "NO")

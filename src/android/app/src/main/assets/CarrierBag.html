@@ -287,6 +287,11 @@
                                 } else {
                                     title = item.title || 'Untitled Item';
                                     subtitle = item.emojicode || '';
+
+                                    // Add purchased badge if item has been purchased
+                                    if (item.purchased === true || item.purchasedAt) {
+                                        title = `✅ ${title}`;
+                                    }
                                 }
 
                                 return `

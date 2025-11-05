@@ -308,6 +308,11 @@
                                     title = item.title || 'Untitled Item';
                                     subtitle = item.emojicode || '';
 
+                                    // Add purchased badge if item has been purchased
+                                    if (item.purchased === true || item.purchasedAt) {
+                                        title = `✅ ${title}`;
+                                    }
+
                                     // Check if this is a product item (has price and payees)
                                     if (item.price && item.payees && Array.isArray(item.payees)) {
                                         affiliateButton = `

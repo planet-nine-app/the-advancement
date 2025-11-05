@@ -8,6 +8,8 @@
     let currentMode = 'standard';
     let postedBDOs = [];
     let clipboardText = '';
+    let currentDecodedBDO = null;
+    let affiliateEmojicode = null;
 
     // Mode button handling
     const modeButtons = document.querySelectorAll('.mode-button');
@@ -133,6 +135,16 @@
         console.log('🔍 Decoding emojicode:', clipboardText);
         if (window.Android && window.Android.decodeEmojicode) {
             window.Android.decodeEmojicode(clipboardText);
+        }
+    };
+
+    // Function called from native code after BDO is decoded
+    window.onBDODecoded = function(bdoJson) {
+        console.log('✅ BDO decoded:', bdoJson);
+        try {
+            currentDecodedBDO = JSON.parse(bdoJson);
+        } catch (e) {
+            console.error('Failed to parse decoded BDO:', e);
         }
     };
 
@@ -338,6 +350,68 @@
 
         } catch (error) {
             console.error('Error opening carrier bag:', error);
+        }
+    };
+
+    window.shareCurrentBDO = function() {
+        try {
+            console.log('🔗 Sharing current BDO');
+
+            if (!currentDecodedBDO) {
+                console.warn('No BDO currently decoded');
+                alert('Please decode a BDO first (use DEMOJI mode)');
+                return;
+            }
+
+            // Call Android interface to create affiliate BDO
+            if (window.Android && window.Android.createAffiliateBDO) {
+                window.Android.createAffiliateBDO(JSON.stringify(currentDecodedBDO));
+            } else {
+                console.warn('Android.createAffiliateBDO not available');
+            }
+
+        } catch (error) {
+            console.error('Error sharing BDO:', error);
+        }
+    };
+
+    // Function called from native code after affiliate BDO is created
+    window.onAffiliateCreated = function(emojicode) {
+        console.log('✅ Affiliate emojicode received:', emojicode);
+        affiliateEmojicode = emojicode;
+
+        // Show success message with copyable emojicode
+        const contentArea = document.getElementById('contentArea');
+        contentArea.innerHTML = `
+            <div style="text-align: center; padding: 20px;">
+                <h3 class="panel-header" style="color: #10b981;">🎉 Affiliate Link Created!</h3>
+                <div style="margin: 20px 0;">
+                    <div style="font-size: 12px; color: rgba(16, 185, 129, 0.8); margin-bottom: 8px;">
+                        Your Affiliate Emojicode (tap to copy):
+                    </div>
+                    <div style="background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; border-radius: 8px; padding: 16px; cursor: pointer; font-size: 24px; letter-spacing: 0.1em;" onclick="copyAffiliateEmojicode()">
+                        ${emojicode}
+                    </div>
+                </div>
+                <div style="font-size: 12px; color: rgba(139, 92, 246, 0.8); line-height: 1.6;">
+                    Share this emojicode to earn 10% commission on sales!
+                </div>
+            </div>
+        `;
+    };
+
+    window.copyAffiliateEmojicode = function() {
+        if (affiliateEmojicode && window.Android && window.Android.copyToClipboard) {
+            window.Android.copyToClipboard(affiliateEmojicode);
+            console.log('📋 Copied affiliate emojicode to clipboard');
+
+            // Visual feedback
+            const contentArea = document.getElementById('contentArea');
+            const originalContent = contentArea.innerHTML;
+            contentArea.innerHTML = originalContent.replace('tap to copy', '✅ Copied!');
+            setTimeout(() => {
+                contentArea.innerHTML = originalContent;
+            }, 2000);
         }
     };
 

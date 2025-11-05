@@ -62,7 +62,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
     private func markKeyboardAsUsed() {
         // Set flag in shared UserDefaults so main app knows keyboard is installed
-        let sharedDefaults = UserDefaults(suiteName: "group.app.planetnine.theadvancement")
+        let sharedDefaults = UserDefaults(suiteName: "group.com.planetnine.Planet-Nine")
         sharedDefaults?.set(true, forKey: "keyboardFirstUsed")
         NSLog("ADVANCEKEY: ⌨️ Marked keyboard as used")
     }
@@ -129,6 +129,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         contentController.add(self, name: "purchase")
         contentController.add(self, name: "navigateToCard")
         contentController.add(self, name: "openCarrierBag")
+        contentController.add(self, name: "shareBDO")
         webViewConfig.userContentController = contentController
 
         // Inject console.log override to capture messages
@@ -242,9 +243,9 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
         NSLog("ADVANCEKEY: ==========================================")
 
-        // Check for 8-emoji shortcode first (new BDO emojicode format)
+        // Check for 9-emoji shortcode first (new BDO emojicode format)
         if let shortcode = extract8EmojiShortcode(from: fullContext) {
-            NSLog("ADVANCEKEY: 🎨 Found 8-emoji shortcode: %@", shortcode)
+            NSLog("ADVANCEKEY: 🎨 Found 9-emoji shortcode: %@", shortcode)
             decodeAndFetchBDO(emojicode: shortcode)
         }
         // Look for emojicoded sequence (starts and ends with ✨)
@@ -263,7 +264,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             Emoji count: \(emojiCount)
             Sparkles: \(sparklesCount)
 
-            Need: 8 consecutive emojis OR ✨...emojis...✨ pattern
+            Need: 9 consecutive emojis OR ✨...emojis...✨ pattern
             Selected: \(selectedText)
 
             Try selecting more text or scrolling to include the emoji sequence.
@@ -343,9 +344,9 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
         NSLog("ADVANCEKEY: 🔍 Auto-detecting emojicode in text: %@", String(fullContext.prefix(50)))
 
-        // Check for 8-emoji shortcode first (new BDO emojicode format)
+        // Check for 9-emoji shortcode first (new BDO emojicode format)
         if let shortcode = extract8EmojiShortcode(from: fullContext) {
-            NSLog("ADVANCEKEY: ✨ Auto-detected 8-emoji shortcode: %@", shortcode)
+            NSLog("ADVANCEKEY: ✨ Auto-detected 9-emoji shortcode: %@", shortcode)
             decodeAndFetchBDO(emojicode: shortcode)
         }
         // Look for emojicoded sequence (starts and ends with ✨)
@@ -359,18 +360,18 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         // Extract all emojis from the text
         let emojis = text.filter { $0.isEmoji }
 
-        // Check if we have exactly 8 consecutive emojis
-        if emojis.count == 8 {
-            NSLog("ADVANCEKEY: 🎯 Found exactly 8 emojis: %@", String(emojis))
+        // Check if we have exactly 9 consecutive emojis
+        if emojis.count == 9 {
+            NSLog("ADVANCEKEY: 🎯 Found exactly 9 emojis: %@", String(emojis))
             return String(emojis)
         }
 
-        // If more than 8, try to find a sequence of 8 consecutive emojis
-        if emojis.count > 8 {
-            // Look for patterns: try the first 8, last 8, or any 8 consecutive
-            let first8 = String(emojis.prefix(8))
-            NSLog("ADVANCEKEY: 🔍 Found %d emojis, trying first 8: %@", emojis.count, first8)
-            return first8
+        // If more than 9, try to find a sequence of 9 consecutive emojis
+        if emojis.count > 9 {
+            // Look for patterns: try the first 9, last 9, or any 9 consecutive
+            let first9 = String(emojis.prefix(9))
+            NSLog("ADVANCEKEY: 🔍 Found %d emojis, trying first 9: %@", emojis.count, first9)
+            return first9
         }
 
         return nil
@@ -401,10 +402,10 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     }
 
     func decodeAndFetchBDO(emojicode: String) {
-        // Check if this is an 8-emoji shortcode (no sparkles)
+        // Check if this is a 9-emoji shortcode (no sparkles)
         let emojiOnly = emojicode.filter { $0.isEmoji }
-        if emojiOnly.count == 8 && !emojicode.contains("✨") {
-            NSLog("ADVANCEKEY: 🎯 Detected 8-emoji shortcode, fetching directly from /emoji endpoint")
+        if emojiOnly.count == 9 && !emojicode.contains("✨") {
+            NSLog("ADVANCEKEY: 🎯 Detected 9-emoji shortcode, fetching directly from /emoji endpoint")
             fetchBDOByEmojicode(emojicode: String(emojiOnly))
             return
         }
@@ -1054,12 +1055,18 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 svg.authorized .sign-button {
                     display: block;
                 }
-                /* Carrier bag button */
-                #bag-button {
+                /* Bottom button container */
+                #bottom-buttons {
                     position: fixed;
                     bottom: 10px;
                     left: 50%;
                     transform: translateX(-50%);
+                    display: flex;
+                    gap: 10px;
+                    z-index: 2000;
+                }
+                /* Carrier bag button */
+                #bag-button {
                     width: 120px;
                     height: 40px;
                     background: rgba(236, 72, 153, 0.15);
@@ -1069,16 +1076,41 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                     align-items: center;
                     justify-content: center;
                     cursor: pointer;
-                    z-index: 2000;
                     transition: all 0.3s ease;
                     animation: bagGlow 2.5s ease-in-out infinite;
                 }
                 #bag-button:active {
-                    transform: translateX(-50%) scale(0.95);
+                    transform: scale(0.95);
                     background: rgba(236, 72, 153, 0.3);
                 }
                 #bag-button-text {
                     color: #ec4899;
+                    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                    font-size: 14px;
+                    font-weight: 700;
+                    letter-spacing: 0.5px;
+                    text-align: center;
+                }
+                /* Share button */
+                #share-button {
+                    width: 120px;
+                    height: 40px;
+                    background: rgba(39, 174, 96, 0.15);
+                    border: 1px solid #27ae60;
+                    border-radius: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    animation: shareGlow 2.5s ease-in-out infinite 0.5s;
+                }
+                #share-button:active {
+                    transform: scale(0.95);
+                    background: rgba(39, 174, 96, 0.3);
+                }
+                #share-button-text {
+                    color: #27ae60;
                     font-family: -apple-system, BlinkMacSystemFont, sans-serif;
                     font-size: 14px;
                     font-weight: 700;
@@ -1095,6 +1127,16 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                         box-shadow: 0 0 15px rgba(236, 72, 153, 0.6);
                     }
                 }
+                @keyframes shareGlow {
+                    0%, 100% {
+                        opacity: 0.7;
+                        box-shadow: 0 0 5px rgba(39, 174, 96, 0.3);
+                    }
+                    50% {
+                        opacity: 1;
+                        box-shadow: 0 0 15px rgba(39, 174, 96, 0.6);
+                    }
+                }
             </style>
         </head>
         <body>
@@ -1102,8 +1144,13 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             <div id="svg-container">
                 \(svg)
             </div>
-            <div id="bag-button" onclick="openCarrierBag()">
-                <div id="bag-button-text">🎒 BAG</div>
+            <div id="bottom-buttons">
+                <div id="bag-button" onclick="openCarrierBag()">
+                    <div id="bag-button-text">🎒 BAG</div>
+                </div>
+                <div id="share-button" onclick="shareBDO()">
+                    <div id="share-button-text">📤 SHARE</div>
+                </div>
             </div>
             <script>
                 // BDO data for spell handling
@@ -1352,7 +1399,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                     }
                 }
 
-                function saveToCarrierBag(data, components) {
+                function saveToCarrierBag(data, components, purchased = false) {
                     try {
                         // Extract BDO data
                         const bdo = data.bdo || data;
@@ -1394,7 +1441,8 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                             collection: collection,
                             type: type,
                             title: title,
-                            bdoData: bdo
+                            bdoData: bdo,
+                            purchased: purchased
                         });
 
                     } catch (error) {
@@ -1761,16 +1809,98 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
                 function openCarrierBag() {
                     try {
-                        console.log('🎒 Opening carrier bag from AdvanceKey');
+                        console.log('🎒 Saving BDO to carrier bag');
 
-                        // Send message to Swift to open carrier bag in main app
-                        window.webkit.messageHandlers.openCarrierBag.postMessage({
-                            action: 'openCarrierBag'
+                        const bdo = bdoData.bdo || bdoData;
+                        const type = bdo.type || 'item';
+                        const title = bdo.title || bdo.productTitle || 'Untitled';
+
+                        // Determine collection from BDO type
+                        let collection = 'stacks'; // default
+                        if (type === 'contract-signing-ui' || type === 'contract') {
+                            collection = 'contracts';
+                        } else if (type === 'recipe') {
+                            collection = 'cookbook';
+                        } else if (type === 'ebook' || type === 'book' || type === 'article') {
+                            collection = 'bookshelf';
+                        } else if (type === 'potion' || type === 'remedy') {
+                            collection = 'apothecary';
+                        } else if (type === 'artwork' || type === 'image') {
+                            collection = 'gallery';
+                        } else if (type === 'music' || type === 'song') {
+                            collection = 'music';
+                        } else if (type === 'event') {
+                            collection = 'events';
+                        }
+
+                        console.log('Saving to collection:', collection, 'with type:', type);
+
+                        // Send message to Swift to save to carrierBag
+                        window.webkit.messageHandlers.saveToCarrierBag.postMessage({
+                            action: 'saveToCarrierBag',
+                            collection: collection,
+                            type: type,
+                            title: title,
+                            bdoData: bdo,
+                            purchased: false
+                        });
+
+                        alert('✅ Saved to ' + collection + '!');
+
+                    } catch (error) {
+                        console.error('Error saving to carrier bag:', error);
+                        alert('❌ Failed to save: ' + error.message);
+                    }
+                }
+
+                // Global function for SVG onclick handlers (called by product SVGs)
+                window.purchaseProduct = function(productId, emojicode) {
+                    try {
+                        console.log('💳 Purchase product clicked:', productId, emojicode);
+
+                        // Extract product info from BDO data
+                        const bdo = bdoData.bdo || bdoData;
+                        const price = bdo.price || 0;
+                        const title = bdo.title || bdo.productTitle || 'Product';
+
+                        console.log('Product details:', { productId, price, title, emojicode });
+
+                        // Call the purchaseProduct handler in Swift
+                        window.webkit.messageHandlers.purchase.postMessage({
+                            action: 'purchaseProduct',
+                            productId: productId,
+                            price: price,
+                            title: title,
+                            emojicode: emojicode,
+                            bdoData: bdo
                         });
 
                     } catch (error) {
-                        console.error('Error opening carrier bag:', error);
-                        alert('❌ Failed to open carrier bag: ' + error.message);
+                        console.error('Error purchasing product:', error);
+                        alert('❌ Failed to start purchase: ' + error.message);
+                    }
+                };
+
+                // Share BDO function
+                function shareBDO() {
+                    try {
+                        console.log('📤 Share BDO clicked');
+
+                        const bdo = bdoData.bdo || bdoData;
+                        const title = bdo.title || bdo.productTitle || 'Shared Item';
+
+                        console.log('Creating shareable BDO with affiliate payee for:', title);
+
+                        // Send message to Swift to create a new BDO with user's payee quad added
+                        window.webkit.messageHandlers.shareBDO.postMessage({
+                            action: 'shareBDO',
+                            bdoData: bdo,
+                            title: title
+                        });
+
+                    } catch (error) {
+                        console.error('Error sharing BDO:', error);
+                        alert('❌ Failed to share: ' + error.message);
                     }
                 }
             </script>
@@ -1862,7 +1992,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 🎯 The emojicode format seems incorrect
 
                 Valid formats:
-                • 8 consecutive emojis (e.g., 🌍🔑💎🌟💎🎨🐉📌)
+                • 9 consecutive emojis (e.g., 🌍🔑💎🌟💎🎨🐉📌🎯)
                 • Emojis wrapped in sparkles (e.g., ✨🏰👑✨)
 
                 Tips:
@@ -1969,6 +2099,10 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             handleNavigateToCardMessage(message.body)
         } else if message.name == "openCarrierBag" {
             handleOpenCarrierBagMessage(message.body)
+        } else if message.name == "shareBDO" {
+            handleShareBDOMessage(message.body)
+        } else if message.name == "advanceKey" {
+            handleAdvanceKeyMessage(message.body)
         }
     }
 
@@ -2027,13 +2161,25 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
         NSLog("ADVANCEKEY: 💾 Saving '\(title)' to \(collection)")
 
-        // Create the item entry
-        let itemEntry: [String: Any] = [
+        // Check if this is a purchased item
+        let purchased = messageDict["purchased"] as? Bool ?? false
+        if purchased {
+            NSLog("ADVANCEKEY: ✅ Item marked as purchased")
+        }
+
+        // Create the item entry with optional purchased flag
+        var itemEntry: [String: Any] = [
             "type": type,
             "title": title,
             "bdoData": bdoData,
             "savedAt": ISO8601DateFormatter().string(from: Date())
         ]
+
+        // Add purchased flag if true
+        if purchased {
+            itemEntry["purchased"] = true
+            itemEntry["purchasedAt"] = ISO8601DateFormatter().string(from: Date())
+        }
 
         // Save to SharedUserDefaults carrierBag
         SharedUserDefaults.addToCarrierBagCollection(collection, item: itemEntry)
@@ -2254,12 +2400,41 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             return
         }
 
-        // Original purchase flow
-        guard action == "purchase" else {
+        // Handle purchase actions (both "purchase" and "purchaseProduct")
+        guard action == "purchase" || action == "purchaseProduct" else {
             NSLog("ADVANCEKEY: ❌ Unknown action: %@", action)
             return
         }
 
+        // Extract BDO data for purchaseProduct action
+        if action == "purchaseProduct", let bdoData = messageDict["bdoData"] as? [String: Any] {
+            NSLog("ADVANCEKEY: 💳 Processing purchaseProduct with BDO data")
+
+            // Extract metadata
+            let metadata = bdoData["metadata"] as? [String: Any] ?? [:]
+            let priceStr = metadata["priceFormatted"] as? String ?? "$0.00"
+            let priceInCents = extractPriceInCents(from: priceStr)
+            let productTitle = metadata["productTitle"] as? String ?? "Unknown Product"
+            let sanoraUUID = metadata["sanoraUUID"] as? String
+
+            // Extract payees
+            let payees = bdoData["payees"] as? [[String: Any]] ?? []
+
+            NSLog("ADVANCEKEY: 💳 Product: %@, Price: %d cents", productTitle, priceInCents)
+            NSLog("ADVANCEKEY: 💳 Payees: %d", payees.count)
+
+            // Process the purchase with Stripe payment
+            processPurchaseWithStripe(
+                productTitle: productTitle,
+                priceInCents: priceInCents,
+                payees: payees,
+                sanoraUUID: sanoraUUID,
+                bdoData: bdoData
+            )
+            return
+        }
+
+        // Original purchase flow for legacy "purchase" action
         let components = messageDict["components"] as? [String: Any] ?? [:]
         let fullBDO = messageDict["fullBDO"] as? [String: Any] ?? [:]
 
@@ -2284,6 +2459,33 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
         } else {
             NSLog("ADVANCEKEY: ❌ Unknown purchase type")
         }
+    }
+
+    // Helper to extract price in cents from formatted string like "$199.99"
+    private func extractPriceInCents(from priceString: String) -> Int {
+        // Remove $ and convert to cents
+        let cleaned = priceString.replacingOccurrences(of: "$", with: "")
+            .replacingOccurrences(of: ",", with: "")
+        if let dollars = Double(cleaned) {
+            return Int(dollars * 100)
+        }
+        return 0
+    }
+
+    // Process purchase with Stripe payment for purchaseProduct action
+    private func processPurchaseWithStripe(
+        productTitle: String,
+        priceInCents: Int,
+        payees: [[String: Any]],
+        sanoraUUID: String?,
+        bdoData: [String: Any]
+    ) {
+        NSLog("ADVANCEKEY: 💳 Processing Stripe purchase for: %@", productTitle)
+        NSLog("ADVANCEKEY: 💰 Price: %d cents", priceInCents)
+
+        // Use the existing payment method selection flow
+        // The bdoData contains all the information needed for the purchase
+        showPaymentMethodSelection(for: productTitle, price: priceInCents, bdoData: bdoData)
     }
 
     private func handleNavigateToCardMessage(_ messageBody: Any) {
@@ -2353,6 +2555,400 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 NSLog("ADVANCEKEY: ❌ Failed to open carrier bag URL")
             }
         })
+    }
+
+    private func handleShareBDOMessage(_ messageBody: Any) {
+        NSLog("ADVANCEKEY: 📤 Share BDO message received")
+
+        guard let messageDict = messageBody as? [String: Any],
+              let action = messageDict["action"] as? String,
+              action == "shareBDO",
+              let bdoData = messageDict["bdoData"] as? [String: Any],
+              let title = messageDict["title"] as? String else {
+            NSLog("ADVANCEKEY: ❌ Invalid share BDO message format")
+            return
+        }
+
+        // Get user's keys for creating affiliate payee
+        guard let keys = sessionless.getKeys() else {
+            NSLog("ADVANCEKEY: ❌ No user keys found")
+            showShareError("Authentication required")
+            return
+        }
+
+        // Check if user has any saved payment methods (using same method as purchase flow)
+        let storedMethods = loadStoredPaymentMethods()
+        guard storedMethods.count > 0 else {
+            NSLog("ADVANCEKEY: ❌ No payment methods configured")
+            showShareError("Please add a payment method in the main app first to receive affiliate commissions")
+            return
+        }
+
+        // Use the first payment method as the payout card
+        let payoutCardId = storedMethods[0].id
+        NSLog("ADVANCEKEY: 💳 Using payment method for payouts: %@ •••• %@", storedMethods[0].brand, storedMethods[0].last4)
+
+        // Get the total price from the BDO
+        guard let price = bdoData["price"] as? Int, price > 0 else {
+            NSLog("ADVANCEKEY: ❌ No price found in BDO")
+            showShareError("This item doesn't have a price")
+            return
+        }
+
+        // Calculate 10% affiliate commission
+        let affiliateAmount = Int(Double(price) * 0.10)
+
+        NSLog("ADVANCEKEY: 💰 Creating affiliate share")
+        NSLog("ADVANCEKEY:   Total price: $%.2f", Double(price) / 100.0)
+        NSLog("ADVANCEKEY:   Affiliate (10%%): $%.2f", Double(affiliateAmount) / 100.0)
+        NSLog("ADVANCEKEY:   Payout card: %@", payoutCardId)
+
+        // Create the affiliate payee quad
+        let affiliatePayee: [String: Any] = [
+            "pubKey": keys.publicKey,
+            "amount": affiliateAmount,
+            "payoutCard": payoutCardId,
+            "percentage": 10
+        ]
+
+        // Get existing payees array (or create empty one)
+        var existingPayees = bdoData["payees"] as? [[String: Any]] ?? []
+
+        // Adjust existing payees to account for 10% affiliate cut
+        // Reduce each payee proportionally
+        let adjustmentFactor = 0.90 // 90% of original amounts
+        existingPayees = existingPayees.map { payee in
+            var adjusted = payee
+            if let amount = payee["amount"] as? Int {
+                adjusted["amount"] = Int(Double(amount) * adjustmentFactor)
+            }
+            return adjusted
+        }
+
+        // Add affiliate payee to the beginning
+        var updatedPayees = [affiliatePayee] + existingPayees
+
+        NSLog("ADVANCEKEY: 📋 Updated payees count: %d", updatedPayees.count)
+
+        // Create new BDO data with updated payees
+        var newBDOData = bdoData
+        newBDOData["payees"] = updatedPayees
+
+        // Create the new BDO in Fount
+        Task {
+            do {
+                let emojicode = try await createShareableBDO(bdoData: newBDOData, title: title)
+                NSLog("ADVANCEKEY: ✅ Created shareable BDO with emojicode: %@", emojicode)
+
+                // Save to carrierBag "store" collection
+                await saveToCarrierBagStore(bdoData: newBDOData, emojicode: emojicode, title: title)
+
+                // Present the emojicode
+                await presentEmojicode(emojicode: emojicode, title: title)
+
+            } catch {
+                NSLog("ADVANCEKEY: ❌ Failed to create shareable BDO: %@", error.localizedDescription)
+                await MainActor.run {
+                    showShareError(error.localizedDescription)
+                }
+            }
+        }
+    }
+
+    private func getFountUserUUID() async throws -> String {
+        // Debug: Check what's in SharedUserDefaults
+        NSLog("ADVANCEKEY: 🔍 Checking SharedUserDefaults for Fount user UUID...")
+        NSLog("ADVANCEKEY: 🔍 Using App Group: group.com.planetnine.Planet-Nine")
+
+        // Print all SharedUserDefaults contents for debugging
+        SharedUserDefaults.debugPrint(prefix: "ADVANCEKEY")
+
+        // Check if we already have a Fount user UUID in SharedUserDefaults
+        if let existingUUID = SharedUserDefaults.getFountUserUUID() {
+            NSLog("ADVANCEKEY: ✅ Found existing Fount user UUID: %@", existingUUID)
+            return existingUUID
+        }
+
+        // Also check regular UserDefaults as fallback
+        if let regularUUID = UserDefaults.standard.string(forKey: "fountUserUUID") {
+            NSLog("ADVANCEKEY: ⚠️ Found UUID in regular UserDefaults (not shared): %@", regularUUID)
+            NSLog("ADVANCEKEY: ⚠️ This UUID won't be accessible to keyboard extension")
+
+            // If we found it in regular UserDefaults, copy it to SharedUserDefaults
+            NSLog("ADVANCEKEY: 📋 Copying Fount UUID from regular UserDefaults to SharedUserDefaults...")
+            SharedUserDefaults.setFountUserUUID(regularUUID)
+            return regularUUID
+        }
+
+        // Need to create a new Fount user via API
+        NSLog("ADVANCEKEY: 🆕 No Fount user UUID found in SharedUserDefaults, creating new Fount user...")
+
+        guard let keys = sessionless.getKeys() else {
+            throw NSError(domain: "AuthError", code: 0, userInfo: [NSLocalizedDescriptionKey: "No user keys found"])
+        }
+
+        let pubKey = keys.publicKey
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let homeBase = Configuration.fountBaseURL
+        let endpoint = "\(homeBase)/user/create"
+
+        // Sign the request
+        let message = timestamp + pubKey
+        guard let signature = sessionless.sign(message: message) else {
+            throw NSError(domain: "SignatureError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to sign request"])
+        }
+
+        var request = URLRequest(url: URL(string: endpoint)!)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "pubKey": pubKey,
+            "timestamp": timestamp,
+            "signature": signature
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        NSLog("ADVANCEKEY: 📡 Creating Fount user...")
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "NetworkError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+        }
+
+        NSLog("ADVANCEKEY: 📡 Fount user creation response status: %d", httpResponse.statusCode)
+
+        guard httpResponse.statusCode == 200 || httpResponse.statusCode == 201 else {
+            let errorText = String(data: data, encoding: .utf8) ?? "Unknown error"
+            NSLog("ADVANCEKEY: ❌ Fount user creation failed: %@", errorText)
+            throw NSError(domain: "FountError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Failed to create Fount user: \(errorText)"])
+        }
+
+        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let uuid = json["uuid"] as? String else {
+            throw NSError(domain: "FountError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response from Fount user creation"])
+        }
+
+        // Store the UUID in SharedUserDefaults for future use
+        SharedUserDefaults.setFountUserUUID(uuid)
+        NSLog("ADVANCEKEY: ✅ Created and saved new Fount user UUID: %@", uuid)
+
+        return uuid
+    }
+
+    // Helper method to sign with arbitrary keys (not just saved user keys)
+    private func signWithKeys(message: String, privateKey: String) -> String? {
+        NSLog("ADVANCEKEY: 🖊️ Signing with custom keys...")
+
+        guard let signJS = sessionless.jsContext?.objectForKeyedSubscript("globalThis")?.objectForKeyedSubscript("sessionless")?.objectForKeyedSubscript("sign") else {
+            NSLog("ADVANCEKEY: ❌ Cannot sign: signJS not available")
+            return nil
+        }
+
+        guard let signaturejs = signJS.call(withArguments: [message, privateKey]) else {
+            NSLog("ADVANCEKEY: ❌ Failed to call signJS")
+            return nil
+        }
+
+        let signature = signaturejs.toString()
+        NSLog("ADVANCEKEY: ✅ Message signed successfully")
+        return signature
+    }
+
+    private func createShareableBDO(bdoData: [String: Any], title: String) async throws -> String {
+        NSLog("ADVANCEKEY: 🏗️ Creating new BDO with affiliate payee")
+
+        // Save current user keys
+        guard let originalKeys = sessionless.getKeys() else {
+            throw NSError(domain: "AuthError", code: 0, userInfo: [NSLocalizedDescriptionKey: "No user keys found"])
+        }
+
+        // 1. Generate NEW sessionless keys for the BDO (DO NOT SAVE)
+        guard let bdoKeys = sessionless.generateKeys() else {
+            throw NSError(domain: "CryptoError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to generate BDO keys"])
+        }
+
+        let bdoPubKey = bdoKeys.publicKey
+        NSLog("ADVANCEKEY: 🔑 Generated new BDO keys: %@", String(bdoPubKey.prefix(16)))
+
+        // 2. Create BDO user with the new keys
+        let bdoBaseURL = Configuration.bdoBaseURL
+        let createUserEndpoint = Configuration.BDO.createUser()
+
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let hash = "The Advancement"
+        let message = timestamp + bdoPubKey + hash  // timestamp + pubKey + hash
+        guard let signature = signWithKeys(message: message, privateKey: bdoKeys.privateKey) else {
+            throw NSError(domain: "SignatureError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to sign BDO user creation"])
+        }
+
+        var createUserRequest = URLRequest(url: URL(string: createUserEndpoint)!)
+        createUserRequest.httpMethod = "PUT"
+        createUserRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let createUserBody: [String: Any] = [
+            "timestamp": timestamp,
+            "pubKey": bdoPubKey,
+            "signature": signature,
+            "hash": hash,  // Hash for BDO authentication
+            "bdo": bdoData  // Include the BDO data with affiliate payee
+        ]
+
+        createUserRequest.httpBody = try JSONSerialization.data(withJSONObject: createUserBody)
+
+        NSLog("ADVANCEKEY: 📡 Creating BDO user...")
+        let (createData, createResponse) = try await URLSession.shared.data(for: createUserRequest)
+
+        guard let httpResponse = createResponse as? HTTPURLResponse,
+              httpResponse.statusCode == 201 || httpResponse.statusCode == 200,
+              let json = try? JSONSerialization.jsonObject(with: createData) as? [String: Any],
+              let bdoUUID = json["uuid"] as? String else {
+            let errorText = String(data: createData, encoding: .utf8) ?? "Unknown error"
+            throw NSError(domain: "BDOError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to create BDO user: \(errorText)"])
+        }
+
+        NSLog("ADVANCEKEY: ✅ BDO user created: %@", bdoUUID)
+
+        // 3. Update BDO to make it PUBLIC (this generates the emojicode)
+        let updateTimestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let updateMessage = updateTimestamp + bdoUUID + hash  // timestamp + uuid + hash
+        guard let updateSignature = signWithKeys(message: updateMessage, privateKey: bdoKeys.privateKey) else {
+            throw NSError(domain: "SignatureError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to sign BDO update"])
+        }
+
+        let updateEndpoint = Configuration.BDO.putBDO(userUUID: bdoUUID)
+        var updateRequest = URLRequest(url: URL(string: updateEndpoint)!)
+        updateRequest.httpMethod = "PUT"
+        updateRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let updateBody: [String: Any] = [
+            "timestamp": updateTimestamp,
+            "pubKey": bdoPubKey,
+            "signature": updateSignature,
+            "hash": hash,  // Hash for BDO authentication
+            "bdo": bdoData,
+            "public": true  // This triggers emojicode generation
+        ]
+
+        updateRequest.httpBody = try JSONSerialization.data(withJSONObject: updateBody)
+
+        NSLog("ADVANCEKEY: 📡 Making BDO public to generate emojicode...")
+        let (updateData, updateResponse) = try await URLSession.shared.data(for: updateRequest)
+
+        guard let updateHttpResponse = updateResponse as? HTTPURLResponse,
+              updateHttpResponse.statusCode == 200,
+              let updateJson = try? JSONSerialization.jsonObject(with: updateData) as? [String: Any],
+              let emojicode = updateJson["emojiShortcode"] as? String else {
+            let errorText = String(data: updateData, encoding: .utf8) ?? "Unknown error"
+            throw NSError(domain: "BDOError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to make BDO public: \(errorText)"])
+        }
+
+        NSLog("ADVANCEKEY: ✅ BDO made public with emojicode: %@", emojicode)
+        NSLog("ADVANCEKEY: 🔑 BDO PubKey: %@", bdoPubKey)
+
+        // Don't restore original keys since we never actually changed sessionless.getKeys
+        // The bdoKeys were just generated locally and used for signing
+
+        return emojicode
+    }
+
+    private func presentEmojicode(emojicode: String, title: String) async {
+        NSLog("ADVANCEKEY: 🎨 Presenting emojicode: %@", emojicode)
+
+        // Insert the emojicode into the text field
+        await MainActor.run {
+            self.textDocumentProxy.insertText(emojicode)
+
+            // Show success alert with clickable emojicode
+            let successHTML = """
+            <div style="padding: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-align: center; font-family: -apple-system, BlinkMacSystemFont, sans-serif; border-radius: 12px; margin: 10px;">
+                <div style="font-size: 48px; margin-bottom: 10px;">✅</div>
+                <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">Shareable Link Created!</div>
+                <div style="font-size: 14px; margin-bottom: 12px;">\(title)</div>
+                <div onclick="copyEmojicode()" style="font-size: 16px; font-family: monospace; background: rgba(255,255,255,0.2); padding: 8px; border-radius: 6px; word-break: break-all; cursor: pointer; user-select: all;">\(emojicode)</div>
+                <div style="font-size: 11px; margin-top: 8px; opacity: 0.7;">👆 Tap to copy</div>
+                <div style="font-size: 12px; margin-top: 12px; opacity: 0.9;">You'll earn 10% affiliate commission on purchases made through this link!</div>
+            </div>
+            <script>
+            function copyEmojicode() {
+                const emojicode = '\(emojicode)';
+                navigator.clipboard.writeText(emojicode).then(() => {
+                    window.webkit.messageHandlers.advanceKey.postMessage({
+                        action: 'emojicodeCopied',
+                        emojicode: emojicode
+                    });
+                });
+            }
+            </script>
+            """
+
+            self.resultWebView.evaluateJavaScript("document.body.innerHTML = `\(successHTML)`", completionHandler: nil)
+
+            // Clear after 5 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                self.resultWebView.evaluateJavaScript("document.body.innerHTML = ''", completionHandler: nil)
+            }
+        }
+    }
+
+    private func handleAdvanceKeyMessage(_ messageBody: Any) {
+        guard let messageDict = messageBody as? [String: Any],
+              let action = messageDict["action"] as? String else {
+            return
+        }
+
+        if action == "emojicodeCopied" {
+            NSLog("ADVANCEKEY: 📋 Emojicode copied to clipboard")
+            // Show brief confirmation
+            DispatchQueue.main.async {
+                let copiedHTML = """
+                <div style="padding: 10px; background: rgba(16, 185, 129, 0.9); color: white; text-align: center; font-family: -apple-system; border-radius: 8px; margin: 10px;">
+                    <div style="font-size: 14px;">📋 Copied to clipboard!</div>
+                </div>
+                """
+                self.resultWebView.evaluateJavaScript("document.body.innerHTML = `\(copiedHTML)`", completionHandler: nil)
+
+                // Clear after 1 second
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self.resultWebView.evaluateJavaScript("document.body.innerHTML = ''", completionHandler: nil)
+                }
+            }
+        }
+    }
+
+    private func saveToCarrierBagStore(bdoData: [String: Any], emojicode: String, title: String) async {
+        NSLog("ADVANCEKEY: 💼 Saving shared BDO to carrierBag store collection")
+
+        // Create the item to save with emojicode
+        var itemToSave = bdoData
+        itemToSave["emojicode"] = emojicode
+        itemToSave["title"] = title
+        itemToSave["sharedAt"] = ISO8601DateFormatter().string(from: Date())
+        itemToSave["type"] = "shared-link"
+
+        // Add to carrierBag "store" collection
+        SharedUserDefaults.addToCarrierBagCollection("store", item: itemToSave)
+        NSLog("ADVANCEKEY: ✅ Saved shared BDO to store collection")
+    }
+
+    private func showShareError(_ message: String) {
+        DispatchQueue.main.async {
+            let errorHTML = """
+            <div style="padding: 20px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; text-align: center; font-family: -apple-system, BlinkMacSystemFont, sans-serif; border-radius: 12px; margin: 10px;">
+                <div style="font-size: 48px; margin-bottom: 10px;">❌</div>
+                <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">Share Failed</div>
+                <div style="font-size: 14px;">\(message)</div>
+            </div>
+            """
+
+            self.resultWebView.evaluateJavaScript("document.body.innerHTML = `\(errorHTML)`", completionHandler: nil)
+
+            // Clear after 3 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                self.resultWebView.evaluateJavaScript("document.body.innerHTML = ''", completionHandler: nil)
+            }
+        }
     }
 
     @objc func openURL(_ url: URL) {
@@ -3016,22 +3612,170 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
     private func purchaseProduct(productId: String, price: Int, fullBDO: [String: Any]) {
         NSLog("ADVANCEKEY: 🛒 Purchasing product: %@", productId)
-        // Implement general product purchase flow
-        // Similar to event ticket but without ticket-specific logic
+        NSLog("ADVANCEKEY: 💰 Price: $%.2f", Double(price) / 100.0)
+
+        // Show payment method selection
+        showPaymentMethodSelection(for: productId, price: price, bdoData: fullBDO)
+    }
+
+    private func showPaymentMethodSelection(for productId: String, price: Int, bdoData: [String: Any]) {
+        NSLog("ADVANCEKEY: 💳 Showing payment method selection")
+
+        let storedMethods = loadStoredPaymentMethods()
+
+        guard !storedMethods.isEmpty else {
+            NSLog("ADVANCEKEY: ❌ No stored payment methods")
+            showNoPaymentMethodsError()
+            return
+        }
+
+        NSLog("ADVANCEKEY: 📦 Found %d stored payment methods", storedMethods.count)
+
+        // Create payment method selection UI
+        var html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    min-height: 100vh;
+                    padding: 20px;
+                }
+                .container {
+                    max-width: 400px;
+                    margin: 0 auto;
+                }
+                .header {
+                    text-align: center;
+                    color: white;
+                    margin-bottom: 30px;
+                }
+                .price {
+                    font-size: 48px;
+                    font-weight: bold;
+                    margin: 10px 0;
+                }
+                .product-title {
+                    font-size: 20px;
+                    opacity: 0.9;
+                }
+                .payment-methods {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 15px;
+                }
+                .payment-card {
+                    background: white;
+                    border-radius: 12px;
+                    padding: 20px;
+                    cursor: pointer;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                }
+                .payment-card:active {
+                    transform: scale(0.98);
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                }
+                .card-brand {
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: #667eea;
+                    margin-bottom: 8px;
+                }
+                .card-last4 {
+                    font-size: 24px;
+                    font-family: monospace;
+                    color: #333;
+                }
+                .cancel-btn {
+                    margin-top: 20px;
+                    background: rgba(255,255,255,0.2);
+                    border: 2px solid white;
+                    border-radius: 12px;
+                    color: white;
+                    padding: 15px;
+                    text-align: center;
+                    font-size: 18px;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+                .cancel-btn:active {
+                    background: rgba(255,255,255,0.3);
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <div class="product-title">\(bdoData["title"] as? String ?? "Product")</div>
+                    <div class="price">$\(String(format: "%.2f", Double(price) / 100.0))</div>
+                </div>
+                <div class="payment-methods">
+        """
+
+        for (index, method) in storedMethods.enumerated() {
+            let brandEmoji = method.brand.lowercased() == "visa" ? "💳" :
+                           method.brand.lowercased() == "mastercard" ? "💳" :
+                           method.brand.lowercased() == "amex" ? "💎" : "💳"
+            html += """
+                    <div class="payment-card" onclick="selectPaymentMethod('\(method.id)')">
+                        <div class="card-brand">\(brandEmoji) \(method.brand)</div>
+                        <div class="card-last4">•••• \(method.last4)</div>
+                    </div>
+            """
+        }
+
+        html += """
+                </div>
+                <div class="cancel-btn" onclick="cancelPurchase()">Cancel</div>
+            </div>
+            <script>
+                function selectPaymentMethod(paymentMethodId) {
+                    window.webkit.messageHandlers.paymentMethodSelected.postMessage({
+                        action: 'purchaseProduct',
+                        paymentMethodId: paymentMethodId,
+                        productId: '\(productId)',
+                        price: \(price),
+                        bdoData: \(try! String(data: JSONSerialization.data(withJSONObject: bdoData), encoding: .utf8)!)
+                    });
+                }
+
+                function cancelPurchase() {
+                    window.webkit.messageHandlers.purchase.postMessage({
+                        action: 'cancel'
+                    });
+                }
+            </script>
+        </body>
+        </html>
+        """
+
+        // Load the payment selection UI
+        resultWebView.loadHTMLString(html, baseURL: nil)
+        resultWebView.isHidden = false
     }
 
     // MARK: - Stored Payment Methods
 
     func loadStoredPaymentMethods() -> [PaymentMethod] {
-        guard let userDefaults = UserDefaults(suiteName: "group.com.planetnine.the-advancement") else {
+        // Use correct App Group ID matching entitlements
+        guard let userDefaults = UserDefaults(suiteName: "group.com.planetnine.Planet-Nine") else {
             NSLog("ADVANCEKEY: ❌ Failed to access shared UserDefaults")
             return []
         }
 
-        guard let storedMethodsData = userDefaults.array(forKey: "stored_payment_methods") as? [[String: Any]] else {
+        // Read from the same key that MainViewController uses
+        guard let cardsData = userDefaults.data(forKey: "stripe_saved_cards"),
+              let storedMethodsData = try? JSONSerialization.jsonObject(with: cardsData) as? [[String: Any]] else {
             NSLog("ADVANCEKEY: 📝 No stored payment methods found")
             return []
         }
+
+        NSLog("ADVANCEKEY: 📦 Found \(storedMethodsData.count) cards in shared UserDefaults")
 
         let paymentMethods = storedMethodsData.compactMap { methodData -> PaymentMethod? in
             guard let id = methodData["id"] as? String,
@@ -3041,10 +3785,15 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
                 return nil
             }
 
+            // Log if this is an issued card
+            if let isIssuedCard = methodData["isIssuedCard"] as? Bool, isIssuedCard {
+                NSLog("ADVANCEKEY: 🎫 Found issued card: \(brand) •••• \(last4)")
+            }
+
             return PaymentMethod(id: id, brand: brand, last4: last4, type: "card")
         }
 
-        NSLog("ADVANCEKEY: 💳 Loaded %d stored payment methods", paymentMethods.count)
+        NSLog("ADVANCEKEY: 💳 Loaded %d stored payment methods (including issued cards)", paymentMethods.count)
         return paymentMethods
     }
 
@@ -3083,6 +3832,13 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
     }
 
     func handlePaymentMethodSelection(_ message: [String: Any]) {
+        // Check if this is a product purchase
+        if let action = message["action"] as? String, action == "purchaseProduct" {
+            handleProductPurchase(message)
+            return
+        }
+
+        // Original payment method selection flow
         guard let paymentMethodId = message["paymentId"] as? String else {
             NSLog("ADVANCEKEY: ❌ Invalid payment method selection")
             return
@@ -3103,6 +3859,436 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
         // Show confirmation to user
         showPaymentConfirmation(for: selectedMethod)
+    }
+
+    private func handleProductPurchase(_ message: [String: Any]) {
+        guard let paymentMethodId = message["paymentMethodId"] as? String,
+              let productId = message["productId"] as? String,
+              let price = message["price"] as? Int else {
+            NSLog("ADVANCEKEY: ❌ Invalid product purchase message - missing required fields")
+            return
+        }
+
+        // Handle bdoData as either a String (JSON) or Dictionary (already parsed)
+        let bdoData: [String: Any]
+        if let bdoDataString = message["bdoData"] as? String {
+            // bdoData is a JSON string - parse it
+            guard let parsed = try? JSONSerialization.jsonObject(with: bdoDataString.data(using: .utf8)!) as? [String: Any] else {
+                NSLog("ADVANCEKEY: ❌ Invalid bdoData JSON string")
+                return
+            }
+            bdoData = parsed
+        } else if let bdoDataDict = message["bdoData"] as? [String: Any] {
+            // bdoData is already a dictionary - use it directly
+            bdoData = bdoDataDict
+        } else {
+            NSLog("ADVANCEKEY: ❌ Invalid bdoData format - expected String or Dictionary")
+            return
+        }
+
+        NSLog("ADVANCEKEY: 🛒 Processing product purchase")
+        NSLog("ADVANCEKEY:    Product: %@", productId)
+        NSLog("ADVANCEKEY:    Price: $%.2f", Double(price) / 100.0)
+        NSLog("ADVANCEKEY:    Payment: %@", paymentMethodId)
+
+        // Process the purchase
+        processProductPurchase(productId: productId, price: price, bdoData: bdoData, paymentMethodId: paymentMethodId)
+    }
+
+    private func getOrCreateAddieUser(pubKey: String) async throws -> String {
+        // Check cache first (use regular UserDefaults since keyboard can access it)
+        if let cachedUUID = UserDefaults.standard.string(forKey: "addie_user_uuid") {
+            NSLog("ADVANCEKEY: ✅ Using cached Addie UUID: %@", cachedUUID)
+            return cachedUUID
+        }
+
+        NSLog("ADVANCEKEY: 🔄 Creating/fetching Addie user...")
+
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let message = timestamp + pubKey
+        guard let signature = sessionless.sign(message: message) else {
+            throw NSError(domain: "SignatureError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to sign request"])
+        }
+
+        let addieBaseURL = Configuration.addieBaseURL
+        let endpoint = "\(addieBaseURL)/user/create"
+        var request = URLRequest(url: URL(string: endpoint)!)
+        request.httpMethod = "PUT"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let body: [String: Any] = [
+            "pubKey": pubKey,
+            "timestamp": timestamp,
+            "signature": signature
+        ]
+
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200,
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let uuid = json["uuid"] as? String else {
+            throw NSError(domain: "AddieError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to get/create Addie user"])
+        }
+
+        NSLog("ADVANCEKEY: ✅ Got Addie UUID: %@", uuid)
+        UserDefaults.standard.set(uuid, forKey: "addie_user_uuid")
+        return uuid
+    }
+
+    private func processProductPurchase(productId: String, price: Int, bdoData: [String: Any], paymentMethodId: String) {
+        NSLog("ADVANCEKEY: 💳 Creating payment intent for product")
+
+        Task {
+            do {
+                // Get user keys
+                guard let keys = sessionless.getKeys() else {
+                    throw NSError(domain: "AuthError", code: 0, userInfo: [NSLocalizedDescriptionKey: "No user keys found"])
+                }
+
+                // Get or create Addie user UUID
+                let addieUUID = try await getOrCreateAddieUser(pubKey: keys.publicKey)
+
+                // Get payees from BDO
+                guard let payees = bdoData["payees"] as? [[String: Any]] else {
+                    throw NSError(domain: "DataError", code: 0, userInfo: [NSLocalizedDescriptionKey: "No payees found in BDO"])
+                }
+
+                NSLog("ADVANCEKEY: 💰 Product has %d payees", payees.count)
+
+                // Charge with saved payment method through Addie
+                let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+                let addieBaseURL = Configuration.addieBaseURL
+                let endpoint = "\(addieBaseURL)/charge-with-saved-method"
+
+                // Signature: timestamp + uuid + amount + paymentMethodId
+                let message = timestamp + addieUUID + String(price) + paymentMethodId
+                guard let signature = sessionless.sign(message: message) else {
+                    throw NSError(domain: "SignatureError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to sign request"])
+                }
+
+                var request = URLRequest(url: URL(string: endpoint)!)
+                request.httpMethod = "POST"
+                request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+                let body: [String: Any] = [
+                    "timestamp": timestamp,
+                    "uuid": addieUUID,
+                    "amount": price,
+                    "currency": "usd",
+                    "paymentMethodId": paymentMethodId,
+                    "payees": payees,
+                    "signature": signature
+                ]
+
+                request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+                NSLog("ADVANCEKEY: 📡 Sending payment request to Addie...")
+                let (data, response) = try await URLSession.shared.data(for: request)
+
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    throw NSError(domain: "NetworkError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+                }
+
+                NSLog("ADVANCEKEY: 📡 Payment response status: %d", httpResponse.statusCode)
+
+                guard httpResponse.statusCode == 200 else {
+                    let errorText = String(data: data, encoding: .utf8) ?? "Unknown error"
+                    NSLog("ADVANCEKEY: ❌ Payment failed: %@", errorText)
+                    throw NSError(domain: "PaymentError", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Payment failed: \(errorText)"])
+                }
+
+                guard let result = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                    let errorMsg = "No Result"
+                    throw NSError(domain: "PaymentError", code: 0, userInfo: [NSLocalizedDescriptionKey: errorMsg])
+                }
+                guard let success = result["success"] as? Bool, success else {
+                    let errorMsg = (result["error"] as? String) ?? "Payment failed"
+                    throw NSError(domain: "PaymentError", code: 0, userInfo: [NSLocalizedDescriptionKey: errorMsg])
+                }
+
+                NSLog("ADVANCEKEY: ✅ Payment successful!")
+
+                // Save the purchased product to carrierBag
+                await savePurchasedProduct(bdoData: bdoData)
+
+                // Show success message
+                await MainActor.run {
+                    showPurchaseSuccess(productTitle: bdoData["title"] as? String ?? "Product")
+                }
+
+            } catch {
+                NSLog("ADVANCEKEY: ❌ Purchase failed: %@", error.localizedDescription)
+                await MainActor.run {
+                    showPurchaseError(error: error.localizedDescription)
+                }
+            }
+        }
+    }
+
+    private func savePurchasedProduct(bdoData: [String: Any]) async {
+        NSLog("ADVANCEKEY: 💾 Saving purchased product to carrierBag")
+
+        let title = bdoData["title"] as? String ?? "Product"
+        let type = bdoData["type"] as? String ?? "product"
+        let collection = determineCollectionForType(type)
+
+        // Create purchased item entry
+        let itemEntry: [String: Any] = [
+            "type": type,
+            "title": title,
+            "bdoData": bdoData,
+            "purchased": true,
+            "purchasedAt": ISO8601DateFormatter().string(from: Date()),
+            "savedAt": ISO8601DateFormatter().string(from: Date())
+        ]
+
+        // Save to SharedUserDefaults carrierBag
+        SharedUserDefaults.addToCarrierBagCollection(collection, item: itemEntry)
+
+        NSLog("ADVANCEKEY: ✅ Product saved to %@ with purchased flag", collection)
+    }
+
+    private func determineCollectionForType(_ type: String) -> String {
+        // Map BDO types to carrierBag collections
+        switch type.lowercased() {
+        case "recipe", "food": return "cookbook"
+        case "potion", "remedy": return "apothecary"
+        case "artwork", "image": return "gallery"
+        case "book", "literature", "ebook": return "bookshelf"
+        case "pet", "familiar": return "familiarPen"
+        case "tool", "machine": return "machinery"
+        case "gem", "metal": return "metallics"
+        case "music", "song": return "music"
+        case "prophecy", "divination": return "oracular"
+        case "plant", "botanical": return "greenHouse"
+        case "clothing", "garment": return "closet"
+        case "game", "entertainment": return "games"
+        case "event", "popup", "ticket": return "events"
+        case "contract", "covenant": return "contracts"
+        case "room", "space": return "stacks"
+        case "product": return "bookshelf" // Default products to bookshelf
+        default: return "stacks"
+        }
+    }
+
+    private func showPurchaseSuccess(productTitle: String) {
+        NSLog("ADVANCEKEY: 🎉 Showing purchase success")
+
+        let html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                    background: linear-gradient(135deg, #2ECC71 0%, #27AE60 100%);
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                }
+                .success-container {
+                    text-align: center;
+                    color: white;
+                }
+                .checkmark {
+                    font-size: 80px;
+                    animation: pop 0.5s ease-out;
+                }
+                @keyframes pop {
+                    0% { transform: scale(0); }
+                    50% { transform: scale(1.2); }
+                    100% { transform: scale(1); }
+                }
+                .title {
+                    font-size: 32px;
+                    font-weight: bold;
+                    margin: 20px 0;
+                }
+                .message {
+                    font-size: 18px;
+                    opacity: 0.9;
+                    margin-bottom: 10px;
+                }
+                .product {
+                    font-size: 20px;
+                    font-weight: 600;
+                    margin: 15px 0;
+                }
+                .done-btn {
+                    margin-top: 30px;
+                    background: white;
+                    color: #27AE60;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 15px 40px;
+                    font-size: 18px;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="success-container">
+                <div class="checkmark">✅</div>
+                <div class="title">Purchase Successful!</div>
+                <div class="product">\(productTitle)</div>
+                <div class="message">Saved to your Carrier Bag</div>
+                <button class="done-btn" onclick="window.webkit.messageHandlers.purchase.postMessage({ action: 'done' })">Done</button>
+            </div>
+        </body>
+        </html>
+        """
+
+        resultWebView.loadHTMLString(html, baseURL: nil)
+        resultWebView.isHidden = false
+
+        // Auto-hide after 3 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            self.resultWebView.isHidden = true
+        }
+    }
+
+    private func showPurchaseError(error: String) {
+        NSLog("ADVANCEKEY: ❌ Showing purchase error")
+
+        let html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                }
+                .error-container {
+                    text-align: center;
+                    color: white;
+                }
+                .error-icon {
+                    font-size: 80px;
+                    animation: shake 0.5s ease-out;
+                }
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    25% { transform: translateX(-10px); }
+                    75% { transform: translateX(10px); }
+                }
+                .title {
+                    font-size: 32px;
+                    font-weight: bold;
+                    margin: 20px 0;
+                }
+                .message {
+                    font-size: 16px;
+                    opacity: 0.9;
+                    margin: 15px 0;
+                    line-height: 1.6;
+                }
+                .done-btn {
+                    margin-top: 30px;
+                    background: white;
+                    color: #c0392b;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 15px 40px;
+                    font-size: 18px;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="error-container">
+                <div class="error-icon">❌</div>
+                <div class="title">Purchase Failed</div>
+                <div class="message">\(error)</div>
+                <button class="done-btn" onclick="window.webkit.messageHandlers.purchase.postMessage({ action: 'done' })">OK</button>
+            </div>
+        </body>
+        </html>
+        """
+
+        resultWebView.loadHTMLString(html, baseURL: nil)
+        resultWebView.isHidden = false
+    }
+
+    private func showNoPaymentMethodsError() {
+        NSLog("ADVANCEKEY: ❌ Showing no payment methods error")
+
+        let html = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+                    min-height: 100vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                }
+                .warning-container {
+                    text-align: center;
+                    color: white;
+                }
+                .warning-icon {
+                    font-size: 80px;
+                }
+                .title {
+                    font-size: 32px;
+                    font-weight: bold;
+                    margin: 20px 0;
+                }
+                .message {
+                    font-size: 16px;
+                    opacity: 0.9;
+                    margin: 15px 0;
+                    line-height: 1.6;
+                }
+                .done-btn {
+                    margin-top: 30px;
+                    background: white;
+                    color: #e67e22;
+                    border: none;
+                    border-radius: 12px;
+                    padding: 15px 40px;
+                    font-size: 18px;
+                    font-weight: 600;
+                    cursor: pointer;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="warning-container">
+                <div class="warning-icon">💳</div>
+                <div class="title">No Payment Methods</div>
+                <div class="message">Please add a payment method in The Advancement app first.</div>
+                <button class="done-btn" onclick="window.webkit.messageHandlers.purchase.postMessage({ action: 'done' })">OK</button>
+            </div>
+        </body>
+        </html>
+        """
+
+        resultWebView.loadHTMLString(html, baseURL: nil)
+        resultWebView.isHidden = false
     }
 
     private func showPaymentConfirmation(for paymentMethod: PaymentMethod) {
