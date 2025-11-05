@@ -323,7 +323,7 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
     ): Map<String, Any> = withContext(Dispatchers.IO) {
         val url = Configuration.Fount.resolve(spellName)
 
-        val body = mutableMapOf(
+        val body = mutableMapOf<String, Any>(
             "userUUID" to userUUID,
             "pubKey" to pubKey,
             "timestamp" to timestamp,

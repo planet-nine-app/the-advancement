@@ -139,7 +139,7 @@ class PaymentMethodActivity : ComponentActivity() {
                         .build()
                 }
                 "POST", "PATCH" -> {
-                    val jsonBody = gson.toJson(body ?: emptyMap())
+                    val jsonBody = gson.toJson(body ?: emptyMap<String, Any>())
                     val mediaType = "application/json; charset=utf-8".toMediaType()
 
                     Request.Builder()
@@ -574,6 +574,34 @@ class PaymentMethodActivity : ComponentActivity() {
     }
 
     /**
+     * Get Service Info for base admin sharing
+     */
+    suspend fun getServiceInfo(): String {
+        Log.d(TAG, "🔑 Getting service info...")
+
+        val keys = sessionless.getKeys()
+        if (keys == null) {
+            return gson.toJson(mapOf("error" to "No authentication keys found"))
+        }
+
+        val prefs = getSharedPreferences("the_advancement", Context.MODE_PRIVATE)
+
+        // Get UUIDs from SharedPreferences
+        val fountUUID = prefs.getString("fount_user_uuid", null) ?: "Not available"
+        val covenantUUID = prefs.getString("covenant_user_uuid", null) ?: "Not available"
+        val addieUUID = prefs.getString("addie_user_uuid", null) ?: "Not available"
+
+        val result = mapOf(
+            "fountUUID" to fountUUID,
+            "covenantUUID" to covenantUUID,
+            "addieUUID" to addieUUID,
+            "pubKey" to keys.publicKey
+        )
+
+        return gson.toJson(result)
+    }
+
+    /**
      * JavaScript interface for PaymentMethod.html
      */
     class PaymentMethodJSInterface(private val activity: PaymentMethodActivity) {
@@ -691,6 +719,15 @@ class PaymentMethodActivity : ComponentActivity() {
             var result = ""
             kotlinx.coroutines.runBlocking {
                 result = activity.getPayoutCardStatus()
+            }
+            return result
+        }
+
+        @JavascriptInterface
+        fun getServiceInfo(paramsJson: String): String {
+            var result = ""
+            kotlinx.coroutines.runBlocking {
+                result = activity.getServiceInfo()
             }
             return result
         }

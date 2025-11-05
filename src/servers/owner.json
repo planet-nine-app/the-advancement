@@ -1,11 +1,11 @@
 {
   "name": "planetnineisaspaceship",
   "sessionlessKeys": {
-    "pubKey": "025bfdbff040e38e48901d6cc26f11ba988cbdfbafc82197ae87012d98fa4c37",
-    "privateKey": "0833b77e24453498b70f403758bc791f83ff348319d663c317c9fd4fc06c4ff3"
+    "pubKey": "023b8db9cea9a5119cfa9a7922d1a5e976bf992c487035c4b71b9bc3d032c7fe",
+    "privateKey": "693217e90bfd01877bbd0dbccc3cec0e2ee05321575048cb9dc60a84ecab8f03"
   },
-  "pubKey": "025bfdbff040e38e48901d6cc26f11ba988cbdfbafc82197ae87012d98fa4c37",
-  "locationEmoji": "🇵🇷🐸✨",
+  "pubKey": "023b8db9cea9a5119cfa9a7922d1a5e976bf992c487035c4b71b9bc3d032c7fe",
+  "locationEmoji": "☮️💚🏴‍☠️",
   "federationEmoji": "💚",
-  "domain": "eljunque.allyabase.com"
+  "domain": "plr.allyabase.com"
 }

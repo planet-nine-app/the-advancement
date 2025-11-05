@@ -72,9 +72,9 @@ WIKI_PATH=$(npm root -g)/wiki/node_modules
 mkdir -p "$WIKI_PATH"
 # Install using npm in the wiki directory (not in the plugin subdirectory)
 cd /root
-npm install --prefix "$WIKI_PATH/.." wiki-plugin-allyabase --silent 2>/dev/null || true
+npm install --prefix "$WIKI_PATH/.." wiki-plugin-allyabase@latest --silent 2>/dev/null || true
 echo "📦 Installing wiki-security-sessionless..."
-npm install --prefix "$WIKI_PATH/.." wiki-security-sessionless --silent 2>/dev/null || true
+npm install --prefix "$WIKI_PATH/.." wiki-security-sessionless@latest --silent 2>/dev/null || true
 
 # Setup wiki directory
 echo "📁 Setting up wiki directory..."

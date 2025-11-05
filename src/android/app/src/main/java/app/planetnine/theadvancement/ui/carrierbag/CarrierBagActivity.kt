@@ -246,21 +246,23 @@ class CarrierBagActivity : ComponentActivity() {
         val feedUrl: String? = when {
             item["feedUrl"] is String -> {
                 Log.d(TAG, "🎵 Found feedUrl at top level")
-                item["feedUrl"] as String
+                item["feedUrl"] as? String
             }
             item["metadata"] is Map<*, *> -> {
                 val metadata = item["metadata"] as Map<*, *>
-                if (metadata["feedUrl"] is String) {
+                val url = metadata["feedUrl"]
+                if (url is String) {
                     Log.d(TAG, "🎵 Found feedUrl in metadata")
-                    metadata["feedUrl"] as String
+                    url
                 } else null
             }
             item["bdoData"] is Map<*, *> -> {
                 val bdoData = item["bdoData"] as Map<*, *>
                 val metadata = bdoData["metadata"] as? Map<*, *>
-                if (metadata?["feedUrl"] is String) {
+                val url = metadata?.get("feedUrl")
+                if (url is String) {
                     Log.d(TAG, "🎵 Found feedUrl in bdoData.metadata")
-                    metadata["feedUrl"] as String
+                    url
                 } else null
             }
             else -> {
@@ -443,7 +445,8 @@ class CarrierBagActivity : ComponentActivity() {
             Log.d(TAG, "✅ Added new address")
         }
 
-        carrierBag["addresses"] = addresses
+        @Suppress("UNCHECKED_CAST")
+        (carrierBag as MutableMap<String, Any?>).put("addresses", addresses)
 
         // Save to SharedPreferences
         val updatedJson = gson.toJson(carrierBag)
@@ -474,7 +477,8 @@ class CarrierBagActivity : ComponentActivity() {
             addresses[i] = addr
         }
 
-        carrierBag["addresses"] = addresses
+        @Suppress("UNCHECKED_CAST")
+        (carrierBag as MutableMap<String, Any?>).put("addresses", addresses)
 
         // Save
         val updatedJson = gson.toJson(carrierBag)
@@ -515,7 +519,8 @@ class CarrierBagActivity : ComponentActivity() {
             addresses[0] = firstAddr
         }
 
-        carrierBag["addresses"] = addresses
+        @Suppress("UNCHECKED_CAST")
+        (carrierBag as MutableMap<String, Any?>).put("addresses", addresses)
 
         // Save
         val updatedJson = gson.toJson(carrierBag)

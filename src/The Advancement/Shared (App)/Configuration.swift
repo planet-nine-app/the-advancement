@@ -10,9 +10,10 @@ import Foundation
 public struct Configuration {
     // MARK: - Environment Configuration
 
-    /// Environment mode: "production", "test", or "local"
-    public static let environment: String = "production"  // Change to "test" for local testing
-    //public static let environment: String = "test"  // Change to "test" for local testing
+    /// Environment mode: "production", "test", "local", or "wiki"
+    //public static let environment: String = "production"  // Change to "test" for local testing
+    public static let environment: String = "test"  // Change to "test" for local testing
+    //public static let environment: String = "wiki"  // Route through wiki plugin
 
     /// Test base number (1, 2, or 3) - only used when environment = "test"
     public static let testBaseNumber: Int = 1
@@ -44,6 +45,7 @@ public struct Configuration {
     /// - Production: https://subdomain.service.domain.tld
     /// - Test: http://127.0.0.1:port (based on testBaseNumber)
     /// - Local: http://localhost:port
+    /// - Wiki: https://subdomain.domain.tld/plugin/allyabase/service
     private static func serviceURL(for service: Service) -> String {
         switch environment {
         case "test":
@@ -86,6 +88,10 @@ public struct Configuration {
                 port = 3007
             }
             return "http://localhost:\(port)"
+
+        case "wiki":
+            let scheme = "https"
+            return "\(scheme)://\(subdomain).\(baseDomain)/plugin/allyabase/\(service.rawValue)"
 
         default: // "production"
             let scheme = useHTTPS ? "https" : "http"
@@ -222,6 +228,7 @@ public struct Configuration {
         print("💡 To change environment, edit Configuration.swift:")
         print("   - Set environment to \"test\" for local testing (127.0.0.1:ports)")
         print("   - Set environment to \"local\" for localhost development")
+        print("   - Set environment to \"wiki\" for wiki plugin proxy")
         print("   - Set environment to \"production\" for deployed services")
     }
 }

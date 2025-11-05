@@ -193,9 +193,9 @@
         }
     });
 
-    // PAYMENT button click handler
-    document.getElementById('paymentButton').addEventListener('click', function() {
-        console.log('💳 PAYMENT button clicked');
+    // ADD CARDS button click handler
+    document.getElementById('addCardsButton').addEventListener('click', function() {
+        console.log('💳 ADD CARDS button clicked');
 
         // Send to native code
         if (platform === 'ios' && window.webkit?.messageHandlers?.mainApp) {
@@ -375,7 +375,7 @@
 
         // Add HTML overlay for selectable emojicode
         const emojiOverlay = document.createElement('div');
-        const totalYOffset = 32 + yOffset; // Base offset (32 for BDO display area) + BDO offset
+        const totalYOffset = 42 + yOffset; // Base offset (42 for BDO display area) + BDO offset
 
         // Calculate positions differently for Android (use pixels instead of vh)
         let topPosition, fontSize;

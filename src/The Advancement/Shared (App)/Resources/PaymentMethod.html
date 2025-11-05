@@ -207,6 +207,46 @@
         .form-input::placeholder {
             color: rgba(167, 139, 250, 0.5);
         }
+
+        .service-info-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(233, 30, 99, 0.2);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .service-info-label {
+            color: #e91e63;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .service-info-value {
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            word-break: break-all;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .service-info-value:hover {
+            background: rgba(233, 30, 99, 0.1);
+        }
+
+        .copy-hint {
+            font-size: 11px;
+            color: #a78bfa;
+            margin-top: 4px;
+            opacity: 0.7;
+        }
     </style>
 </head>
 <body>
@@ -226,6 +266,26 @@
                     <span class="choice-title">I need a card</span>
                     <span class="choice-subtitle">Get a Planet Nine virtual card</span>
                 </button>
+
+                <button class="choice-button" onclick="showServiceInfoFlow()">
+                    <span class="choice-emoji">🔑</span>
+                    <span class="choice-title">Service Info</span>
+                    <span class="choice-subtitle">View your UUIDs for base admin</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Service Info Flow -->
+        <div id="service-info-screen" class="flow-screen">
+            <button class="back-button" onclick="showChoiceScreen()">← Back</button>
+            <h1>🔑 Service Information</h1>
+
+            <div class="info-box">
+                Share these identifiers with your base administrator to enable base payouts. Copy each value and provide to your admin.
+            </div>
+
+            <div class="card-form" id="service-info-container">
+                <p style="color: #a78bfa; text-align: center;">Loading...</p>
             </div>
         </div>
 
@@ -303,6 +363,98 @@
             document.querySelectorAll('.flow-screen').forEach(s => s.classList.remove('active'));
             document.getElementById('need-card-screen').classList.add('active');
             showCardholderForm();
+        }
+
+        async function showServiceInfoFlow() {
+            document.querySelectorAll('.flow-screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('service-info-screen').classList.add('active');
+            await loadServiceInfo();
+        }
+
+        async function loadServiceInfo() {
+            try {
+                console.log('🔑 Loading service info...');
+                const info = await callSwift('getServiceInfo');
+                console.log('🔑 Service info loaded:', info);
+
+                const html = `
+                    <div class="service-info-item">
+                        <div class="service-info-label">Fount UUID</div>
+                        <div class="service-info-value" onclick="copyToClipboard('${info.fountUUID || 'Not available'}', 'Fount UUID')">
+                            ${info.fountUUID || 'Not available'}
+                        </div>
+                        <div class="copy-hint">👆 Tap to copy</div>
+                    </div>
+
+                    <div class="service-info-item">
+                        <div class="service-info-label">Covenant UUID</div>
+                        <div class="service-info-value" onclick="copyToClipboard('${info.covenantUUID || 'Not available'}', 'Covenant UUID')">
+                            ${info.covenantUUID || 'Not available'}
+                        </div>
+                        <div class="copy-hint">👆 Tap to copy</div>
+                    </div>
+
+                    <div class="service-info-item">
+                        <div class="service-info-label">Addie UUID</div>
+                        <div class="service-info-value" onclick="copyToClipboard('${info.addieUUID || 'Not available'}', 'Addie UUID')">
+                            ${info.addieUUID || 'Not available'}
+                        </div>
+                        <div class="copy-hint">👆 Tap to copy</div>
+                    </div>
+
+                    <div class="service-info-item">
+                        <div class="service-info-label">Public Key</div>
+                        <div class="service-info-value" onclick="copyToClipboard('${info.pubKey || 'Not available'}', 'Public Key')">
+                            ${info.pubKey || 'Not available'}
+                        </div>
+                        <div class="copy-hint">👆 Tap to copy</div>
+                    </div>
+
+                    <div style="margin-top: 20px; padding: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; font-size: 13px; color: #10b981;">
+                        ✓ Tap any value to copy it to clipboard
+                    </div>
+                `;
+
+                document.getElementById('service-info-container').innerHTML = html;
+            } catch (error) {
+                console.error('❌ Failed to load service info:', error);
+                document.getElementById('service-info-container').innerHTML = `
+                    <p style="color: #f44336; text-align: center;">Failed to load service information</p>
+                `;
+            }
+        }
+
+        function copyToClipboard(text, label) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    // Show success feedback
+                    const successDiv = document.createElement('div');
+                    successDiv.style.position = 'fixed';
+                    successDiv.style.top = '50%';
+                    successDiv.style.left = '50%';
+                    successDiv.style.transform = 'translate(-50%, -50%)';
+                    successDiv.style.background = 'rgba(16, 185, 129, 0.95)';
+                    successDiv.style.color = 'white';
+                    successDiv.style.padding = '20px 40px';
+                    successDiv.style.borderRadius = '12px';
+                    successDiv.style.fontSize = '16px';
+                    successDiv.style.fontWeight = '600';
+                    successDiv.style.zIndex = '10000';
+                    successDiv.style.boxShadow = '0 4px 24px rgba(0,0,0,0.3)';
+                    successDiv.textContent = `✓ ${label} copied!`;
+                    document.body.appendChild(successDiv);
+
+                    setTimeout(() => {
+                        document.body.removeChild(successDiv);
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                    alert(`${label}: ${text}`);
+                });
+            } else {
+                // Fallback for browsers that don't support clipboard API
+                alert(`${label}: ${text}`);
+            }
         }
 
         // Initialize Stripe for "I have a card" flow

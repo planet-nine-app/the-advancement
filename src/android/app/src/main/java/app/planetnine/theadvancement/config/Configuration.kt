@@ -9,7 +9,7 @@ package app.planetnine.theadvancement.config
  * Current environment: hitchhikers.*.allyabase.com
  */
 object Configuration {
-    // Environment: "production", "test", or "local"
+    // Environment: "production", "test", "local", or "wiki"
     const val ENVIRONMENT: String = "production"
 
     // Toggle this for local development
@@ -43,7 +43,11 @@ object Configuration {
         }
 
         val scheme = if (USE_HTTPS) "https" else "http"
-        return "$scheme://$SUBDOMAIN.${service.serviceName}.$BASE_DOMAIN"
+
+        return when (ENVIRONMENT) {
+            "wiki" -> "$scheme://$SUBDOMAIN.$BASE_DOMAIN/plugin/allyabase/${service.serviceName}"
+            else -> "$scheme://$SUBDOMAIN.${service.serviceName}.$BASE_DOMAIN"
+        }
     }
 
     private fun getDefaultPort(service: Service): Int = when (service) {

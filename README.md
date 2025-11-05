@@ -1,106 +1,159 @@
 # The Advancement
 
-The Advancement is a repo with a mission to help a movement to improve the world.
+Privacy-first mobile apps for passwordless authentication, decentralized commerce, and ad-free browsing.
 
-## Overview
+## What It Is
 
-_This repo is a work in progress_
+**The Advancement** is the consumer-facing application of the [Planet Nine](https://github.com/planet-nine-app/planet-nine) ecosystem. Native iOS and Android apps that provide:
 
-*The Advancement* is the *free* consumer-facing application of the [Planet Nine][planet-nine] stack, built on top of [Sessionless], [MAGIC], and [teleportation].
-It is a set of browser extensions paired with companion apps that allow users to navigate cyberspace without a shared credential like email, and without the need for passwords. 
-Since it allows for a lot of behaviors, there's a bit of a smorgasbord (I suspect this word won't translate well, but many of its synonyms in English are idiomatic. Maybe conglomeration?) to choose from. 
+- **Passwordless Authentication** - Cryptographic keys via [Sessionless](https://github.com/planet-nine-app/sessionless), no passwords ever
+- **Decentralized Commerce** - Buy and sell without intermediaries using [MAGIC](https://github.com/planet-nine-app/MAGIC) protocol
+- **Ad Covering** - Cover ads with peaceful ficus plants instead of blocking them (creators still get paid)
+- **CarrierBag System** - Personal data storage across 15 collections (recipes, music, contracts, etc.)
+- **Payment Processing** - Stripe-powered payments with instant affiliate payouts to debit cards
+- **AdvanceKey Keyboard** - System keyboard for posting BDOs, decoding emojicodes, and casting spells
 
-Perhaps a bit of lore might help.
+## Key Features
 
-### Planet Nine is a spaceship
+### For Users
+- No email or password required
+- Save payment cards for instant checkout
+- Receive instant payouts (~30 minutes) to your debit card
+- Share your service info with base administrators to receive payments
+- Post and save BDOs (Basic Data Objects) to your carrier bag
+- Sign contracts using cryptographic keys
 
-Benevolent aliens have been watching us from afar at their home on Planet Nine.
-Unable to make physical contact, they waited patiently for humanity to create an online ecosystem where they could interact in small quantities with us via the pseudonymity of the internet.
-These aliens belong to a galactic federation called The Advancement. 
+### For Base Administrators
+- Users can share their Fount, Covenant, and Addie UUIDs with you
+- Look up users by any service UUID to verify payout capability
+- Set up instant affiliate payouts without complex onboarding
 
-There are four criteria to join the Advancement, and humanity is close, but not quite there so interaction is limited.
+### For Developers
+- Full MAGIC protocol integration for spell casting
+- Sessionless authentication SDK
+- WebView-based architecture for rapid iteration
+- Works with the entire Planet Nine allyabase ecosystem
 
-Holding humanity back is our collective need to divide ourselves into groups and subgroups, and to subjugate and undermine the opportunities available to different groups.
-There are many causes of this, but rather than look into those, I'd like to focus on one of the consequences. 
+## Running the Apps
 
-There is an enormous economic incentive for reinforcing group segmentation amongst humans, and that incentive is what is fueling digital advertising. 
-This giant industry has built an intricate system of software to track you, and everyone else, around everywhere you go in cyberspace. 
+### iOS App
 
-It is not easy to not be tracked, and often you're at the mercy of what companies are forced to do. 
-Those little popups asking for your permission about cookies and things are only there because governments said they had to be. 
-And you know what, I do this stuff for a living, and I don't even know what those rules are, and what you should do about them. 
+**Requirements**: macOS with Xcode 15+
 
-What I do have is a sense that forcing convoluted decisions on people to protect their privacy can not be in the best interest of humanity. 
-And since I enjoy thinking about what that means in the context of joining a Roddenberry-esque galactic federation, I've decided to build [Planet Nine][planet-nine].
+```bash
+cd src/The\ Advancement
+open The\ Advancement.xcodeproj
 
-Of course, you don't have to care about privacy or anything like that to benefit here.
-You just need to not like advertising.
-And who likes advertising?
+# Build and run to iOS Simulator or device
+# Select "The Advancement" scheme and press Cmd+R
+```
 
-## How to battle the Advertisement
+**AdvanceKey Keyboard Extension**:
+- Settings → General → Keyboard → Keyboards → Add New Keyboard → AdvanceKey
+- Grant "Full Access" when prompted
 
-I've always had this thing where I don't believe it should ever be my responsibility to tell you who I am.
-99% of the time you shouldn't have to know who I am at all. 
-For the 1% of the time that you do, like a bank or court I guess, we can leave that to governments.
+### Android App
 
-To this end, the first feature of The Advancement is to provide users with a set of emails that, for all intents and purposes, do not exist. 
-Users can optionally use these emails automagically to sign up for things around the internet. 
-The Advancement will remember which email is used where, just like a password manager, so that users don't have to.
-Similarly if you need to put in an email to get past some gatekeeping, just wave your wand (cursor), and the Advancement will use your email, and then we'll handle the cans of spam that'll be lobbed at you. 
+**Requirements**: Android Studio with Kotlin support
 
-If you haven't given up on email entirely, and want to clean up yours, I suggest checking out [this project](https://github.com/HellBri8nger/gmail-unsubscriber) which provides a python script for unsubscribing from all the garbage The Advertisement has signed you up for. 
+```bash
+cd src/android
+./gradlew :app:assembleDebug
 
-The second order of business in defending against the Advertisement is identifying them in the first place.
-The Advancement provides browser extensions for doing just that or at least it will once I finish it). 
-Most browsers are supported, if your browser of choice isn't on the list below, let us know.
+# Or open in Android Studio:
+# File → Open → select the-advancement/src/android
+# Run → Run 'app'
+```
 
-#### Supported browsers
+**AdvanceKey Keyboard**:
+- Settings → System → Languages & Input → On-screen keyboard → Manage keyboards
+- Enable "AdvanceKey"
 
-Safari and Chrome are under construction.
+**Version Bumping** (for Play Store):
+```kotlin
+// Edit app/build.gradle.kts
+versionCode = 3      // Increment by 1
+versionName = "1.2"  // Update version string
 
-The extensions are geared towards a gaming experience, and a non-gaming experience, which users can opt into in the app.
-Not everyone has fun the same way, so we wanted to keep it flexible.
+// Build release bundle
+./gradlew :app:bundleRelease
+# Upload: app/build/outputs/bundle/release/app-release.aab
+```
 
-#### The technical reason for these extensions
+### Test Environment
 
-These extensions are ad ~blockers~ cover-uppers. 
-With [Google's adoption of manifest v3][manifest-v3], ad blockers are losing their ability to rely on huge filter sets for blocking ad domains.
-In that link you can read about one ad blocker's attempt to continue without the filter rules, but we wanted to go an alternative route.
+**Requirements**: Docker, Node.js 18+
 
-You see there's nothing stopping us in manifest v3 from just covering up ads with this harmless ficus.
+```bash
+cd test-server
+npm install
+npm start
 
-![a picture of a pleasant ficus][ficus]
+# Open http://localhost:3456
+# Test complete Planet Nine purchase flow with Stripe test keys
+```
 
-That might not seem like much, but it makes it so that if you tap *anywhere* on the ad, it just goes away.
-Unless you're playing the game version, in which case you have to kill the ad.
+## Architecture
 
-Oh, and unlike ad blockers, doing it this way makes sure the content creator still gets paid. 
+```
+the-advancement/
+├── src/
+│   ├── The Advancement/        # iOS app (Swift)
+│   │   ├── iOS (App)/         # Main iOS app
+│   │   ├── AdvanceKey/        # iOS keyboard extension
+│   │   └── Shared (App)/      # Shared code & HTML/JS
+│   ├── android/               # Android app (Kotlin)
+│   │   └── app/src/main/
+│   │       ├── assets/        # WebView HTML/JS
+│   │       ├── java/.../ime/  # AdvanceKey keyboard
+│   │       └── java/.../ui/   # Main app activities
+│   └── extensions/
+│       ├── chrome/            # Chrome extension
+│       └── safari/            # Safari extension
+├── test-server/               # Complete test environment
+└── docs/                      # Detailed documentation
+```
 
-## But how will I know where to buy socks?
+## Documentation
 
-Well first of all, in addition to battling ads, the browser extension gives you the ability to use any MAGICal interaction built anywhere on the web.
-That can be one click shopping, or just liking a blog post.
+- **[Complete Documentation](CLAUDE.md)** - Full technical details, architecture, and implementation
+- **[Ad Covering System](docs/AD-COVERING-SYSTEM.md)** - Ficus ad covering with slime monster gaming
+- **[Payment Processing](docs/PAYMENT-PROCESSING.md)** - Stripe integration and instant payouts
+- **[MAGIC Protocol](docs/MAGIC-PROTOCOL.md)** - Spell casting implementation
+- **[Test Environment](docs/TEST-ENVIRONMENT.md)** - Comprehensive testing infrastructure
 
-The second thing the Advancement provides is an entry point to a (the?) teleportal network.
-The Advancement apps aren't meant to be true shopping experiences, though teleportation can enable that, but rather an aggregater for finding teleportals that might interest a user.
-Check out the [teleportation][teleportation] repo for more on this.
+## The Lore
+
+Benevolent aliens watch humanity from Planet Nine, waiting for us to join their galactic federation called **The Advancement**. We're close, but our collective tendency to divide ourselves into groups holds us back.
+
+One major driver of division? The $600+ billion digital advertising industry that tracks you everywhere online.
+
+We're building an alternative: privacy-first apps that let you navigate the internet without surveillance, passwords, or email. And if you must see ads, at least you can cover them with [peaceful ficus plants](https://github.com/planet-nine-app/the-advancement/blob/main/resources/ficus.jpg?raw=true).
+
+## Current Status (January 2025)
+
+✅ **Production Ready**:
+- iOS app (App Store)
+- Android app (Google Play)
+- Stripe payment processing with instant payouts
+- CarrierBag system with 15 collections
+- AdvanceKey keyboard extensions
+- Service Info for base administrators
+- Contract signing via Covenant
+
+🚧 **In Development**:
+- Browser extensions (Chrome, Safari)
+- Cross-base commerce
+- Ad covering system enhancements
 
 ## Contributing
 
-For more on how this all works and how to get started, check out these companion docs.
+See companion docs for detailed guides:
 
-| Dev          | UX          | Product     | The Non-Technical |
-|--------------|-------------|-------------|-------------------|
-| [README-DEV] | [README-UX] | coming soon | [README-NT]       |
+| Dev | UX | Product | Non-Technical |
+|-----|----|---------|--------------|
+| [README-DEV](./README-DEV.md) | [README-UX](./README-UX.md) | Coming Soon | [README-NT](./README-NT.md) |
 
-[README-DEV]: ./README-DEV.md
-[README-UX]: ./README-UX.md
-[README-NT]: ./README-NT.md
+---
 
-[Sessionless]: https://www.github.com/planet-nine-app/sessionless
-[MAGIC]: https://www.github.com/planet-nine-app/MAGIC
-[teleportation]: https://www.github.com/planet-nine-app/teleportation
-[planet-nine]: https://github.com/planet-nine-app/planet-nine
-[manifest-v3]: https://adguard.com/en/blog/chrome-manifest-v3-where-we-stand.html
-[ficus]: https://github.com/planet-nine-app/the-advancement/blob/main/resources/ficus.jpg?raw=true
-
+**The Advancement**: Because humanity deserves better than surveillance capitalism.

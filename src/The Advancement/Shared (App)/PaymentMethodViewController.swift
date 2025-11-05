@@ -255,6 +255,9 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
         case "getPayoutCardStatus":
             getPayoutCardStatus(messageId: messageId)
 
+        case "getServiceInfo":
+            getServiceInfo(messageId: messageId)
+
         default:
             sendResponse(messageId: messageId, error: "Unknown method: \(method)")
         }
@@ -1246,6 +1249,36 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
             NSLog("PAYMENTMETHOD: ✅ Got payout card status")
             self.sendResponse(messageId: messageId, result: json)
         }.resume()
+    }
+
+    private func getServiceInfo(messageId: Any) {
+        NSLog("PAYMENTMETHOD: 🔑 Getting service info...")
+
+        guard let keys = sessionless.getKeys() else {
+            sendResponse(messageId: messageId, error: "No authentication keys found")
+            return
+        }
+
+        let pubKey = keys.publicKey
+
+        // Get UUIDs from SharedUserDefaults and UserDefaults
+        let fountUUID = SharedUserDefaults.getFountUserUUID() ?? "Not available"
+        let covenantUUID = SharedUserDefaults.getCovenantUserUUID() ?? "Not available"
+        let addieUUID = UserDefaults.standard.string(forKey: "addie_user_uuid") ?? "Not available"
+
+        NSLog("PAYMENTMETHOD: 🔑 Fount UUID: %@", fountUUID)
+        NSLog("PAYMENTMETHOD: 🔑 Covenant UUID: %@", covenantUUID)
+        NSLog("PAYMENTMETHOD: 🔑 Addie UUID: %@", addieUUID)
+        NSLog("PAYMENTMETHOD: 🔑 PubKey: %@", String(pubKey.prefix(20)) + "...")
+
+        let result: [String: Any] = [
+            "fountUUID": fountUUID,
+            "covenantUUID": covenantUUID,
+            "addieUUID": addieUUID,
+            "pubKey": pubKey
+        ]
+
+        sendResponse(messageId: messageId, result: result)
     }
 
     // MARK: - Helpers
