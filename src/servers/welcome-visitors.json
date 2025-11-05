@@ -1,0 +1,142 @@
+{
+  "title": "Welcome Visitors",
+  "story": [
+    {
+      "type": "paragraph",
+      "id": "welcome-intro",
+      "text": "Welcome to this [[Allyabase]] federated wiki. This is a privacy-first, decentralized knowledge base powered by the Planet Nine ecosystem."
+    },
+    {
+      "type": "paragraph",
+      "id": "what-is-fedwiki",
+      "text": "[[Federated Wiki]] allows you to create, edit, and share pages. Each page can be forked to your own wiki, creating a decentralized network of knowledge."
+    },
+    {
+      "type": "markdown",
+      "id": "getting-started",
+      "text": "# Getting Started\n\nTo launch your own Allyabase ecosystem:\n\n1. Create an **[[allyabase]]** page\n2. The plugin will automatically detect this page\n3. Click the plugin button to launch your services\n4. Your base will include: Julia, Fount, BDO, and more"
+    },
+    {
+      "type": "markdown",
+      "id": "forking-pages",
+      "text": "# Forking Pages\n\nTo fork a page to your own wiki:\n\n1. Click the **fork icon** (🔱) at the bottom of any page\n2. The page will be copied to your wiki\n3. You can edit your fork independently\n4. Your changes won't affect the original page\n\nThis creates a decentralized web of knowledge where everyone owns their own content."
+    },
+    {
+      "type": "markdown",
+      "id": "editing",
+      "text": "# Editing Pages\n\n- **Double-click** any paragraph to edit\n- **Drag** to reorder paragraphs\n- Use **[[wiki links]]** to create connections between pages\n- Your changes are saved locally in your wiki\n\nThe **journal** (📖) at the bottom shows the complete history of edits and forks."
+    },
+    {
+      "type": "markdown",
+      "id": "privacy",
+      "text": "# Privacy & Ownership\n\n- **No tracking**: This wiki doesn't collect analytics or user data\n- **Local first**: All your content is stored on your own server\n- **Sessionless auth**: Use cryptographic keys instead of passwords\n- **Your data**: You own and control everything you create"
+    },
+    {
+      "type": "markdown",
+      "id": "learn-more",
+      "text": "# Learn More\n\n- [[Allyabase]] - Launch your own Planet Nine base\n- [[Federated Wiki]] - Understanding the wiki federation\n- [[Planet Nine]] - The broader ecosystem\n- [Federation Guide](http://fed.wiki.org/view/how-federation-works) - External resource"
+    },
+    {
+      "type": "paragraph",
+      "id": "footer",
+      "text": "This wiki is part of the Planet Nine ecosystem - a privacy-first, decentralized platform for knowledge, commerce, and community. 🌌"
+    }
+  ],
+  "journal": [
+    {
+      "type": "create",
+      "item": {
+        "title": "Welcome Visitors",
+        "story": []
+      },
+      "date": 1730296800000
+    },
+    {
+      "type": "add",
+      "id": "welcome-intro",
+      "item": {
+        "type": "paragraph",
+        "id": "welcome-intro",
+        "text": "Welcome to this [[Allyabase]] federated wiki. This is a privacy-first, decentralized knowledge base powered by the Planet Nine ecosystem."
+      },
+      "date": 1730296801000
+    },
+    {
+      "type": "add",
+      "id": "what-is-fedwiki",
+      "item": {
+        "type": "paragraph",
+        "id": "what-is-fedwiki",
+        "text": "[[Federated Wiki]] allows you to create, edit, and share pages. Each page can be forked to your own wiki, creating a decentralized network of knowledge."
+      },
+      "after": "welcome-intro",
+      "date": 1730296802000
+    },
+    {
+      "type": "add",
+      "id": "getting-started",
+      "item": {
+        "type": "markdown",
+        "id": "getting-started",
+        "text": "# Getting Started\n\nTo launch your own Allyabase ecosystem:\n\n1. Create an **[[allyabase]]** page\n2. The plugin will automatically detect this page\n3. Click the plugin button to launch your services\n4. Your base will include: Julia, Fount, BDO, and more"
+      },
+      "after": "what-is-fedwiki",
+      "date": 1730296803000
+    },
+    {
+      "type": "add",
+      "id": "forking-pages",
+      "item": {
+        "type": "markdown",
+        "id": "forking-pages",
+        "text": "# Forking Pages\n\nTo fork a page to your own wiki:\n\n1. Click the **fork icon** (🔱) at the bottom of any page\n2. The page will be copied to your wiki\n3. You can edit your fork independently\n4. Your changes won't affect the original page\n\nThis creates a decentralized web of knowledge where everyone owns their own content."
+      },
+      "after": "getting-started",
+      "date": 1730296804000
+    },
+    {
+      "type": "add",
+      "id": "editing",
+      "item": {
+        "type": "markdown",
+        "id": "editing",
+        "text": "# Editing Pages\n\n- **Double-click** any paragraph to edit\n- **Drag** to reorder paragraphs\n- Use **[[wiki links]]** to create connections between pages\n- Your changes are saved locally in your wiki\n\nThe **journal** (📖) at the bottom shows the complete history of edits and forks."
+      },
+      "after": "forking-pages",
+      "date": 1730296805000
+    },
+    {
+      "type": "add",
+      "id": "privacy",
+      "item": {
+        "type": "markdown",
+        "id": "privacy",
+        "text": "# Privacy & Ownership\n\n- **No tracking**: This wiki doesn't collect analytics or user data\n- **Local first**: All your content is stored on your own server\n- **Sessionless auth**: Use cryptographic keys instead of passwords\n- **Your data**: You own and control everything you create"
+      },
+      "after": "editing",
+      "date": 1730296806000
+    },
+    {
+      "type": "add",
+      "id": "learn-more",
+      "item": {
+        "type": "markdown",
+        "id": "learn-more",
+        "text": "# Learn More\n\n- [[Allyabase]] - Launch your own Planet Nine base\n- [[Federated Wiki]] - Understanding the wiki federation\n- [[Planet Nine]] - The broader ecosystem\n- [Federation Guide](http://fed.wiki.org/view/how-federation-works) - External resource"
+      },
+      "after": "privacy",
+      "date": 1730296807000
+    },
+    {
+      "type": "add",
+      "id": "footer",
+      "item": {
+        "type": "paragraph",
+        "id": "footer",
+        "text": "This wiki is part of the Planet Nine ecosystem - a privacy-first, decentralized platform for knowledge, commerce, and community. 🌌"
+      },
+      "after": "learn-more",
+      "date": 1730296808000
+    }
+  ]
+}

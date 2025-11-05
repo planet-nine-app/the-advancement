@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:hardwareAccelerated="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.TheAdvancement"
+        tools:targetApi="31">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.TheAdvancement">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Music Player Activity -->
+        <activity
+            android:name=".ui.music.MusicPlayerActivity"
+            android:exported="false"
+            android:label="Music Player"
+            android:theme="@style/Theme.TheAdvancement" />
+
+        <!-- Carrier Bag Activity -->
+        <activity
+            android:name=".ui.carrierbag.CarrierBagActivity"
+            android:exported="false"
+            android:label="Carrier Bag"
+            android:theme="@style/Theme.TheAdvancement" />
+
+        <!-- Payment Methods Activity -->
+        <activity
+            android:name=".ui.payment.PaymentMethodActivity"
+            android:exported="false"
+            android:label="Payment Methods"
+            android:theme="@style/Theme.TheAdvancement" />
+
+        <!-- AdvanceKey IME Service -->
+        <service
+            android:name=".ime.AdvanceKeyService"
+            android:label="AdvanceKey"
+            android:permission="android.permission.BIND_INPUT_METHOD"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data
+                android:name="android.view.im"
+                android:resource="@xml/method" />
+        </service>
+    </application>
+
+</manifest>

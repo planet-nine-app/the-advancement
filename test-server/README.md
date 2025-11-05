@@ -8,11 +8,12 @@ This test server demonstrates the complete Planet Nine purchase flow with The Ad
 
 ### 🌍 **Complete Planet Nine Integration**
 - **Teleported Product Feeds** - Products discovered from user's selected home base
-- **Menu Catalog Teleportation** - Complete restaurant menus from Planet Nine bases ✨ **NEW**
+- **Menu Catalog Teleportation** - Complete restaurant menus from Planet Nine bases
 - **Multi-PubKey System** - Site owner, product creator, and base public key verification
 - **Stripe Payment Processing** - Secure payments via The Advancement extension
 - **Addie Coordination** - Payment processing through user's home base
 - **Sessionless Authentication** - Cryptographic signing for all transactions
+- **SVG Gallery** - Visual gallery of all AllyaBase example SVGs in AdvanceKey keyboard dimensions ✨ **NEW**
 
 ### 💳 **Payment Flow Testing**
 - **3-Party Payment Splits** - Creator (70%), Base (20%), Site (10%)
@@ -52,6 +53,14 @@ This test server demonstrates the complete Planet Nine purchase flow with The Ad
    ```
    http://localhost:3456
    ```
+
+4. **View SVG Gallery** (optional):
+   ```
+   http://localhost:3456/svg-gallery.html
+   ```
+   - Gallery displays all AllyaBase example SVGs in AdvanceKey keyboard dimensions (400x320)
+   - Filter by category or view all examples
+   - Perfect for tweaking SVG designs for AdvanceKey integration
 
 ### Testing the Complete Flow
 
@@ -293,6 +302,29 @@ console.log('User home base:', homeBase.name);
 // Use home base for Addie coordination
 const addieEndpoint = `${homeBase.dns.addie}/payment/process`;
 ```
+
+## SVG Gallery
+
+The test server includes a visual gallery for viewing all AllyaBase example SVGs.
+
+### Accessing the Gallery
+
+Navigate to `http://localhost:3456/svg-gallery.html`
+
+### Features
+
+- **20 Categories** - All example types from AllyaBase (apothecary, bundles, closet, cookbook, events, familiarPen, gallery, games, geometry, greenHouse, idothis, literary, machinery, metallics, music, network-topology, oracular, popups, simulations, trading-cards)
+- **Keyboard Dimensions** - All SVGs displayed in AdvanceKey keyboard size (400x320)
+- **Category Filtering** - Filter by category or view all examples
+- **Detailed Labels** - Shows category, item name, and generator function for each SVG
+- **Live Examples** - Dynamically loads and renders actual SVG content from example data
+
+### Use Cases
+
+- **Design Review** - View all SVG designs in actual keyboard dimensions
+- **Visual Tweaking** - Compare different categories and styles side-by-side
+- **AdvanceKey Integration** - Ensure SVGs fit properly in keyboard layout
+- **Example Discovery** - Browse all available example types and their visual appearance
 
 ## Development Features
 

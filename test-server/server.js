@@ -31,6 +31,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Serve examples directory for SVG gallery
+app.use('/examples', express.static(path.join(__dirname, '../../allyabase/deployment/docker/examples')));
+
 // ========================================
 // Mock Data - In Production This Comes From Real Services
 // ========================================
@@ -64,19 +67,47 @@ const PRODUCT_CREATORS = {
 
 // Planet Nine Bases (where products are hosted)
 const PLANET_NINE_BASES = {
-    'dev': {
-        name: 'DEV',
-        description: 'Development Planet Nine base',
+    'base1': {
+        name: 'BASE1',
+        description: 'Planet Nine test base 1',
         pubKey: '0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321',
         address: '0xfedcba0987654321fedcba09',
         dns: {
-            bdo: 'dev.bdo.allyabase.com',
-            sanora: 'dev.sanora.allyabase.com',
-            dolores: 'dev.dolores.allyabase.com',
-            fount: 'dev.fount.allyabase.com',
-            addie: 'dev.addie.allyabase.com'
+            bdo: 'localhost:5114',
+            sanora: 'localhost:5121',
+            dolores: 'localhost:5118',
+            fount: 'localhost:5117',
+            addie: 'localhost:5115'
         },
-        stripe_account_id: 'acct_test_base_dev'
+        stripe_account_id: 'acct_test_base1'
+    },
+    'base2': {
+        name: 'BASE2',
+        description: 'Planet Nine test base 2',
+        pubKey: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+        address: '0x1234567890abcdef12345678',
+        dns: {
+            bdo: 'localhost:5214',
+            sanora: 'localhost:5221',
+            dolores: 'localhost:5218',
+            fount: 'localhost:5217',
+            addie: 'localhost:5215'
+        },
+        stripe_account_id: 'acct_test_base2'
+    },
+    'base3': {
+        name: 'BASE3',
+        description: 'Planet Nine test base 3',
+        pubKey: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+        address: '0xabcdef1234567890abcdef12',
+        dns: {
+            bdo: 'localhost:5314',
+            sanora: 'localhost:5321',
+            dolores: 'localhost:5318',
+            fount: 'localhost:5317',
+            addie: 'localhost:5315'
+        },
+        stripe_account_id: 'acct_test_base3'
     },
     'local': {
         name: 'LOCAL',
@@ -86,7 +117,8 @@ const PLANET_NINE_BASES = {
         dns: {
             bdo: 'localhost:3003',
             sanora: 'localhost:7243',
-            dolores: 'localhost:3007'
+            dolores: 'localhost:3007',
+            fount: 'localhost:3002'
         },
         stripe_account_id: 'acct_test_base_local'
     }
@@ -102,7 +134,7 @@ const TELEPORTED_PRODUCTS = [
         currency: 'usd',
         type: 'ebook',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         image_url: '/images/ebook-planet-nine.jpg',
         preview_url: '/previews/planet-nine-preview.pdf',
         metadata: {
@@ -122,7 +154,7 @@ const TELEPORTED_PRODUCTS = [
         currency: 'usd',
         type: 'course',
         creator: 'creator2',
-        base: 'dev',
+        base: 'base2',
         image_url: '/images/course-sessionless.jpg',
         preview_url: '/previews/sessionless-preview.mp4',
         metadata: {
@@ -143,7 +175,7 @@ const TELEPORTED_PRODUCTS = [
         currency: 'usd',
         type: 'physical',
         creator: 'creator1',
-        base: 'local',
+        base: 'base3',
         image_url: '/images/stickers-planet-nine.jpg',
         metadata: {
             quantity: 12,
@@ -153,6 +185,69 @@ const TELEPORTED_PRODUCTS = [
             created_at: '2024-01-10T09:00:00Z'
         },
         teleport_signature: 'mock_signature_3',
+        shipping_required: true
+    },
+    {
+        id: 'wand_fire',
+        title: 'Wand of Eternal Flames',
+        description: 'A powerful magical wand crafted from phoenix feather and obsidian. Channel the elemental power of fire with this legendary artifact.',
+        price: 2499, // $24.99 in cents
+        currency: 'usd',
+        type: 'magical_item',
+        creator: 'creator1',
+        base: 'base1',
+        image_url: '/images/wand-fire.jpg',
+        emojicoded: '🔥🪄✨⚡🌟💫🔮🎯💥🌈🔥💎⭐🌙☄️🪄🎪🎭🎨🎵🎪⚡🔥🌟💫🔮🎯💥🌈🔥💎⭐🌙☄️🪄🎪🎭🎨🎵🎪⚡🔥🌟💫🔮🎯💥🌈🔥💎⭐🌙☄️🪄',
+        metadata: {
+            magical_power: 'Fire Elemental',
+            enchantment_level: 'Master',
+            durability: 'Indestructible',
+            origin: 'Dragon Forge Mountains',
+            created_at: '2024-12-15T16:30:00Z'
+        },
+        teleport_signature: 'mock_signature_fire',
+        shipping_required: true
+    },
+    {
+        id: 'wand_ice',
+        title: 'Wand of Frozen Starlight',
+        description: 'An elegant wand carved from crystallized moonbeam and winter\'s heart. Harness the power of ice and snow with this mystical creation.',
+        price: 2799, // $27.99 in cents
+        currency: 'usd',
+        type: 'magical_item',
+        creator: 'creator2',
+        base: 'base2',
+        image_url: '/images/wand-ice.jpg',
+        emojicoded: '❄️🪄✨💎🌟💫🔮⭐🌙💠❄️🏔️🌨️☃️🔷💙🩵🤍✨💎🪄❄️🌟💫🔮⭐🌙💠❄️🏔️🌨️☃️🔷💙🩵🤍✨💎🪄❄️🌟💫🔮⭐🌙💠❄️🏔️🌨️☃️🔷',
+        metadata: {
+            magical_power: 'Ice Elemental',
+            enchantment_level: 'Grandmaster',
+            durability: 'Eternal Frost',
+            origin: 'Celestial Ice Caves',
+            created_at: '2024-12-18T11:45:00Z'
+        },
+        teleport_signature: 'mock_signature_ice',
+        shipping_required: true
+    },
+    {
+        id: 'wand_lightning',
+        title: 'Wand of Storm\'s Fury',
+        description: 'A volatile wand forged from thundercloud essence and storm giant bone. Command the raw power of lightning and tempest.',
+        price: 3199, // $31.99 in cents
+        currency: 'usd',
+        type: 'magical_item',
+        creator: 'creator1',
+        base: 'base3',
+        image_url: '/images/wand-lightning.jpg',
+        emojicoded: '⚡🪄✨🌩️🌟💫🔮⭐🌙💥⚡🌊🌀🌪️🌈💜🟣💙⚡✨🪄🌩️🌟💫🔮⭐🌙💥⚡🌊🌀🌪️🌈💜🟣💙⚡✨🪄🌩️🌟💫🔮⭐🌙💥⚡🌊🌀🌪️',
+        metadata: {
+            magical_power: 'Lightning Elemental',
+            enchantment_level: 'Legendary',
+            durability: 'Storm-Forged',
+            origin: 'Sky Realm Foundries',
+            created_at: '2024-12-20T08:15:00Z'
+        },
+        teleport_signature: 'mock_signature_lightning',
         shipping_required: true
     }
 ];
@@ -168,7 +263,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_structure',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             isMenuStructure: true,
@@ -208,7 +303,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'beverages',
@@ -224,7 +319,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'beverages',
@@ -240,7 +335,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'beverages',
@@ -256,7 +351,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'beverages',
@@ -272,7 +367,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'breakfast',
@@ -288,7 +383,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'breakfast',
@@ -304,7 +399,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'lunch',
@@ -320,7 +415,7 @@ const MENU_CATALOG_PRODUCTS = [
         currency: 'usd',
         type: 'menu_item',
         creator: 'creator1',
-        base: 'dev',
+        base: 'base1',
         metadata: {
             menuCatalogId: 'cafe_luna_menu',
             category: 'lunch',
@@ -354,8 +449,8 @@ sessionless.generateKeys(saveKeys, getKeys).then(() => {
     console.log('🔐 MAGIC: Using existing keys or creating new ones');
 });
 
-// Configure fount for test environment
-fount.baseURL = 'http://127.0.0.1:5117/'; // Test environment fount
+// Configure fount for test environment (Base 1)
+fount.baseURL = 'http://127.0.0.1:5117/'; // Test environment fount (Base 1)
 
 // Global fount user for MAGIC protocol (will be created in initializeGateway)
 global.fountUser = null;
@@ -640,7 +735,7 @@ app.post('/api/purchase/intent', async (req, res) => {
 
         const creator = PRODUCT_CREATORS[product.creator];
         const base = PLANET_NINE_BASES[product.base];
-        const userBase = PLANET_NINE_BASES[homeBase] || PLANET_NINE_BASES['dev'];
+        const userBase = PLANET_NINE_BASES[homeBase] || PLANET_NINE_BASES['base1'];
 
         // Calculate payment splits (Planet Nine pattern)
         const totalAmount = product.price;
@@ -785,6 +880,29 @@ app.get('/api/nineum-balance', async (req, res) => {
     }
 });
 
+// API: Proxy to Sanora (Base 1)
+app.get('/api/sanora/*', async (req, res) => {
+    const sanoraPath = req.params[0];
+    const sanoraURL = `http://127.0.0.1:5121/${sanoraPath}${req.url.includes('?') ? '?' + req.url.split('?')[1] : ''}`;
+
+    console.log(`🔄 Proxying to Sanora: ${sanoraURL}`);
+
+    try {
+        const fetch = (await import('node-fetch')).default;
+        const response = await fetch(sanoraURL);
+        const data = await response.json();
+
+        res.json(data);
+    } catch (error) {
+        console.error('❌ Sanora proxy error:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to connect to Sanora service',
+            details: error.message
+        });
+    }
+});
+
 // API: Health check
 app.get('/api/health', (req, res) => {
     res.json({
@@ -797,7 +915,8 @@ app.get('/api/health', (req, res) => {
             'multi-pubkey',
             'stripe-integration',
             'addie-coordination',
-            'magic-protocol'
+            'magic-protocol',
+            'sanora-proxy'
         ]
     });
 });
@@ -811,6 +930,96 @@ app.get('/debug/spellbook', (req, res) => {
         keys: Object.keys(spellbook),
         hasSpellTest: !!spellbook.spellTest
     });
+});
+
+// API: Get all SVG examples (generated server-side)
+app.get('/api/svg-examples', async (req, res) => {
+    console.log('🎨 Generating SVG examples...');
+
+    try {
+        const examples = [];
+        const examplesDir = path.join(__dirname, '../../allyabase/deployment/docker/examples');
+
+        // List of example modules to load
+        const moduleConfigs = [
+            { dir: 'apothecary', file: 'apothecary.js', generators: ['generateCosmeticSVG', 'generateRemedySVG'], data: 'apothecaryPosts' },
+            { dir: 'bundles', file: 'bundles.js', generators: ['generateBundleSVG'], data: 'bundlesPosts' },
+            { dir: 'closet', file: 'closet.js', generators: ['generateClothingSVG'], data: 'closetPosts' },
+            { dir: 'cookbook', file: 'cookbook.js', generators: ['generateRecipeSVG'], data: 'cookbookPosts' },
+            { dir: 'events', file: 'events.js', generators: ['generateEventSVG'], data: 'events' },
+            { dir: 'familiarPen', file: 'familiarPen.js', generators: ['generateFamiliarSVG'], data: 'familiarPenPosts' },
+            { dir: 'gallery', file: 'gallery.js', generators: ['generateArtworkSVG', 'generateMarketplaceLogosSVG', 'generatePoliticalArtSVG', 'generateDiscoveryPathwaysSVG', 'generateFriendsIllustrationSVG'], data: 'galleryPosts' },
+            { dir: 'games', file: 'games.js', generators: ['generateGameSVG', 'generateFTPSVG'], data: 'gamesPosts' },
+            { dir: 'geometry', file: 'geometry.js', generators: ['generateEuclidPostulatesSVG', 'generateNonEuclideanSVG', 'generateGeneralRelativitySVG', 'generateGravitationalLensingSVG'], data: 'geometryPosts' },
+            { dir: 'greenHouse', file: 'greenHouse.js', generators: ['generatePlantSVG'], data: 'greenHousePosts' },
+            { dir: 'idothis', file: 'idothis.js', generators: ['generateIdothisBookNowSVG'], data: 'idothisPosts' },
+            { dir: 'literary', file: 'literary.js', generators: ['generateBookTwoButtonSVG', 'generateLiteraryOneButtonSVG'], data: 'literaryPosts' },
+            { dir: 'machinery', file: 'machinery.js', generators: ['generateMachinerySVG'], data: 'machineryPosts' },
+            { dir: 'metallics', file: 'metallics.js', generators: ['generateGemstoneSVG', 'generateJewelrySVG'], data: 'metallicsPosts' },
+            { dir: 'music', file: 'music-bdo.js', generators: ['generateMusicBDO', 'generateMirloBDO', 'generateBandcampBDO'], data: 'exampleMusicTracks' },
+            { dir: 'network-topology', file: 'network-topology.js', generators: ['generateHubSpokeSVG', 'generateFederatedNetworkSVG', 'generateFFXIVServersSVG', 'generateOverlayNetworkSVG'], data: 'networkTopologyPosts' },
+            { dir: 'oracular', file: 'oracular.js', generators: ['generateTarotSVG', 'generateAstrologySVG'], data: 'oracularPosts' },
+            { dir: 'popups', file: 'popups.js', generators: ['generatePopupTwoButtonSVG', 'generateLocationViewSVG'], data: 'popupPosts' },
+            { dir: 'simulations', file: 'simulations.js', generators: ['generateGalaxyCollisionSVG', 'generatePlanetNineSpaceshipSVG'], data: 'simulationsPosts' },
+            { dir: 'trading-cards', file: 'trading-cards.js', generators: ['generateSTEMPioneerCardSVG'], data: 'tradingCardsPosts' },
+            { dir: 'food-banks', file: 'food-banks.js', generators: ['generateFoodBankSVG', 'generateSNAPBenefitsSVG', 'generateSNAPProcessSVG'], data: 'foodBanksPosts' },
+            { dir: 'social', file: 'social.js', generators: ['generateMarketplaceSVG', 'generateTravelingMerchantSVG'], data: 'socialPosts' },
+            { dir: 'system-design', file: 'system-design.js', generators: ['generateStackLayersSVG', 'generateStackFlowSVG', 'generateAllyabaseInfrastructureSVG', 'generateAllyabaseDeveloperSVG', 'generateNullaryConceptSVG', 'generateNullaryPhilosophySVG'], data: 'systemDesigns' }
+        ];
+
+        for (const config of moduleConfigs) {
+            try {
+                const modulePath = path.join(examplesDir, config.dir, config.file);
+                const module = await import('file://' + modulePath);
+
+                const posts = module[config.data] || [];
+
+                for (const post of posts) {
+                    for (const generatorName of config.generators) {
+                        const generator = module[generatorName];
+                        if (generator) {
+                            try {
+                                // Generate a dummy pubkey for display
+                                const dummyPubKey = 'example_' + post.id;
+                                const svgContent = generator(post, dummyPubKey);
+
+                                // Skip if generator returned null (wrong type for this generator)
+                                if (svgContent) {
+                                    examples.push({
+                                        category: config.dir,
+                                        name: post.title || post.name || post.id,
+                                        generator: generatorName,
+                                        svgContent: svgContent,
+                                        path: `${config.dir}/${config.file}`
+                                    });
+                                }
+                            } catch (err) {
+                                console.error(`Error generating SVG for ${post.id}:`, err.message);
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error(`Error loading module ${config.dir}/${config.file}:`, err.message);
+            }
+        }
+
+        console.log(`✅ Generated ${examples.length} SVG examples from ${moduleConfigs.length} categories`);
+
+        res.json({
+            success: true,
+            count: examples.length,
+            examples: examples
+        });
+
+    } catch (error) {
+        console.error('Failed to generate SVG examples:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to generate SVG examples',
+            details: error.message
+        });
+    }
 });
 
 // ========================================

@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://js.stripe.com https://m.stripe.com https://*.stripe.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; style-src 'self' 'unsafe-inline'; frame-src https://js.stripe.com https://m.stripe.com https://*.stripe.com; connect-src 'self' https://api.stripe.com https://m.stripe.com https://*.stripe.com http://127.0.0.1:*;">
+    <title>Payment Method</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a0033 0%, #330066 100%);
+            color: white;
+            padding: 40px 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 400px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 40px;
+            text-align: center;
+            background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .choices {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .choice-button {
+            width: 100%;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(233, 30, 99, 0.3);
+            border-radius: 16px;
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .choice-button:hover {
+            transform: translateY(-4px);
+            border-color: #e91e63;
+            background: rgba(233, 30, 99, 0.1);
+            box-shadow: 0 8px 24px rgba(233, 30, 99, 0.3);
+        }
+
+        .choice-emoji {
+            display: block;
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .choice-title {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .choice-subtitle {
+            display: block;
+            font-size: 14px;
+            color: #a78bfa;
+            font-weight: 400;
+        }
+
+        /* Flow screens */
+        .flow-screen {
+            display: none;
+        }
+
+        .flow-screen.active {
+            display: block;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            color: #a78bfa;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 12px;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            color: #e91e63;
+        }
+
+        .card-form {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(233, 30, 99, 0.3);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        #payment-element {
+            margin-bottom: 20px;
+        }
+
+        .button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+            color: #a78bfa;
+        }
+
+        .loading.visible {
+            display: block;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.visible {
+            display: block;
+        }
+
+        .message.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            color: #4caf50;
+        }
+
+        .message.error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.5);
+            color: #f44336;
+        }
+
+        .info-box {
+            background: rgba(167, 139, 250, 0.1);
+            border: 1px solid rgba(167, 139, 250, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            color: #a78bfa;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(233, 30, 99, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: rgba(167, 139, 250, 0.5);
+        }
+
+        .service-info-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(233, 30, 99, 0.2);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .service-info-label {
+            color: #e91e63;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .service-info-value {
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            word-break: break-all;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .service-info-value:hover {
+            background: rgba(233, 30, 99, 0.1);
+        }
+
+        .copy-hint {
+            font-size: 11px;
+            color: #a78bfa;
+            margin-top: 4px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Main Choice Screen -->
+        <div id="choice-screen" class="flow-screen active">
+            <h1>💳 Payment Setup</h1>
+            <div class="choices">
+                <button class="choice-button" onclick="showHaveCardFlow()">
+                    <span class="choice-emoji">💳</span>
+                    <span class="choice-title">I have a card</span>
+                    <span class="choice-subtitle">Save your existing debit or credit card</span>
+                </button>
+
+                <button class="choice-button" onclick="showNeedCardFlow()">
+                    <span class="choice-emoji">🏦</span>
+                    <span class="choice-title">I need a card</span>
+                    <span class="choice-subtitle">Get a Planet Nine virtual card</span>
+                </button>
+
+                <button class="choice-button" onclick="showServiceInfoFlow()">
+                    <span class="choice-emoji">🔑</span>
+                    <span class="choice-title">Service Info</span>
+                    <span class="choice-subtitle">View your UUIDs for base admin</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Service Info Flow -->
+        <div id="service-info-screen" class="flow-screen">
+            <button class="back-button" onclick="showChoiceScreen()">← Back</button>
+            <h1>🔑 Service Information</h1>
+
+            <div class="info-box">
+                Share these identifiers with your base administrator to enable base payouts. Copy each value and provide to your admin.
+            </div>
+
+            <div class="card-form" id="service-info-container">
+                <p style="color: #a78bfa; text-align: center;">Loading...</p>
+            </div>
+        </div>
+
+        <!-- I Have a Card Flow -->
+        <div id="have-card-screen" class="flow-screen">
+            <button class="back-button" onclick="showChoiceScreen()">← Back</button>
+            <h1>💳 Save Your Card</h1>
+
+            <div id="success-message" class="message success"></div>
+            <div id="error-message" class="message error"></div>
+
+            <div class="info-box">
+                Save your card to make purchases across Planet Nine. Your card information is stored securely with Stripe.
+            </div>
+
+            <div class="card-form">
+                <form id="payment-form">
+                    <div id="payment-element"></div>
+                    <button id="submit-button" class="button" type="submit">
+                        Save Card
+                    </button>
+                </form>
+            </div>
+
+            <div id="loading" class="loading">
+                <p>Processing...</p>
+            </div>
+        </div>
+
+        <!-- I Need a Card Flow -->
+        <div id="need-card-screen" class="flow-screen">
+            <button class="back-button" onclick="showChoiceScreen()">← Back</button>
+            <h1>🏦 Get Your Card</h1>
+
+            <div id="issue-success-message" class="message success"></div>
+            <div id="issue-error-message" class="message error"></div>
+
+            <div class="info-box">
+                <strong>Planet Nine Virtual Card</strong><br>
+                Get your own virtual debit card - use it anywhere online, instantly.<br><br>
+                ✓ Free to create<br>
+                ✓ Instant activation<br>
+                ✓ Set your own spending limit
+            </div>
+
+            <div id="cardholder-form-container">
+                <!-- Cardholder form will be inserted here -->
+            </div>
+
+            <div id="issue-loading" class="loading">
+                <p>Processing...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stripe;
+        let elements;
+        let setupIntentClientSecret;
+
+        function showChoiceScreen() {
+            document.querySelectorAll('.flow-screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('choice-screen').classList.add('active');
+        }
+
+        function showHaveCardFlow() {
+            document.querySelectorAll('.flow-screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('have-card-screen').classList.add('active');
+            if (!stripe) {
+                initializeStripe();
+            }
+        }
+
+        function showNeedCardFlow() {
+            document.querySelectorAll('.flow-screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('need-card-screen').classList.add('active');
+            showCardholderForm();
+        }
+
+        async function showServiceInfoFlow() {
+            document.querySelectorAll('.flow-screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('service-info-screen').classList.add('active');
+            await loadServiceInfo();
+        }
+
+        async function loadServiceInfo() {
+            try {
+                console.log('🔑 Loading service info...');
+                const info = await callSwift('getServiceInfo');
+                console.log('🔑 Service info loaded:', info);
+
+                const html = `
+                    <div class="service-info-item">
+                        <div class="service-info-label">Fount UUID</div>
+                        <div class="service-info-value" onclick="copyToClipboard('${info.fountUUID || 'Not available'}', 'Fount UUID')">
+                            ${info.fountUUID || 'Not available'}
+                        </div>
+                        <div class="copy-hint">👆 Tap to copy</div>
+                    </div>
+
+                    <div class="service-info-item">
+                        <div class="service-info-label">Covenant UUID</div>
+                        <div class="service-info-value" onclick="copyToClipboard('${info.covenantUUID || 'Not available'}', 'Covenant UUID')">
+                            ${info.covenantUUID || 'Not available'}
+                        </div>
+                        <div class="copy-hint">👆 Tap to copy</div>
+                    </div>
+
+                    <div class="service-info-item">
+                        <div class="service-info-label">Addie UUID</div>
+                        <div class="service-info-value" onclick="copyToClipboard('${info.addieUUID || 'Not available'}', 'Addie UUID')">
+                            ${info.addieUUID || 'Not available'}
+                        </div>
+                        <div class="copy-hint">👆 Tap to copy</div>
+                    </div>
+
+                    <div class="service-info-item">
+                        <div class="service-info-label">Public Key</div>
+                        <div class="service-info-value" onclick="copyToClipboard('${info.pubKey || 'Not available'}', 'Public Key')">
+                            ${info.pubKey || 'Not available'}
+                        </div>
+                        <div class="copy-hint">👆 Tap to copy</div>
+                    </div>
+
+                    <div style="margin-top: 20px; padding: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; font-size: 13px; color: #10b981;">
+                        ✓ Tap any value to copy it to clipboard
+                    </div>
+                `;
+
+                document.getElementById('service-info-container').innerHTML = html;
+            } catch (error) {
+                console.error('❌ Failed to load service info:', error);
+                document.getElementById('service-info-container').innerHTML = `
+                    <p style="color: #f44336; text-align: center;">Failed to load service information</p>
+                `;
+            }
+        }
+
+        function copyToClipboard(text, label) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    // Show success feedback
+                    const successDiv = document.createElement('div');
+                    successDiv.style.position = 'fixed';
+                    successDiv.style.top = '50%';
+                    successDiv.style.left = '50%';
+                    successDiv.style.transform = 'translate(-50%, -50%)';
+                    successDiv.style.background = 'rgba(16, 185, 129, 0.95)';
+                    successDiv.style.color = 'white';
+                    successDiv.style.padding = '20px 40px';
+                    successDiv.style.borderRadius = '12px';
+                    successDiv.style.fontSize = '16px';
+                    successDiv.style.fontWeight = '600';
+                    successDiv.style.zIndex = '10000';
+                    successDiv.style.boxShadow = '0 4px 24px rgba(0,0,0,0.3)';
+                    successDiv.textContent = `✓ ${label} copied!`;
+                    document.body.appendChild(successDiv);
+
+                    setTimeout(() => {
+                        document.body.removeChild(successDiv);
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                    alert(`${label}: ${text}`);
+                });
+            } else {
+                // Fallback for browsers that don't support clipboard API
+                alert(`${label}: ${text}`);
+            }
+        }
+
+        // Initialize Stripe for "I have a card" flow
+        async function initializeStripe() {
+            try {
+                console.log('💳 Initializing Stripe...');
+                showLoading(true);
+
+                console.log('💳 Calling createSetupIntent...');
+                const response = await callSwift('createSetupIntent');
+                console.log('💳 SetupIntent response:', response);
+
+                if (!response || !response.clientSecret) {
+                    throw new Error('Failed to create SetupIntent');
+                }
+
+                setupIntentClientSecret = response.clientSecret;
+                const publishableKey = response.publishableKey;
+                console.log('💳 Got clientSecret and publishableKey');
+
+                stripe = Stripe(publishableKey);
+                console.log('💳 Stripe initialized');
+
+                const appearance = {
+                    theme: 'night',
+                    variables: {
+                        colorPrimary: '#10b981',  // Green for focus/active state
+                        colorBackground: '#1a0033',
+                        colorText: '#ffffff',
+                        colorDanger: '#f44336',
+                        fontFamily: '-apple-system, sans-serif',
+                        borderRadius: '8px',
+                    },
+                };
+
+                elements = stripe.elements({
+                    clientSecret: setupIntentClientSecret,
+                    appearance: appearance,
+                });
+                console.log('💳 Elements created');
+
+                const paymentElement = elements.create('payment');
+
+                // Listen for load errors
+                let hasLoadError = false;
+                paymentElement.on('loaderror', (event) => {
+                    console.error('⚠️ Payment element load error:', JSON.stringify(event));
+                    hasLoadError = true;
+
+                    // Show warning but don't prevent usage
+                    const warningDiv = document.createElement('div');
+                    warningDiv.className = 'info-box';
+                    warningDiv.style.borderColor = '#ff9800';
+                    warningDiv.style.color = '#ff9800';
+                    warningDiv.innerHTML = `
+                        ⚠️ <strong>Sandbox Warning</strong><br>
+                        Stripe Elements detected a sandbox restriction. If the form doesn't appear or work properly,
+                        you may need to use the Safari extension or Android app for payment method setup.
+                    `;
+                    document.querySelector('.card-form').insertBefore(warningDiv, document.getElementById('payment-element'));
+                });
+
+                paymentElement.on('ready', () => {
+                    console.log('✅ Payment element is ready and visible!');
+                    if (!hasLoadError) {
+                        // Form loaded successfully without errors
+                        console.log('✅ No load errors - form should be fully functional');
+                    } else {
+                        console.log('⚠️ Form is ready but had load errors - functionality may be limited');
+                    }
+                });
+
+                paymentElement.mount('#payment-element');
+                console.log('💳 Payment element mounted');
+
+                showLoading(false);
+                console.log('✅ Stripe initialization complete');
+
+            } catch (error) {
+                console.error('❌ Stripe initialization error:', error);
+                showError('Failed to initialize: ' + error.message);
+                showLoading(false);
+            }
+        }
+
+        // Handle "I have a card" form submission
+        document.getElementById('payment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!stripe || !elements) {
+                showError('Stripe not initialized');
+                return;
+            }
+
+            showLoading(true);
+            clearMessages();
+
+            try {
+                const { error, setupIntent } = await stripe.confirmSetup({
+                    elements,
+                    confirmParams: {
+                        return_url: 'https://planetnine.app/payment-success',
+                    },
+                    redirect: 'if_required',
+                });
+
+                if (error) {
+                    showError(error.message);
+                    showLoading(false);
+                    return;
+                }
+
+                if (setupIntent.status === 'succeeded') {
+                    await callSwift('setupIntentSucceeded', {
+                        setupIntentId: setupIntent.id,
+                        paymentMethodId: setupIntent.payment_method
+                    });
+
+                    showSuccess('Card saved successfully!');
+
+                    setTimeout(() => {
+                        showChoiceScreen();
+                    }, 2000);
+                }
+
+                showLoading(false);
+
+            } catch (error) {
+                showError('An error occurred: ' + error.message);
+                showLoading(false);
+            }
+        });
+
+        // Show cardholder form for "I need a card" flow
+        function showCardholderForm() {
+            const html = `
+                <div class="card-form">
+                    <h3 style="color: #a78bfa; margin-bottom: 16px; font-size: 18px;">Your Information</h3>
+                    <input type="text" id="first-name" placeholder="First Name" class="form-input" required>
+                    <input type="text" id="last-name" placeholder="Last Name" class="form-input" required>
+                    <input type="email" id="email" placeholder="Email" class="form-input" required>
+                    <input type="tel" id="phone" placeholder="Phone (+1...)" class="form-input" required>
+
+                    <h4 style="color: #a78bfa; margin: 16px 0 12px; font-size: 16px;">Date of Birth</h4>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="number" id="dob-month" placeholder="MM" min="1" max="12" class="form-input" style="flex: 1;" required>
+                        <input type="number" id="dob-day" placeholder="DD" min="1" max="31" class="form-input" style="flex: 1;" required>
+                        <input type="number" id="dob-year" placeholder="YYYY" min="1900" max="2010" class="form-input" style="flex: 2;" required>
+                    </div>
+
+                    <h4 style="color: #a78bfa; margin: 16px 0 12px; font-size: 16px;">Address</h4>
+                    <input type="text" id="address-line1" placeholder="Street Address" class="form-input" required>
+                    <input type="text" id="address-line2" placeholder="Apt, Suite, Unit (optional)" class="form-input">
+                    <input type="text" id="city" placeholder="City" class="form-input" required>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="state" placeholder="State" class="form-input" style="flex: 1;" required>
+                        <input type="text" id="postal-code" placeholder="ZIP" class="form-input" style="flex: 1;" required>
+                    </div>
+
+                    <h4 style="color: #a78bfa; margin: 16px 0 12px; font-size: 16px;">Spending Limit</h4>
+                    <input type="number" id="spending-limit" value="1000" min="100" max="50000" step="100" class="form-input">
+                    <div style="font-size: 12px; color: #a78bfa; margin-bottom: 16px;">Monthly limit in USD (minimum $100)</div>
+
+                    <label style="display: flex; align-items: center; gap: 8px; margin: 16px 0; cursor: pointer;">
+                        <input type="checkbox" id="tos-acceptance" required style="width: 20px; height: 20px;">
+                        <span style="font-size: 14px; color: #a78bfa;">I agree to the <a href="https://stripe.com/legal/issuing/cardholder-terms" target="_blank" style="color: #e91e63; text-decoration: underline;">Stripe Issuing Terms</a></span>
+                    </label>
+
+                    <button class="button" onclick="submitCardRequest()">
+                        Get My Card
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('cardholder-form-container').innerHTML = html;
+        }
+
+        // Submit "I need a card" request
+        async function submitCardRequest() {
+            // Check TOS acceptance
+            const tosAccepted = document.getElementById('tos-acceptance').checked;
+            if (!tosAccepted) {
+                showIssueError('Please accept the Stripe Issuing Terms to continue');
+                return;
+            }
+
+            // Build address object, only including line2 if it's not empty
+            const line1 = document.getElementById('address-line1').value;
+            const line2 = document.getElementById('address-line2').value.trim();
+            const city = document.getElementById('city').value;
+            const state = document.getElementById('state').value;
+            const postalCode = document.getElementById('postal-code').value;
+
+            const address = {
+                line1: line1,
+                city: city,
+                state: state,
+                postal_code: postalCode,
+                country: 'US'
+            };
+
+            // Only include line2 if it's not empty (Stripe requirement)
+            if (line2) {
+                address.line2 = line2;
+            }
+
+            const info = {
+                firstName: document.getElementById('first-name').value,
+                lastName: document.getElementById('last-name').value,
+                name: document.getElementById('first-name').value + ' ' + document.getElementById('last-name').value,
+                email: document.getElementById('email').value,
+                phoneNumber: document.getElementById('phone').value,
+                dob: {
+                    month: parseInt(document.getElementById('dob-month').value),
+                    day: parseInt(document.getElementById('dob-day').value),
+                    year: parseInt(document.getElementById('dob-year').value)
+                },
+                address: address
+                // tosAcceptance constructed by backend with actual IP
+            };
+
+            const spendingLimit = parseInt(document.getElementById('spending-limit').value) * 100;
+
+            // Validate
+            if (!info.firstName || !info.lastName || !info.email || !info.dob.month || !info.address.line1) {
+                showIssueError('Please fill in all required fields');
+                return;
+            }
+
+            try {
+                showIssueLoading(true);
+
+                // Create cardholder
+                await callSwift('createCardholder', { individualInfo: info });
+
+                // Issue virtual card
+                const result = await callSwift('issueVirtualCard', { spendingLimit });
+
+                showIssueSuccess(`Virtual card issued! •••• ${result.last4}`);
+
+                setTimeout(() => {
+                    showChoiceScreen();
+                }, 3000);
+
+            } catch (error) {
+                showIssueError('Failed to issue card: ' + error.message);
+            } finally {
+                showIssueLoading(false);
+            }
+        }
+
+        // Helper to call Swift methods
+        function callSwift(method, params = {}) {
+            return new Promise((resolve, reject) => {
+                const messageId = Date.now() + Math.random();
+                console.log(`🔵 callSwift: ${method}, messageId: ${messageId}`);
+
+                const responseHandler = (event) => {
+                    console.log('🔵 Received message event:', event);
+                    console.log('🔵 event.data:', event.data);
+                    console.log('🔵 Looking for messageId:', messageId);
+
+                    if (event.data && event.data.messageId === messageId) {
+                        console.log('🟢 MessageId matched! Processing response...');
+                        window.removeEventListener('message', responseHandler);
+                        if (event.data.error) {
+                            console.error('🔴 Error in response:', event.data.error);
+                            reject(new Error(event.data.error));
+                        } else {
+                            console.log('🟢 Success! Result:', event.data.result);
+                            resolve(event.data.result);
+                        }
+                    } else {
+                        console.log('🟡 MessageId did not match or data missing');
+                    }
+                };
+
+                window.addEventListener('message', responseHandler);
+                console.log('🔵 Added message event listener');
+
+                if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.paymentMethod) {
+                    console.log('🔵 Posting message to Swift...');
+                    window.webkit.messageHandlers.paymentMethod.postMessage({
+                        method,
+                        params,
+                        messageId
+                    });
+                    console.log('🔵 Message posted to Swift');
+                } else {
+                    console.error('🔴 Swift message handler not available');
+                    reject(new Error('Swift message handler not available'));
+                }
+
+                setTimeout(() => {
+                    console.log('🔴 Request timeout after 30s');
+                    window.removeEventListener('message', responseHandler);
+                    reject(new Error('Request timeout'));
+                }, 30000);
+            });
+        }
+
+        // UI helpers
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('visible', show);
+            const btn = document.getElementById('submit-button');
+            if (btn) btn.disabled = show;
+        }
+
+        function showIssueLoading(show) {
+            document.getElementById('issue-loading').classList.toggle('visible', show);
+        }
+
+        function showSuccess(message) {
+            const el = document.getElementById('success-message');
+            el.textContent = message;
+            el.classList.add('visible');
+            setTimeout(() => el.classList.remove('visible'), 5000);
+        }
+
+        function showError(message) {
+            const el = document.getElementById('error-message');
+            el.textContent = message;
+            el.classList.add('visible');
+            setTimeout(() => el.classList.remove('visible'), 5000);
+        }
+
+        function showIssueSuccess(message) {
+            const el = document.getElementById('issue-success-message');
+            el.textContent = message;
+            el.classList.add('visible');
+            setTimeout(() => el.classList.remove('visible'), 5000);
+        }
+
+        function showIssueError(message) {
+            const el = document.getElementById('issue-error-message');
+            el.textContent = message;
+            el.classList.add('visible');
+            setTimeout(() => el.classList.remove('visible'), 5000);
+        }
+
+        function clearMessages() {
+            document.getElementById('success-message').classList.remove('visible');
+            document.getElementById('error-message').classList.remove('visible');
+        }
+    </script>
+</body>
+</html>

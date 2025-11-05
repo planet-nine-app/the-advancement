@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        * { margin: 0; padding: 0; -webkit-user-select: none; -webkit-user-drag: none; box-sizing: border-box; }
+        html, body {
+            width: 100%;
+            height: 100%;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-color: #000000;
+            position: relative;
+        }
+        #mainSVG {
+            width: 100%;
+            height: 100%;
+            min-height: 100vh;
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none; /* Allow clicks to pass through to input below */
+        }
+        .button-group {
+            cursor: pointer;
+            pointer-events: auto; /* Re-enable clicks for buttons */
+        }
+        .button-group:active rect { fill: rgba(16, 185, 129, 0.3); }
+        input { -webkit-user-select: text; }
+    </style>
+</head>
+<body>
+    <svg id="mainSVG" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 140" preserveAspectRatio="xMidYMin meet">
+        <defs>
+            <filter id="greenGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="0.8" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="purpleGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="0.5" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="pinkGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="0.6" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="yellowGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="0.4" result="coloredBlur"/>
+                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <radialGradient id="bgGradient" cx="50%" cy="50%" r="70%">
+                <stop offset="0%" style="stop-color:#1a0033; stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#000000; stop-opacity:1" />
+            </radialGradient>
+        </defs>
+
+        <!-- Background -->
+        <rect width="100" height="140" fill="url(#bgGradient)"/>
+
+        <!-- Title -->
+        <text x="50" y="22" text-anchor="middle" style="font-family: -apple-system; font-size: 5px; font-weight: 700; letter-spacing: 0.5px;" fill="#10b981" filter="url(#greenGlow)">
+            THE ADVANCEMENT
+        </text>
+
+        <!-- Top Buttons -->
+        <g id="topButtons" transform="translate(0, 28)">
+            <!-- ADD CARDS Button (top left) -->
+            <g id="addCardsButton" class="button-group">
+                <rect x="10" y="0" width="35" height="8" rx="1" fill="rgba(139, 92, 246, 0.15)" stroke="#8b5cf6" stroke-width="0.25" filter="url(#purpleGlow)" opacity="0.9">
+                    <animate attributeName="opacity" values="0.7;1;0.7" dur="2.2s" repeatCount="indefinite"/>
+                </rect>
+                <text x="27.5" y="5" text-anchor="middle" style="font-family: -apple-system; font-size: 3px; font-weight: 600; letter-spacing: 0.3px;" fill="#8b5cf6" filter="url(#purpleGlow)">
+                    💳 ADD CARDS
+                </text>
+            </g>
+
+            <!-- BAG Button (top right) -->
+            <g id="bagButton" class="button-group">
+                <rect x="55" y="0" width="35" height="8" rx="1" fill="rgba(236, 72, 153, 0.15)" stroke="#ec4899" stroke-width="0.25" filter="url(#pinkGlow)" opacity="0.9">
+                    <animate attributeName="opacity" values="0.7;1;0.7" dur="2.5s" repeatCount="indefinite"/>
+                </rect>
+                <text x="72.5" y="5" text-anchor="middle" style="font-family: -apple-system; font-size: 3px; font-weight: 600; letter-spacing: 0.3px;" fill="#ec4899" filter="url(#pinkGlow)">
+                    🎒 BAG
+                </text>
+            </g>
+        </g>
+
+        <!-- Posted BDOs Display Area (will be populated dynamically) -->
+        <g id="bdoDisplayArea" transform="translate(0, 42)">
+            <!-- BDOs will be inserted here -->
+        </g>
+
+        <!-- Input Area (at bottom) -->
+        <g id="inputArea" transform="translate(0, 102)">
+            <!-- POST Button -->
+            <g id="postButton" class="button-group">
+                <rect x="10" y="15" width="35" height="8" rx="1" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="0.25" filter="url(#greenGlow)" opacity="0.9">
+                    <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
+                </rect>
+                <text x="27.5" y="20" text-anchor="middle" style="font-family: -apple-system; font-size: 3px; font-weight: 600; letter-spacing: 0.3px;" fill="#10b981" filter="url(#greenGlow)">
+                    POST
+                </text>
+            </g>
+
+            <!-- Keyboard Switcher Button (Android only) -->
+            <g id="keyboardSwitchButton" class="button-group">
+                <rect x="10" y="37" width="80" height="6" rx="1" fill="rgba(251, 191, 36, 0.15)" stroke="#fbbf24" stroke-width="0.25" filter="url(#yellowGlow)" opacity="0.8"/>
+                <text x="50" y="41" text-anchor="middle" style="font-family: -apple-system; font-size: 2.5px; font-weight: 600; letter-spacing: 0.2px;" fill="#fbbf24" filter="url(#yellowGlow)">
+                    Switch to AdvanceKey
+                </text>
+            </g>
+
+            <!-- Keyboard Installation Notice (hidden by default) -->
+            <g id="keyboardNotice" class="button-group" opacity="0">
+                <rect x="10" y="45" width="80" height="5" rx="1" fill="rgba(251, 191, 36, 0.1)" stroke="#fbbf24" stroke-width="0.2" opacity="0.8"/>
+                <text x="50" y="48.5" text-anchor="middle" style="font-family: -apple-system; font-size: 1.8px; font-weight: 500; letter-spacing: 0.1px;" fill="#fbbf24" opacity="0.9">
+                    ⌨️ Enable AdvanceKey in Settings
+                </text>
+            </g>
+        </g>
+    </svg>
+
+    <!-- HTML input styled to look like the purple SVG rect -->
+    <div id="inputContainer" style="position: absolute; pointer-events: auto; z-index: 10;">
+        <input
+            type="text"
+            id="textInput"
+            placeholder="Enter text to post..."
+            inputmode="text"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            style="width: 100%; height: 100%; background: rgba(139, 92, 246, 0.15); border: 1px solid #8b5cf6; border-radius: 4px; outline: none; color: #8b5cf6; font-family: -apple-system; font-size: 18px; font-weight: 500; pointer-events: auto; padding: 0 8px; box-sizing: border-box; filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.5));" />
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>

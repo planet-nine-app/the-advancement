@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CarrierBag Save Spell Test - Sharon</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a0033 0%, #2d1b4e 50%, #1a0033 100%);
+            min-height: 100vh;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 20px;
+            border-bottom: 2px solid rgba(233, 30, 99, 0.3);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 36px;
+            background: linear-gradient(135deg, #e91e63, #ff6090, #e91e63);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #a78bfa;
+            font-size: 16px;
+        }
+
+        .test-section {
+            background: rgba(155, 89, 182, 0.1);
+            border: 2px solid rgba(233, 30, 99, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .test-section h2 {
+            color: #ff6090;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #a78bfa;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(233, 30, 99, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+        }
+
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        button {
+            background: linear-gradient(135deg, #e91e63, #ff6090);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(233, 30, 99, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .bdo-display {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(233, 30, 99, 0.2);
+        }
+
+        .bdo-display h3 {
+            color: #ff6090;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .svg-container {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .info-text {
+            color: #a78bfa;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #10b981;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+
+        .carrier-bag-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .collection-card {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(233, 30, 99, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .collection-card h4 {
+            color: #ff6090;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .collection-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .collection-empty {
+            color: #6c757d;
+            font-style: italic;
+            font-size: 13px;
+        }
+
+        .status-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .status-success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+            color: #10b981;
+        }
+
+        .status-error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            color: #ef4444;
+        }
+
+        .status-info {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid #3b82f6;
+            color: #3b82f6;
+        }
+
+        .example-emojicodes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .emojicode-chip {
+            background: rgba(233, 30, 99, 0.2);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            border: 1px solid rgba(233, 30, 99, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .emojicode-chip:hover {
+            background: rgba(233, 30, 99, 0.4);
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎒 CarrierBag Save Spell Test</h1>
+            <p class="subtitle">Test save spells on seeded BDOs using emojicodes</p>
+        </header>
+
+        <!-- BDO Fetch Section -->
+        <div class="test-section">
+            <h2>1. Fetch BDO by Emojicode</h2>
+            <p class="info-text">
+                After running <code>node seed-ecosystem.js</code>, copy an emojicode from the output and paste it below.
+            </p>
+
+            <div class="input-group">
+                <label for="emojicode-input">BDO Emojicode:</label>
+                <input
+                    type="text"
+                    id="emojicode-input"
+                    placeholder="Paste emojicode here (e.g., 🌍🔑💎🌟💎🎨🐉📌)"
+                />
+            </div>
+
+            <div class="input-group">
+                <label for="bdo-url">BDO Service URL:</label>
+                <input
+                    type="text"
+                    id="bdo-url"
+                    value="http://localhost:5114"
+                    placeholder="http://localhost:5114"
+                />
+            </div>
+
+            <button id="fetch-bdo-btn" onclick="fetchBDO()">🔍 Fetch BDO</button>
+            <button onclick="clearDisplay()" style="background: #6c757d; margin-left: 10px;">🗑️ Clear</button>
+
+            <div id="fetch-status"></div>
+            <div id="bdo-display-container"></div>
+
+            <!-- Example emojicodes -->
+            <div class="info-text" style="margin-top: 20px;">
+                Quick test: Click an example type (will load first available from seed output):
+            </div>
+            <div class="example-emojicodes">
+                <div class="emojicode-chip" onclick="loadExample('recipe')">🍪 Recipe</div>
+                <div class="emojicode-chip" onclick="loadExample('music')">🎵 Music</div>
+                <div class="emojicode-chip" onclick="loadExample('room')">🏠 Room</div>
+                <div class="emojicode-chip" onclick="loadExample('event')">🎫 Event</div>
+                <div class="emojicode-chip" onclick="loadExample('popup')">🎪 Popup</div>
+                <div class="emojicode-chip" onclick="loadExample('book')">📚 Book</div>
+            </div>
+        </div>
+
+        <!-- CarrierBag Display Section -->
+        <div class="test-section">
+            <h2>2. CarrierBag Contents</h2>
+            <p class="info-text">
+                Items saved via the save spell will appear here (stored in localStorage).
+            </p>
+
+            <button onclick="loadCarrierBag()" style="margin-bottom: 15px;">🔄 Refresh CarrierBag</button>
+            <button onclick="clearCarrierBag()" style="background: #ef4444; margin-left: 10px;">🗑️ Clear All</button>
+
+            <div id="carrier-bag-container" class="carrier-bag-section"></div>
+        </div>
+
+        <!-- Instructions Section -->
+        <div class="test-section">
+            <h2>📋 Instructions</h2>
+            <ol style="color: #a78bfa; line-height: 1.8; padding-left: 20px;">
+                <li>Run the seed script: <code>cd allyabase/deployment/docker && node seed-ecosystem.js test 1</code></li>
+                <li>Copy an emojicode from the seed output (printed at the end)</li>
+                <li>Paste the emojicode in the input above and click "Fetch BDO"</li>
+                <li>The SVG will be displayed with its save button</li>
+                <li>Click the save button to test the save spell</li>
+                <li>Check the CarrierBag Contents section to see the saved item</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Current BDO data
+        let currentBDO = null;
+
+        // Initialize carrier bag from localStorage
+        function getCarrierBag() {
+            const stored = localStorage.getItem('sharonTestCarrierBag');
+            if (!stored) {
+                return createEmptyCarrierBag();
+            }
+            return JSON.parse(stored);
+        }
+
+        function saveCarrierBag(carrierBag) {
+            localStorage.setItem('sharonTestCarrierBag', JSON.stringify(carrierBag));
+            loadCarrierBag();
+        }
+
+        function createEmptyCarrierBag() {
+            return {
+                cookbook: [],
+                apothecary: [],
+                gallery: [],
+                bookshelf: [],
+                familiarPen: [],
+                machinery: [],
+                metallics: [],
+                music: [],
+                oracular: [],
+                greenHouse: [],
+                closet: [],
+                games: [],
+                events: [],
+                contracts: [],
+                stacks: []
+            };
+        }
+
+        // Fetch BDO by emojicode
+        async function fetchBDO() {
+            const emojicodeInput = document.getElementById('emojicode-input');
+            const bdoUrl = document.getElementById('bdo-url').value;
+            const emojicode = emojicodeInput.value.trim();
+
+            if (!emojicode) {
+                showStatus('error', 'Please enter an emojicode');
+                return;
+            }
+
+            showStatus('info', 'Fetching BDO...');
+
+            try {
+                // Encode the emojicode for URL
+                const encodedEmojicode = encodeURIComponent(emojicode);
+                const url = `${bdoUrl}/emoji/${encodedEmojicode}`;
+
+                console.log('Fetching from:', url);
+
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+
+                const data = await response.json();
+                console.log('Fetched BDO:', data);
+
+                currentBDO = data;
+                displayBDO(data);
+                showStatus('success', `BDO fetched successfully! Type: ${data.bdo?.type || 'unknown'}`);
+
+            } catch (error) {
+                console.error('Fetch error:', error);
+                showStatus('error', `Failed to fetch BDO: ${error.message}`);
+                document.getElementById('bdo-display-container').innerHTML = '';
+            }
+        }
+
+        // Display BDO content
+        function displayBDO(data) {
+            const container = document.getElementById('bdo-display-container');
+
+            const html = `
+                <div class="bdo-display">
+                    <h3>BDO Details</h3>
+                    <div class="info-text">
+                        <strong>Emojicode:</strong> ${data.emojicode}<br>
+                        <strong>PubKey:</strong> ${data.pubKey.substring(0, 20)}...<br>
+                        <strong>Type:</strong> ${data.bdo?.type || 'unknown'}<br>
+                        <strong>Title:</strong> ${data.bdo?.title || 'Untitled'}
+                    </div>
+
+                    ${data.bdo?.svgContent ? `
+                        <h4 style="color: #ff6090; margin-top: 15px;">SVG Preview:</h4>
+                        <div class="svg-container" id="svg-container">
+                            ${data.bdo.svgContent}
+                        </div>
+                    ` : '<p class="info-text">No SVG content in this BDO</p>'}
+
+                    <details style="margin-top: 15px;">
+                        <summary style="cursor: pointer; color: #ff6090;">View Full BDO Data</summary>
+                        <div class="code-block">${JSON.stringify(data, null, 2)}</div>
+                    </details>
+                </div>
+            `;
+
+            container.innerHTML = html;
+
+            // Attach save spell handlers after SVG is rendered
+            setTimeout(() => attachSpellHandlers(), 100);
+        }
+
+        // Attach event handlers to spell elements
+        function attachSpellHandlers() {
+            const svgContainer = document.getElementById('svg-container');
+            if (!svgContainer) return;
+
+            // Find all elements with spell="save"
+            const saveElements = svgContainer.querySelectorAll('[spell="save"]');
+
+            saveElements.forEach(element => {
+                element.style.cursor = 'pointer';
+                element.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    handleSaveSpell(element);
+                });
+            });
+
+            console.log(`Attached ${saveElements.length} save spell handlers`);
+        }
+
+        // Handle save spell click
+        function handleSaveSpell(element) {
+            try {
+                // Extract spell components
+                const componentsAttr = element.getAttribute('spell-components');
+                if (!componentsAttr) {
+                    showStatus('error', 'No spell-components found on save button');
+                    return;
+                }
+
+                const components = JSON.parse(componentsAttr);
+                console.log('Save spell components:', components);
+
+                // Get collection from components or infer from BDO type
+                let collection = components.collection || components.carrierBag;
+
+                if (!collection && currentBDO?.bdo?.type) {
+                    collection = inferCollection(currentBDO.bdo.type);
+                }
+
+                if (!collection) {
+                    showStatus('error', 'Could not determine collection for this BDO');
+                    return;
+                }
+
+                // Create item to save
+                const item = {
+                    title: currentBDO.bdo?.title || 'Untitled Item',
+                    type: currentBDO.bdo?.type || 'item',
+                    emojicode: currentBDO.emojicode,
+                    bdoPubKey: currentBDO.pubKey,
+                    savedAt: new Date().toISOString(),
+                    description: currentBDO.bdo?.description || ''
+                };
+
+                // Save to carrier bag
+                const carrierBag = getCarrierBag();
+                if (!carrierBag[collection]) {
+                    carrierBag[collection] = [];
+                }
+
+                carrierBag[collection].push(item);
+                saveCarrierBag(carrierBag);
+
+                showStatus('success', `💾 Saved to ${collection}! Item: "${item.title}"`);
+
+            } catch (error) {
+                console.error('Save spell error:', error);
+                showStatus('error', `Save spell failed: ${error.message}`);
+            }
+        }
+
+        // Infer collection from BDO type
+        function inferCollection(type) {
+            const typeMap = {
+                'recipe': 'cookbook',
+                'ebook': 'bookshelf',
+                'book': 'bookshelf',
+                'article': 'bookshelf',
+                'room': 'stacks',
+                'popup': 'events',
+                'popup-post': 'events',
+                'event': 'events',
+                'music-player': 'music',
+                'music': 'music',
+                'contract': 'contracts',
+                'contract-signing-ui': 'contracts'
+            };
+
+            return typeMap[type] || 'stacks';
+        }
+
+        // Display carrier bag contents
+        function loadCarrierBag() {
+            const carrierBag = getCarrierBag();
+            const container = document.getElementById('carrier-bag-container');
+
+            const collections = [
+                { name: 'cookbook', icon: '🍳' },
+                { name: 'apothecary', icon: '🧪' },
+                { name: 'gallery', icon: '🖼️' },
+                { name: 'bookshelf', icon: '📚' },
+                { name: 'familiarPen', icon: '🐾' },
+                { name: 'machinery', icon: '⚙️' },
+                { name: 'metallics', icon: '💎' },
+                { name: 'music', icon: '🎵' },
+                { name: 'oracular', icon: '🔮' },
+                { name: 'greenHouse', icon: '🌿' },
+                { name: 'closet', icon: '👔' },
+                { name: 'games', icon: '🎮' },
+                { name: 'events', icon: '🎫' },
+                { name: 'contracts', icon: '📜' },
+                { name: 'stacks', icon: '🏠' }
+            ];
+
+            let html = '';
+
+            collections.forEach(col => {
+                const items = carrierBag[col.name] || [];
+                const count = items.length;
+
+                html += `
+                    <div class="collection-card">
+                        <h4>${col.icon} ${col.name} (${count})</h4>
+                        ${count === 0 ? '<div class="collection-empty">No items</div>' : ''}
+                        ${items.map(item => `
+                            <div class="collection-item">
+                                <strong>${item.title}</strong><br>
+                                <span style="font-size: 11px; color: #a78bfa;">
+                                    ${item.emojicode}<br>
+                                    Saved: ${new Date(item.savedAt).toLocaleString()}
+                                </span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Clear carrier bag
+        function clearCarrierBag() {
+            if (confirm('Are you sure you want to clear the entire carrier bag?')) {
+                localStorage.removeItem('sharonTestCarrierBag');
+                loadCarrierBag();
+                showStatus('info', 'CarrierBag cleared');
+            }
+        }
+
+        // Clear display
+        function clearDisplay() {
+            document.getElementById('bdo-display-container').innerHTML = '';
+            document.getElementById('emojicode-input').value = '';
+            document.getElementById('fetch-status').innerHTML = '';
+            currentBDO = null;
+        }
+
+        // Show status message
+        function showStatus(type, message) {
+            const statusDiv = document.getElementById('fetch-status');
+            const statusClass = `status-${type}`;
+            statusDiv.innerHTML = `<div class="status-message ${statusClass}">${message}</div>`;
+        }
+
+        // Load example (placeholder for now - would need to fetch actual emojicodes from API)
+        function loadExample(type) {
+            showStatus('info', `Looking for ${type} example... Please paste an emojicode from the seed output instead.`);
+        }
+
+        // Initialize
+        loadCarrierBag();
+
+        // Handle Enter key in input
+        document.getElementById('emojicode-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                fetchBDO();
+            }
+        });
+    </script>
+</body>
+</html>

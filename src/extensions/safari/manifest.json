@@ -59,7 +59,8 @@
     {
       "resources": [
         "InputDetector.js",
-        "TypingSimulator.js"
+        "TypingSimulator.js",
+        "castSpell.js"
       ],
       "matches": ["<all_urls>"]
     }

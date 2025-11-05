@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Development Agreement - Covenant Contract</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .site-title {
+            font-size: 1.8rem;
+            color: #3498db;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .site-subtitle {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .contract-container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+            margin-bottom: 40px;
+        }
+
+        .contract-header {
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .contract-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 15px;
+            line-height: 1.2;
+        }
+
+        .contract-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .contract-description {
+            font-size: 1.1rem;
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+        }
+
+        .contract-section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            color: #3498db;
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .participants-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .participant-card {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+        }
+
+        .participant-role {
+            font-weight: 600;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+
+        .participant-status {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .steps-list {
+            list-style: none;
+            counter-reset: step-counter;
+        }
+
+        .steps-list li {
+            counter-increment: step-counter;
+            margin-bottom: 15px;
+            padding: 15px;
+            padding-left: 60px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .steps-list li:before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            background: #3498db;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .signing-section {
+            margin-top: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #f0f4ff, #e6f3ff);
+            border-radius: 12px;
+            border: 2px solid #3498db;
+        }
+
+        .signing-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .signing-header h3 {
+            color: #3498db;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .signing-description {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        .emojicoded-display {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px dashed #3498db;
+            font-size: 1.3rem;
+            line-height: 1.6;
+            word-wrap: break-word;
+            user-select: all;
+            cursor: pointer;
+            font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'NotoColorEmoji', sans-serif;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+
+        .emojicoded-display:hover {
+            background: #fffbe6;
+            border-color: #e91e63;
+            transform: scale(1.02);
+        }
+
+        .signing-instructions {
+            color: #555;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .signing-instructions strong {
+            color: #333;
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .signing-instructions ol {
+            margin-left: 20px;
+        }
+
+        .signing-instructions li {
+            margin-bottom: 8px;
+        }
+
+        .security-notice {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .security-notice strong {
+            color: #856404;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .security-notice p {
+            color: #856404;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 768px) {
+            .contract-title {
+                font-size: 2rem;
+            }
+
+            .emojicoded-display {
+                font-size: 1rem;
+                padding: 15px;
+            }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="site-title">Covenant Contracts</h1>
+            <p class="site-subtitle">Cryptographically Secure Multi-Party Agreements</p>
+        </header>
+
+        <div class="contract-container">
+            <div class="contract-header">
+                <h1 class="contract-title">Website Development Agreement</h1>
+                <div class="contract-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">Contract ID:</span>
+                        <span>website-dev-001</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Created:</span>
+                        <span>October 1, 2025</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Status:</span>
+                        <span>⏳ Awaiting Signatures</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="contract-description">
+                📋 Contract for developing a modern e-commerce website with payment integration. This agreement outlines the deliverables, timeline, and responsibilities for both parties throughout the development process.
+            </div>
+
+            <div class="contract-section">
+                <h2 class="section-title">👥 Participants</h2>
+                <div class="participants-list">
+                    <div class="participant-card">
+                        <div class="participant-role">Client / Project Owner</div>
+                        <div class="participant-status">⏳ Signature pending</div>
+                    </div>
+                    <div class="participant-card">
+                        <div class="participant-role">Developer / Service Provider</div>
+                        <div class="participant-status">⏳ Signature pending</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="contract-section">
+                <h2 class="section-title">📝 Project Steps</h2>
+                <ol class="steps-list">
+                    <li>Requirements gathering and wireframing</li>
+                    <li>UI/UX design and client approval</li>
+                    <li>Frontend development</li>
+                    <li>Backend and payment integration</li>
+                    <li>Testing and quality assurance</li>
+                    <li>Deployment and training</li>
+                </ol>
+            </div>
+
+            <!-- Contract Signing Section -->
+            <div class="signing-section">
+                <div class="signing-header">
+                    <h3>✍️ Sign This Contract</h3>
+                    <p class="signing-description">Use Planet Nine keyboard extension to cryptographically sign this agreement:</p>
+                </div>
+
+                <!-- Emojicoded signing UI BDO pubKey - Auto-updated by seed script -->
+                <div class="emojicoded-display">
+                    ✨😀🐯😔🌙👈🍎😄🍰🔑👈📱😆⚽👌💖💖👇🐻👇🍎🐶🍔☀️😄🍊🐯😆⭐🐶😑💛🔑🍰🎉😅👎⭐🌙🌙👆🏠☕🐸💕✨
+                </div>
+
+                <div class="signing-instructions">
+                    <strong>How to sign:</strong>
+                    <ol>
+                        <li>Double-tap to select the entire emoji sequence above</li>
+                        <li>If only part is selected, drag to expand the selection to include both ✨ sparkles</li>
+                        <li>Open any text field and bring up the Planet Nine keyboard</li>
+                        <li>Tap DEMOJI button to decode the signing interface</li>
+                        <li>If you're an authorized participant, the SIGN button will appear</li>
+                        <li>Tap SIGN to cryptographically sign this contract</li>
+                    </ol>
+                </div>
+
+                <div class="security-notice">
+                    <strong>🔐 Security Notice</strong>
+                    <p>Only authorized participants can sign this contract. Your signature is cryptographically verified using your Planet Nine keys. Once signed, the agreement is immutable and timestamped on the blockchain.</p>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>🌍 Covenant - Cryptographic contracts for the decentralized future</p>
+            <p><em>Contract ID: website-dev-001</em></p>
+        </footer>
+    </div>
+</body>
+</html>

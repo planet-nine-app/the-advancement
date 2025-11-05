@@ -1,0 +1,22 @@
+{
+  "name": "base-launcher",
+  "version": "0.0.1",
+  "description": "For launching allyabase bases compatible with The Advancement",
+  "license": "MIT",
+  "author": "planetnineisaspaceship",
+  "type": "commonjs",
+  "main": "deploy-do.js",
+  "scripts": {
+    "deploy": "node deploy-do.js",
+    "configure": "node configure-owner.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dots-wrapper": "^3.12.5",
+    "node-ssh": "^13.2.0"
+  },
+  "bin": {
+    "deploy-base": "./deploy-do.js",
+    "configure-base": "./configure-owner.js"
+  }
+}

@@ -1,0 +1,70 @@
+
+> advancement-test-server@1.0.0 start
+> node server.js
+
+🔑 MAGIC: Saving keys for test environment
+🔐 MAGIC: Test server keys initialized
+🚀 The Advancement Test Server running on port 3456
+🌐 Website: http://localhost:3456
+📡 API: http://localhost:3456/api/*
+
+🎯 Features:
+   - Teleported product feeds from Planet Nine bases
+   - Multi-pubKey system (site, creator, base)
+   - Stripe payment processing via The Advancement
+   - Addie coordination at user's home base
+   - MAGIC protocol support with spellTest
+
+🔧 Test this with The Advancement Safari extension!
+⚡ MAGIC: Creating fount user for gateway initialization...
+🔑 MAGIC: Retrieving keys for test environment
+🔑 MAGIC: Retrieving keys for test environment
+⚡ MAGIC: Fount user created - 388f021d-739f-4ddf-aba2-b582da0c5329
+🪄 MAGIC: Initializing gateway...
+✅ MAGIC: Gateway initialized successfully
+🔮 MAGIC routes added to Express app
+
+🪄 MAGIC spellTest endpoint: http://localhost:3456/spellTest
+🔍 Teleporting products from base: base1, with pubKey: test_pubkey
+🍽️ Reconstructed menu catalog: Café Luna Menu (8 items)
+✅ Teleported 9 products and 1 menu catalogs from BASE1
+🔍 Teleporting products from base: base1, with pubKey: test_pubkey
+🍽️ Reconstructed menu catalog: Café Luna Menu (8 items)
+✅ Teleported 9 products and 1 menu catalogs from BASE1
+🔑 MAGIC: Retrieving keys for test environment
+⭐ Nineum balance requested - User: 388f021d-739f-4ddf-aba2-b582da0c5329, Balance: 0
+🔍 Teleporting products from base: base1, with pubKey: test_pubkey
+🍽️ Reconstructed menu catalog: Café Luna Menu (8 items)
+✅ Teleported 9 products and 1 menu catalogs from BASE1
+🔑 MAGIC: Retrieving keys for test environment
+⭐ Nineum balance requested - User: 388f021d-739f-4ddf-aba2-b582da0c5329, Balance: 0
+🔍 Teleporting products from base: base1, with pubKey: test_pubkey
+🍽️ Reconstructed menu catalog: Café Luna Menu (8 items)
+✅ Teleported 9 products and 1 menu catalogs from BASE1
+🔑 MAGIC: Retrieving keys for test environment
+⭐ Nineum balance requested - User: 388f021d-739f-4ddf-aba2-b582da0c5329, Balance: 0
+🔍 Teleporting products from base: base1, with pubKey: test_pubkey
+🍽️ Reconstructed menu catalog: Café Luna Menu (8 items)
+✅ Teleported 9 products and 1 menu catalogs from BASE1
+🔑 MAGIC: Retrieving keys for test environment
+⭐ Nineum balance requested - User: 388f021d-739f-4ddf-aba2-b582da0c5329, Balance: 0
+🔍 Teleporting products from base: base1, with pubKey: test_pubkey
+🍽️ Reconstructed menu catalog: Café Luna Menu (8 items)
+✅ Teleported 9 products and 1 menu catalogs from BASE1
+🔑 MAGIC: Retrieving keys for test environment
+⭐ Nineum balance requested - User: 388f021d-739f-4ddf-aba2-b582da0c5329, Balance: 0
+🔍 Teleporting products from base: base1, with pubKey: test_pubkey
+🍽️ Reconstructed menu catalog: Café Luna Menu (8 items)
+✅ Teleported 9 products and 1 menu catalogs from BASE1
+🔑 MAGIC: Retrieving keys for test environment
+⭐ Nineum balance requested - User: undefined, Balance: 0
+🔑 MAGIC: Retrieving keys for test environment
+⭐ Nineum balance requested - User: undefined, Balance: 0
+❌ 404: GET /apple-touch-icon-precomposed.png
+❌ 404: GET /apple-touch-icon-precomposed.png
+❌ 404: GET /apple-touch-icon.png
+❌ 404: GET /apple-touch-icon.png
+🔑 MAGIC: Retrieving keys for test environment
+⭐ Nineum balance requested - User: undefined, Balance: 0
+❌ 404: GET /author-platform.html
+❌ 404: GET /authors-platform.html

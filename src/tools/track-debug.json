@@ -1,0 +1,218 @@
+[
+  {
+    "index": 1,
+    "buttonHTML": "<button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 192 512\" height=\"1em\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M96 18",
+    "parentHTML": "<div class=\"css-5cu3ia\"><button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 192 512\" height=\"1em\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M96 184c39.8 0 72 32.2 72 72s-32.2 72-72 72-72-32.2-72-72 32.2-72 72-72zM24 80c0 39.8 32.2 72 72 72s72-32.2 72-72S135.8 8 96 8 24 40.2 24 80zm0 352c0 39.8 32.2 72 72 72s72-32.2 72-72",
+    "grandparentHTML": "<td align=\"right\"><div class=\"css-5cu3ia\"><button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 192 512\" height=\"1em\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M96 184c39.8 0 72 32.2 72 72s-32.2 72-72 72-72-32.2-72-72 32.2-72 72-72zM24 80c0 39.8 32.2 72 72 72s72-32.2 72-72S135.8 8 96 8 24 40.2 24 80zm0 352c0 39.8 32.2 72 72 72s72-32.2 72-72-32.2-72-72-72-72 32.2-72 72z\"></path></svg></span><span class=\"children\"></span></button></div></td>",
+    "containerHTML": "<tr id=\"19541\" class=\"css-gm0ylo ehcxhj2\"><td class=\"css-35vjtm ehcxhj1\"><span class=\"track-number css-86r5u0\">1</span><button title=\"\" aria-label=\"\" class=\"play-button css-6cr1jk es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 16 16\" height=\"1em\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M3.78 2L3 2.41v12l.78.42 9-6V8l-9-6zM4 13.48V3.35l7.6 5.07L4 13.48z\"></path></svg></span><span class=\"children\"></span></button></td><td class=\"css-1tinryg ehcxhj0\"><div class=\"css-1ves5i\"><div class=\"css-18e58a9\">PBR</div><div class=\"css-1pamk5i\">01:17</div></div></td><td align=\"right\"><div class=\"css-5cu3ia\"><button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 192 512\" height=\"1em\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M96 184c39.8 0 72 32.2 72 72s-32.2 72-72 72-72-32.2-72-72 32.2-72 72-72zM24 80c0 39.8 32.2 72 72 72s72-32.2 72-72S135.8 8 96 8 24 40.2 24 80zm0 352c0 39.8 32.2 72 72 72s72-32.2 72-72-32.2-72-72-72-72 32.2-72 72z\"></path></svg></span><span class=\"children\"></span></button></div></td></tr>",
+    "containerText": "1PBR01:17",
+    "containerChildren": [
+      {
+        "tag": "TD",
+        "className": "css-35vjtm ehcxhj1",
+        "text": "1",
+        "html": "<td class=\"css-35vjtm ehcxhj1\"><span class=\"track-number css-86r5u0\">1</span><button title=\"\" aria-label=\"\" class=\"play-button css-6cr1jk es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 16 16\" height=\"1em\" width=\"1em\" "
+      },
+      {
+        "tag": "TD",
+        "className": "css-1tinryg ehcxhj0",
+        "text": "PBR01:17",
+        "html": "<td class=\"css-1tinryg ehcxhj0\"><div class=\"css-1ves5i\"><div class=\"css-18e58a9\">PBR</div><div class=\"css-1pamk5i\">01:17</div></div></td>"
+      },
+      {
+        "tag": "TD",
+        "className": "",
+        "text": "",
+        "html": "<td align=\"right\"><div class=\"css-5cu3ia\"><button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 192 512\" height=\"1em\" width=\"1em\" xmlns=\"h"
+      }
+    ],
+    "allTextElements": [
+      {
+        "tag": "TD",
+        "className": "css-35vjtm ehcxhj1",
+        "text": "1",
+        "directText": []
+      },
+      {
+        "tag": "SPAN",
+        "className": "track-number css-86r5u0",
+        "text": "1",
+        "directText": [
+          "1"
+        ]
+      },
+      {
+        "tag": "TD",
+        "className": "css-1tinryg ehcxhj0",
+        "text": "PBR01:17",
+        "directText": []
+      },
+      {
+        "tag": "DIV",
+        "className": "css-1ves5i",
+        "text": "PBR01:17",
+        "directText": []
+      },
+      {
+        "tag": "DIV",
+        "className": "css-18e58a9",
+        "text": "PBR",
+        "directText": [
+          "PBR"
+        ]
+      },
+      {
+        "tag": "DIV",
+        "className": "css-1pamk5i",
+        "text": "01:17",
+        "directText": [
+          "01:17"
+        ]
+      }
+    ]
+  },
+  {
+    "index": 2,
+    "buttonHTML": "<button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 192 512\" height=\"1em\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M96 18",
+    "parentHTML": "<div class=\"css-5cu3ia\"><button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 192 512\" height=\"1em\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M96 184c39.8 0 72 32.2 72 72s-32.2 72-72 72-72-32.2-72-72 32.2-72 72-72zM24 80c0 39.8 32.2 72 72 72s72-32.2 72-72S135.8 8 96 8 24 40.2 24 80zm0 352c0 39.8 32.2 72 72 72s72-32.2 72-72",
+    "grandparentHTML": "<td align=\"right\"><div class=\"css-5cu3ia\"><button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 192 512\" height=\"1em\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M96 184c39.8 0 72 32.2 72 72s-32.2 72-72 72-72-32.2-72-72 32.2-72 72-72zM24 80c0 39.8 32.2 72 72 72s72-32.2 72-72S135.8 8 96 8 24 40.2 24 80zm0 352c0 39.8 32.2 72 72 72s72-32.2 72-72-32.2-72-72-72-72 32.2-72 72z\"></path></svg></span><span class=\"children\"></span></button></div></td>",
+    "containerHTML": "<tr id=\"19540\" class=\"css-gm0ylo ehcxhj2\"><td class=\"css-35vjtm ehcxhj1\"><span class=\"track-number css-86r5u0\">2</span><button title=\"\" aria-label=\"\" class=\"play-button css-6cr1jk es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 16 16\" height=\"1em\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M3.78 2L3 2.41v12l.78.42 9-6V8l-9-6zM4 13.48V3.35l7.6 5.07L4 13.48z\"></path></svg></span><span class=\"children\"></span></button></td><td class=\"css-1tinryg ehcxhj0\"><div class=\"css-1ves5i\"><div class=\"css-18e58a9\">Let's Go Surfin' Now</div><div class=\"css-1pamk5i\">01:14</div></div></td><td align=\"right\"><div class=\"css-5cu3ia\"><button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 192 512\" height=\"1em\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M96 184c39.8 0 72 32.2 72 72s-32.2 72-72 72-72-32.2-72-72 32.2-72 72-72zM24 80c0 39.8 32.2 72 72 72s72-32.2 72-72S135.8 8 96 8 24 40.2 24 80zm0 352c0 39.8 32.2 72 72 72s72-32.2 72-72-32.2-72-72-72-72 32.2-72 72z\"></path></svg></span><span class=\"children\"></span></button></div></td></tr>",
+    "containerText": "2Let's Go Surfin' Now01:14",
+    "containerChildren": [
+      {
+        "tag": "TD",
+        "className": "css-35vjtm ehcxhj1",
+        "text": "2",
+        "html": "<td class=\"css-35vjtm ehcxhj1\"><span class=\"track-number css-86r5u0\">2</span><button title=\"\" aria-label=\"\" class=\"play-button css-6cr1jk es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 16 16\" height=\"1em\" width=\"1em\" "
+      },
+      {
+        "tag": "TD",
+        "className": "css-1tinryg ehcxhj0",
+        "text": "Let's Go Surfin' Now01:14",
+        "html": "<td class=\"css-1tinryg ehcxhj0\"><div class=\"css-1ves5i\"><div class=\"css-18e58a9\">Let's Go Surfin' Now</div><div class=\"css-1pamk5i\">01:14</div></div></td>"
+      },
+      {
+        "tag": "TD",
+        "className": "",
+        "text": "",
+        "html": "<td align=\"right\"><div class=\"css-5cu3ia\"><button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 192 512\" height=\"1em\" width=\"1em\" xmlns=\"h"
+      }
+    ],
+    "allTextElements": [
+      {
+        "tag": "TD",
+        "className": "css-35vjtm ehcxhj1",
+        "text": "2",
+        "directText": []
+      },
+      {
+        "tag": "SPAN",
+        "className": "track-number css-86r5u0",
+        "text": "2",
+        "directText": [
+          "2"
+        ]
+      },
+      {
+        "tag": "TD",
+        "className": "css-1tinryg ehcxhj0",
+        "text": "Let's Go Surfin' Now01:14",
+        "directText": []
+      },
+      {
+        "tag": "DIV",
+        "className": "css-1ves5i",
+        "text": "Let's Go Surfin' Now01:14",
+        "directText": []
+      },
+      {
+        "tag": "DIV",
+        "className": "css-18e58a9",
+        "text": "Let's Go Surfin' Now",
+        "directText": [
+          "Let's Go Surfin' Now"
+        ]
+      },
+      {
+        "tag": "DIV",
+        "className": "css-1pamk5i",
+        "text": "01:14",
+        "directText": [
+          "01:14"
+        ]
+      }
+    ]
+  },
+  {
+    "index": 3,
+    "buttonHTML": "<button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 192 512\" height=\"1em\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M96 18",
+    "parentHTML": "<div class=\"css-5cu3ia\"><button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 192 512\" height=\"1em\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M96 184c39.8 0 72 32.2 72 72s-32.2 72-72 72-72-32.2-72-72 32.2-72 72-72zM24 80c0 39.8 32.2 72 72 72s72-32.2 72-72S135.8 8 96 8 24 40.2 24 80zm0 352c0 39.8 32.2 72 72 72s72-32.2 72-72",
+    "grandparentHTML": "<td align=\"right\"><div class=\"css-5cu3ia\"><button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 192 512\" height=\"1em\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M96 184c39.8 0 72 32.2 72 72s-32.2 72-72 72-72-32.2-72-72 32.2-72 72-72zM24 80c0 39.8 32.2 72 72 72s72-32.2 72-72S135.8 8 96 8 24 40.2 24 80zm0 352c0 39.8 32.2 72 72 72s72-32.2 72-72-32.2-72-72-72-72 32.2-72 72z\"></path></svg></span><span class=\"children\"></span></button></div></td>",
+    "containerHTML": "<tr id=\"19539\" class=\"css-gm0ylo ehcxhj2\"><td class=\"css-35vjtm ehcxhj1\"><span class=\"track-number css-86r5u0\">3</span><button title=\"\" aria-label=\"\" class=\"play-button css-6cr1jk es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 16 16\" height=\"1em\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M3.78 2L3 2.41v12l.78.42 9-6V8l-9-6zM4 13.48V3.35l7.6 5.07L4 13.48z\"></path></svg></span><span class=\"children\"></span></button></td><td class=\"css-1tinryg ehcxhj0\"><div class=\"css-1ves5i\"><div class=\"css-18e58a9\">Pedal To the Metal</div><div class=\"css-1pamk5i\">01:12</div></div></td><td align=\"right\"><div class=\"css-5cu3ia\"><button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 192 512\" height=\"1em\" width=\"1em\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M96 184c39.8 0 72 32.2 72 72s-32.2 72-72 72-72-32.2-72-72 32.2-72 72-72zM24 80c0 39.8 32.2 72 72 72s72-32.2 72-72S135.8 8 96 8 24 40.2 24 80zm0 352c0 39.8 32.2 72 72 72s72-32.2 72-72-32.2-72-72-72-72 32.2-72 72z\"></path></svg></span><span class=\"children\"></span></button></div></td></tr>",
+    "containerText": "3Pedal To the Metal01:12",
+    "containerChildren": [
+      {
+        "tag": "TD",
+        "className": "css-35vjtm ehcxhj1",
+        "text": "3",
+        "html": "<td class=\"css-35vjtm ehcxhj1\"><span class=\"track-number css-86r5u0\">3</span><button title=\"\" aria-label=\"\" class=\"play-button css-6cr1jk es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 16 16\" height=\"1em\" width=\"1em\" "
+      },
+      {
+        "tag": "TD",
+        "className": "css-1tinryg ehcxhj0",
+        "text": "Pedal To the Metal01:12",
+        "html": "<td class=\"css-1tinryg ehcxhj0\"><div class=\"css-1ves5i\"><div class=\"css-18e58a9\">Pedal To the Metal</div><div class=\"css-1pamk5i\">01:12</div></div></td>"
+      },
+      {
+        "tag": "TD",
+        "className": "",
+        "text": "",
+        "html": "<td align=\"right\"><div class=\"css-5cu3ia\"><button title=\"\" aria-label=\"Track options\" class=\"css-18h3ndd css-hzb38m css-1c598z6 es0rh070\"><span class=\"startIcon\" aria-hidden=\"true\"><svg stroke=\"currentColor\" fill=\"currentColor\" stroke-width=\"0\" viewBox=\"0 0 192 512\" height=\"1em\" width=\"1em\" xmlns=\"h"
+      }
+    ],
+    "allTextElements": [
+      {
+        "tag": "TD",
+        "className": "css-35vjtm ehcxhj1",
+        "text": "3",
+        "directText": []
+      },
+      {
+        "tag": "SPAN",
+        "className": "track-number css-86r5u0",
+        "text": "3",
+        "directText": [
+          "3"
+        ]
+      },
+      {
+        "tag": "TD",
+        "className": "css-1tinryg ehcxhj0",
+        "text": "Pedal To the Metal01:12",
+        "directText": []
+      },
+      {
+        "tag": "DIV",
+        "className": "css-1ves5i",
+        "text": "Pedal To the Metal01:12",
+        "directText": []
+      },
+      {
+        "tag": "DIV",
+        "className": "css-18e58a9",
+        "text": "Pedal To the Metal",
+        "directText": [
+          "Pedal To the Metal"
+        ]
+      },
+      {
+        "tag": "DIV",
+        "className": "css-1pamk5i",
+        "text": "01:12",
+        "directText": [
+          "01:12"
+        ]
+      }
+    ]
+  }
+]

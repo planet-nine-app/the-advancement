@@ -1,0 +1,67 @@
+{
+  "comment": "Maps example categories to Planet Nine bases for ecosystem seeding",
+  "bases": {
+    "base1": {
+      "name": "Creative Arts & Entertainment Base",
+      "url": "http://127.0.0.1:5114",
+      "baseEmoji": "🎨🎭🎵",
+      "categories": [
+        "apothecary",
+        "cookbook",
+        "events",
+        "music",
+        "popups",
+        "gallery",
+        "oracular"
+      ]
+    },
+    "base2": {
+      "name": "Technology & Learning Base",
+      "url": "http://127.0.0.1:5214",
+      "baseEmoji": "🔬💻📚",
+      "categories": [
+        "geometry",
+        "network-topology",
+        "simulations",
+        "games",
+        "trading-cards",
+        "literary",
+        "social"
+      ]
+    },
+    "base3": {
+      "name": "Commerce & Lifestyle Base",
+      "url": "http://127.0.0.1:5314",
+      "baseEmoji": "🛍️🏠🌿",
+      "categories": [
+        "closet",
+        "greenHouse",
+        "machinery",
+        "metallics",
+        "familiarPen",
+        "bundles",
+        "idothis",
+        "products",
+        "rooms"
+      ]
+    }
+  },
+  "allBases": {
+    "comment": "Categories that should be seeded to ALL bases for redundancy",
+    "categories": [
+      "contracts",
+      "food-banks",
+      "profiles"
+    ]
+  },
+  "emojiShortcodes": {
+    "comment": "Categories that should generate emojiShortcodes for easy sharing",
+    "categories": [
+      "events",
+      "music",
+      "popups",
+      "oracular",
+      "trading-cards"
+    ]
+  }
+}

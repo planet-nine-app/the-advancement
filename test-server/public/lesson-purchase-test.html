@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson Purchase Flow - The Advancement Test</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.5em;
+    }
+
+    .flow-diagram {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    .flow-step {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+
+    .flow-step-number {
+      width: 40px;
+      height: 40px;
+      background: #667eea;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-right: 15px;
+    }
+
+    .flow-step-content {
+      flex: 1;
+    }
+
+    .flow-step-title {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #333;
+    }
+
+    .flow-step-desc {
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .roles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .role-card {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    .role-card h2 {
+      color: #667eea;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .lesson-card {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .lesson-title {
+      font-size: 1.3em;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .lesson-meta {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 15px;
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .lesson-meta span {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .nineum-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      font-weight: bold;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .contract-display {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      margin-top: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    .contract-steps {
+      margin-top: 20px;
+    }
+
+    .contract-step {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .contract-step.completed {
+      background: #d4edda;
+      border-left: 4px solid #28a745;
+    }
+
+    .contract-step.pending {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+    }
+
+    .step-checkbox {
+      width: 24px;
+      height: 24px;
+      margin-right: 15px;
+    }
+
+    .log-panel {
+      background: #1e1e1e;
+      color: #00ff00;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 30px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9em;
+      max-height: 400px;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .log-entry {
+      margin-bottom: 5px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .log-entry.error {
+      color: #ff4444;
+    }
+
+    .log-entry.success {
+      color: #44ff44;
+    }
+
+    .log-entry.info {
+      color: #4444ff;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85em;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+
+    .status-badge.pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status-badge.completed {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status-badge.active {
+      background: #cfe2ff;
+      color: #084298;
+    }
+
+    .emojicode-display {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      text-align: center;
+      font-size: 1.5em;
+      word-break: break-all;
+      border: 2px dashed #667eea;
+    }
+
+    .user-info {
+      background: #e7f3ff;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-size: 0.9em;
+    }
+
+    .user-info strong {
+      color: #667eea;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎓 Lesson Purchase Flow Test</h1>
+
+    <!-- Flow Diagram -->
+    <div class="flow-diagram">
+      <h2 style="margin-bottom: 20px; color: #333;">📋 Complete Flow</h2>
+      <div class="flow-step">
+        <div class="flow-step-number">1</div>
+        <div class="flow-step-content">
+          <div class="flow-step-title">Student Purchases Lesson</div>
+          <div class="flow-step-desc">Payment processed through Addie with 70/20/10 split</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-number">2</div>
+        <div class="flow-step-content">
+          <div class="flow-step-title">SODOTO Contract Created</div>
+          <div class="flow-step-desc">Contract generated with teacher and student as participants</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-number">3</div>
+        <div class="flow-step-content">
+          <div class="flow-step-title">Contract Saved to CarrierBag</div>
+          <div class="flow-step-desc">Contract stored in student's BDO contracts collection</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-number">4</div>
+        <div class="flow-step-content">
+          <div class="flow-step-title">Teacher & Student Progress Through Steps</div>
+          <div class="flow-step-desc">Both parties complete their assigned contract steps</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-number">5</div>
+        <div class="flow-step-content">
+          <div class="flow-step-title">Teacher Grants Nineum</div>
+          <div class="flow-step-desc">On completion, teacher grants student nineum permission</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-step-number">6</div>
+        <div class="flow-step-content">
+          <div class="flow-step-title">Student Collects Lesson</div>
+          <div class="flow-step-desc">With nineum permission, student collects lesson to bookshelf</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Role Cards -->
+    <div class="roles">
+      <!-- Student Role -->
+      <div class="role-card">
+        <h2>👨‍🎓 Student Portal</h2>
+
+        <div class="user-info" id="studentInfo">
+          <div><strong>UUID:</strong> <span id="studentUUID">Loading...</span></div>
+          <div><strong>PubKey:</strong> <span id="studentPubKey">Loading...</span></div>
+        </div>
+
+        <div class="lesson-card">
+          <div class="lesson-title">Introduction to Blockchain Development</div>
+          <div class="lesson-meta">
+            <span>💰 $29.99</span>
+            <span>⏱️ 6 weeks</span>
+            <span>📚 12 modules</span>
+          </div>
+          <div class="lesson-meta">
+            <span class="nineum-badge">💎 Requires: 01-blockchain-beginner</span>
+          </div>
+          <div style="margin-top: 15px; color: #666; font-size: 0.95em;">
+            Learn blockchain fundamentals, smart contracts, and dApp development.
+            Upon completion, receive nineum permission to collect advanced courses.
+          </div>
+          <button id="purchaseBtn" onclick="purchaseLesson()">🛒 Purchase Lesson</button>
+        </div>
+
+        <div id="studentContractView" style="display: none;">
+          <h3 style="margin: 20px 0 10px 0; color: #333;">📜 My Contract</h3>
+          <div class="emojicode-display" id="contractEmojicode"></div>
+          <div class="contract-steps" id="studentSteps"></div>
+          <button id="completeStepBtn" onclick="completeStudentStep()" style="display: none;">
+            ✅ Complete My Step
+          </button>
+          <button id="collectBtn" onclick="collectLesson()" style="display: none;">
+            📚 Collect Lesson
+          </button>
+        </div>
+      </div>
+
+      <!-- Teacher Role -->
+      <div class="role-card">
+        <h2>👨‍🏫 Teacher Portal</h2>
+
+        <div class="user-info" id="teacherInfo">
+          <div><strong>UUID:</strong> teacher-uuid-12345</div>
+          <div><strong>PubKey:</strong> 02abcdef...</div>
+          <div><strong>Status:</strong> <span class="status-badge active">Active</span></div>
+        </div>
+
+        <div id="teacherContractView" style="display: none;">
+          <h3 style="margin: 20px 0 10px 0; color: #333;">📜 Student Contract</h3>
+          <div class="contract-steps" id="teacherSteps"></div>
+          <button id="grantAccessBtn" onclick="teacherGrantAccess()" style="display: none;">
+            🔓 Grant Lesson Access
+          </button>
+          <button id="verifyCompletionBtn" onclick="teacherVerifyCompletion()" style="display: none;">
+            ✅ Verify Completion
+          </button>
+          <button id="grantNineumBtn" onclick="teacherGrantNineum()" style="display: none;">
+            💎 Grant Nineum Permission
+          </button>
+        </div>
+
+        <div id="teacherPlaceholder">
+          <div style="text-align: center; padding: 40px; color: #999;">
+            <div style="font-size: 3em; margin-bottom: 10px;">⏳</div>
+            <div>Waiting for student purchase...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contract Details -->
+    <div id="contractDetails" class="contract-display" style="display: none;">
+      <h2 style="color: #333; margin-bottom: 15px;">📋 Contract Details</h2>
+      <div id="contractDetailsContent"></div>
+    </div>
+
+    <!-- Log Panel -->
+    <div class="log-panel">
+      <div style="margin-bottom: 15px; font-weight: bold; color: #fff;">🔍 Activity Log</div>
+      <div id="logContent"></div>
+    </div>
+  </div>
+
+  <script src="http://127.0.0.1:5117/lessonFlow.js"></script>
+  <script>
+    // State management
+    let currentContract = null;
+    let studentUUID = null;
+    let currentStep = 0;
+
+    // Initialize
+    async function init() {
+      log('🚀 Initializing lesson purchase test...', 'info');
+
+      // Load student info
+      try {
+        const fountUser = await LessonFlow.getOrCreateFountUser();
+        studentUUID = fountUser.uuid;
+        document.getElementById('studentUUID').textContent = fountUser.uuid.substring(0, 16) + '...';
+        document.getElementById('studentPubKey').textContent = fountUser.pubKey.substring(0, 16) + '...';
+        log(`✅ Student user loaded: ${fountUser.uuid}`, 'success');
+      } catch (error) {
+        log(`❌ Failed to load student: ${error.message}`, 'error');
+      }
+    }
+
+    // Purchase lesson
+    async function purchaseLesson() {
+      const btn = document.getElementById('purchaseBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Processing purchase...';
+
+      log('💳 Starting lesson purchase...', 'info');
+
+      try {
+        const result = await LessonFlow.purchaseLesson({
+          lessonId: 'lesson-blockchain-101',
+          lessonTitle: 'Introduction to Blockchain Development',
+          lessonBdoPubKey: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+          teacherUUID: 'teacher-uuid-12345',
+          teacherPubKey: '02abcdef01234567890abcdef01234567890abcdef01234567890abcdef012345',
+          price: 2999, // $29.99 in cents
+          currency: 'usd',
+          requiredNineum: {
+            galaxy: '01',
+            system: 'blockchain',
+            flavor: 'beginner'
+          }
+        });
+
+        log('✅ Purchase successful!', 'success');
+        log(`📜 Contract UUID: ${result.contract.contractUuid}`, 'info');
+        log(`✨ Emojicode: ${result.contract.emojicode}`, 'info');
+
+        currentContract = result.contract;
+        displayContract();
+
+        btn.textContent = '✅ Purchase Complete';
+      } catch (error) {
+        log(`❌ Purchase failed: ${error.message}`, 'error');
+        btn.disabled = false;
+        btn.textContent = '🛒 Purchase Lesson';
+      }
+    }
+
+    // Display contract in UI
+    function displayContract() {
+      // Show contract sections
+      document.getElementById('studentContractView').style.display = 'block';
+      document.getElementById('teacherContractView').style.display = 'block';
+      document.getElementById('teacherPlaceholder').style.display = 'none';
+      document.getElementById('contractDetails').style.display = 'block';
+
+      // Display emojicode
+      document.getElementById('contractEmojicode').textContent = currentContract.emojicode;
+
+      // Display contract steps for student
+      const studentStepsEl = document.getElementById('studentSteps');
+      const teacherStepsEl = document.getElementById('teacherSteps');
+
+      studentStepsEl.innerHTML = '';
+      teacherStepsEl.innerHTML = '';
+
+      currentContract.steps.forEach((step, index) => {
+        const stepEl = document.createElement('div');
+        stepEl.className = `contract-step ${step.completed ? 'completed' : 'pending'}`;
+        stepEl.innerHTML = `
+          <input type="checkbox" class="step-checkbox" ${step.completed ? 'checked' : ''} disabled>
+          <div>
+            <div style="font-weight: bold;">${step.title}</div>
+            <div style="font-size: 0.85em; color: #666; margin-top: 3px;">
+              ${step.description || ''}
+              ${step.completed ? `<span style="color: #28a745;">(Completed)</span>` : ''}
+            </div>
+          </div>
+        `;
+
+        if (step.assignedTo === 'student') {
+          studentStepsEl.appendChild(stepEl.cloneNode(true));
+        } else {
+          teacherStepsEl.appendChild(stepEl.cloneNode(true));
+        }
+      });
+
+      // Show appropriate buttons
+      updateButtons();
+    }
+
+    // Update button visibility based on contract state
+    function updateButtons() {
+      const studentStep = currentContract.steps.find(s =>
+        s.assignedTo === 'student' && !s.completed && s.id !== 'step_1_payment'
+      );
+      const teacherStep = currentContract.steps.find(s =>
+        s.assignedTo === 'teacher' && !s.completed
+      );
+
+      document.getElementById('completeStepBtn').style.display =
+        studentStep ? 'block' : 'none';
+      document.getElementById('grantAccessBtn').style.display =
+        teacherStep && teacherStep.id === 'step_2_access' ? 'block' : 'none';
+      document.getElementById('verifyCompletionBtn').style.display =
+        teacherStep && teacherStep.id === 'step_4_verification' ? 'block' : 'none';
+      document.getElementById('grantNineumBtn').style.display =
+        teacherStep && teacherStep.id === 'step_5_nineum' ? 'block' : 'none';
+
+      // Show collect button if all steps complete
+      const allComplete = currentContract.steps.every(s => s.completed);
+      document.getElementById('collectBtn').style.display =
+        allComplete ? 'block' : 'none';
+    }
+
+    // Student completes their step
+    async function completeStudentStep() {
+      const step = currentContract.steps.find(s =>
+        s.assignedTo === 'student' && !s.completed && s.id !== 'step_1_payment'
+      );
+
+      if (!step) return;
+
+      log(`✍️ Student completing step: ${step.title}`, 'info');
+
+      try {
+        await LessonFlow.signContractStep(currentContract.contractUuid, step.id);
+        step.completed = true;
+        step.completedAt = Date.now();
+        step.completedBy = studentUUID;
+
+        log(`✅ Step completed: ${step.title}`, 'success');
+        displayContract();
+      } catch (error) {
+        log(`❌ Failed to complete step: ${error.message}`, 'error');
+      }
+    }
+
+    // Teacher grants access
+    async function teacherGrantAccess() {
+      log('🔓 Teacher granting lesson access...', 'info');
+
+      const step = currentContract.steps.find(s => s.id === 'step_2_access');
+      step.completed = true;
+      step.completedAt = Date.now();
+
+      log('✅ Lesson access granted', 'success');
+      displayContract();
+    }
+
+    // Teacher verifies completion
+    async function teacherVerifyCompletion() {
+      log('✅ Teacher verifying lesson completion...', 'info');
+
+      const step = currentContract.steps.find(s => s.id === 'step_4_verification');
+      step.completed = true;
+      step.completedAt = Date.now();
+
+      log('✅ Lesson completion verified', 'success');
+      displayContract();
+    }
+
+    // Teacher grants nineum
+    async function teacherGrantNineum() {
+      log('💎 Teacher granting nineum permission...', 'info');
+
+      try {
+        await LessonFlow.completeContractAndGrantNineum(currentContract.contractUuid);
+
+        const step = currentContract.steps.find(s => s.id === 'step_5_nineum');
+        step.completed = true;
+        step.completedAt = Date.now();
+
+        log('✅ Nineum permission granted!', 'success');
+        displayContract();
+      } catch (error) {
+        log(`❌ Failed to grant nineum: ${error.message}`, 'error');
+      }
+    }
+
+    // Student collects lesson
+    async function collectLesson() {
+      const btn = document.getElementById('collectBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Collecting...';
+
+      log('📚 Collecting lesson with nineum permission...', 'info');
+
+      try {
+        await LessonFlow.collectLesson(
+          currentContract.metadata.lessonBdoPubKey,
+          currentContract.metadata.requiredNineum
+        );
+
+        log('✅ Lesson collected and saved to bookshelf!', 'success');
+        btn.textContent = '✅ Collected';
+      } catch (error) {
+        log(`❌ Collection failed: ${error.message}`, 'error');
+        btn.disabled = false;
+        btn.textContent = '📚 Collect Lesson';
+      }
+    }
+
+    // Logging
+    function log(message, type = 'info') {
+      const logEl = document.getElementById('logContent');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      const timestamp = new Date().toLocaleTimeString();
+      entry.textContent = `[${timestamp}] ${message}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+
+      console.log(message);
+    }
+
+    // Initialize on load
+    init();
+  </script>
+</body>
+</html>

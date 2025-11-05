@@ -152,6 +152,112 @@ const books = [
   }
 ];
 
+// Blog post data
+const blogPosts = [
+  // Sarah Mitchell's blog posts
+  {
+    id: 'blog-worldbuilding-001',
+    title: 'The Art of Worldbuilding in Fantasy Fiction',
+    author: 'Sarah Mitchell',
+    authorUUID: authors[0].uuid,
+    description: 'Explore the techniques I use to create immersive fantasy worlds that feel real and lived-in. From magic systems to cultural details, learn how to build worlds your readers will never want to leave.',
+    type: 'hosted',
+    category: 'blog',
+    price: 0, // Free
+    publishDate: '2024-10-01',
+    tags: ['fantasy', 'writing tips', 'worldbuilding'],
+    longFormVideoUrl: 'https://vimeo.com/1124593180?share=copy&fl=sv&fe=ci',
+    shortFormVideoUrl: 'https://www.dropbox.com/scl/fo/f7yvc3uwszkj5385oqc5i/AI6KCon-C2IOtrpQxrmMQ6o?rlkey=vmrop8ijmnmblx29hjhj4vtvi&st=ee5roc5i&dl=0'
+  },
+  {
+    id: 'blog-character-arcs-002',
+    title: 'Creating Compelling Character Arcs',
+    author: 'Sarah Mitchell',
+    authorUUID: authors[0].uuid,
+    description: 'Character development is at the heart of every great story. In this post, I share my process for crafting character arcs that resonate with readers and drive the narrative forward.',
+    type: 'hosted',
+    category: 'blog',
+    price: 0, // Free
+    publishDate: '2024-09-15',
+    tags: ['writing', 'characters', 'storytelling'],
+    longFormVideoUrl: 'https://vimeo.com/1124593180?share=copy&fl=sv&fe=ci',
+    shortFormVideoUrl: 'https://www.dropbox.com/scl/fo/f7yvc3uwszkj5385oqc5i/AI6KCon-C2IOtrpQxrmMQ6o?rlkey=vmrop8ijmnmblx29hjhj4vtvi&st=ee5roc5i&dl=0'
+  },
+  // Marcus Chen's blog posts
+  {
+    id: 'blog-ai-ethics-003',
+    title: 'AI Ethics in Science Fiction: Writing Responsibly About Technology',
+    author: 'Marcus Chen',
+    authorUUID: authors[1].uuid,
+    description: 'As we write about artificial intelligence and emerging technologies, we have a responsibility to explore the ethical implications. Here\'s how I approach these complex topics in my work.',
+    type: 'hosted',
+    category: 'blog',
+    price: 0, // Free
+    publishDate: '2024-10-10',
+    tags: ['AI', 'ethics', 'science fiction', 'technology'],
+    longFormVideoUrl: 'https://vimeo.com/1124593180?share=copy&fl=sv&fe=ci',
+    shortFormVideoUrl: 'https://www.dropbox.com/scl/fo/f7yvc3uwszkj5385oqc5i/AI6KCon-C2IOtrpQxrmMQ6o?rlkey=vmrop8ijmnmblx29hjhj4vtvi&st=ee5roc5i&dl=0'
+  },
+  {
+    id: 'blog-future-tech-004',
+    title: 'Predicting the Future: How I Research Technology for My Novels',
+    author: 'Marcus Chen',
+    authorUUID: authors[1].uuid,
+    description: 'Science fiction is most powerful when it feels plausible. I dive into my research process for staying current with technological trends and extrapolating them into compelling futures.',
+    type: 'hosted',
+    category: 'blog',
+    price: 0, // Free
+    publishDate: '2024-09-28',
+    tags: ['research', 'technology', 'writing process'],
+    longFormVideoUrl: 'https://vimeo.com/1124593180?share=copy&fl=sv&fe=ci',
+    shortFormVideoUrl: 'https://www.dropbox.com/scl/fo/f7yvc3uwszkj5385oqc5i/AI6KCon-C2IOtrpQxrmMQ6o?rlkey=vmrop8ijmnmblx29hjhj4vtvi&st=ee5roc5i&dl=0'
+  },
+  // Isabella Rodriguez's blog posts
+  {
+    id: 'blog-historical-research-005',
+    title: 'Uncovering Lost Voices: My Journey Through Historical Archives',
+    author: 'Isabella Rodriguez',
+    authorUUID: authors[2].uuid,
+    description: 'Historical fiction requires deep research to bring authenticity to forgotten stories. Follow me through the archives, museums, and oral histories that shaped my latest novel.',
+    type: 'hosted',
+    category: 'blog',
+    price: 0, // Free
+    publishDate: '2024-10-05',
+    tags: ['historical fiction', 'research', 'archives', 'history'],
+    longFormVideoUrl: 'https://vimeo.com/1124593180?share=copy&fl=sv&fe=ci',
+    shortFormVideoUrl: 'https://www.dropbox.com/scl/fo/f7yvc3uwszkj5385oqc5i/AI6KCon-C2IOtrpQxrmMQ6o?rlkey=vmrop8ijmnmblx29hjhj4vtvi&st=ee5roc5i&dl=0'
+  },
+  {
+    id: 'blog-cultural-heritage-006',
+    title: 'Honoring Cultural Heritage Through Fiction',
+    author: 'Isabella Rodriguez',
+    authorUUID: authors[2].uuid,
+    description: 'Writing about marginalized histories comes with responsibility. I discuss the importance of respectful representation and how I work with cultural consultants to tell these important stories.',
+    type: 'hosted',
+    category: 'blog',
+    price: 0, // Free
+    publishDate: '2024-09-20',
+    tags: ['culture', 'heritage', 'representation', 'history'],
+    longFormVideoUrl: 'https://vimeo.com/1124593180?share=copy&fl=sv&fe=ci',
+    shortFormVideoUrl: 'https://www.dropbox.com/scl/fo/f7yvc3uwszkj5385oqc5i/AI6KCon-C2IOtrpQxrmMQ6o?rlkey=vmrop8ijmnmblx29hjhj4vtvi&st=ee5roc5i&dl=0'
+  },
+  // Bonus: A paid premium blog post
+  {
+    id: 'blog-writing-masterclass-007',
+    title: 'Complete Novel Writing Masterclass: From Idea to Publication',
+    author: 'Sarah Mitchell',
+    authorUUID: authors[0].uuid,
+    description: 'My comprehensive guide to writing and publishing your first novel. This premium content includes worksheets, templates, and exclusive insights from my 15-year publishing career. Over 50 pages of actionable advice.',
+    type: 'hosted',
+    category: 'blog',
+    price: 999, // $9.99 - Premium content
+    publishDate: '2024-10-12',
+    tags: ['writing course', 'publishing', 'masterclass', 'premium'],
+    longFormVideoUrl: 'https://vimeo.com/1124593180?share=copy&fl=sv&fe=ci',
+    shortFormVideoUrl: 'https://www.dropbox.com/scl/fo/f7yvc3uwszkj5385oqc5i/AI6KCon-C2IOtrpQxrmMQ6o?rlkey=vmrop8ijmnmblx29hjhj4vtvi&st=ee5roc5i&dl=0'
+  }
+];
+
 // Helper function to create simple signature for testing
 function createSignature(uuid, timestamp) {
   // Create a simple signature for testing (not cryptographically secure)
@@ -274,12 +380,12 @@ async function seedProfiles() {
 // Seed books in sanora
 async function seedBooks() {
   console.log('\n📚 Creating books in sanora...');
-  
+
   for (const book of books) {
     try {
       console.log(`Creating book: ${book.title}...`);
       const result = await sanoraRequest('/products', 'POST', book);
-      
+
       if (result.success || result.uuid) {
         console.log(`✅ Created book: ${book.title}`);
       } else {
@@ -291,10 +397,30 @@ async function seedBooks() {
   }
 }
 
+// Seed blog posts in sanora
+async function seedBlogPosts() {
+  console.log('\n📝 Creating blog posts in sanora...');
+
+  for (const post of blogPosts) {
+    try {
+      console.log(`Creating blog post: ${post.title}...`);
+      const result = await sanoraRequest('/products', 'POST', post);
+
+      if (result.success || result.uuid) {
+        console.log(`✅ Created blog post: ${post.title}`);
+      } else {
+        console.log(`❌ Failed to create blog post ${post.title}:`, result.error || result);
+      }
+    } catch (error) {
+      console.error(`❌ Error creating blog post ${post.title}:`, error.message);
+    }
+  }
+}
+
 // Create BDO associations
 async function createAssociations() {
   console.log('\n🔗 Creating author-book associations in BDO...');
-  
+
   // Create associations object
   const associations = {
     type: 'author-book-associations',
@@ -319,7 +445,7 @@ async function createAssociations() {
         description: 'Author and book associations for carousel demo'
       }
     });
-    
+
     if (result.uuid) {
       console.log(`✅ Created BDO associations with UUID: ${result.uuid}`);
       console.log('🎯 Save this UUID for the carousel site:', result.uuid);
@@ -340,23 +466,31 @@ async function main() {
     console.log(`  Prof: ${BASE_URL}`);
     console.log(`  Sanora: ${SANORA_URL}`);
     console.log(`  BDO: ${BDO_URL}`);
-    
+
     await seedProfiles();
     await seedBooks();
+    await seedBlogPosts();
     const associationsUUID = await createAssociations();
-    
+
     console.log('\n🎉 Seeding completed!');
     console.log('\n📋 Summary:');
     console.log(`  Authors created: ${authors.length}`);
     console.log(`  Books created: ${books.length}`);
+    console.log(`  Blog posts created: ${blogPosts.length}`);
     console.log(`  BDO UUID: ${associationsUUID || 'Failed to create'}`);
-    
+
     console.log('\n📖 Authors and their books:');
     authors.forEach(author => {
       const authorBooks = books.filter(book => book.authorUUID === author.uuid);
       console.log(`  ${author.name}: ${authorBooks.map(b => b.title).join(', ')}`);
     });
-    
+
+    console.log('\n📝 Authors and their blog posts:');
+    authors.forEach(author => {
+      const authorPosts = blogPosts.filter(post => post.authorUUID === author.uuid);
+      console.log(`  ${author.name}: ${authorPosts.map(p => p.title).join(', ')}`);
+    });
+
   } catch (error) {
     console.error('❌ Seeding failed:', error);
     process.exit(1);

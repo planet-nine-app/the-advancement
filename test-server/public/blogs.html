@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Posts - Planet Nine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            border-bottom: 3px solid #9b59b6;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            color: #9b59b6;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            font-size: 1.2rem;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .error {
+            background: #fee;
+            border: 2px solid #e74c3c;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #c0392b;
+        }
+
+        .error h3 {
+            margin-bottom: 10px;
+        }
+
+        .blog-list {
+            display: grid;
+            gap: 30px;
+        }
+
+        .blog-post {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .blog-post:hover {
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.2);
+            border-color: #9b59b6;
+            transform: translateY(-2px);
+        }
+
+        .blog-post-header {
+            margin-bottom: 15px;
+        }
+
+        .blog-post-title {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .blog-post-meta {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+
+        .blog-post-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .blog-post-description {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .blog-post-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .blog-post-type {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .type-hosted {
+            background: #e8f5e9;
+            color: #27ae60;
+        }
+
+        .type-external {
+            background: #e3f2fd;
+            color: #3498db;
+        }
+
+        .blog-post-price {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #9b59b6;
+        }
+
+        .blog-post-price.free {
+            color: #27ae60;
+        }
+
+        .video-links {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #eee;
+        }
+
+        .video-links h4 {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .video-link {
+            display: inline-block;
+            margin-right: 15px;
+            color: #9b59b6;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .video-link:hover {
+            text-decoration: underline;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .stats h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .stats p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .blog-post {
+                padding: 20px;
+            }
+
+            .blog-post-title {
+                font-size: 1.4rem;
+            }
+
+            .blog-post-footer {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📝 Blog Posts</h1>
+            <p>Discover stories from Planet Nine</p>
+        </header>
+
+        <div id="stats" class="stats" style="display: none;">
+            <h3 id="post-count">0</h3>
+            <p>blog posts available</p>
+        </div>
+
+        <div id="loading" class="loading">
+            Loading blog posts
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="blog-list" class="blog-list"></div>
+    </div>
+
+    <script>
+        // Configuration - using local Sanora by default
+        const SANORA_URL = 'http://localhost:7243'; // Local Sanora
+        const USE_PROXY = true; // Use the test server's proxy endpoint
+
+        // Fetch all blog posts
+        async function fetchBlogPosts() {
+            const loadingEl = document.getElementById('loading');
+            const errorEl = document.getElementById('error');
+            const blogListEl = document.getElementById('blog-list');
+            const statsEl = document.getElementById('stats');
+            const postCountEl = document.getElementById('post-count');
+
+            try {
+                console.log('🔍 Fetching blog posts from Sanora...');
+
+                // Fetch from Sanora via proxy or directly
+                const url = USE_PROXY
+                    ? '/api/sanora/products'
+                    : `${SANORA_URL}/products`;
+
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('✅ Received data:', data);
+
+                // Extract products (could be in data.products or data directly)
+                const products = data.products || data || [];
+
+                // Filter for blog posts (type includes 'blog', 'hosted', or 'external')
+                const blogPosts = products.filter(product => {
+                    const type = product.type || '';
+                    return type.includes('blog') ||
+                           type === 'hosted' ||
+                           type === 'external' ||
+                           product.title || product.description; // Fallback: has blog-like fields
+                });
+
+                console.log(`📊 Found ${blogPosts.length} blog posts out of ${products.length} total products`);
+
+                // Hide loading
+                loadingEl.style.display = 'none';
+
+                // Show stats
+                if (blogPosts.length > 0) {
+                    postCountEl.textContent = blogPosts.length;
+                    statsEl.style.display = 'block';
+                }
+
+                // Display blog posts
+                if (blogPosts.length === 0) {
+                    blogListEl.innerHTML = `
+                        <div class="empty-state">
+                            <h3>📭 No blog posts yet</h3>
+                            <p>Check back soon for new content!</p>
+                            <p style="margin-top: 10px; font-size: 0.9rem; color: #999;">
+                                Create blog posts using Rhapsold and they'll appear here.
+                            </p>
+                        </div>
+                    `;
+                } else {
+                    displayBlogPosts(blogPosts);
+                }
+
+            } catch (error) {
+                console.error('❌ Failed to fetch blog posts:', error);
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+                errorEl.innerHTML = `
+                    <h3>⚠️ Error Loading Blog Posts</h3>
+                    <p>${error.message}</p>
+                    <p style="margin-top: 10px; font-size: 0.9rem;">
+                        Make sure Sanora is running on ${SANORA_URL}
+                    </p>
+                `;
+            }
+        }
+
+        // Display blog posts
+        function displayBlogPosts(posts) {
+            const blogListEl = document.getElementById('blog-list');
+
+            blogListEl.innerHTML = posts.map(post => {
+                const price = post.price || 0;
+                const isFree = price === 0;
+                const priceDisplay = isFree
+                    ? 'Free'
+                    : `$${(price / 100).toFixed(2)}`;
+
+                const type = post.type || 'hosted';
+                const typeClass = type === 'external' ? 'type-external' : 'type-hosted';
+                const typeLabel = type === 'external' ? 'External Link' : 'Hosted';
+
+                // Format date
+                const publishDate = post.publishDate || post.created_at || post.createdAt;
+                const dateDisplay = publishDate
+                    ? new Date(publishDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })
+                    : 'No date';
+
+                // Video URLs (new fields!)
+                const hasVideos = post.longFormVideoUrl || post.shortFormVideoUrl;
+                const videosHTML = hasVideos ? `
+                    <div class="video-links">
+                        <h4>📹 Video Content:</h4>
+                        ${post.longFormVideoUrl ? `<a href="${post.longFormVideoUrl}" target="_blank" class="video-link">🎬 Long-form video</a>` : ''}
+                        ${post.shortFormVideoUrl ? `<a href="${post.shortFormVideoUrl}" target="_blank" class="video-link">📱 Short-form video</a>` : ''}
+                    </div>
+                ` : '';
+
+                return `
+                    <article class="blog-post">
+                        <div class="blog-post-header">
+                            <h2 class="blog-post-title">${post.title || 'Untitled Post'}</h2>
+                            <div class="blog-post-meta">
+                                <span>👤 ${post.author || 'Anonymous'}</span>
+                                <span>📅 ${dateDisplay}</span>
+                                ${post.uuid ? `<span>🆔 ${post.uuid.substring(0, 8)}...</span>` : ''}
+                            </div>
+                        </div>
+
+                        <p class="blog-post-description">
+                            ${post.description || 'No description available.'}
+                        </p>
+
+                        ${videosHTML}
+
+                        <div class="blog-post-footer">
+                            <span class="blog-post-type ${typeClass}">${typeLabel}</span>
+                            <span class="blog-post-price ${isFree ? 'free' : ''}">${priceDisplay}</span>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        // Load blog posts on page load
+        window.addEventListener('DOMContentLoaded', fetchBlogPosts);
+    </script>
+</body>
+</html>

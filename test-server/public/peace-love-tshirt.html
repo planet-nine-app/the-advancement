@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peace Love and Redistribution T-Shirt - Planet Nine Store</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .site-title {
+            font-size: 1.8rem;
+            color: #e91e63;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .site-subtitle {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .product-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .product-image-section {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 500px;
+        }
+
+        .product-placeholder {
+            text-align: center;
+        }
+
+        .product-icon {
+            font-size: 8rem;
+            margin-bottom: 20px;
+        }
+
+        .product-image-text {
+            font-size: 1.5rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .product-info-section {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+        }
+
+        .product-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #222;
+            margin-bottom: 15px;
+            line-height: 1.2;
+        }
+
+        .product-price {
+            font-size: 2rem;
+            color: #27ae60;
+            font-weight: 700;
+            margin-bottom: 25px;
+        }
+
+        .product-description {
+            font-size: 1.1rem;
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .product-details {
+            margin-bottom: 30px;
+        }
+
+        .product-details h3 {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .product-details ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .product-details li {
+            padding: 8px 0;
+            color: #666;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .product-details li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .product-meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .meta-tag {
+            background: #e91e63;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .product-bdo-section {
+            margin-top: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #f0f4ff, #e6f3ff);
+            border-radius: 12px;
+            border: 2px solid #3498db;
+        }
+
+        .bdo-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .bdo-header h3 {
+            color: #3498db;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .bdo-description {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        .emojicoded-display {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px dashed #3498db;
+            font-size: 1.3rem;
+            line-height: 1.6;
+            word-wrap: break-word;
+            user-select: all;
+            cursor: pointer;
+            font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'NotoColorEmoji', sans-serif;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+
+        .emojicoded-display:hover {
+            background: #fffbe6;
+            border-color: #e91e63;
+            transform: scale(1.02);
+        }
+
+        .bdo-instructions {
+            color: #555;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .bdo-instructions strong {
+            color: #333;
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .bdo-instructions ol {
+            margin-left: 20px;
+        }
+
+        .bdo-instructions li {
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 968px) {
+            .product-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .product-title {
+                font-size: 2rem;
+            }
+
+            .product-image-section {
+                min-height: 300px;
+                padding: 20px;
+            }
+
+            .product-icon {
+                font-size: 5rem;
+            }
+
+            .emojicoded-display {
+                font-size: 1rem;
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .emojicoded-display {
+                font-size: 0.9rem;
+                padding: 12px;
+            }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="site-title">Planet Nine Store</h1>
+            <p class="site-subtitle">Peace, Love, and Cryptographic Commerce</p>
+        </header>
+
+        <div class="product-layout">
+            <div class="product-image-section">
+                <div class="product-placeholder">
+                    <div class="product-icon">👕</div>
+                    <p class="product-image-text">Peace Love and<br>Redistribution</p>
+                </div>
+            </div>
+
+            <div class="product-info-section">
+                <h1 class="product-title">Peace Love and<br>Redistribution T-Shirt</h1>
+                <div class="product-price">$29.00</div>
+
+                <div class="product-meta">
+                    <span class="meta-tag">apparel</span>
+                    <span class="meta-tag">t-shirt</span>
+                    <span class="meta-tag">social-justice</span>
+                    <span class="meta-tag">organic</span>
+                </div>
+
+                <p class="product-description">
+                    Classic unisex t-shirt promoting equality and social justice. Made from 100% organic cotton, this ethically produced garment combines comfort with conscience. Perfect for anyone who believes in a more equitable world.
+                </p>
+
+                <div class="product-details">
+                    <h3>Product Details</h3>
+                    <ul>
+                        <li>100% organic cotton</li>
+                        <li>Ethically manufactured</li>
+                        <li>Unisex sizing (runs true to size)</li>
+                        <li>Soft, breathable fabric</li>
+                        <li>Pre-shrunk for perfect fit</li>
+                        <li>Available in multiple colors</li>
+                    </ul>
+                </div>
+
+                <!-- Product BDO Section with Interactive Buttons -->
+                <div class="product-bdo-section">
+                    <div class="bdo-header">
+                        <h3>🛒 Interactive Product Actions</h3>
+                        <p class="bdo-description">Use Planet Nine keyboard extension to interact with this product:</p>
+                    </div>
+
+                    <!-- Emojicoded product BDO pubKey - Auto-updated by seed script -->
+                    <div class="emojicoded-display">
+                        ✨😀⭐👆🏠😘👆🍰💚🐰☀️☀️🐸😋☁️😍😀😄❄️⚽🍔🍔👆🐰💎🍺😂🍌🍌🍎💖🐱☁️👍😆😐😂😂😍👈👇💧😅🍊👉✨
+                    </div>
+
+                    <div class="bdo-instructions">
+                        <strong>How to use:</strong>
+                        <ol>
+                            <li>Double-tap to select the entire emoji sequence above</li>
+                            <li>If only part is selected, drag to expand the selection to include both ✨ sparkles</li>
+                            <li>Open any text field and bring up the Planet Nine keyboard</li>
+                            <li>Tap DEMOJI button to decode and see interactive buttons</li>
+                            <li>Options available: Share, Add to Cart, and Magic actions</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>🌍 Planet Nine - Building the future of decentralized commerce</p>
+            <p><em>Product ID: peace-love-redistribution-tshirt</em></p>
+        </footer>
+    </div>
+</body>
+</html>

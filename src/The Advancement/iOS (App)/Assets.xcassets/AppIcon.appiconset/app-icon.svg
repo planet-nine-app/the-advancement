@@ -1,0 +1,72 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bgGradient" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" style="stop-color:#1a0033; stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#000000; stop-opacity:1" />
+    </radialGradient>
+
+    <linearGradient id="greenGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981; stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#34d399; stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="purpleGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6; stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a78bfa; stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="pinkGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ec4899; stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f472b6; stop-opacity:1" />
+    </linearGradient>
+
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="strongGlow">
+      <feGaussianBlur stdDeviation="12" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="url(#bgGradient)" rx="180"/>
+
+  <!-- Geometric "A" for Advancement -->
+  <!-- Left leg -->
+  <path d="M 340 750 L 450 300 L 500 300 L 420 750 Z" fill="url(#purpleGlow)" filter="url(#glow)" opacity="0.9"/>
+
+  <!-- Right leg -->
+  <path d="M 574 300 L 684 750 L 604 750 L 524 300 Z" fill="url(#greenGlow)" filter="url(#glow)" opacity="0.9"/>
+
+  <!-- Cross bar -->
+  <rect x="400" y="500" width="224" height="60" fill="url(#pinkGlow)" filter="url(#glow)" opacity="0.85"/>
+
+  <!-- Top accent triangle -->
+  <path d="M 512 200 L 470 300 L 554 300 Z" fill="#fbbf24" filter="url(#strongGlow)" opacity="0.95"/>
+
+  <!-- Orbiting particles (sci-fi element) -->
+  <circle cx="280" cy="400" r="12" fill="#10b981" filter="url(#glow)" opacity="0.7">
+    <animateTransform attributeName="transform" type="rotate" from="0 512 512" to="360 512 512" dur="8s" repeatCount="indefinite"/>
+  </circle>
+
+  <circle cx="744" cy="400" r="12" fill="#8b5cf6" filter="url(#glow)" opacity="0.7">
+    <animateTransform attributeName="transform" type="rotate" from="0 512 512" to="-360 512 512" dur="6s" repeatCount="indefinite"/>
+  </circle>
+
+  <circle cx="400" cy="220" r="8" fill="#ec4899" filter="url(#glow)" opacity="0.6">
+    <animateTransform attributeName="transform" type="rotate" from="0 512 512" to="360 512 512" dur="10s" repeatCount="indefinite"/>
+  </circle>
+
+  <circle cx="624" cy="220" r="8" fill="#fbbf24" filter="url(#glow)" opacity="0.6">
+    <animateTransform attributeName="transform" type="rotate" from="0 512 512" to="-360 512 512" dur="12s" repeatCount="indefinite"/>
+  </circle>
+</svg>

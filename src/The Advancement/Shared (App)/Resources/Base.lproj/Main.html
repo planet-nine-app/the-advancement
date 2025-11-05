@@ -8,13 +8,44 @@
 
     <link rel="stylesheet" href="../Style.css">
     <script src="../Script.js" defer></script>
+    <style>
+        .main-menu {
+            margin: 20px 0;
+        }
+        .menu-item {
+            display: block;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            text-align: left;
+            width: 100%;
+        }
+        .menu-item:hover {
+            background: #e0e0e0;
+        }
+        /* Note: Cookbook CSS removed - now using native Swift UI */
+    </style>
 </head>
 <body>
     <img src="../Icon.png" width="128" height="128" alt="The Advancement Icon">
-    <p class="platform-ios">You can turn on The Advancement’s Safari extension in Settings.</p>
-    <p class="platform-mac state-unknown">You can turn on The Advancement’s extension in Safari Extensions preferences.</p>
-    <p class="platform-mac state-on">The Advancement’s extension is currently on. You can turn it off in Safari Extensions preferences.</p>
-    <p class="platform-mac state-off">The Advancement’s extension is currently off. You can turn it on in Safari Extensions preferences.</p>
-    <button class="platform-mac open-preferences">Quit and Open Safari Extensions Preferences…</button>
+
+    <!-- Main Menu View -->
+    <div id="main-view">
+        <p class="platform-ios">You can turn on The Advancement's Safari extension in Settings.</p>
+        <p class="platform-mac state-unknown">You can turn on The Advancement's extension in Safari Extensions preferences.</p>
+        <p class="platform-mac state-on">The Advancement's extension is currently on. You can turn it off in Safari Extensions preferences.</p>
+        <p class="platform-mac state-off">The Advancement's extension is currently off. You can turn it on in Safari Extensions preferences.</p>
+        <button class="platform-mac open-preferences">Quit and Open Safari Extensions Preferences…</button>
+
+        <div class="main-menu">
+            <!-- Main app uses native Swift UI only - no JavaScript buttons needed -->
+        </div>
+    </div>
+
+    <!-- Note: Cookbook view has been moved to native Swift (CookbookViewController) -->
 </body>
 </html>

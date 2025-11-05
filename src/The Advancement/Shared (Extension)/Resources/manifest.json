@@ -2,8 +2,9 @@
   "manifest_version": 3,
   "name": "The Advancement",
   "version": "1.0.0",
-  "description": "Privacy-first browser extension with sessionless authentication, spell casting, nineum rewards, and Planet Nine ecosystem integration.",
-  
+  "description": "Privacy-first extension with sessionless authentication, spell casting, and Planet Nine integration.",
+  "default_locale": "en",
+
   "permissions": [
     "activeTab",
     "scripting",
@@ -13,17 +14,18 @@
     "nativeMessaging",
     "<all_urls>"
   ],
-  
+
   "host_permissions": [
     "http://localhost/*",
-    "http://127.0.0.1/*", 
+    "http://127.0.0.1/*",
     "https://dev.*.allyabase.com/*",
     "https://*.planetnineapp.com/*",
     "*://localhost:*/*"
   ],
-  
+
   "background": {
-    "scripts": ["background.js"]
+    "scripts": ["background.js"],
+    "persistent": false
   },
   
   "content_scripts": [
