@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linkifier - Planet Nine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+
+        .input-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="url"],
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="url"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        input::placeholder {
+            color: #64748b;
+        }
+
+        .create-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .create-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .create-btn:active {
+            transform: translateY(0);
+        }
+
+        .create-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .result-section {
+            display: none;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .result-section.visible {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success-icon {
+            text-align: center;
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .result-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #10b981;
+        }
+
+        .emojicode-display {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid #10b981;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            font-size: 20px;
+            font-family: monospace;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .emojicode-display:hover {
+            background: rgba(16, 185, 129, 0.2);
+            transform: scale(1.02);
+        }
+
+        .tap-hint {
+            text-align: center;
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 15px;
+        }
+
+        .bdo-preview {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .preview-label {
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .link-preview {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 6px;
+        }
+
+        .link-icon {
+            font-size: 24px;
+        }
+
+        .link-text {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .link-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .link-url {
+            font-size: 11px;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .create-another-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .create-another-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            color: #fca5a5;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #10b981;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(16, 185, 129, 0.3);
+            border-top-color: #10b981;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 Linkifier</h1>
+        <p class="subtitle">Create shareable BDO links for the Planet Nine ecosystem</p>
+
+        <!-- Input Section -->
+        <div class="input-section">
+            <div class="form-group">
+                <label for="url-input">URL</label>
+                <input type="url" id="url-input" placeholder="https://example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="title-input">Title (optional)</label>
+                <input type="text" id="title-input" placeholder="My Cool Link">
+            </div>
+
+            <button class="create-btn" id="create-btn">Create Link BDO</button>
+
+            <div class="error-message" id="error-message"></div>
+        </div>
+
+        <!-- Result Section -->
+        <div class="result-section" id="result-section">
+            <div class="success-icon">✨</div>
+            <div class="result-title">Link BDO Created!</div>
+
+            <div class="emojicode-display" id="emojicode-display" onclick="copyEmojicode()">
+                <!-- Emojicode will be inserted here -->
+            </div>
+            <div class="tap-hint">👆 Tap to copy emojicode</div>
+
+            <div class="bdo-preview">
+                <div class="preview-label">Preview</div>
+                <div class="link-preview">
+                    <div class="link-icon">🔗</div>
+                    <div class="link-text">
+                        <div class="link-title" id="preview-title">Link Title</div>
+                        <div class="link-url" id="preview-url">https://example.com</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="create-another-btn" onclick="createAnother()">Create Another</button>
+        </div>
+    </div>
+
+    <script>
+        const urlInput = document.getElementById('url-input');
+        const titleInput = document.getElementById('title-input');
+        const createBtn = document.getElementById('create-btn');
+        const errorMessage = document.getElementById('error-message');
+        const resultSection = document.getElementById('result-section');
+        const emojicodeDisplay = document.getElementById('emojicode-display');
+        const previewTitle = document.getElementById('preview-title');
+        const previewUrl = document.getElementById('preview-url');
+
+        let currentEmojicode = '';
+
+        // Auto-generate title from URL if not provided
+        urlInput.addEventListener('input', () => {
+            if (!titleInput.value) {
+                const url = urlInput.value;
+                try {
+                    const hostname = new URL(url).hostname.replace('www.', '');
+                    titleInput.placeholder = hostname;
+                } catch (e) {
+                    titleInput.placeholder = 'My Cool Link';
+                }
+            }
+        });
+
+        createBtn.addEventListener('click', async () => {
+            const url = urlInput.value.trim();
+            const title = titleInput.value.trim() || titleInput.placeholder;
+
+            if (!url) {
+                showError('Please enter a URL');
+                return;
+            }
+
+            // Validate URL
+            try {
+                new URL(url);
+            } catch (e) {
+                showError('Please enter a valid URL');
+                return;
+            }
+
+            await createLinkBDO(url, title);
+        });
+
+        async function createLinkBDO(url, title) {
+            hideError();
+            createBtn.disabled = true;
+            createBtn.textContent = 'Creating...';
+
+            try {
+                // Create BDO data with external link
+                const bdoData = {
+                    title: title,
+                    type: 'link',
+                    contentType: 'external-link',
+                    url: url,
+                    description: `Link to ${url}`,
+                    svgContent: generateLinkSVG(title, url),
+                    metadata: {
+                        createdAt: new Date().toISOString(),
+                        originalUrl: url
+                    }
+                };
+
+                // Call Android/iOS to create the BDO
+                let result;
+                if (window.Android && window.Android.createLinkBDO) {
+                    // Android
+                    const resultJson = window.Android.createLinkBDO(JSON.stringify(bdoData));
+                    result = JSON.parse(resultJson);
+                } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.linkifier) {
+                    // iOS
+                    result = await new Promise((resolve, reject) => {
+                        window.linkifierCallback = resolve;
+                        window.webkit.messageHandlers.linkifier.postMessage({
+                            action: 'createLinkBDO',
+                            bdoData: bdoData
+                        });
+                        setTimeout(() => reject(new Error('Timeout')), 10000);
+                    });
+                } else {
+                    throw new Error('Platform not supported');
+                }
+
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                // Show result
+                currentEmojicode = result.emojicode;
+                showResult(result.emojicode, title, url);
+
+            } catch (error) {
+                console.error('Failed to create link BDO:', error);
+                showError(error.message || 'Failed to create link BDO');
+            } finally {
+                createBtn.disabled = false;
+                createBtn.textContent = 'Create Link BDO';
+            }
+        }
+
+        function generateLinkSVG(title, url) {
+            // Simple SVG that opens link in default browser (not WebView)
+            const escapedUrl = url.replace(/"/g, '&quot;');
+            const escapedTitle = title.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+            return `<svg width="320" height="100" viewBox="0 0 320 100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="linkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <rect fill="url(#linkGrad)" width="320" height="100" rx="12"/>
+
+  <!-- Link icon -->
+  <text x="30" y="60" fill="white" font-size="36">🔗</text>
+
+  <!-- Title -->
+  <text x="75" y="50" fill="white" font-size="16" font-weight="bold">
+    ${escapedTitle.substring(0, 25)}${escapedTitle.length > 25 ? '...' : ''}
+  </text>
+
+  <!-- Tap to open text -->
+  <text x="75" y="70" fill="rgba(255,255,255,0.8)" font-size="12">
+    Tap to open link
+  </text>
+
+  <!-- Clickable area that opens in default browser -->
+  <a href="${escapedUrl}" target="_blank">
+    <rect x="0" y="0" width="320" height="100" fill="transparent" cursor="pointer">
+      <title>Open ${escapedTitle}</title>
+    </rect>
+  </a>
+</svg>`;
+        }
+
+        function showResult(emojicode, title, url) {
+            emojicodeDisplay.textContent = emojicode;
+            previewTitle.textContent = title;
+            previewUrl.textContent = url;
+            resultSection.classList.add('visible');
+            document.querySelector('.input-section').style.display = 'none';
+        }
+
+        function copyEmojicode() {
+            if (!currentEmojicode) return;
+
+            // Try to copy to clipboard
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(currentEmojicode).then(() => {
+                    showCopyFeedback();
+                });
+            } else {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = currentEmojicode;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showCopyFeedback();
+            }
+        }
+
+        function showCopyFeedback() {
+            const originalText = emojicodeDisplay.textContent;
+            emojicodeDisplay.textContent = '✓ Copied!';
+            emojicodeDisplay.style.background = 'rgba(16, 185, 129, 0.3)';
+
+            setTimeout(() => {
+                emojicodeDisplay.textContent = originalText;
+                emojicodeDisplay.style.background = 'rgba(16, 185, 129, 0.1)';
+            }, 1000);
+        }
+
+        function createAnother() {
+            resultSection.classList.remove('visible');
+            document.querySelector('.input-section').style.display = 'block';
+            urlInput.value = '';
+            titleInput.value = '';
+            currentEmojicode = '';
+            hideError();
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('visible');
+        }
+
+        function hideError() {
+            errorMessage.classList.remove('visible');
+        }
+
+        // Handle Enter key
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                createBtn.click();
+            }
+        });
+
+        titleInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                createBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "@planetnine/linkifier",
+  "version": "1.0.0",
+  "description": "Create shareable link BDOs for the Planet Nine ecosystem",
+  "main": "linkifier.js",
+  "type": "module",
+  "bin": {
+    "linkifier": "./linkifier.js"
+  },
+  "scripts": {
+    "test": "node linkifier.js https://example.com"
+  },
+  "keywords": [
+    "planet-nine",
+    "bdo",
+    "links",
+    "cli"
+  ],
+  "author": "Planet Nine",
+  "license": "MIT",
+  "dependencies": {
+    "bdo-js": "latest",
+    "sessionless-node": "latest"
+  }
+}
