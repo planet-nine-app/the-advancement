@@ -70,7 +70,7 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
     }
 
     /**
-     * Monitor clipboard for emojicode patterns
+     * Monitor clipboard for emojicode patterns and URLs
      */
     private fun monitorClipboard() {
         try {
@@ -84,6 +84,11 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
                     if (isEmojicode(text)) {
                         _clipboardText.value = text
                         Log.d(TAG, "Detected emojicode in clipboard: $text")
+                    }
+                    // Check if it's a URL
+                    else if (isURL(text)) {
+                        Log.d(TAG, "🔗 Detected URL in clipboard: $text")
+                        saveURLToLinks(text)
                     }
                 }
             }
@@ -99,6 +104,144 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
         // Rough check: emojicodes are typically 9-36 characters (9 emojis in UTF-16)
         val trimmed = text.trim()
         return trimmed.length in 9..36 && trimmed.any { it.code > 0x1F000 }
+    }
+
+    /**
+     * Check if text is a valid URL
+     */
+    private fun isURL(text: String): Boolean {
+        val trimmed = text.trim()
+        return (trimmed.startsWith("http://") || trimmed.startsWith("https://")) &&
+                trimmed.contains(".")
+    }
+
+    /**
+     * Save URL to links collection with cool SVG
+     */
+    private fun saveURLToLinks(url: String) {
+        viewModelScope.launch {
+            try {
+                Log.d(TAG, "🔗 Saving URL to links: $url")
+
+                // Extract domain for title
+                val title = extractDomain(url)
+
+                // Generate SVG
+                val svgContent = generateLinkSVG(title, url)
+
+                // Create link data
+                val linkData = mapOf(
+                    "title" to title,
+                    "url" to url,
+                    "type" to "link",
+                    "svgContent" to svgContent,
+                    "savedAt" to System.currentTimeMillis()
+                )
+
+                // Load carrier bag
+                val carrierBagJson = prefs.getString(KEY_CARRIER_BAG, null)
+                val carrierBag = if (carrierBagJson != null) {
+                    @Suppress("UNCHECKED_CAST")
+                    gson.fromJson(carrierBagJson, Map::class.java).toMutableMap() as MutableMap<String, Any>
+                } else {
+                    createEmptyCarrierBag().toMutableMap()
+                }
+
+                // Get links collection
+                @Suppress("UNCHECKED_CAST")
+                val linksItems = (carrierBag["links"] as? List<Map<String, Any>>)?.toMutableList()
+                    ?: mutableListOf()
+
+                // Add link to beginning
+                linksItems.add(0, linkData)
+
+                // Update carrier bag
+                carrierBag["links"] = linksItems
+
+                // Save to SharedPreferences
+                val updatedJson = gson.toJson(carrierBag)
+                prefs.edit().putString(KEY_CARRIER_BAG, updatedJson).apply()
+
+                Log.d(TAG, "✅ Saved URL to links collection (${linksItems.size} items)")
+
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Failed to save URL to links", e)
+            }
+        }
+    }
+
+    /**
+     * Extract domain from URL
+     */
+    private fun extractDomain(urlString: String): String {
+        return try {
+            val url = java.net.URL(urlString)
+            url.host.replace("^www\\.".toRegex(), "")
+        } catch (e: Exception) {
+            urlString
+        }
+    }
+
+    /**
+     * Generate colorful SVG for link
+     */
+    private fun generateLinkSVG(title: String, url: String): String {
+        // Escape special characters
+        val escapedTitle = title
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+        val escapedURL = url.replace("\"", "&quot;")
+
+        // Truncate title if too long
+        val displayTitle = if (escapedTitle.length > 25) {
+            escapedTitle.substring(0, 25) + "..."
+        } else {
+            escapedTitle
+        }
+
+        // Random gradient color scheme
+        val gradients = listOf(
+            listOf("#10b981", "#059669"),  // Green
+            listOf("#3b82f6", "#2563eb"),  // Blue
+            listOf("#8b5cf6", "#7c3aed"),  // Purple
+            listOf("#ec4899", "#db2777"),  // Pink
+            listOf("#f59e0b", "#d97706"),  // Orange
+            listOf("#ef4444", "#dc2626")   // Red
+        )
+        val gradient = gradients.random()
+
+        return """
+<svg width="320" height="100" viewBox="0 0 320 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="linkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:${gradient[0]};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${gradient[1]};stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <rect fill="url(#linkGrad)" width="320" height="100" rx="12"/>
+
+  <!-- Link icon -->
+  <text x="30" y="60" fill="white" font-size="36">🔗</text>
+
+  <!-- Title -->
+  <text x="75" y="50" fill="white" font-size="16" font-weight="bold">
+    $displayTitle
+  </text>
+
+  <!-- Tap to open text -->
+  <text x="75" y="70" fill="rgba(255,255,255,0.8)" font-size="12">
+    Tap to open link
+  </text>
+
+  <!-- Clickable area -->
+  <a href="$escapedURL" target="_blank">
+    <rect x="0" y="0" width="320" height="100" fill="transparent" cursor="pointer">
+      <title>Open $escapedTitle</title>
+    </rect>
+  </a>
+</svg>
+        """.trimIndent()
     }
 
     /**
@@ -767,6 +910,7 @@ class AdvanceKeyViewModel(private val context: Context) : ViewModel() {
             "contracts" to emptyList<Any>(),
             "stacks" to emptyList<Any>(),
             "store" to emptyList<Any>(),  // Shared affiliate links
+            "links" to emptyList<Any>(),  // Personal links (like linktree)
             "addresses" to emptyList<Any>()  // Shipping addresses for purchases
         )
     }
