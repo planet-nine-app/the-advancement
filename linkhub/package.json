@@ -1,0 +1,27 @@
+{
+  "name": "@planetnine/linkhub",
+  "version": "1.0.0",
+  "description": "Planet Nine LinkHub - Linktree-style service for displaying carrierBag links",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "planet-nine",
+    "linkhub",
+    "linktree",
+    "bdo",
+    "links"
+  ],
+  "author": "Planet Nine",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "bdo-js": "latest",
+    "addie-js": "latest",
+    "fount-js": "latest",
+    "sessionless-node": "latest"
+  }
+}
