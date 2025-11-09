@@ -655,73 +655,17 @@ app.post('/create', async (req, res) => {
 
         console.log(`🔑 Generated keys: ${pubKey.substring(0, 16)}...`);
 
-        // Create BDO via BDO service
-        const timestamp = Date.now().toString();
+        // Create BDO via bdo-js (handles signing automatically)
         const hash = 'Glyphenge';
-        const message = timestamp + pubKey + hash;
-        const signature = sessionless.sign(message, keys.privateKey);
+        console.log(`🌐 Creating BDO with hash: ${hash}`);
 
-        const createEndpoint = `${bdoLib.baseURL}user/create`;
-        console.log(`🌐 Creating BDO at: ${createEndpoint}`);
-
-        const createResponse = await fetch(createEndpoint, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                timestamp: timestamp,
-                pubKey: pubKey,
-                hash: hash,
-                signature: signature,
-                bdo: glyphengeBDO
-            })
-        });
-
-        if (!createResponse.ok) {
-            const errorText = await createResponse.text();
-            console.error('❌ BDO creation failed:', errorText);
-            return res.status(500).json({
-                error: 'Failed to create BDO',
-                details: errorText
-            });
-        }
-
-        const createData = await createResponse.json();
-        const bdoUUID = createData.uuid;
-
+        const bdoUUID = await bdoLib.createUser(hash, glyphengeBDO, saveKeys, getKeys);
         console.log(`✅ BDO created: ${bdoUUID}`);
 
-        // Make BDO public to get emojicode
-        const updateTimestamp = Date.now().toString();
-        const updateMessage = updateTimestamp + bdoUUID + hash;
-        const updateSignature = sessionless.sign(updateMessage, keys.privateKey);
-
-        const updateEndpoint = `${bdoLib.baseURL}user/${bdoUUID}/bdo`;
+        // Make BDO public to get emojicode (using bdo-js)
         console.log(`🌍 Making BDO public...`);
-
-        const updateResponse = await fetch(updateEndpoint, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                timestamp: updateTimestamp,
-                pubKey: pubKey,
-                hash: hash,
-                signature: updateSignature,
-                bdo: glyphengeBDO,
-                public: true  // Generate emojicode!
-            })
-        });
-
-        if (!updateResponse.ok) {
-            const errorText = await updateResponse.text();
-            console.error('❌ Failed to make BDO public:', errorText);
-            return res.status(500).json({
-                error: 'Failed to generate emojicode',
-                details: errorText
-            });
-        }
-
-        const updateData = await updateResponse.json();
-        const emojicode = updateData.emojiShortcode;
+        const updatedBDO = await bdoLib.updateBDO(bdoUUID, hash, glyphengeBDO, true);
+        const emojicode = updatedBDO.emojiShortcode;
 
         console.log(`✅ Emojicode generated: ${emojicode}`);
 
