@@ -107,6 +107,121 @@
         footer a:hover {
             text-decoration: underline;
         }
+
+        /* Beta Access Section */
+        .beta-access {
+            max-width: 700px;
+            margin: 60px auto;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border-radius: 20px;
+            border: 2px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .beta-access h2 {
+            text-align: center;
+            color: #10b981;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .beta-access p {
+            text-align: center;
+            color: #cbd5e1;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .platform-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .platform-btn {
+            display: inline-block;
+            width: 100%;
+            max-width: 400px;
+            padding: 18px 30px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .platform-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(16, 185, 129, 0.5);
+        }
+
+        .platform-btn.android {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            cursor: pointer;
+        }
+
+        .platform-btn.android:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        @keyframes wiggleScale {
+            0% {
+                transform: scale(1) rotate(0deg);
+            }
+            15% {
+                transform: scale(1.15) rotate(-3deg);
+            }
+            30% {
+                transform: scale(1.15) rotate(3deg);
+            }
+            45% {
+                transform: scale(1.15) rotate(-3deg);
+            }
+            60% {
+                transform: scale(1.15) rotate(3deg);
+            }
+            75% {
+                transform: scale(1.15) rotate(-1deg);
+            }
+            90% {
+                transform: scale(1.15) rotate(1deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        .email-note.animate {
+            animation: wiggleScale 0.6s ease-in-out;
+        }
+
+        .email-note {
+            font-size: 0.95rem;
+            color: #94a3b8;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .beta-access {
+                padding: 30px 20px;
+            }
+
+            .beta-access h2 {
+                font-size: 1.5rem;
+            }
+
+            .platform-btn {
+                font-size: 1rem;
+                padding: 15px 25px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -224,6 +339,26 @@
             </div>
         </div>
 
+        <div class="beta-access">
+            <h2>🚀 Join the Beta</h2>
+            <p>The Advancement is currently in beta testing. Get early access to privacy-first commerce.</p>
+
+            <div class="platform-buttons">
+                <a href="https://testflight.apple.com/join/zEZEJTqa" class="platform-btn" target="_blank">
+                    📱 iOS TestFlight Beta
+                </a>
+
+                <div style="width: 100%; max-width: 400px; text-align: center;">
+                    <div class="platform-btn android" id="android-btn">
+                        🤖 Android Beta 👇
+                    </div>
+                    <p class="email-note" id="email-instructions">
+                        👉 Email zach at the-advancement dot com to request access 👈
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <footer>
             <p>Covering ads with peace. Enabling commerce without surveillance.</p>
             <p style="margin-top: 10px;">
@@ -233,5 +368,25 @@
     </div>
 
     <script src="https://player.vimeo.com/api/player.js"></script>
+    <script>
+        // Android button click handler
+        document.getElementById('android-btn').addEventListener('click', function() {
+            const instructions = document.getElementById('email-instructions');
+
+            // Remove animation class if it exists
+            instructions.classList.remove('animate');
+
+            // Trigger reflow to restart animation
+            void instructions.offsetWidth;
+
+            // Add animation class
+            instructions.classList.add('animate');
+
+            // Remove class after animation completes
+            setTimeout(function() {
+                instructions.classList.remove('animate');
+            }, 600);
+        });
+    </script>
 </body>
 </html>

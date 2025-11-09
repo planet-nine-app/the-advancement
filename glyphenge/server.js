@@ -1,14 +1,21 @@
 #!/usr/bin/env node
 
 /**
- * LinkHub - Planet Nine's Linktree-style Service
+ * Glyphenge - Planet Nine's Mystical Link Tapestry
  *
- * Displays user's carrierBag links in beautiful SVG layouts
- * Uses Fount to fetch user's BDO and extract links collection
+ * Weaves user's links into beautiful runic SVG layouts
+ * Public access via emojicode - no authentication required for viewers
+ *
+ * Enchantment Flow:
+ * 1. User casts Glyphenge enchantment via The Enchantment Emporium
+ * 2. Enchanted BDO made public → generates emojicode rune
+ * 3. Anyone can view the tapestry: glyphenge?emojicode=😀🔗💎🌟...
+ * 4. Glyphenge weaves links from BDO into mystical patterns
  */
 
 import express from 'express';
 import fountLib from 'fount-js';
+import bdoLib from 'bdo-js';
 import sessionless from 'sessionless-node';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -21,13 +28,16 @@ const PORT = process.env.PORT || 3010;
 
 // Configuration
 const FOUNT_BASE_URL = process.env.FOUNT_BASE_URL || 'https://plr.allyabase.com/plugin/allyabase/fount/';
+const BDO_BASE_URL = process.env.BDO_BASE_URL || 'https://plr.allyabase.com/plugin/allyabase/bdo/';
 
-// Configure Fount SDK
+// Configure SDKs
 fountLib.baseURL = FOUNT_BASE_URL.endsWith('/') ? FOUNT_BASE_URL : `${FOUNT_BASE_URL}/`;
+bdoLib.baseURL = BDO_BASE_URL.endsWith('/') ? BDO_BASE_URL : `${BDO_BASE_URL}/`;
 
-console.log('🔗 LinkHub - Planet Nine Link Service');
-console.log('=====================================');
+console.log('✨ Glyphenge - Mystical Link Tapestry');
+console.log('====================================');
 console.log(`📍 Fount URL: ${fountLib.baseURL}`);
+console.log(`📍 BDO URL: ${bdoLib.baseURL}`);
 
 // Middleware
 app.use(express.static(join(__dirname, 'public')));
@@ -36,21 +46,52 @@ app.use(express.json());
 /**
  * Main route - Displays user's links
  *
- * Query params:
+ * Query params (Method 1 - Emojicode):
+ * - emojicode: 8-emoji identifier for Glyphenge BDO
+ *
+ * Query params (Method 2 - Legacy Authentication):
  * - pubKey: User's public key
  * - timestamp: Request timestamp
  * - signature: Sessionless signature (timestamp + pubKey)
  */
 app.get('/', async (req, res) => {
     try {
-        const { pubKey, timestamp, signature } = req.query;
+        const { emojicode, pubKey, timestamp, signature } = req.query;
 
         let links = [];
         let userName = 'Anonymous';
         let authenticated = false;
 
-        // If authentication provided, fetch user's actual links
-        if (pubKey && timestamp && signature) {
+        // Method 1: Fetch by emojicode (PUBLIC - no auth required)
+        if (emojicode) {
+            console.log(`😀 Fetching Glyphenge by emojicode: ${emojicode}`);
+
+            try {
+                // Fetch Glyphenge BDO by emojicode
+                const linkHubBDO = await bdoLib.getBDOByEmojicode(emojicode);
+
+                console.log('📦 Glyphenge BDO fetched:', JSON.stringify(linkHubBDO).substring(0, 200));
+
+                // Extract links from BDO data
+                const bdoData = linkHubBDO.bdo || linkHubBDO;
+                if (bdoData.links && Array.isArray(bdoData.links)) {
+                    links = bdoData.links;
+                    console.log(`🔗 Found ${links.length} links in Glyphenge BDO`);
+                } else {
+                    console.log('⚠️ No links array found in Glyphenge BDO');
+                }
+
+                // Get user name from BDO
+                userName = bdoData.title || bdoData.name || 'My Links';
+                authenticated = false; // Public access via emojicode
+
+            } catch (error) {
+                console.error('❌ Failed to fetch Glyphenge BDO by emojicode:', error.message);
+                // Continue with empty links array
+            }
+        }
+        // Method 2: Legacy authentication (for backward compatibility)
+        else if (pubKey && timestamp && signature) {
             console.log(`🔐 Authenticating request for pubKey: ${pubKey.substring(0, 16)}...`);
 
             // Verify signature
@@ -89,7 +130,7 @@ app.get('/', async (req, res) => {
                 console.log('❌ Invalid signature');
             }
         } else {
-            console.log('ℹ️ No authentication provided, showing demo');
+            console.log('ℹ️ No emojicode or authentication provided, showing demo');
         }
 
         // If no links, show demo links
@@ -102,7 +143,7 @@ app.get('/', async (req, res) => {
         const displayLinks = links.slice(0, 20);
 
         // Generate HTML page
-        const html = generateLinkHubPage(displayLinks, userName, authenticated, pubKey);
+        const html = generateGlyphengePage(displayLinks, userName, authenticated, pubKey);
 
         res.send(html);
 
@@ -112,7 +153,7 @@ app.get('/', async (req, res) => {
             <!DOCTYPE html>
             <html>
             <head>
-                <title>LinkHub Error</title>
+                <title>Glyphenge Error</title>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <style>
@@ -147,9 +188,9 @@ app.get('/', async (req, res) => {
 });
 
 /**
- * Generate the main LinkHub HTML page
+ * Generate the main Glyphenge HTML page
  */
-function generateLinkHubPage(links, userName, authenticated, pubKey) {
+function generateGlyphengePage(links, userName, authenticated, pubKey) {
     const linkCount = links.length;
     const svgTemplate = chooseSVGTemplate(linkCount);
 
@@ -158,7 +199,7 @@ function generateLinkHubPage(links, userName, authenticated, pubKey) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${userName} - LinkHub</title>
+    <title>${userName} - Glyphenge</title>
     <style>
         * {
             margin: 0;
@@ -304,32 +345,32 @@ function generateLinkHubPage(links, userName, authenticated, pubKey) {
     </div>
 
     <div class="cta-container">
-        <h2>🚀 Create Your Own LinkHub</h2>
-        <p>Get your own beautiful link page powered by Planet Nine. Store your links in your carrierBag and display them anywhere.</p>
+        <h2>✨ Weave Your Own Glyphenge</h2>
+        <p>Cast the Glyphenge enchantment to create your mystical link tapestry. Visit The Enchantment Emporium in The Advancement app.</p>
         <a href="#purchase" class="cta-button" onclick="handlePurchase()">
-            Get Started - $9.99/year
+            Visit The Enchantment Emporium
         </a>
         <p style="font-size: 0.9rem; margin-top: 20px; opacity: 0.8;">
-            ✨ Privacy-first • 🔐 Cryptographically secure • 🎨 Beautiful designs
+            ✨ Privacy-first • 🔐 Cryptographically secure • 🎨 Mystically beautiful
         </p>
     </div>
 
     <div class="footer">
-        <p>Powered by <strong>Planet Nine</strong></p>
-        <p style="margin-top: 5px;">The privacy-first link management platform</p>
+        <p>Woven by <strong>Planet Nine</strong></p>
+        <p style="margin-top: 5px;">The Enchantment Emporium • Glyphenge Tapestries</p>
     </div>
 
     <script>
         function handlePurchase() {
-            // TODO: Implement Planet Nine purchase flow
-            alert('Purchase flow coming soon! This will integrate with The Advancement payment system.');
-            console.log('Purchase initiated for LinkHub subscription');
+            // TODO: Implement Enchantment Emporium integration
+            alert('Visit The Enchantment Emporium in The Advancement app to cast the Glyphenge enchantment!');
+            console.log('Redirecting to Enchantment Emporium');
 
             // Future implementation:
-            // 1. Show payment modal
-            // 2. Collect payment via Stripe (using addie-js)
-            // 3. Create subscription BDO in user's carrierBag
-            // 4. Grant access to custom domain/subdomain
+            // 1. Deep link to The Advancement app
+            // 2. Open Enchantment Emporium
+            // 3. Show Glyphenge enchantment
+            // 4. Guide user through enchantment casting
         }
 
         // Make links clickable
@@ -552,10 +593,11 @@ function escapeXML(str) {
 
 // Start server
 app.listen(PORT, () => {
-    console.log(`\n✅ LinkHub server running on port ${PORT}`);
-    console.log(`🌐 Open: http://localhost:${PORT}`);
-    console.log(`\n📝 Usage:`);
-    console.log(`   Demo mode: http://localhost:${PORT}`);
-    console.log(`   Authenticated: http://localhost:${PORT}?pubKey=YOUR_PUBKEY&timestamp=TIMESTAMP&signature=SIGNATURE`);
+    console.log(`\n✅ Glyphenge tapestry weaver active on port ${PORT}`);
+    console.log(`🌐 View demo: http://localhost:${PORT}`);
+    console.log(`\n📝 Viewing Modes:`);
+    console.log(`   Demo tapestry: http://localhost:${PORT}`);
+    console.log(`   By emojicode rune: http://localhost:${PORT}?emojicode=😀🔗💎🌟...`);
+    console.log(`   Legacy auth: http://localhost:${PORT}?pubKey=YOUR_PUBKEY&timestamp=TIMESTAMP&signature=SIGNATURE`);
     console.log('');
 });

@@ -1,7 +1,7 @@
 {
-  "name": "@planetnine/linkhub",
+  "name": "@planetnine/glyphenge",
   "version": "1.0.0",
-  "description": "Planet Nine LinkHub - Linktree-style service for displaying carrierBag links",
+  "description": "Planet Nine Glyphenge - Mystical link tapestry weaver from The Enchantment Emporium",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -10,10 +10,12 @@
   },
   "keywords": [
     "planet-nine",
-    "linkhub",
-    "linktree",
+    "glyphenge",
+    "enchantment-emporium",
+    "link-tapestry",
+    "magic",
     "bdo",
-    "links"
+    "emojicode"
   ],
   "author": "Planet Nine",
   "license": "MIT",

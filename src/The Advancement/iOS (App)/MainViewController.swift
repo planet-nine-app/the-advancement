@@ -188,6 +188,19 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             </text>
         </g>
 
+        <!-- Enchantment Emporium Button (center below title) -->
+        <g id="emporiumButton" class="button-group">
+            <ellipse cx="50" cy="28" rx="18" ry="6" fill="rgba(167, 139, 250, 0.15)" stroke="#a78bfa" stroke-width="0.3" filter="url(#purpleGlow)">
+                <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite"/>
+            </ellipse>
+            <text x="42" y="29.5" text-anchor="middle" style="font-family: -apple-system; font-size: 2.5px; font-weight: 600; letter-spacing: 0.1px;" fill="#fbbf24" filter="url(#yellowGlow)">
+                ✨
+            </text>
+            <text x="50" y="29.5" text-anchor="middle" style="font-family: -apple-system; font-size: 2.2px; font-weight: 600; letter-spacing: 0.15px;" fill="#a78bfa" filter="url(#purpleGlow)">
+                Enchantment Emporium
+            </text>
+        </g>
+
         <!-- Posted BDOs Display Area (will be populated dynamically) -->
         <g id="bdoDisplayArea" transform="translate(0, 32)">
             <!-- BDOs will be inserted here -->
@@ -317,6 +330,16 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             // Send to Swift
             webkit.messageHandlers.mainApp.postMessage({
                 action: 'openKeyboardSettings'
+            });
+        });
+
+        // Enchantment Emporium button click handler
+        document.getElementById('emporiumButton').addEventListener('click', function() {
+            console.log('✨ Enchantment Emporium button clicked');
+
+            // Send to Swift
+            webkit.messageHandlers.mainApp.postMessage({
+                action: 'openEmporium'
             });
         });
 
@@ -532,6 +555,8 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             checkKeyboardInstallation()
         } else if action == "openKeyboardSettings" {
             openKeyboardSettings()
+        } else if action == "openEmporium" {
+            openEnchantmentEmporium()
         }
     }
 
@@ -858,6 +883,18 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
 
         let carrierBagVC = CarrierBagViewController()
         let navController = UINavigationController(rootViewController: carrierBagVC)
+        navController.modalPresentationStyle = .fullScreen
+
+        present(navController, animated: true)
+    }
+
+    // MARK: - Enchantment Emporium
+
+    private func openEnchantmentEmporium() {
+        NSLog("✨ Opening Enchantment Emporium")
+
+        let emporiumVC = EnchantmentEmporiumViewController()
+        let navController = UINavigationController(rootViewController: emporiumVC)
         navController.modalPresentationStyle = .fullScreen
 
         present(navController, animated: true)

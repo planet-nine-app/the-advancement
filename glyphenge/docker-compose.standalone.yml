@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  linkhub:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+    container_name: planet-nine-linkhub
+    ports:
+      - "3010:3010"
+    environment:
+      - PORT=3010
+      - FOUNT_BASE_URL=http://localhost:3004/
+    restart: unless-stopped
