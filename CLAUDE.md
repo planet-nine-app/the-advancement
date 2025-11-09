@@ -197,16 +197,30 @@ open http://localhost:3456
 - **BDO Service Integration**: Proper authentication with "The Advancement" hash
 - **Complete Flow**: Create copy → Add affiliate payee → Generate keys → Create BDO user → Make public → Get emojicode → Save to store
 
-### ✅ **Linkifier CLI Tool** (January 2025)
-- **Simple CLI**: Create link BDOs from the command line with a single command
-- **Auto-Title Generation**: Extracts domain name from URL if no title provided
-- **Public BDO Creation**: Uses bdo-js SDK to create public BDOs with emojicodes
-- **Beautiful SVG**: Green gradient design (320x100) with link icon and title
-- **External Link Handling**: SVG uses `target="_blank"` to open in default browser
-- **Sessionless Keys**: Generates temporary keys for each link BDO
-- **Flexible Configuration**: Works with any BDO service URL via `--bdo-url` flag
-- **Default Environment**: Configured for plr.allyabase.com wiki plugin pattern
-- **Usage**: `./linkifier.js <url> [title] [--bdo-url=<service>]`
+### ✅ **Glyphenge Rendering Service** (January 2025)
+- **Server-Side SVG Generation**: All SVG rendering logic centralized in Glyphenge service
+- **POST /create Endpoint**: Accepts raw link data, generates SVG, creates BDO with emojicode
+- **Three Adaptive Templates**: Automatically selects layout based on link count
+  - Compact (1-6 links): Vertical stack with 600x90 cards
+  - Grid (7-13 links): 2-column layout with 290x80 cards
+  - Dense (14-20 links): 3-column layout with 190x65 cards
+- **Automatic BDO Creation**: Uses bdo-js SDK to create public BDOs with emojicodes
+- **Thin Clients**: iOS and CLI tools send raw data only, no client-side rendering
+- **Consistent Rendering**: All Glyphenge BDOs use same templates across platforms
+- **Port**: 3010 (default)
+- **Architecture**: Client → Glyphenge (adds svgContent) → BDO Service (storage)
+- **Code Reduction**: Clients simplified by 200-350 lines by removing SVG generation
+
+### ✅ **Linktree Importer** (January 2025)
+- **CLI Tool**: Import Linktree pages from the command line
+- **Auto-Extraction**: Parses __NEXT_DATA__ from Next.js SSR pages
+- **Glyphenge Integration**: Uses Glyphenge POST /create endpoint for rendering
+- **User-Agent Spoofing**: Bypasses bot detection with browser headers
+- **Flexible Configuration**: Works with any Glyphenge service URL via `--glyphenge-url` flag
+- **Default Environment**: Configured for http://localhost:5125
+- **Usage**: `./linktree-importer.js <linktr.ee-url> [--glyphenge-url=<service>]`
+- **iOS Integration**: Available as spell in Enchantment Emporium
+- **File Size**: 225 lines (simplified from 431 by removing SVG generation)
 
 ### ✅ **CarrierBag Links Collection** (January 2025)
 - **Linktree Alternative**: Personal links stored in carrierBag "links" collection
@@ -243,10 +257,15 @@ the-advancement/
 │   ├── TEST-ENVIRONMENT.md     # Testing infrastructure
 │   └── TECHNICAL-ARCHITECTURE.md # Implementation patterns
 ├── test-server/                # Complete test environment
-├── linkifier/                  # CLI tool for creating link BDOs
-│   ├── linkifier.js            # Main executable
-│   ├── package.json            # Dependencies
+├── linkifier/                  # CLI tools for link BDOs
+│   ├── linkifier.js            # Single link BDO creator
+│   ├── linktree-importer.js    # Linktree page importer
+│   ├── package.json            # Dependencies (node-fetch)
 │   └── README.md               # Usage documentation
+├── glyphenge/                  # Glyphenge rendering service
+│   ├── server.js               # Express server with SVG templates
+│   ├── package.json            # Dependencies (bdo-js, sessionless-node)
+│   └── README.md               # Service documentation
 ├── linkhub/                    # LinkHub service (first PN business)
 │   ├── server.js               # Express server with Fount integration
 │   ├── package.json            # Dependencies (bdo-js, fount-js, addie-js)
@@ -2199,6 +2218,309 @@ This hash is specific to The Advancement app and is used for authentication with
 3. **Public BDOs**: Setting `public: true` triggers automatic emojicode generation
 4. **Store Collection**: Added new "store" collection to carrierBag for affiliate links
 5. **Error Handling**: Graceful failures with user-friendly error messages
+
+## Glyphenge Server-Side Rendering Architecture (January 2025)
+
+### Overview
+
+Glyphenge implements a clean server-side rendering architecture where all SVG generation logic lives on the Glyphenge service, not in clients. This eliminates code duplication, ensures consistent rendering across platforms, and simplifies client implementations.
+
+### The Problem (Before)
+
+**Duplicated SVG Generation**:
+- iOS EnchantmentEmporiumViewController: ~350 lines of SVG code
+- Linktree-importer CLI: ~200 lines of SVG code
+- Identical templates duplicated in multiple clients
+- Manual BDO creation with sessionless keys in each client
+- Inconsistent rendering if templates diverge
+
+**Architecture (Wrong)**:
+```
+iOS Client → Generate SVG → Create BDO → Make Public → Return Emojicode
+CLI Client → Generate SVG → Create BDO → Make Public → Return Emojicode
+```
+
+### The Solution (After)
+
+**Centralized Rendering on Glyphenge**:
+- Single source of truth for SVG templates
+- Clients send raw link data only
+- Glyphenge generates SVG and creates BDO
+- iOS EnchantmentEmporiumViewController: ~566 lines (down from ~920)
+- Linktree-importer CLI: ~225 lines (down from ~431)
+
+**Architecture (Correct)**:
+```
+Client → POST /create {links, title} → Glyphenge → Add svgContent → Create BDO → Return Emojicode
+```
+
+### Glyphenge POST /create Endpoint
+
+**Location**: `glyphenge/server.js` lines 594-744
+
+**Request**:
+```javascript
+POST /create
+Content-Type: application/json
+
+{
+  "title": "My Glyphenge",
+  "links": [
+    {"title": "GitHub", "url": "https://github.com/user"},
+    {"title": "Twitter", "url": "https://twitter.com/user"}
+  ],
+  "source": "linktree",      // optional
+  "sourceUrl": "https://..."  // optional
+}
+```
+
+**Response**:
+```javascript
+{
+  "success": true,
+  "uuid": "abc123...",
+  "pubKey": "02a1b2c3...",
+  "emojicode": "💚🌍🔑💎🌟💎🎨🐉📌",
+  "url": "http://localhost:3010?emojicode=...",
+  "bdoUrl": "http://localhost:3003/emoji/..."
+}
+```
+
+**Processing Flow**:
+1. Receive raw link data
+2. Choose SVG template based on link count (1-6, 7-13, 14-20)
+3. Generate SVG using server-side templates
+4. Create complete BDO with `svgContent` field
+5. Generate temporary sessionless keys
+6. Create BDO user via bdo-js SDK
+7. Make BDO public to get emojicode
+8. Return emojicode to client
+
+### SVG Template Selection
+
+**Template Logic** (`glyphenge/server.js` lines 574-592):
+```javascript
+function chooseSVGTemplate(linkCount) {
+    if (linkCount <= 6) {
+        return generateCompactSVG;   // Vertical stack, 600x90 cards
+    } else if (linkCount <= 13) {
+        return generateGridSVG;      // 2-column, 290x80 cards
+    } else {
+        return generateDenseSVG;     // 3-column, 190x65 cards
+    }
+}
+```
+
+**Compact SVG Template** (1-6 links):
+- Height: `max(400, links.count * 110 + 60)`
+- Card size: 600x90px
+- Layout: Vertical stack
+- Best for: Showcasing key destinations
+
+**Grid SVG Template** (7-13 links):
+- Height: `max(400, rows * 100 + 100)`
+- Card size: 290x80px
+- Layout: 2-column grid
+- Best for: Social links and projects
+
+**Dense SVG Template** (14-20 links):
+- Height: `max(400, rows * 80 + 100)`
+- Card size: 190x65px
+- Layout: 3-column grid
+- Best for: Extensive link collections
+
+**Gradient Schemes**:
+```javascript
+const gradients = [
+    ["#10b981", "#059669"],  // Green
+    ["#3b82f6", "#2563eb"],  // Blue
+    ["#8b5cf6", "#7c3aed"],  // Purple
+    ["#ec4899", "#db2777"],  // Pink
+    ["#f59e0b", "#d97706"],  // Orange
+    ["#a78bfa", "#8b5cf6"]   // Light purple
+];
+```
+
+### Client Implementation Pattern
+
+**iOS EnchantmentEmporiumViewController** (`src/The Advancement/Shared (App)/EnchantmentEmporiumViewController.swift`):
+
+**Before** (~920 lines):
+```swift
+private func castGlyphenge() {
+    // Generate temporary keys
+    let tempKeys = sessionless.generateKeys()
+
+    // Generate SVG client-side (200+ lines)
+    let compositeSVG = generateGlyphengeSVG(links: links)
+
+    // Create BDO manually
+    let glyphengeBDO = [
+        "svgContent": compositeSVG,
+        "links": links
+    ]
+
+    // Sign and send to BDO service
+    let signature = sessionless.signWithPrivateKey(...)
+    // POST /user/create
+    // PUT /user/:uuid/bdo (make public)
+}
+
+// 350+ lines of SVG generation functions
+private func generateGlyphengeSVG() { ... }
+private func generateCompactSVG() { ... }
+private func generateGridSVG() { ... }
+private func generateDenseSVG() { ... }
+private func escapeXML() { ... }
+```
+
+**After** (~566 lines):
+```swift
+private func castGlyphenge() {
+    let glyphengeServiceURL = "http://localhost:3010"
+    let createEndpoint = "\(glyphengeServiceURL)/create"
+
+    let glyphengePayload: [String: Any] = [
+        "title": "My Glyphenge",
+        "links": links,
+        "source": "emporium"
+    ]
+
+    // Send raw data to Glyphenge
+    let response = URLSession.shared.dataTask(url: createURL, body: glyphengePayload)
+
+    // Get emojicode back
+    let emojicode = json["emojicode"] as? String
+
+    // Save to carrierBag
+    saveGlyphengeToStore(emojicode: emojicode)
+    showSuccessJS(emojicode: emojicode)
+}
+
+// No SVG generation code needed!
+```
+
+**Linktree Importer CLI** (`linkifier/linktree-importer.js`):
+
+**Before** (431 lines with SVG generation)
+**After** (225 lines sending raw data)
+
+**Code Removed**:
+- All SVG template functions (200+ lines)
+- sessionless-node key management
+- bdo-js SDK calls
+- Manual BDO creation and signing
+
+**Code Added**:
+- Single fetch() to Glyphenge POST /create
+
+### Benefits
+
+1. **Code Reduction**: Clients simplified by 200-350 lines each
+2. **Single Source of Truth**: All templates in one location
+3. **Consistent Rendering**: All Glyphenge BDOs use same templates
+4. **Easier Updates**: Template changes only need to happen once
+5. **Thin Clients**: Clients only handle data collection
+6. **Separation of Concerns**:
+   - Clients: Data collection (fetch Linktree, get carrierBag links)
+   - Glyphenge: Rendering (SVG templates, layout decisions)
+   - BDO Service: Storage (dumb storage, no rendering logic)
+
+### Testing
+
+**Test Glyphenge Endpoint**:
+```bash
+cd glyphenge
+npm start  # Port 3010
+
+# Create Glyphenge from links
+curl -X POST http://localhost:3010/create \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "My Links",
+    "links": [
+      {"title": "GitHub", "url": "https://github.com/user"}
+    ]
+  }'
+
+# Response: { emojicode: "💚🌍🔑💎🌟💎🎨🐉📌", ... }
+```
+
+**Test iOS Integration**:
+```bash
+# 1. Add links to carrierBag via AdvanceKey
+# 2. Open Enchantment Emporium in The Advancement app
+# 3. Cast Glyphenge spell
+# 4. Receive emojicode
+```
+
+**Test Linktree Import**:
+```bash
+cd linkifier
+./linktree-importer.js https://linktr.ee/username
+
+# Automatically uses Glyphenge to render SVG
+# Returns emojicode: 💚🌍🔑💎🌟💎🎨🐉📌
+```
+
+### Files Modified
+
+**Glyphenge Service** (`glyphenge/server.js`):
+- Added: POST /create endpoint (lines 594-744)
+- Added: SVG template functions (lines 407-566)
+- Uses: bdo-js SDK for BDO creation
+- Uses: sessionless-node for key generation
+
+**iOS EnchantmentEmporiumViewController** (`src/The Advancement/Shared (App)/EnchantmentEmporiumViewController.swift`):
+- Removed: ~350 lines of SVG generation
+- Changed: castGlyphenge() to POST to Glyphenge
+- Changed: createGlyphengeFromLinks() to POST to Glyphenge
+- File size: 920 lines → 566 lines
+
+**Linktree Importer** (`linkifier/linktree-importer.js`):
+- Removed: ~200 lines of SVG generation
+- Removed: bdo-js and sessionless-node imports
+- Changed: POST to Glyphenge instead of BDO service
+- File size: 431 lines → 225 lines
+
+### Architecture Diagram
+
+```
+┌──────────────────────────────────────────────────────┐
+│                    Clients                            │
+│                                                       │
+│  ┌───────────────┐         ┌──────────────────┐     │
+│  │ iOS Emporium  │         │  Linktree CLI    │     │
+│  │ (566 lines)   │         │  (225 lines)     │     │
+│  └───────┬───────┘         └────────┬─────────┘     │
+│          │                          │               │
+│          │  POST {links, title}     │               │
+│          └──────────┬───────────────┘               │
+└─────────────────────┼──────────────────────────────┘
+                      │
+                      ▼
+         ┌────────────────────────────┐
+         │   Glyphenge Service        │
+         │   (Port 3010)              │
+         │                            │
+         │  POST /create              │
+         │  1. Choose template        │
+         │  2. Generate SVG           │
+         │  3. Create BDO             │
+         │  4. Make public            │
+         │  5. Return emojicode       │
+         └────────────┬───────────────┘
+                      │
+                      ▼
+         ┌────────────────────────────┐
+         │   BDO Service              │
+         │   (Port 3003)              │
+         │                            │
+         │  - Store BDO with SVG      │
+         │  - Generate emojicode      │
+         │  - Public access via emoji │
+         └────────────────────────────┘
+```
 
 ## Integration with Planet Nine Ecosystem
 
