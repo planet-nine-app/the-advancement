@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Advancement - Privacy-First Browser Extension</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 60px 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        h1 {
+            text-align: center;
+            color: #10b981;
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .tagline {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 1.3rem;
+            margin-bottom: 60px;
+            font-weight: 300;
+        }
+
+        .video-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 20;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* Floating SVG icons */
+        .floating-icons {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .icon {
+            position: absolute;
+            opacity: 0.3;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-30px) rotate(5deg);
+            }
+        }
+
+        /* Position icons around the page */
+        .icon:nth-child(1) { top: 10%; left: 5%; width: 80px; animation-delay: 0s; }
+        .icon:nth-child(2) { top: 15%; right: 8%; width: 90px; animation-delay: -2s; }
+        .icon:nth-child(3) { top: 40%; left: 3%; width: 75px; animation-delay: -4s; }
+        .icon:nth-child(4) { top: 45%; right: 5%; width: 85px; animation-delay: -6s; }
+        .icon:nth-child(5) { top: 70%; left: 7%; width: 80px; animation-delay: -8s; }
+        .icon:nth-child(6) { top: 75%; right: 10%; width: 95px; animation-delay: -10s; }
+        .icon:nth-child(7) { top: 25%; left: 15%; width: 70px; animation-delay: -12s; }
+        .icon:nth-child(8) { top: 60%; right: 15%; width: 88px; animation-delay: -14s; }
+        .icon:nth-child(9) { top: 85%; left: 20%; width: 82px; animation-delay: -16s; }
+        .icon:nth-child(10) { top: 30%; right: 20%; width: 78px; animation-delay: -18s; }
+
+        footer {
+            text-align: center;
+            color: #64748b;
+            margin-top: 80px;
+            padding: 40px 20px;
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: #10b981;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Beta Access Section */
+        .beta-access {
+            max-width: 700px;
+            margin: 60px auto;
+            padding: 40px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border-radius: 20px;
+            border: 2px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .beta-access h2 {
+            text-align: center;
+            color: #10b981;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .beta-access p {
+            text-align: center;
+            color: #cbd5e1;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .platform-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .platform-btn {
+            display: inline-block;
+            width: 100%;
+            max-width: 400px;
+            padding: 18px 30px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .platform-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(16, 185, 129, 0.5);
+        }
+
+        .platform-btn.android {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            cursor: pointer;
+        }
+
+        .platform-btn.android:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        @keyframes wiggleScale {
+            0% {
+                transform: scale(1) rotate(0deg);
+            }
+            15% {
+                transform: scale(1.15) rotate(-3deg);
+            }
+            30% {
+                transform: scale(1.15) rotate(3deg);
+            }
+            45% {
+                transform: scale(1.15) rotate(-3deg);
+            }
+            60% {
+                transform: scale(1.15) rotate(3deg);
+            }
+            75% {
+                transform: scale(1.15) rotate(-1deg);
+            }
+            90% {
+                transform: scale(1.15) rotate(1deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        .email-note.animate {
+            animation: wiggleScale 0.6s ease-in-out;
+        }
+
+        .email-note {
+            font-size: 0.95rem;
+            color: #94a3b8;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .beta-access {
+                padding: 30px 20px;
+            }
+
+            .beta-access h2 {
+                font-size: 1.5rem;
+            }
+
+            .platform-btn {
+                font-size: 1rem;
+                padding: 15px 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating ecommerce vertical icons -->
+    <div class="floating-icons">
+        <!-- Marketplace -->
+        <svg class="icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="30" width="60" height="50" fill="none" stroke="#10b981" stroke-width="3"/>
+            <path d="M 15 30 L 50 10 L 85 30" fill="none" stroke="#10b981" stroke-width="3"/>
+            <rect x="35" y="50" width="10" height="20" fill="#10b981"/>
+            <rect x="55" y="50" width="10" height="20" fill="#10b981"/>
+            <circle cx="40" cy="40" r="3" fill="#10b981"/>
+            <circle cx="60" cy="40" r="3" fill="#10b981"/>
+        </svg>
+
+        <!-- Groceries -->
+        <svg class="icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 25 30 L 30 70 L 70 70 L 75 30 Z" fill="none" stroke="#10b981" stroke-width="3"/>
+            <line x1="35" y1="30" x2="35" y2="25" stroke="#10b981" stroke-width="3"/>
+            <line x1="50" y1="30" x2="50" y2="20" stroke="#10b981" stroke-width="3"/>
+            <line x1="65" y1="30" x2="65" y2="25" stroke="#10b981" stroke-width="3"/>
+            <circle cx="40" cy="80" r="5" fill="#10b981"/>
+            <circle cx="60" cy="80" r="5" fill="#10b981"/>
+        </svg>
+
+        <!-- Ridesharing -->
+        <svg class="icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="40" width="60" height="30" rx="5" fill="none" stroke="#10b981" stroke-width="3"/>
+            <path d="M 25 40 Q 30 25 50 25 Q 70 25 75 40" fill="none" stroke="#10b981" stroke-width="3"/>
+            <circle cx="33" cy="70" r="6" fill="none" stroke="#10b981" stroke-width="3"/>
+            <circle cx="67" cy="70" r="6" fill="none" stroke="#10b981" stroke-width="3"/>
+            <rect x="35" y="48" width="12" height="10" fill="#10b981"/>
+            <rect x="53" y="48" width="12" height="10" fill="#10b981"/>
+        </svg>
+
+        <!-- Print on Demand -->
+        <svg class="icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="25" y="20" width="50" height="60" fill="none" stroke="#10b981" stroke-width="3"/>
+            <path d="M 35 35 Q 50 25 65 35" fill="none" stroke="#10b981" stroke-width="2"/>
+            <line x1="35" y1="45" x2="65" y2="45" stroke="#10b981" stroke-width="2"/>
+            <line x1="35" y1="55" x2="65" y2="55" stroke="#10b981" stroke-width="2"/>
+            <line x1="35" y1="65" x2="55" y2="65" stroke="#10b981" stroke-width="2"/>
+        </svg>
+
+        <!-- Publishing -->
+        <svg class="icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="30" y="15" width="40" height="70" fill="none" stroke="#10b981" stroke-width="3"/>
+            <line x1="40" y1="30" x2="60" y2="30" stroke="#10b981" stroke-width="2"/>
+            <line x1="40" y1="40" x2="60" y2="40" stroke="#10b981" stroke-width="2"/>
+            <line x1="40" y1="50" x2="60" y2="50" stroke="#10b981" stroke-width="2"/>
+            <line x1="40" y1="60" x2="55" y2="60" stroke="#10b981" stroke-width="2"/>
+            <line x1="30" y1="15" x2="30" y2="85" stroke="#10b981" stroke-width="2"/>
+        </svg>
+
+        <!-- Music -->
+        <svg class="icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 45 20 L 45 60 M 65 15 L 65 55" stroke="#10b981" stroke-width="3"/>
+            <ellipse cx="40" cy="65" rx="8" ry="5" fill="#10b981"/>
+            <ellipse cx="60" cy="60" rx="8" ry="5" fill="#10b981"/>
+            <path d="M 45 20 Q 55 18 65 15" fill="none" stroke="#10b981" stroke-width="3"/>
+            <circle cx="50" cy="35" r="3" fill="#10b981"/>
+        </svg>
+
+        <!-- Games -->
+        <svg class="icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="25" y="35" width="50" height="30" rx="15" fill="none" stroke="#10b981" stroke-width="3"/>
+            <circle cx="40" cy="50" r="4" fill="#10b981"/>
+            <circle cx="60" cy="45" r="3" fill="#10b981"/>
+            <circle cx="68" cy="50" r="3" fill="#10b981"/>
+            <line x1="35" y1="43" x2="35" y2="53" stroke="#10b981" stroke-width="2"/>
+            <line x1="30" y1="48" x2="40" y2="48" stroke="#10b981" stroke-width="2"/>
+        </svg>
+
+        <!-- Food Delivery -->
+        <svg class="icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="45" r="25" fill="none" stroke="#10b981" stroke-width="3"/>
+            <path d="M 40 35 Q 50 30 60 35" fill="none" stroke="#10b981" stroke-width="2"/>
+            <path d="M 38 45 Q 50 55 62 45" fill="none" stroke="#10b981" stroke-width="2"/>
+            <line x1="30" y1="70" x2="70" y2="70" stroke="#10b981" stroke-width="3"/>
+            <circle cx="40" cy="80" r="5" fill="#10b981"/>
+            <circle cx="60" cy="80" r="5" fill="#10b981"/>
+        </svg>
+
+        <!-- Blogging -->
+        <svg class="icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect x="25" y="25" width="50" height="50" rx="5" fill="none" stroke="#10b981" stroke-width="3"/>
+            <line x1="35" y1="35" x2="65" y2="35" stroke="#10b981" stroke-width="2"/>
+            <line x1="35" y1="45" x2="65" y2="45" stroke="#10b981" stroke-width="2"/>
+            <line x1="35" y1="55" x2="65" y2="55" stroke="#10b981" stroke-width="2"/>
+            <line x1="35" y1="65" x2="50" y2="65" stroke="#10b981" stroke-width="2"/>
+            <circle cx="60" cy="65" r="3" fill="#10b981"/>
+        </svg>
+
+        <!-- Fashion -->
+        <svg class="icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 35 25 L 35 45 L 25 45 L 25 85 L 75 85 L 75 45 L 65 45 L 65 25 L 50 30 Z" fill="none" stroke="#10b981" stroke-width="3"/>
+            <circle cx="50" cy="20" r="8" fill="none" stroke="#10b981" stroke-width="2"/>
+            <line x1="40" y1="55" x2="60" y2="55" stroke="#10b981" stroke-width="2"/>
+            <line x1="40" y1="65" x2="60" y2="65" stroke="#10b981" stroke-width="2"/>
+        </svg>
+    </div>
+
+    <div class="container">
+        <h1>The Advancement</h1>
+        <p class="tagline">Privacy-First Commerce for Every Industry</p>
+
+        <div class="video-wrapper">
+            <div style="padding:64.95% 0 0 0;position:relative;">
+                <iframe src="https://player.vimeo.com/video/1133899411?badge=0&amp;autopause=0&amp;player_id=0&amp;app_id=58479"
+                        frameborder="0"
+                        allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        style="position:absolute;top:0;left:0;width:100%;height:100%;"
+                        title="The Advancement"></iframe>
+            </div>
+        </div>
+
+        <div class="beta-access">
+            <h2>🚀 Join the Beta</h2>
+            <p>The Advancement is currently in beta testing. Get early access to privacy-first commerce.</p>
+
+            <div class="platform-buttons">
+                <a href="https://testflight.apple.com/join/zEZEJTqa" class="platform-btn" target="_blank">
+                    📱 iOS TestFlight Beta
+                </a>
+
+                <div style="width: 100%; max-width: 400px; text-align: center;">
+                    <div class="platform-btn android" id="android-btn">
+                        🤖 Android Beta 👇
+                    </div>
+                    <p class="email-note" id="email-instructions">
+                        👉 Email zach at the-advancement dot com to request access 👈
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Covering ads with peace. Enabling commerce without surveillance.</p>
+            <p style="margin-top: 10px;">
+                <a href="https://github.com/planet-nine-app/the-advancement" target="_blank">View on GitHub</a>
+            </p>
+        </footer>
+    </div>
+
+    <script src="https://player.vimeo.com/api/player.js"></script>
+    <script>
+        // Android button click handler
+        document.getElementById('android-btn').addEventListener('click', function() {
+            const instructions = document.getElementById('email-instructions');
+
+            // Remove animation class if it exists
+            instructions.classList.remove('animate');
+
+            // Trigger reflow to restart animation
+            void instructions.offsetWidth;
+
+            // Add animation class
+            instructions.classList.add('animate');
+
+            // Remove class after animation completes
+            setTimeout(function() {
+                instructions.classList.remove('animate');
+            }, 600);
+        });
+    </script>
+</body>
+</html>

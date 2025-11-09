@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # Planet Nine core services (existing container)
+  allyabase:
+    image: planetnine/allyabase:latest
+    container_name: planet-nine-ecosystem
+    ports:
+      - "2525:2525"  # ContinueBee
+      - "2999:2999"  # Julia
+      - "3000:3000"  # Allyabase (wiki)
+      - "3001:3001"  # Joan
+      - "3002:3002"  # Pref
+      - "3003:3003"  # BDO
+      - "3004:3004"  # Fount
+      - "3005:3005"  # Addie
+      - "3007:3007"  # Dolores
+      - "7243:7243"  # Aretha
+      - "7277:7277"  # Sanora
+    networks:
+      - planetnine
+
+  # LinkHub - First Planet Nine Business
+  linkhub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: planet-nine-linkhub
+    ports:
+      - "3010:3010"
+    environment:
+      - PORT=3010
+      - FOUNT_BASE_URL=http://allyabase:3004/
+    depends_on:
+      - allyabase
+    networks:
+      - planetnine
+    restart: unless-stopped
+
+networks:
+  planetnine:
+    driver: bridge

@@ -197,6 +197,37 @@ open http://localhost:3456
 - **BDO Service Integration**: Proper authentication with "The Advancement" hash
 - **Complete Flow**: Create copy → Add affiliate payee → Generate keys → Create BDO user → Make public → Get emojicode → Save to store
 
+### ✅ **Linkifier CLI Tool** (January 2025)
+- **Simple CLI**: Create link BDOs from the command line with a single command
+- **Auto-Title Generation**: Extracts domain name from URL if no title provided
+- **Public BDO Creation**: Uses bdo-js SDK to create public BDOs with emojicodes
+- **Beautiful SVG**: Green gradient design (320x100) with link icon and title
+- **External Link Handling**: SVG uses `target="_blank"` to open in default browser
+- **Sessionless Keys**: Generates temporary keys for each link BDO
+- **Flexible Configuration**: Works with any BDO service URL via `--bdo-url` flag
+- **Default Environment**: Configured for plr.allyabase.com wiki plugin pattern
+- **Usage**: `./linkifier.js <url> [title] [--bdo-url=<service>]`
+
+### ✅ **CarrierBag Links Collection** (January 2025)
+- **Linktree Alternative**: Personal links stored in carrierBag "links" collection
+- **Auto URL Detection**: AdvanceKey automatically detects URLs in clipboard/input
+- **Colorful SVGs**: 6 random gradient schemes (green, blue, purple, pink, orange, red)
+- **Domain Extraction**: Clean domain names from URLs (github.com, twitter.com, etc.)
+- **iOS & Android**: Full clipboard monitoring and URL saving on both platforms
+- **Automatic Saving**: URLs saved immediately when detected
+- **Clickable Cards**: 320x100 SVG cards with link icon and "Tap to open" text
+
+### ✅ **LinkHub - First Planet Nine Business** (January 2025)
+- **Linktree Service**: Privacy-first link management and display service
+- **Three SVG Templates**: Adapts layout based on link count (1-6, 7-13, 14-20 links)
+- **Fount Integration**: Fetches user's carrierBag links via fount-js
+- **Sessionless Auth**: Cryptographic authentication via query params (pubKey, timestamp, signature)
+- **Beautiful Layouts**: Compact, Grid, and Dense SVG templates with gradient cards
+- **Demo Mode**: Shows demo links for unauthenticated visitors
+- **Subscription Model**: $9.99/year placeholder with future custom subdomain support
+- **Purchase CTA**: Integrated Stripe payment placeholder
+- **Port**: 3010 (default)
+
 ## File Structure
 
 ```
@@ -212,6 +243,14 @@ the-advancement/
 │   ├── TEST-ENVIRONMENT.md     # Testing infrastructure
 │   └── TECHNICAL-ARCHITECTURE.md # Implementation patterns
 ├── test-server/                # Complete test environment
+├── linkifier/                  # CLI tool for creating link BDOs
+│   ├── linkifier.js            # Main executable
+│   ├── package.json            # Dependencies
+│   └── README.md               # Usage documentation
+├── linkhub/                    # LinkHub service (first PN business)
+│   ├── server.js               # Express server with Fount integration
+│   ├── package.json            # Dependencies (bdo-js, fount-js, addie-js)
+│   └── README.md               # Service documentation
 ├── resources/                  # Assets (ficus.jpg, etc.)
 └── src/
     ├── servers/                # Federated wiki deployment

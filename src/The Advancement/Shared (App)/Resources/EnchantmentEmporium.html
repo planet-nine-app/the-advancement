@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Enchantment Emporium</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a0033 0%, #2d0a4e 100%);
+            color: #e0d4f7;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(167, 139, 250, 0.3);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #fbbf24;
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+        }
+
+        .header p {
+            font-size: 14px;
+            color: #a78bfa;
+            font-style: italic;
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        /* Enchantment List */
+        .enchantment-card {
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border: 2px solid rgba(167, 139, 250, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .enchantment-card:hover {
+            border-color: #a78bfa;
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(167, 139, 250, 0.3);
+        }
+
+        .enchantment-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .enchantment-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fbbf24;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .enchantment-subtitle {
+            font-size: 14px;
+            color: #a78bfa;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .enchantment-description {
+            font-size: 13px;
+            color: #d1c4e9;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .enchantment-cost {
+            margin-top: 12px;
+            padding: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 12px;
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        /* Detail View */
+        .detail-container {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(167, 139, 250, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .detail-icon {
+            font-size: 72px;
+            text-align: center;
+            margin-bottom: 15px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        .detail-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #fbbf24;
+            text-align: center;
+            margin-bottom: 8px;
+            text-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+        }
+
+        .detail-subtitle {
+            font-size: 16px;
+            color: #a78bfa;
+            text-align: center;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .detail-section {
+            margin-bottom: 20px;
+        }
+
+        .detail-section h3 {
+            font-size: 16px;
+            color: #fbbf24;
+            margin-bottom: 10px;
+        }
+
+        .detail-section p {
+            font-size: 14px;
+            color: #d1c4e9;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .detail-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .detail-section li {
+            font-size: 14px;
+            color: #d1c4e9;
+            padding: 6px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .detail-section li::before {
+            content: "✨";
+            position: absolute;
+            left: 0;
+        }
+
+        .requirements {
+            background: rgba(167, 139, 250, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+
+        .requirement-item.met {
+            color: #10b981;
+        }
+
+        .requirement-item.not-met {
+            color: #ef4444;
+        }
+
+        .requirement-item .icon {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 10px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #a78bfa;
+            margin-top: 5px;
+        }
+
+        /* Buttons */
+        .button {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .button-primary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .button-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+        }
+
+        .button-primary:active {
+            transform: translateY(0);
+        }
+
+        .button-primary:disabled {
+            background: #4b5563;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .button-secondary {
+            background: rgba(167, 139, 250, 0.2);
+            color: #a78bfa;
+            border: 1px solid rgba(167, 139, 250, 0.5);
+        }
+
+        .button-secondary:hover {
+            background: rgba(167, 139, 250, 0.3);
+        }
+
+        /* Success View */
+        .success-container {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .success-icon {
+            font-size: 96px;
+            margin: 20px 0;
+            animation: successPop 0.6s ease-out;
+        }
+
+        @keyframes successPop {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .success-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #fbbf24;
+            margin-bottom: 15px;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+        }
+
+        .success-message {
+            font-size: 16px;
+            color: #d1c4e9;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        .emojicode-display {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%);
+            border: 2px solid #10b981;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 25px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .emojicode-display:hover {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(5, 150, 105, 0.3) 100%);
+            transform: scale(1.02);
+        }
+
+        .emojicode-label {
+            font-size: 12px;
+            color: #a78bfa;
+            margin-bottom: 8px;
+        }
+
+        .emojicode-value {
+            font-size: 32px;
+            font-family: monospace;
+            color: #10b981;
+            letter-spacing: 3px;
+            margin: 10px 0;
+        }
+
+        .emojicode-hint {
+            font-size: 11px;
+            color: #a78bfa;
+            font-style: italic;
+        }
+
+        .url-display {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+            color: #a78bfa;
+            word-break: break-all;
+        }
+
+        /* Coming Soon */
+        .coming-soon {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px dashed rgba(167, 139, 250, 0.3);
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .coming-soon-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .coming-soon-text {
+            font-size: 18px;
+            color: #a78bfa;
+            opacity: 0.7;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .loading-spinner {
+            font-size: 48px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #a78bfa;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✨ The Enchantment Emporium ✨</h1>
+        <p>Weave magic into reality through ancient spells</p>
+    </div>
+
+    <!-- List View -->
+    <div id="list-view" class="view active">
+        <div id="enchantments-container"></div>
+
+        <div class="coming-soon">
+            <div class="coming-soon-icon">🌟</div>
+            <div class="coming-soon-text">More enchantments await...</div>
+        </div>
+    </div>
+
+    <!-- Detail View -->
+    <div id="detail-view" class="view">
+        <div class="detail-container">
+            <div id="detail-content"></div>
+        </div>
+    </div>
+
+    <!-- Success View -->
+    <div id="success-view" class="view">
+        <div class="success-container">
+            <div id="success-content"></div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner">✨</div>
+            <div class="loading-text">Casting enchantment...</div>
+        </div>
+    </div>
+
+    <script>
+        // Available enchantments
+        const enchantments = [
+            {
+                id: 'glyphenge',
+                name: 'Glyphenge',
+                subtitle: 'Link Tapestry Weaver',
+                icon: '🔮',
+                description: 'Weave your links into a mystical public tapestry accessible to anyone via an emojicode rune.',
+                costMP: 10,
+                costNineum: 100,
+                requirements: [
+                    { text: 'At least 1 link in carrierBag', check: 'hasLinks' },
+                    { text: '10 MP or 100 nineum', check: 'hasFunds' }
+                ],
+                benefits: [
+                    'Public link tapestry',
+                    'Shareable emojicode rune',
+                    '3 mystical layouts',
+                    'No tracking or surveillance'
+                ]
+            }
+        ];
+
+        // Global state
+        let currentEnchantment = null;
+        let userStats = {
+            linkCount: 0,
+            mp: 0,
+            nineum: 0
+        };
+
+        // Initialize
+        function init() {
+            renderEnchantmentList();
+            requestUserStats();
+        }
+
+        // Request user stats from Swift
+        function requestUserStats() {
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.emporium) {
+                window.webkit.messageHandlers.emporium.postMessage({
+                    action: 'getUserStats'
+                });
+            }
+        }
+
+        // Update user stats (called from Swift)
+        window.updateUserStats = function(stats) {
+            userStats = stats;
+            console.log('User stats updated:', userStats);
+
+            // Refresh current view if needed
+            if (currentEnchantment) {
+                showDetail(currentEnchantment.id);
+            }
+        };
+
+        // Render enchantment list
+        function renderEnchantmentList() {
+            const container = document.getElementById('enchantments-container');
+            container.innerHTML = '';
+
+            enchantments.forEach(ench => {
+                const card = document.createElement('div');
+                card.className = 'enchantment-card';
+                card.onclick = () => showDetail(ench.id);
+
+                card.innerHTML = `
+                    <div class="enchantment-icon">${ench.icon}</div>
+                    <div class="enchantment-name">${ench.name}</div>
+                    <div class="enchantment-subtitle">${ench.subtitle}</div>
+                    <div class="enchantment-description">${ench.description}</div>
+                    <div class="enchantment-cost">
+                        Cost: ${ench.costMP} MP or ${ench.costNineum} nineum
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // Show detail view
+        function showDetail(enchantmentId) {
+            const ench = enchantments.find(e => e.id === enchantmentId);
+            if (!ench) return;
+
+            currentEnchantment = ench;
+
+            // Check requirements
+            const canCast = checkRequirements(ench);
+
+            const detailHTML = `
+                <div class="detail-icon">${ench.icon}</div>
+                <div class="detail-title">${ench.name}</div>
+                <div class="detail-subtitle">${ench.subtitle}</div>
+
+                <div class="detail-section">
+                    <p>${ench.description}</p>
+                </div>
+
+                <div class="detail-section">
+                    <h3>✨ What You Get:</h3>
+                    <ul>
+                        ${ench.benefits.map(b => `<li>${b}</li>`).join('')}
+                    </ul>
+                </div>
+
+                <div class="requirements">
+                    <h3 style="margin-bottom: 10px;">📋 Requirements:</h3>
+                    ${renderRequirements(ench)}
+                </div>
+
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value">${userStats.linkCount}</div>
+                        <div class="stat-label">Links Ready</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">${userStats.mp}</div>
+                        <div class="stat-label">MP</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">${userStats.nineum}</div>
+                        <div class="stat-label">Nineum</div>
+                    </div>
+                </div>
+
+                <button class="button button-primary" ${!canCast ? 'disabled' : ''} onclick="castEnchantment('${ench.id}')">
+                    Cast ${ench.name} (${ench.costMP} MP)
+                </button>
+
+                <button class="button button-secondary" onclick="backToList()">
+                    Back
+                </button>
+            `;
+
+            document.getElementById('detail-content').innerHTML = detailHTML;
+            switchView('detail-view');
+        }
+
+        // Render requirements
+        function renderRequirements(ench) {
+            return ench.requirements.map(req => {
+                const met = checkRequirement(req.check);
+                const icon = met ? '✅' : '❌';
+                const className = met ? 'met' : 'not-met';
+
+                return `
+                    <div class="requirement-item ${className}">
+                        <span class="icon">${icon}</span>
+                        <span>${req.text}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Check single requirement
+        function checkRequirement(check) {
+            switch(check) {
+                case 'hasLinks':
+                    return userStats.linkCount > 0;
+                case 'hasFunds':
+                    return userStats.mp >= 10 || userStats.nineum >= 100;
+                default:
+                    return false;
+            }
+        }
+
+        // Check all requirements
+        function checkRequirements(ench) {
+            return ench.requirements.every(req => checkRequirement(req.check));
+        }
+
+        // Cast enchantment
+        function castEnchantment(enchantmentId) {
+            const ench = enchantments.find(e => e.id === enchantmentId);
+            if (!ench) return;
+
+            // Show loading
+            document.getElementById('loading-overlay').classList.add('active');
+
+            // Send to Swift
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.emporium) {
+                window.webkit.messageHandlers.emporium.postMessage({
+                    action: 'castEnchantment',
+                    enchantmentId: enchantmentId
+                });
+            }
+        }
+
+        // Show success (called from Swift)
+        window.showSuccess = function(data) {
+            // Hide loading
+            document.getElementById('loading-overlay').classList.remove('active');
+
+            const ench = currentEnchantment;
+            const successHTML = `
+                <div class="success-icon">✨</div>
+                <div class="success-title">Enchantment Cast!</div>
+                <div class="success-message">
+                    Your ${ench.name} has been woven into the fabric of Planet Nine!
+                </div>
+
+                <div class="emojicode-display" onclick="copyEmojicode('${data.emojicode}')">
+                    <div class="emojicode-label">Your Emojicode Rune:</div>
+                    <div class="emojicode-value">${data.emojicode}</div>
+                    <div class="emojicode-hint">👆 Tap to copy</div>
+                </div>
+
+                <div class="success-message">
+                    Share this rune with anyone! They can view your tapestry at:
+                </div>
+
+                <div class="url-display">
+                    https://glyphenge.com?emojicode=${data.emojicode}
+                </div>
+
+                <button class="button button-primary" onclick="shareEmojicode('${data.emojicode}')">
+                    📤 Share Emojicode
+                </button>
+
+                <button class="button button-secondary" onclick="viewTapestry('${data.emojicode}')">
+                    👁️ View My Tapestry
+                </button>
+
+                <button class="button button-secondary" onclick="backToList()">
+                    Done
+                </button>
+            `;
+
+            document.getElementById('success-content').innerHTML = successHTML;
+            switchView('success-view');
+        };
+
+        // Show error (called from Swift)
+        window.showError = function(message) {
+            // Hide loading
+            document.getElementById('loading-overlay').classList.remove('active');
+
+            alert(message);
+        };
+
+        // Copy emojicode
+        function copyEmojicode(emojicode) {
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.emporium) {
+                window.webkit.messageHandlers.emporium.postMessage({
+                    action: 'copyEmojicode',
+                    emojicode: emojicode
+                });
+            }
+        }
+
+        // Share emojicode
+        function shareEmojicode(emojicode) {
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.emporium) {
+                window.webkit.messageHandlers.emporium.postMessage({
+                    action: 'shareEmojicode',
+                    emojicode: emojicode
+                });
+            }
+        }
+
+        // View tapestry
+        function viewTapestry(emojicode) {
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.emporium) {
+                window.webkit.messageHandlers.emporium.postMessage({
+                    action: 'viewTapestry',
+                    emojicode: emojicode
+                });
+            }
+        }
+
+        // Back to list
+        function backToList() {
+            currentEnchantment = null;
+            switchView('list-view');
+            requestUserStats(); // Refresh stats
+        }
+
+        // Switch view
+        function switchView(viewId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>

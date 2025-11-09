@@ -1,0 +1,29 @@
+{
+  "name": "@planetnine/glyphenge",
+  "version": "1.0.0",
+  "description": "Planet Nine Glyphenge - Mystical link tapestry weaver from The Enchantment Emporium",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "planet-nine",
+    "glyphenge",
+    "enchantment-emporium",
+    "link-tapestry",
+    "magic",
+    "bdo",
+    "emojicode"
+  ],
+  "author": "Planet Nine",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "bdo-js": "latest",
+    "addie-js": "latest",
+    "fount-js": "latest",
+    "sessionless-node": "latest"
+  }
+}

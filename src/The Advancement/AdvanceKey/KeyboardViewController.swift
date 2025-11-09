@@ -354,6 +354,11 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             NSLog("ADVANCEKEY: ✨ Auto-detected emojicode: %@", String(emojicode.prefix(30)))
             decodeAndFetchBDO(emojicode: emojicode)
         }
+        // Check for URL
+        else if let url = extractURL(from: fullContext) {
+            NSLog("ADVANCEKEY: 🔗 Auto-detected URL: %@", url)
+            offerToSaveURL(url: url)
+        }
     }
 
     func extract8EmojiShortcode(from text: String) -> String? {
@@ -399,6 +404,137 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
 
         NSLog("ADVANCEKEY: ❌ No regex match found in text: %@", String(text.prefix(50)))
         return nil
+    }
+
+    func extractURL(from text: String) -> String? {
+        // Look for URLs using data detector
+        let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
+        let matches = detector?.matches(in: text, options: [], range: NSRange(location: 0, length: text.utf16.count))
+
+        if let match = matches?.first, let url = match.url {
+            let urlString = url.absoluteString
+            // Only process http/https URLs
+            if urlString.hasPrefix("http://") || urlString.hasPrefix("https://") {
+                return urlString
+            }
+        }
+
+        return nil
+    }
+
+    func offerToSaveURL(url: String) {
+        NSLog("ADVANCEKEY: 💾 Offering to save URL: %@", url)
+
+        // Extract domain for title
+        let title = extractDomain(from: url)
+
+        // Generate SVG for the link
+        let svgContent = generateLinkSVG(title: title, url: url)
+
+        // Create link data
+        let linkData: [String: Any] = [
+            "title": title,
+            "url": url,
+            "type": "link",
+            "svgContent": svgContent,
+            "savedAt": ISO8601DateFormatter().string(from: Date())
+        ]
+
+        // Save to links collection
+        SharedUserDefaults.addToCarrierBagCollection("links", item: linkData)
+
+        NSLog("ADVANCEKEY: ✅ Saved URL to links collection")
+
+        // Show success message
+        displayLinkSaved(title: title, url: url, svg: svgContent)
+    }
+
+    func extractDomain(from urlString: String) -> String {
+        guard let url = URL(string: urlString) else { return urlString }
+        let host = url.host ?? urlString
+        // Remove www. prefix
+        return host.replacingOccurrences(of: "^www\\.", with: "", options: .regularExpression)
+    }
+
+    func generateLinkSVG(title: String, url: String) -> String {
+        // Escape special characters
+        let escapedTitle = title
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+        let escapedURL = url.replacingOccurrences(of: "\"", with: "&quot;")
+
+        // Truncate title if too long
+        let displayTitle = escapedTitle.count > 25 ? String(escapedTitle.prefix(25)) + "..." : escapedTitle
+
+        // Choose random gradient color scheme
+        let gradients = [
+            ["#10b981", "#059669"],  // Green
+            ["#3b82f6", "#2563eb"],  // Blue
+            ["#8b5cf6", "#7c3aed"],  // Purple
+            ["#ec4899", "#db2777"],  // Pink
+            ["#f59e0b", "#d97706"],  // Orange
+            ["#ef4444", "#dc2626"],  // Red
+        ]
+        let gradient = gradients.randomElement() ?? gradients[0]
+
+        return """
+        <svg width="320" height="100" viewBox="0 0 320 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="linkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:\(gradient[0]);stop-opacity:1" />
+              <stop offset="100%" style="stop-color:\(gradient[1]);stop-opacity:1" />
+            </linearGradient>
+          </defs>
+
+          <rect fill="url(#linkGrad)" width="320" height="100" rx="12"/>
+
+          <!-- Link icon -->
+          <text x="30" y="60" fill="white" font-size="36">🔗</text>
+
+          <!-- Title -->
+          <text x="75" y="50" fill="white" font-size="16" font-weight="bold">
+            \(displayTitle)
+          </text>
+
+          <!-- Tap to open text -->
+          <text x="75" y="70" fill="rgba(255,255,255,0.8)" font-size="12">
+            Tap to open link
+          </text>
+
+          <!-- Clickable area -->
+          <a href="\(escapedURL)" target="_blank">
+            <rect x="0" y="0" width="320" height="100" fill="transparent" cursor="pointer">
+              <title>Open \(escapedTitle)</title>
+            </rect>
+          </a>
+        </svg>
+        """
+    }
+
+    func displayLinkSaved(title: String, url: String, svg: String) {
+        let escapedTitle = title.replacingOccurrences(of: "\"", with: "&quot;")
+        let escapedURL = url.replacingOccurrences(of: "\"", with: "&quot;")
+        let escapedSVG = svg
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "`", with: "\\`")
+            .replacingOccurrences(of: "$", with: "\\$")
+
+        let html = """
+        <div style="padding: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; text-align: center; font-family: -apple-system; border-radius: 12px; margin: 10px;">
+            <div style="font-size: 48px; margin-bottom: 10px;">🔗</div>
+            <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">Link Saved!</div>
+            <div style="font-size: 14px; margin-bottom: 12px; opacity: 0.9;">\(escapedTitle)</div>
+            <div style="font-size: 12px; margin-bottom: 16px; opacity: 0.7; word-break: break-all;">\(escapedURL)</div>
+            <div style="margin: 20px auto; max-width: 320px;">
+                \(escapedSVG)
+            </div>
+            <div style="font-size: 12px; margin-top: 16px; opacity: 0.9;">This link has been saved to your carrierBag links collection!</div>
+        </div>
+        """
+
+        DispatchQueue.main.async {
+            self.resultWebView.loadHTMLString(html, baseURL: nil)
+        }
     }
 
     func decodeAndFetchBDO(emojicode: String) {
