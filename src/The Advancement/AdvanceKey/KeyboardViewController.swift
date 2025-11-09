@@ -473,12 +473,12 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             ["#8b5cf6", "#7c3aed"],  // Purple
             ["#ec4899", "#db2777"],  // Pink
             ["#f59e0b", "#d97706"],  // Orange
-            ["#ef4444", "#dc2626"],  // Red
+            ["#a78bfa", "#8b5cf6"],  // Light Purple
         ]
         let gradient = gradients.randomElement() ?? gradients[0]
 
         return """
-        <svg width="320" height="100" viewBox="0 0 320 100" xmlns="http://www.w3.org/2000/svg">
+        <svg width="600" height="180" viewBox="0 0 600 180" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="linkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" style="stop-color:\(gradient[0]);stop-opacity:1" />
@@ -486,24 +486,24 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             </linearGradient>
           </defs>
 
-          <rect fill="url(#linkGrad)" width="320" height="100" rx="12"/>
+          <rect fill="url(#linkGrad)" width="600" height="180" rx="16"/>
 
           <!-- Link icon -->
-          <text x="30" y="60" fill="white" font-size="36">🔗</text>
+          <text x="50" y="110" fill="white" font-size="64">🔗</text>
 
           <!-- Title -->
-          <text x="75" y="50" fill="white" font-size="16" font-weight="bold">
+          <text x="140" y="90" fill="white" font-size="32" font-weight="bold">
             \(displayTitle)
           </text>
 
           <!-- Tap to open text -->
-          <text x="75" y="70" fill="rgba(255,255,255,0.8)" font-size="12">
+          <text x="140" y="130" fill="rgba(255,255,255,0.8)" font-size="22">
             Tap to open link
           </text>
 
           <!-- Clickable area -->
           <a href="\(escapedURL)" target="_blank">
-            <rect x="0" y="0" width="320" height="100" fill="transparent" cursor="pointer">
+            <rect x="0" y="0" width="600" height="180" fill="transparent" cursor="pointer">
               <title>Open \(escapedTitle)</title>
             </rect>
           </a>
@@ -525,7 +525,7 @@ class KeyboardViewController: UIInputViewController, WKScriptMessageHandler {
             <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">Link Saved!</div>
             <div style="font-size: 14px; margin-bottom: 12px; opacity: 0.9;">\(escapedTitle)</div>
             <div style="font-size: 12px; margin-bottom: 16px; opacity: 0.7; word-break: break-all;">\(escapedURL)</div>
-            <div style="margin: 20px auto; max-width: 320px;">
+            <div style="margin: 20px auto; max-width: 600px; overflow-x: auto;">
                 \(escapedSVG)
             </div>
             <div style="font-size: 12px; margin-top: 16px; opacity: 0.9;">This link has been saved to your carrierBag links collection!</div>

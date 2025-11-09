@@ -5,7 +5,8 @@
   "main": "linkifier.js",
   "type": "module",
   "bin": {
-    "linkifier": "./linkifier.js"
+    "linkifier": "./linkifier.js",
+    "linktree-importer": "./linktree-importer.js"
   },
   "scripts": {
     "test": "node linkifier.js https://example.com"
@@ -20,6 +21,8 @@
   "license": "MIT",
   "dependencies": {
     "bdo-js": "latest",
-    "sessionless-node": "latest"
+    "sessionless-node": "latest",
+    "cheerio": "^1.0.0-rc.12",
+    "node-fetch": "^3.3.2"
   }
 }

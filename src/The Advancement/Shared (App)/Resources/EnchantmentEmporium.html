@@ -97,11 +97,12 @@
 
         .enchantment-cost {
             margin-top: 12px;
-            padding: 8px;
-            background: rgba(16, 185, 129, 0.1);
+            padding: 10px 12px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
             border-radius: 8px;
             text-align: center;
-            font-size: 12px;
+            font-size: 14px;
             color: #10b981;
             font-weight: 600;
         }
@@ -477,6 +478,25 @@
                     'Shareable emojicode rune',
                     '3 mystical layouts',
                     'No tracking or surveillance'
+                ]
+            },
+            {
+                id: 'linktree-importer',
+                name: 'Linktree Importer',
+                subtitle: 'Social Link Portal',
+                icon: '🌳',
+                description: 'Import your existing Linktree page into a privacy-first Glyphenge tapestry with automatic link extraction.',
+                costMP: 10,
+                costNineum: 100,
+                requirements: [
+                    { text: '10 MP or 100 nineum', check: 'hasFunds' }
+                ],
+                benefits: [
+                    'Auto-extract all Linktree links',
+                    'Privacy-first alternative',
+                    'Beautiful composite SVG',
+                    'Shareable emojicode',
+                    'No tracking, no surveillance'
                 ]
             }
         ];

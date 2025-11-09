@@ -591,6 +591,158 @@ function escapeXML(str) {
         .replace(/'/g, '&apos;');
 }
 
+/**
+ * POST /create - Create Glyphenge BDO
+ *
+ * Flow:
+ * 1. Receive raw BDO data with links from client
+ * 2. Generate composite SVG based on link count
+ * 3. Add svgContent to BDO
+ * 4. Forward complete BDO to BDO service
+ * 5. Return emojicode to client
+ *
+ * Body:
+ * {
+ *   "title": "My Links",
+ *   "links": [{"title": "...", "url": "..."}, ...],
+ *   "source": "linktree" | "manual" (optional),
+ *   "sourceUrl": "https://..." (optional)
+ * }
+ */
+app.post('/create', async (req, res) => {
+    try {
+        console.log('🎨 Creating Glyphenge BDO...');
+
+        const { title, links, source, sourceUrl } = req.body;
+
+        // Validate input
+        if (!links || !Array.isArray(links) || links.length === 0) {
+            return res.status(400).json({
+                error: 'Missing or invalid links array'
+            });
+        }
+
+        console.log(`📊 Received ${links.length} links`);
+        console.log(`📝 Title: ${title || 'My Links'}`);
+
+        // Generate composite SVG
+        const linkCount = links.length;
+        const svgTemplate = chooseSVGTemplate(linkCount);
+        const svgContent = svgTemplate(links);
+
+        console.log(`✅ Generated SVG (${svgContent.length} characters)`);
+
+        // Build complete BDO with svgContent
+        const glyphengeBDO = {
+            title: title || 'My Links',
+            type: 'glyphenge',
+            svgContent: svgContent,  // Added by Glyphenge!
+            links: links,
+            createdAt: new Date().toISOString()
+        };
+
+        // Add optional metadata
+        if (source) glyphengeBDO.source = source;
+        if (sourceUrl) glyphengeBDO.sourceUrl = sourceUrl;
+
+        // Generate temporary keys for BDO
+        const saveKeys = (keys) => { tempKeys = keys; };
+        const getKeys = () => tempKeys;
+        let tempKeys = null;
+
+        const keys = await sessionless.generateKeys(saveKeys, getKeys);
+        const pubKey = keys.pubKey;
+
+        console.log(`🔑 Generated keys: ${pubKey.substring(0, 16)}...`);
+
+        // Create BDO via BDO service
+        const timestamp = Date.now().toString();
+        const hash = 'Glyphenge';
+        const message = timestamp + pubKey + hash;
+        const signature = sessionless.sign(message, keys.privateKey);
+
+        const createEndpoint = `${bdoLib.baseURL}user/create`;
+        console.log(`🌐 Creating BDO at: ${createEndpoint}`);
+
+        const createResponse = await fetch(createEndpoint, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                timestamp: timestamp,
+                pubKey: pubKey,
+                hash: hash,
+                signature: signature,
+                bdo: glyphengeBDO
+            })
+        });
+
+        if (!createResponse.ok) {
+            const errorText = await createResponse.text();
+            console.error('❌ BDO creation failed:', errorText);
+            return res.status(500).json({
+                error: 'Failed to create BDO',
+                details: errorText
+            });
+        }
+
+        const createData = await createResponse.json();
+        const bdoUUID = createData.uuid;
+
+        console.log(`✅ BDO created: ${bdoUUID}`);
+
+        // Make BDO public to get emojicode
+        const updateTimestamp = Date.now().toString();
+        const updateMessage = updateTimestamp + bdoUUID + hash;
+        const updateSignature = sessionless.sign(updateMessage, keys.privateKey);
+
+        const updateEndpoint = `${bdoLib.baseURL}user/${bdoUUID}/bdo`;
+        console.log(`🌍 Making BDO public...`);
+
+        const updateResponse = await fetch(updateEndpoint, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                timestamp: updateTimestamp,
+                pubKey: pubKey,
+                hash: hash,
+                signature: updateSignature,
+                bdo: glyphengeBDO,
+                public: true  // Generate emojicode!
+            })
+        });
+
+        if (!updateResponse.ok) {
+            const errorText = await updateResponse.text();
+            console.error('❌ Failed to make BDO public:', errorText);
+            return res.status(500).json({
+                error: 'Failed to generate emojicode',
+                details: errorText
+            });
+        }
+
+        const updateData = await updateResponse.json();
+        const emojicode = updateData.emojiShortcode;
+
+        console.log(`✅ Emojicode generated: ${emojicode}`);
+
+        // Return complete response
+        res.json({
+            success: true,
+            uuid: bdoUUID,
+            pubKey: pubKey,
+            emojicode: emojicode,
+            url: `http://localhost:${PORT}?emojicode=${encodeURIComponent(emojicode)}`,
+            bdoUrl: `${bdoLib.baseURL}emoji/${encodeURIComponent(emojicode)}`
+        });
+
+    } catch (error) {
+        console.error('❌ Error creating Glyphenge:', error);
+        res.status(500).json({
+            error: error.message
+        });
+    }
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`\n✅ Glyphenge tapestry weaver active on port ${PORT}`);
@@ -599,5 +751,7 @@ app.listen(PORT, () => {
     console.log(`   Demo tapestry: http://localhost:${PORT}`);
     console.log(`   By emojicode rune: http://localhost:${PORT}?emojicode=😀🔗💎🌟...`);
     console.log(`   Legacy auth: http://localhost:${PORT}?pubKey=YOUR_PUBKEY&timestamp=TIMESTAMP&signature=SIGNATURE`);
+    console.log(`\n📝 Creation Endpoint:`);
+    console.log(`   POST /create - Create new Glyphenge with auto-generated SVG`);
     console.log('');
 });
