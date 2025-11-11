@@ -30,6 +30,7 @@ const PORT = process.env.PORT || 3010;
 // Configuration
 const FOUNT_BASE_URL = process.env.FOUNT_BASE_URL || 'https://plr.allyabase.com/plugin/allyabase/fount/';
 const BDO_BASE_URL = process.env.BDO_BASE_URL || 'https://plr.allyabase.com/plugin/allyabase/bdo/';
+const GLYPHENGE_BASE_URL = process.env.GLYPHENGE_BASE_URL || `http://localhost:${PORT}`;
 
 // Configure SDKs
 fountLib.baseURL = FOUNT_BASE_URL.endsWith('/') ? FOUNT_BASE_URL : `${FOUNT_BASE_URL}/`;
@@ -145,6 +146,98 @@ app.get('/', async (req, res) => {
 
         // Generate HTML page
         const html = generateGlyphengePage(displayLinks, userName, authenticated, pubKey);
+
+        res.send(html);
+
+    } catch (error) {
+        console.error('❌ Server error:', error);
+        res.status(500).send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Glyphenge Error</title>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body {
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        min-height: 100vh;
+                        margin: 0;
+                        padding: 20px;
+                    }
+                    .error {
+                        background: rgba(255,255,255,0.1);
+                        padding: 40px;
+                        border-radius: 20px;
+                        text-align: center;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="error">
+                    <h1>⚠️ Error</h1>
+                    <p>${error.message}</p>
+                </div>
+            </body>
+            </html>
+        `);
+    }
+});
+
+/**
+ * Alphanumeric path route - /t/:uuid
+ * Provides shareable alphanumeric URLs instead of emojicodes
+ */
+app.get('/t/:uuid', async (req, res) => {
+    try {
+        const { uuid } = req.params;
+
+        console.log(`🔗 Fetching Glyphenge by UUID: ${uuid}`);
+
+        let links = [];
+        let userName = 'Anonymous';
+
+        try {
+            // Fetch BDO by UUID to get emojicode
+            const linkHubBDO = await bdoLib.getBDO(uuid);
+
+            console.log('📦 Glyphenge BDO fetched:', JSON.stringify(linkHubBDO).substring(0, 200));
+
+            // Extract emojicode and links from BDO data
+            const bdoData = linkHubBDO.bdo || linkHubBDO;
+            const emojicode = linkHubBDO.emojiShortcode || bdoData.emojiShortcode;
+
+            if (bdoData.links && Array.isArray(bdoData.links)) {
+                links = bdoData.links;
+                console.log(`🔗 Found ${links.length} links in Glyphenge BDO`);
+            } else {
+                console.log('⚠️ No links array found in Glyphenge BDO');
+            }
+
+            // Get user name from BDO
+            userName = bdoData.title || bdoData.name || 'My Links';
+
+        } catch (error) {
+            console.error('❌ Failed to fetch Glyphenge BDO by UUID:', error.message);
+            // Continue with empty links array
+        }
+
+        // If no links, show demo links
+        if (links.length === 0) {
+            links = getDemoLinks();
+            userName = 'Demo Links';
+        }
+
+        // Limit to 20 links
+        const displayLinks = links.slice(0, 20);
+
+        // Generate HTML page
+        const html = generateGlyphengePage(displayLinks, userName, false, null);
 
         res.send(html);
 
@@ -785,7 +878,8 @@ app.post('/create', async (req, res) => {
             uuid: bdoUUID,
             pubKey: pubKey,
             emojicode: emojicode,
-            url: `http://localhost:${PORT}?emojicode=${encodeURIComponent(emojicode)}`,
+            url: `${GLYPHENGE_BASE_URL}?emojicode=${encodeURIComponent(emojicode)}`,
+            alphanumericUrl: `${GLYPHENGE_BASE_URL}/t/${bdoUUID}`,
             bdoUrl: `${bdoLib.baseURL}emoji/${encodeURIComponent(emojicode)}`
         });
 
@@ -937,7 +1031,8 @@ async function resolveGlyphengeSpell(caster, payload) {
     return {
         success: true,
         emojicode: emojicode,
-        url: `http://localhost:${PORT}?emojicode=${encodeURIComponent(emojicode)}`,
+        url: `${GLYPHENGE_BASE_URL}?emojicode=${encodeURIComponent(emojicode)}`,
+        alphanumericUrl: `${GLYPHENGE_BASE_URL}/t/${bdoUUID}`,
         bdoUrl: `${bdoLib.baseURL}emoji/${encodeURIComponent(emojicode)}`,
         payment: paymentResult.payment
     };
@@ -1064,7 +1159,8 @@ async function resolveGlyphtreeSpell(caster, payload) {
     return {
         success: true,
         emojicode: emojicode,
-        url: `http://localhost:${PORT}?emojicode=${encodeURIComponent(emojicode)}`,
+        url: `${GLYPHENGE_BASE_URL}?emojicode=${encodeURIComponent(emojicode)}`,
+        alphanumericUrl: `${GLYPHENGE_BASE_URL}/t/${bdoUUID}`,
         bdoUrl: `${bdoLib.baseURL}emoji/${encodeURIComponent(emojicode)}`,
         linkCount: links.length,
         payment: paymentResult.payment
