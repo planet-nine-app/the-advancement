@@ -56,6 +56,20 @@ http://localhost:3010?emojicode=😀🔗💎🌟...
 
 **No authentication required for viewers!** Glyphenge acts as a public proxy, fetching the enchanted BDO from the BDO service using the emojicode rune.
 
+### Alphanumeric URLs (Browser-Friendly)
+
+For easier sharing in browsers where emoji URLs may be problematic:
+
+```
+http://localhost:3010/t/02a1b2c3d4e5f6a7
+```
+
+Every tapestry gets **both URL formats**:
+- **Emojicode URL**: Persistent, human-memorable, fun to share
+- **Alphanumeric URL**: Browser-friendly, easier to copy/paste
+
+**Note**: Alphanumeric URLs use in-memory storage and are lost on server restart. For long-term sharing, always use emojicodes.
+
 ### Legacy Authenticated Mode
 
 For backward compatibility with direct carrierBag access:
@@ -99,7 +113,19 @@ http://localhost:3010?pubKey=YOUR_PUBKEY&timestamp=TIMESTAMP&signature=SIGNATURE
 
 - `PORT` - Server port (default: 3010)
 - `FOUNT_BASE_URL` - Fount service URL
-- `BDO_BASE_URL` - BDO service URL for emojicode lookups
+- `BDO_BASE_URL` - BDO service URL for fetching BDOs by emojicode or pubKey
+
+**Architecture Note**: Glyphenge returns only identifiers (emojicode, pubKey), not full URLs. **Clients construct URLs** based on their own environment. This eliminates the need for the server to know its deployment context.
+
+**Docker Testing**: Simply set the PORT to match your container port mapping:
+
+```bash
+# For Docker Base 1 (port 5125)
+PORT=5125 node server.js
+
+# Or use the convenience script
+./start-for-docker-tests.sh
+```
 
 ## NPM Dependencies
 

@@ -30,7 +30,6 @@ const PORT = process.env.PORT || 3010;
 // Configuration
 const FOUNT_BASE_URL = process.env.FOUNT_BASE_URL || 'https://plr.allyabase.com/plugin/allyabase/fount/';
 const BDO_BASE_URL = process.env.BDO_BASE_URL || 'https://plr.allyabase.com/plugin/allyabase/bdo/';
-const GLYPHENGE_BASE_URL = process.env.GLYPHENGE_BASE_URL || `http://localhost:${PORT}`;
 
 // Configure SDKs
 fountLib.baseURL = FOUNT_BASE_URL.endsWith('/') ? FOUNT_BASE_URL : `${FOUNT_BASE_URL}/`;
@@ -38,8 +37,10 @@ bdoLib.baseURL = BDO_BASE_URL.endsWith('/') ? BDO_BASE_URL : `${BDO_BASE_URL}/`;
 
 console.log('✨ Glyphenge - Mystical Link Tapestry');
 console.log('====================================');
+console.log(`📍 Port: ${PORT}`);
 console.log(`📍 Fount URL: ${fountLib.baseURL}`);
 console.log(`📍 BDO URL: ${bdoLib.baseURL}`);
+console.log('📍 Architecture: Server returns identifiers only (clients construct URLs)');
 
 // Middleware
 app.use(express.static(join(__dirname, 'public')));
@@ -189,28 +190,43 @@ app.get('/', async (req, res) => {
     }
 });
 
-/**
- * Alphanumeric path route - /t/:uuid
- * Provides shareable alphanumeric URLs instead of emojicodes
- */
-app.get('/t/:uuid', async (req, res) => {
-    try {
-        const { uuid } = req.params;
+// In-memory mapping of pubKey to metadata for alphanumeric URLs
+const bdoMetadataMap = new Map();
 
-        console.log(`🔗 Fetching Glyphenge by UUID: ${uuid}`);
+/**
+ * Alphanumeric path route - /t/:identifier
+ * Provides shareable alphanumeric URLs using pubKey (first 16 chars)
+ */
+app.get('/t/:identifier', async (req, res) => {
+    try {
+        const { identifier } = req.params;
+
+        console.log(`🔗 Fetching Glyphenge by identifier: ${identifier}`);
+
+        // Look up full pubKey from identifier
+        let pubKey = null;
+        for (const [key, metadata] of bdoMetadataMap.entries()) {
+            if (key.startsWith(identifier)) {
+                pubKey = key;
+                break;
+            }
+        }
+
+        if (!pubKey) {
+            throw new Error('Tapestry not found. Identifier may have expired.');
+        }
 
         let links = [];
         let userName = 'Anonymous';
 
         try {
-            // Fetch BDO by UUID to get emojicode
-            const linkHubBDO = await bdoLib.getBDO(uuid);
+            // Fetch BDO by pubKey
+            const linkHubBDO = await bdoLib.getBDO(pubKey);
 
             console.log('📦 Glyphenge BDO fetched:', JSON.stringify(linkHubBDO).substring(0, 200));
 
-            // Extract emojicode and links from BDO data
+            // Extract links from BDO data
             const bdoData = linkHubBDO.bdo || linkHubBDO;
-            const emojicode = linkHubBDO.emojiShortcode || bdoData.emojiShortcode;
 
             if (bdoData.links && Array.isArray(bdoData.links)) {
                 links = bdoData.links;
@@ -223,7 +239,7 @@ app.get('/t/:uuid', async (req, res) => {
             userName = bdoData.title || bdoData.name || 'My Links';
 
         } catch (error) {
-            console.error('❌ Failed to fetch Glyphenge BDO by UUID:', error.message);
+            console.error('❌ Failed to fetch Glyphenge BDO:', error.message);
             // Continue with empty links array
         }
 
@@ -872,15 +888,19 @@ app.post('/create', async (req, res) => {
 
         console.log(`✅ Emojicode generated: ${emojicode}`);
 
-        // Return complete response
+        // Store pubKey metadata for alphanumeric URL lookup
+        bdoMetadataMap.set(pubKey, {
+            uuid: bdoUUID,
+            emojicode: emojicode,
+            createdAt: new Date()
+        });
+
+        // Return identifiers only - let client construct URLs
         res.json({
             success: true,
             uuid: bdoUUID,
             pubKey: pubKey,
-            emojicode: emojicode,
-            url: `${GLYPHENGE_BASE_URL}?emojicode=${encodeURIComponent(emojicode)}`,
-            alphanumericUrl: `${GLYPHENGE_BASE_URL}/t/${bdoUUID}`,
-            bdoUrl: `${bdoLib.baseURL}emoji/${encodeURIComponent(emojicode)}`
+            emojicode: emojicode
         });
 
     } catch (error) {
@@ -1028,12 +1048,19 @@ async function resolveGlyphengeSpell(caster, payload) {
         console.warn('⚠️ Failed to save to carrierBag, but spell succeeded');
     }
 
+    // Store pubKey metadata for alphanumeric URL lookup
+    bdoMetadataMap.set(pubKey, {
+        uuid: bdoUUID,
+        emojicode: emojicode,
+        createdAt: new Date()
+    });
+
+    // Return identifiers only - let client construct URLs
     return {
         success: true,
+        uuid: bdoUUID,
+        pubKey: pubKey,
         emojicode: emojicode,
-        url: `${GLYPHENGE_BASE_URL}?emojicode=${encodeURIComponent(emojicode)}`,
-        alphanumericUrl: `${GLYPHENGE_BASE_URL}/t/${bdoUUID}`,
-        bdoUrl: `${bdoLib.baseURL}emoji/${encodeURIComponent(emojicode)}`,
         payment: paymentResult.payment
     };
 }
@@ -1156,12 +1183,19 @@ async function resolveGlyphtreeSpell(caster, payload) {
         console.warn('⚠️ Failed to save to carrierBag, but spell succeeded');
     }
 
+    // Store pubKey metadata for alphanumeric URL lookup
+    bdoMetadataMap.set(pubKey, {
+        uuid: bdoUUID,
+        emojicode: emojicode,
+        createdAt: new Date()
+    });
+
+    // Return identifiers only - let client construct URLs
     return {
         success: true,
+        uuid: bdoUUID,
+        pubKey: pubKey,
         emojicode: emojicode,
-        url: `${GLYPHENGE_BASE_URL}?emojicode=${encodeURIComponent(emojicode)}`,
-        alphanumericUrl: `${GLYPHENGE_BASE_URL}/t/${bdoUUID}`,
-        bdoUrl: `${bdoLib.baseURL}emoji/${encodeURIComponent(emojicode)}`,
         linkCount: links.length,
         payment: paymentResult.payment
     };
