@@ -94,11 +94,12 @@ class EnchantmentEmporiumViewController: UIViewController, WKScriptMessageHandle
             sendUserStats()
 
         case "castEnchantment":
-            guard let enchantmentId = messageBody["enchantmentId"] as? String else {
-                NSLog("EMPORIUM: ❌ Missing enchantmentId")
+            guard let enchantmentId = messageBody["enchantmentId"] as? String,
+                  let paymentMethod = messageBody["paymentMethod"] as? String else {
+                NSLog("EMPORIUM: ❌ Missing enchantmentId or paymentMethod")
                 return
             }
-            castEnchantment(enchantmentId: enchantmentId)
+            castEnchantment(enchantmentId: enchantmentId, paymentMethod: paymentMethod)
 
         case "copyEmojicode":
             guard let emojicode = messageBody["emojicode"] as? String else { return }
@@ -160,21 +161,25 @@ class EnchantmentEmporiumViewController: UIViewController, WKScriptMessageHandle
 
     // MARK: - Cast Enchantment
 
-    private func castEnchantment(enchantmentId: String) {
-        NSLog("EMPORIUM: ✨ Casting enchantment: %@", enchantmentId)
+    private func castEnchantment(enchantmentId: String, paymentMethod: String) {
+        NSLog("EMPORIUM: ✨ Casting enchantment: %@ with payment method: %@", enchantmentId, paymentMethod)
 
+        // Route to appropriate MAGIC spell
         switch enchantmentId {
         case "glyphenge":
-            castGlyphenge()
+            castGlyphengeSpell(paymentMethod: paymentMethod)
         case "linktree-importer":
-            castLinktreeImporter()
+            castGlyphtreeSpell(paymentMethod: paymentMethod)
         default:
-            showErrorJS("Unknown enchantment: \(enchantmentId)")
+            NSLog("EMPORIUM: ❌ Unknown enchantment: %@", enchantmentId)
+            showErrorJS("Unknown enchantment")
         }
     }
 
-    private func castGlyphenge() {
-        NSLog("EMPORIUM: 🔮 Casting Glyphenge enchantment...")
+    // MARK: - MAGIC Spell Casting
+
+    private func castGlyphengeSpell(paymentMethod: String) {
+        NSLog("EMPORIUM: 🔮 Casting glyphenge MAGIC spell...")
 
         // 1. Validate requirements
         guard let carrierBag = SharedUserDefaults.getCarrierBag(),
@@ -187,91 +192,111 @@ class EnchantmentEmporiumViewController: UIViewController, WKScriptMessageHandle
 
         NSLog("EMPORIUM: ✅ Found %d links in carrierBag", links.count)
 
-        // 2. Send to Glyphenge service to create BDO (server generates SVG)
-        let glyphengeServiceURL = "http://localhost:5125"
-        let createEndpoint = "\(glyphengeServiceURL)/create"
+        // 2. Get sessionless keys for caster authentication
+        guard let keys = sessionless.getKeys() else {
+            NSLog("EMPORIUM: ❌ No sessionless keys")
+            showErrorJS("Authentication error")
+            return
+        }
 
-        guard let createURL = URL(string: createEndpoint) else {
-            NSLog("EMPORIUM: ❌ Invalid Glyphenge URL")
+        // 3. Build MAGIC spell request
+        let glyphengeServiceURL = "http://localhost:5125"
+        let spellEndpoint = "\(glyphengeServiceURL)/magic/spell/glyphenge"
+
+        guard let spellURL = URL(string: spellEndpoint) else {
+            NSLog("EMPORIUM: ❌ Invalid spell URL")
             showErrorJS("Invalid Glyphenge service URL")
             return
         }
 
-        var createRequest = URLRequest(url: createURL)
-        createRequest.httpMethod = "POST"
-        createRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let message = timestamp + keys.publicKey  // caster signature: timestamp + pubKey
 
-        let glyphengePayload: [String: Any] = [
-            "title": "My Glyphenge",
-            "links": links,
-            "source": "emporium",
-            "sourceUrl": "enchantment-emporium"
-        ]
-
-        do {
-            createRequest.httpBody = try JSONSerialization.data(withJSONObject: glyphengePayload)
-        } catch {
-            NSLog("EMPORIUM: ❌ Failed to serialize request")
-            showErrorJS("Failed to prepare request")
+        guard let signature = sessionless.sign(message: message) else {
+            NSLog("EMPORIUM: ❌ Failed to sign spell cast")
+            showErrorJS("Signature error")
             return
         }
 
-        NSLog("EMPORIUM: 🌐 Sending to Glyphenge service...")
+        var spellRequest = URLRequest(url: spellURL)
+        spellRequest.httpMethod = "POST"
+        spellRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        // Execute Glyphenge request
-        URLSession.shared.dataTask(with: createRequest) { [weak self] data, response, error in
+        let spellPayload: [String: Any] = [
+            "caster": [
+                "pubKey": keys.publicKey,
+                "timestamp": timestamp,
+                "signature": signature
+            ],
+            "payload": [
+                "paymentMethod": paymentMethod,
+                "links": links,
+                "title": "My Glyphenge"
+            ]
+        ]
+
+        do {
+            spellRequest.httpBody = try JSONSerialization.data(withJSONObject: spellPayload)
+        } catch {
+            NSLog("EMPORIUM: ❌ Failed to serialize spell request")
+            showErrorJS("Failed to prepare spell")
+            return
+        }
+
+        NSLog("EMPORIUM: ✨ Casting glyphenge spell...")
+
+        // 4. Cast the spell (atomic operation: payment + SVG + BDO + carrierBag)
+        URLSession.shared.dataTask(with: spellRequest) { [weak self] data, response, error in
             guard let self = self else { return }
 
             if let error = error {
-                NSLog("EMPORIUM: ❌ Network error: %@", error.localizedDescription)
+                NSLog("EMPORIUM: ❌ Spell cast error: %@", error.localizedDescription)
                 DispatchQueue.main.async {
-                    self.showErrorJS("Network error: \(error.localizedDescription)")
+                    self.showErrorJS("Spell failed: \(error.localizedDescription)")
                 }
                 return
             }
 
             guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let emojicode = json["emojicode"] as? String else {
-                NSLog("EMPORIUM: ❌ Failed to create Glyphenge")
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                NSLog("EMPORIUM: ❌ Invalid spell response")
                 if let data = data, let responseString = String(data: data, encoding: .utf8) {
                     NSLog("EMPORIUM: Response: %@", responseString)
                 }
                 DispatchQueue.main.async {
-                    self.showErrorJS("Failed to create Glyphenge")
+                    self.showErrorJS("Invalid spell response")
                 }
                 return
             }
 
-            NSLog("EMPORIUM: ✅ Glyphenge created with emojicode: %@", emojicode)
+            guard let success = json["success"] as? Bool, success else {
+                let errorMsg = json["error"] as? String ?? "Spell failed"
+                NSLog("EMPORIUM: ❌ Spell failed: %@", errorMsg)
+                DispatchQueue.main.async {
+                    self.showErrorJS(errorMsg)
+                }
+                return
+            }
 
-            // Save to carrierBag "store" collection
+            guard let emojicode = json["emojicode"] as? String else {
+                NSLog("EMPORIUM: ❌ No emojicode in response")
+                DispatchQueue.main.async {
+                    self.showErrorJS("Spell succeeded but no emojicode returned")
+                }
+                return
+            }
+
+            NSLog("EMPORIUM: ✅ Spell cast successful! Emojicode: %@", emojicode)
+
             DispatchQueue.main.async {
-                self.saveGlyphengeToStore(emojicode: emojicode)
                 self.showSuccessJS(emojicode: emojicode)
             }
 
         }.resume()
     }
 
-    private func saveGlyphengeToStore(emojicode: String) {
-        NSLog("EMPORIUM: 💼 Saving Glyphenge to carrierBag store...")
-
-        let glyphengeRecord: [String: Any] = [
-            "type": "glyphenge",
-            "emojicode": emojicode,
-            "url": "https://glyphenge.com?emojicode=\(emojicode)",
-            "createdAt": ISO8601DateFormatter().string(from: Date())
-        ]
-
-        SharedUserDefaults.addToCarrierBagCollection("store", item: glyphengeRecord)
-        NSLog("EMPORIUM: ✅ Glyphenge saved to store collection")
-    }
-
-    // MARK: - Linktree Importer
-
-    private func castLinktreeImporter() {
-        NSLog("EMPORIUM: 🌳 Casting Linktree Importer enchantment...")
+    private func castGlyphtreeSpell(paymentMethod: String) {
+        NSLog("EMPORIUM: 🌳 Casting glyphtree MAGIC spell...")
 
         // Prompt for Linktree URL
         let alert = UIAlertController(
@@ -290,205 +315,126 @@ class EnchantmentEmporiumViewController: UIViewController, WKScriptMessageHandle
 
         alert.addAction(UIAlertAction(title: "Import", style: .default) { [weak self] _ in
             guard let self = self,
-                  let urlString = alert.textFields?.first?.text,
-                  !urlString.isEmpty else {
+                  let linktreeUrl = alert.textFields?.first?.text,
+                  !linktreeUrl.isEmpty else {
                 NSLog("EMPORIUM: ❌ No URL provided")
                 return
             }
 
-            self.importFromLinktree(urlString: urlString)
+            self.executeGlyphtreeSpell(linktreeUrl: linktreeUrl, paymentMethod: paymentMethod)
         })
 
         present(alert, animated: true)
     }
 
-    private func importFromLinktree(urlString: String) {
-        NSLog("EMPORIUM: 📎 Importing from: %@", urlString)
+    private func executeGlyphtreeSpell(linktreeUrl: String, paymentMethod: String) {
+        NSLog("EMPORIUM: 🔮 Executing glyphtree spell for: %@", linktreeUrl)
 
         // Validate URL
-        guard let url = URL(string: urlString),
+        guard let url = URL(string: linktreeUrl),
               url.host?.contains("linktr.ee") == true else {
             NSLog("EMPORIUM: ❌ Invalid Linktree URL")
             showErrorJS("Please enter a valid linktr.ee URL")
             return
         }
 
-        // Fetch Linktree page
-        var request = URLRequest(url: url)
-        request.setValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", forHTTPHeaderField: "User-Agent")
-
-        NSLog("EMPORIUM: 🌐 Fetching Linktree page...")
-
-        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
-            guard let self = self else { return }
-
-            if let error = error {
-                NSLog("EMPORIUM: ❌ Fetch error: %@", error.localizedDescription)
-                DispatchQueue.main.async {
-                    self.showErrorJS("Failed to fetch Linktree page: \(error.localizedDescription)")
-                }
-                return
-            }
-
-            guard let data = data,
-                  let html = String(data: data, encoding: .utf8) else {
-                NSLog("EMPORIUM: ❌ No data received")
-                DispatchQueue.main.async {
-                    self.showErrorJS("Failed to load Linktree page")
-                }
-                return
-            }
-
-            NSLog("EMPORIUM: ✅ Page fetched (%d characters)", html.count)
-
-            // Parse links from HTML
-            self.parseLinktreeLinks(html: html, sourceUrl: urlString)
-
-        }.resume()
-    }
-
-    private func parseLinktreeLinks(html: String, sourceUrl: String) {
-        NSLog("EMPORIUM: 🔍 Parsing Linktree data...")
-
-        // Extract __NEXT_DATA__ script tag
-        guard let regex = try? NSRegularExpression(pattern: "<script id=\"__NEXT_DATA__\"[^>]*>(.*?)</script>", options: .dotMatchesLineSeparators),
-              let match = regex.firstMatch(in: html, options: [], range: NSRange(html.startIndex..., in: html)),
-              let jsonRange = Range(match.range(at: 1), in: html) else {
-            NSLog("EMPORIUM: ❌ Could not find __NEXT_DATA__ in page")
-            DispatchQueue.main.async {
-                self.showErrorJS("Could not extract data from Linktree page - format may have changed")
-            }
+        // Get sessionless keys for caster authentication
+        guard let keys = sessionless.getKeys() else {
+            NSLog("EMPORIUM: ❌ No sessionless keys")
+            showErrorJS("Authentication error")
             return
         }
 
-        let jsonString = String(html[jsonRange])
-        NSLog("EMPORIUM: ✅ Found __NEXT_DATA__ (%d characters)", jsonString.count)
-
-        // Parse JSON
-        guard let jsonData = jsonString.data(using: .utf8),
-              let nextData = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
-              let props = nextData["props"] as? [String: Any],
-              let pageProps = props["pageProps"] as? [String: Any],
-              let account = pageProps["account"] as? [String: Any] else {
-            NSLog("EMPORIUM: ❌ Could not parse JSON structure")
-            DispatchQueue.main.async {
-                self.showErrorJS("Could not parse Linktree data structure")
-            }
-            return
-        }
-
-        let username = account["username"] as? String ?? "Unknown"
-        let pageTitle = account["pageTitle"] as? String ?? username
-
-        guard let linktreeLinks = account["links"] as? [[String: Any]],
-              !linktreeLinks.isEmpty else {
-            NSLog("EMPORIUM: ❌ No links found in account")
-            DispatchQueue.main.async {
-                self.showErrorJS("No links found in Linktree account")
-            }
-            return
-        }
-
-        NSLog("EMPORIUM: 📊 Account: %@", username)
-        NSLog("EMPORIUM: 📝 Title: %@", pageTitle)
-        NSLog("EMPORIUM: ✅ Found %d links", linktreeLinks.count)
-
-        // Convert to standard link format
-        var links: [[String: Any]] = []
-        for (index, link) in linktreeLinks.enumerated() {
-            if let title = link["title"] as? String,
-               let url = link["url"] as? String,
-               !url.isEmpty {
-                links.append([
-                    "title": title,
-                    "url": url,
-                    "savedAt": ISO8601DateFormatter().string(from: Date())
-                ])
-                NSLog("EMPORIUM:    %d. %@", index + 1, title)
-                NSLog("EMPORIUM:       → %@", url)
-            }
-        }
-
-        if links.isEmpty {
-            NSLog("EMPORIUM: ❌ No valid links found")
-            DispatchQueue.main.async {
-                self.showErrorJS("No valid links found in Linktree page")
-            }
-            return
-        }
-
-        NSLog("EMPORIUM: ✅ Extracted %d valid links", links.count)
-
-        // Create Glyphenge BDO from imported links
-        DispatchQueue.main.async {
-            self.createGlyphengeFromLinks(links: links, title: "\(username)'s Links", source: sourceUrl)
-        }
-    }
-
-    private func createGlyphengeFromLinks(links: [[String: Any]], title: String, source: String) {
-        NSLog("EMPORIUM: 🎨 Creating Glyphenge from %d imported links...", links.count)
-
-        // Send to Glyphenge service to create BDO (server generates SVG)
+        // Build MAGIC spell request
         let glyphengeServiceURL = "http://localhost:5125"
-        let createEndpoint = "\(glyphengeServiceURL)/create"
+        let spellEndpoint = "\(glyphengeServiceURL)/magic/spell/glyphtree"
 
-        guard let createURL = URL(string: createEndpoint) else {
-            NSLog("EMPORIUM: ❌ Invalid Glyphenge URL")
+        guard let spellURL = URL(string: spellEndpoint) else {
+            NSLog("EMPORIUM: ❌ Invalid spell URL")
             showErrorJS("Invalid Glyphenge service URL")
             return
         }
 
-        var createRequest = URLRequest(url: createURL)
-        createRequest.httpMethod = "POST"
-        createRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let timestamp = String(Int(Date().timeIntervalSince1970 * 1000))
+        let message = timestamp + keys.publicKey  // caster signature: timestamp + pubKey
 
-        let glyphengePayload: [String: Any] = [
-            "title": title,
-            "links": links,
-            "source": "linktree",
-            "sourceUrl": source
-        ]
-
-        do {
-            createRequest.httpBody = try JSONSerialization.data(withJSONObject: glyphengePayload)
-        } catch {
-            NSLog("EMPORIUM: ❌ Failed to serialize request")
-            showErrorJS("Failed to prepare request")
+        guard let signature = sessionless.sign(message: message) else {
+            NSLog("EMPORIUM: ❌ Failed to sign spell cast")
+            showErrorJS("Signature error")
             return
         }
 
-        NSLog("EMPORIUM: 🌐 Sending to Glyphenge service...")
+        var spellRequest = URLRequest(url: spellURL)
+        spellRequest.httpMethod = "POST"
+        spellRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        // Execute Glyphenge request
-        URLSession.shared.dataTask(with: createRequest) { [weak self] data, response, error in
+        let spellPayload: [String: Any] = [
+            "caster": [
+                "pubKey": keys.publicKey,
+                "timestamp": timestamp,
+                "signature": signature
+            ],
+            "payload": [
+                "paymentMethod": paymentMethod,
+                "linktreeUrl": linktreeUrl
+            ]
+        ]
+
+        do {
+            spellRequest.httpBody = try JSONSerialization.data(withJSONObject: spellPayload)
+        } catch {
+            NSLog("EMPORIUM: ❌ Failed to serialize spell request")
+            showErrorJS("Failed to prepare spell")
+            return
+        }
+
+        NSLog("EMPORIUM: ✨ Casting glyphtree spell...")
+
+        // Cast the spell (atomic operation: fetch + parse + payment + SVG + BDO + carrierBag)
+        URLSession.shared.dataTask(with: spellRequest) { [weak self] data, response, error in
             guard let self = self else { return }
 
             if let error = error {
-                NSLog("EMPORIUM: ❌ Network error: %@", error.localizedDescription)
+                NSLog("EMPORIUM: ❌ Spell cast error: %@", error.localizedDescription)
                 DispatchQueue.main.async {
-                    self.showErrorJS("Network error: \(error.localizedDescription)")
+                    self.showErrorJS("Spell failed: \(error.localizedDescription)")
                 }
                 return
             }
 
             guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let emojicode = json["emojicode"] as? String else {
-                NSLog("EMPORIUM: ❌ Failed to create Glyphenge")
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                NSLog("EMPORIUM: ❌ Invalid spell response")
                 if let data = data, let responseString = String(data: data, encoding: .utf8) {
                     NSLog("EMPORIUM: Response: %@", responseString)
                 }
                 DispatchQueue.main.async {
-                    self.showErrorJS("Failed to create Glyphenge")
+                    self.showErrorJS("Invalid spell response")
                 }
                 return
             }
 
-            NSLog("EMPORIUM: ✅ Glyphenge created with emojicode: %@", emojicode)
+            guard let success = json["success"] as? Bool, success else {
+                let errorMsg = json["error"] as? String ?? "Spell failed"
+                NSLog("EMPORIUM: ❌ Spell failed: %@", errorMsg)
+                DispatchQueue.main.async {
+                    self.showErrorJS(errorMsg)
+                }
+                return
+            }
 
-            // Save to carrierBag "store" collection
+            guard let emojicode = json["emojicode"] as? String,
+                  let linkCount = json["linkCount"] as? Int else {
+                NSLog("EMPORIUM: ❌ Missing data in response")
+                DispatchQueue.main.async {
+                    self.showErrorJS("Spell succeeded but incomplete response")
+                }
+                return
+            }
+
+            NSLog("EMPORIUM: ✅ Spell cast successful! Imported %d links, emojicode: %@", linkCount, emojicode)
+
             DispatchQueue.main.async {
-                self.saveGlyphengeToStore(emojicode: emojicode)
                 self.showSuccessJS(emojicode: emojicode)
             }
 

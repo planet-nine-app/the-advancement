@@ -418,6 +418,85 @@
             font-size: 18px;
             color: #a78bfa;
         }
+
+        /* Payment Method Selection */
+        .payment-methods {
+            margin: 20px 0;
+        }
+
+        .payment-method-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .payment-method-button {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid rgba(167, 139, 250, 0.3);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #a78bfa;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .payment-method-button:hover {
+            background: rgba(167, 139, 250, 0.1);
+            border-color: #a78bfa;
+        }
+
+        .payment-method-button.selected {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-color: #10b981;
+            color: white;
+        }
+
+        .payment-option {
+            display: none;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .payment-option.active {
+            display: block;
+        }
+
+        .word-of-power-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(167, 139, 250, 0.3);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0d4f7;
+            font-size: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .word-of-power-input:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+
+        .word-of-power-hint {
+            font-size: 12px;
+            color: #a78bfa;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .payment-info {
+            font-size: 14px;
+            color: #d1c4e9;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -459,6 +538,15 @@
     </div>
 
     <script>
+        // SHA256 hash function
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
         // Available enchantments
         const enchantments = [
             {
@@ -469,6 +557,7 @@
                 description: 'Weave your links into a mystical public tapestry accessible to anyone via an emojicode rune.',
                 costMP: 10,
                 costNineum: 100,
+                wordOfPowerHash: '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', // 'abracadabra'
                 requirements: [
                     { text: 'At least 1 link in carrierBag', check: 'hasLinks' },
                     { text: '10 MP or 100 nineum', check: 'hasFunds' }
@@ -488,6 +577,7 @@
                 description: 'Import your existing Linktree page into a privacy-first Glyphenge tapestry with automatic link extraction.',
                 costMP: 10,
                 costNineum: 100,
+                wordOfPowerHash: '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', // 'abracadabra'
                 requirements: [
                     { text: '10 MP or 100 nineum', check: 'hasFunds' }
                 ],
@@ -503,6 +593,7 @@
 
         // Global state
         let currentEnchantment = null;
+        let selectedPaymentMethod = 'mp';  // 'mp' or 'money'
         let userStats = {
             linkCount: 0,
             mp: 0,
@@ -605,8 +696,43 @@
                     </div>
                 </div>
 
+                <div class="payment-methods">
+                    <h3 style="margin-bottom: 10px; color: #fbbf24;">💰 Choose Payment Method:</h3>
+
+                    <div class="payment-method-buttons">
+                        <button class="payment-method-button selected" onclick="selectPaymentMethod('mp')">
+                            ✨ Magic Points
+                        </button>
+                        <button class="payment-method-button" onclick="selectPaymentMethod('money')">
+                            💳 Money
+                        </button>
+                    </div>
+
+                    <div id="mp-option" class="payment-option active">
+                        <div class="payment-info">
+                            <strong>Magic Points Payment (${ench.costMP} MP)</strong>
+                            <p style="margin-top: 8px;">Use your accumulated magic points. Requires a word of power to authorize.</p>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <input type="text"
+                                   id="word-of-power"
+                                   class="word-of-power-input"
+                                   placeholder="Enter word of power"
+                                   autocomplete="off">
+                            <div class="word-of-power-hint">Whisper the ancient word to unlock your magic...</div>
+                        </div>
+                    </div>
+
+                    <div id="money-option" class="payment-option">
+                        <div class="payment-info">
+                            <strong>Money Payment ($${(ench.costNineum / 100).toFixed(2)})</strong>
+                            <p style="margin-top: 8px;">Pay with your credit/debit card via secure Stripe payment.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <button class="button button-primary" ${!canCast ? 'disabled' : ''} onclick="castEnchantment('${ench.id}')">
-                    Cast ${ench.name} (${ench.costMP} MP)
+                    Cast ${ench.name}
                 </button>
 
                 <button class="button button-secondary" onclick="backToList()">
@@ -651,19 +777,69 @@
             return ench.requirements.every(req => checkRequirement(req.check));
         }
 
+        // Select payment method
+        function selectPaymentMethod(method) {
+            selectedPaymentMethod = method;
+
+            // Update button states
+            document.querySelectorAll('.payment-method-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+
+            // Update option visibility
+            document.getElementById('mp-option').classList.remove('active');
+            document.getElementById('money-option').classList.remove('active');
+
+            if (method === 'mp') {
+                document.getElementById('mp-option').classList.add('active');
+            } else {
+                document.getElementById('money-option').classList.add('active');
+            }
+        }
+
         // Cast enchantment
-        function castEnchantment(enchantmentId) {
+        async function castEnchantment(enchantmentId) {
             const ench = enchantments.find(e => e.id === enchantmentId);
             if (!ench) return;
+
+            // Validate payment method
+            if (selectedPaymentMethod === 'mp') {
+                // Validate word of power (CLIENT-SIDE CHECK via SHA256)
+                const wordOfPower = document.getElementById('word-of-power').value.trim();
+
+                if (!wordOfPower) {
+                    alert('❌ Please enter the word of power!');
+                    return;
+                }
+
+                // Hash the entered word and compare with spell's wordOfPowerHash
+                const enteredHash = await sha256(wordOfPower);
+
+                if (enteredHash !== ench.wordOfPowerHash) {
+                    alert('❌ Incorrect word of power! The ancient magic remains locked.');
+                    return;
+                }
+
+                // Check if user has enough MP
+                if (userStats.mp < ench.costMP) {
+                    alert(`❌ Insufficient Magic Points! You need ${ench.costMP} MP but only have ${userStats.mp} MP.`);
+                    return;
+                }
+            } else if (selectedPaymentMethod === 'money') {
+                // Money payment will go through Addie
+                // No validation needed here, Stripe will handle it
+            }
 
             // Show loading
             document.getElementById('loading-overlay').classList.add('active');
 
-            // Send to Swift
+            // Send to Swift with payment method (NO wordOfPower - already validated client-side)
             if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.emporium) {
                 window.webkit.messageHandlers.emporium.postMessage({
                     action: 'castEnchantment',
-                    enchantmentId: enchantmentId
+                    enchantmentId: enchantmentId,
+                    paymentMethod: selectedPaymentMethod
                 });
             }
         }

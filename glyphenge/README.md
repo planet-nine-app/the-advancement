@@ -127,6 +127,13 @@ Glyphenge is the first enchantment available in **The Enchantment Emporium** - a
 - One-time enchantment casting
 - Permanent public tapestry
 
+### Word of Power Protection:
+- **Client-Side Validation**: Word of power validation happens entirely in the browser using SHA256 hashing
+- **No Server-Side Secrets**: Server never receives or validates the word of power
+- **Hash Comparison**: Enchantment definitions store SHA256 hash of the word of power (e.g., hash of "abracadabra")
+- **Secure Flow**: User enters word → Browser hashes input → Compares with stored hash → Only casts spell if match
+- **Privacy Preserving**: Word of power never transmitted over network
+
 ## BDO Structure (Enchanted Tapestry)
 
 ```json

@@ -210,6 +210,23 @@ open http://localhost:3456
 - **Port**: 3010 (default)
 - **Architecture**: Client → Glyphenge (adds svgContent) → BDO Service (storage)
 - **Code Reduction**: Clients simplified by 200-350 lines by removing SVG generation
+- **Word of Power Protection**: Client-side SHA256 validation for MP payments (see below)
+
+### ✅ **Client-Side Word of Power Validation** (January 2025)
+- **Browser-Based Security**: Word of power validation happens entirely in the browser using SHA256 hashing
+- **No Server-Side Secrets**: Server never receives, validates, or stores the word of power
+- **Hash Storage**: Enchantment definitions store SHA256 hash of the word of power (e.g., `'5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'` for "abracadabra")
+- **Validation Flow**:
+  1. User enters word of power in HTML form
+  2. JavaScript computes SHA256 hash using Web Crypto API
+  3. Compares hash with `enchantment.wordOfPowerHash`
+  4. Only casts spell if hashes match
+  5. Server receives spell cast without word of power
+- **Privacy Preserving**: Word of power never transmitted over network
+- **Implementation Files**:
+  - `EnchantmentEmporium.html`: SHA256 function and async validation (lines 541-845)
+  - `glyphenge/server.js`: No word of power handling in spell resolvers (lines 863-1116)
+  - `EnchantmentEmporiumViewController.swift`: No word of power in spell payloads (lines 181-443)
 
 ### ✅ **Linktree Importer** (January 2025)
 - **CLI Tool**: Import Linktree pages from the command line

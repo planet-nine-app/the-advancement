@@ -140,6 +140,18 @@ struct SharedUserDefaults {
         NSLog("FOUNT: Set Fount user UUID: %@", uuid)
     }
 
+    // Get Addie UUID from App Group shared UserDefaults
+    static func getAddieUUID() -> String? {
+        return shared.string(forKey: "addieUserUUID")
+    }
+
+    // Set Addie UUID in App Group shared UserDefaults
+    static func setAddieUUID(_ uuid: String) {
+        shared.set(uuid, forKey: "addieUserUUID")
+        shared.synchronize()
+        NSLog("ADDIE: Set Addie user UUID: %@", uuid)
+    }
+
     // MARK: - CarrierBag Management
     static func getCarrierBag() -> [String: Any]? {
         return shared.dictionary(forKey: Keys.carrierBag)

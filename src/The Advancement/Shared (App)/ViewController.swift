@@ -76,6 +76,9 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         super.viewWillAppear(animated)
         // Update status indicator when view appears (in case cards were added)
         updateStatusIndicator()
+
+        // Update Emporium button visibility
+        updateEmporiumButtonVisibility()
     }
 #endif
 
@@ -100,6 +103,12 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         // Payment management buttons
         let manageCardsButton = createNavigationButton(title: "⚙️ Manage Cards", action: #selector(showPaymentMethods), backgroundColor: UIColor(red: 0.61, green: 0.15, blue: 0.69, alpha: 1.0))
 
+        // Enchantment Emporium button (only shown if user has saved payment method)
+        let emporiumButton = createNavigationButton(title: "✨ Emporium", action: #selector(showEmporium), backgroundColor: UIColor(red: 0.98, green: 0.75, blue: 0.14, alpha: 1.0))
+        emporiumButton.tag = 999  // Tag for easy reference
+        let hasCards = checkIfUserHasCards()
+        emporiumButton.isHidden = !hasCards
+
         let nexusButton = createNavigationButton(title: "🌐 Nexus", action: #selector(showNexus))
         let nfcButton = createNavigationButton(title: "📱 NFC Keys", action: #selector(showNFC))
 
@@ -108,6 +117,7 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
         stackView.addArrangedSubview(carrierBagButton)
         stackView.addArrangedSubview(myCardButton)
         stackView.addArrangedSubview(manageCardsButton)
+        stackView.addArrangedSubview(emporiumButton)
         stackView.addArrangedSubview(nexusButton)
         stackView.addArrangedSubview(nfcButton)
 
@@ -190,6 +200,15 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 
         let nfcVC = NFCViewController()
         let navController = UINavigationController(rootViewController: nfcVC)
+        present(navController, animated: true)
+    }
+
+    @objc private func showEmporium() {
+        NSLog("ADVANCEAPP: ✨ Showing Enchantment Emporium")
+
+        let emporiumVC = EnchantmentEmporiumViewController()
+        let navController = UINavigationController(rootViewController: emporiumVC)
+        navController.modalPresentationStyle = .fullScreen
         present(navController, animated: true)
     }
 
@@ -310,6 +329,24 @@ class ViewController: PlatformViewController, WKNavigationDelegate, WKScriptMess
 
         NSLog("ADVANCEAPP: ❌ User has no cards (neither payment methods nor issued cards)")
         return false
+    }
+
+    private func updateEmporiumButtonVisibility() {
+        NSLog("ADVANCEAPP: 🔄 Updating Emporium button visibility...")
+
+        // Find the Emporium button by tag
+        if let emporiumButton = view.viewWithTag(999) as? UIButton {
+            let hasCards = checkIfUserHasCards()
+            emporiumButton.isHidden = !hasCards
+
+            if hasCards {
+                NSLog("ADVANCEAPP: ✅ Emporium button shown (user has cards)")
+            } else {
+                NSLog("ADVANCEAPP: ⚠️ Emporium button hidden (no cards)")
+            }
+        } else {
+            NSLog("ADVANCEAPP: ⚠️ Could not find Emporium button to update")
+        }
     }
 #endif
 
