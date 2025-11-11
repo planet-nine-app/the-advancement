@@ -112,16 +112,27 @@ http://localhost:3010?pubKey=YOUR_PUBKEY&timestamp=TIMESTAMP&signature=SIGNATURE
 ## Environment Variables
 
 - `PORT` - Server port (default: 3010)
-- `FOUNT_BASE_URL` - Fount service URL
-- `BDO_BASE_URL` - BDO service URL for fetching BDOs by emojicode or pubKey
+- `FOUNT_BASE_URL` - Fount service URL for carrierBag access (legacy, default: production)
+- `BDO_BASE_URL` - **BDO service URL** for fetching BDOs (default: `http://localhost:3003`)
 
-**Architecture Note**: Glyphenge returns only identifiers (emojicode, pubKey), not full URLs. **Clients construct URLs** based on their own environment. This eliminates the need for the server to know its deployment context.
+**Architecture Note**:
+- **Clients construct URLs** - Glyphenge returns only identifiers (emojicode, pubKey), not full URLs
+- **Server fetches BDOs** - Glyphenge needs `BDO_BASE_URL` to know which BDO service to fetch from
+- **Default setup** - Glyphenge and BDO run together locally (Glyphenge:3010, BDO:3003)
 
-**Docker Testing**: Simply set the PORT to match your container port mapping:
+**Local Development** (default ports):
 
 ```bash
-# For Docker Base 1 (port 5125)
-PORT=5125 node server.js
+npm start
+# Glyphenge: http://localhost:3010
+# BDO: http://localhost:3003 (default)
+```
+
+**Docker Testing** (override ports):
+
+```bash
+# For Docker Base 1
+PORT=5125 BDO_BASE_URL=http://localhost:5114 node server.js
 
 # Or use the convenience script
 ./start-for-docker-tests.sh

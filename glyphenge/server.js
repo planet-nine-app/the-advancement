@@ -29,7 +29,7 @@ const PORT = process.env.PORT || 3010;
 
 // Configuration
 const FOUNT_BASE_URL = process.env.FOUNT_BASE_URL || 'https://plr.allyabase.com/plugin/allyabase/fount/';
-const BDO_BASE_URL = process.env.BDO_BASE_URL || 'https://plr.allyabase.com/plugin/allyabase/bdo/';
+const BDO_BASE_URL = process.env.BDO_BASE_URL || 'http://localhost:3003';
 
 // Configure SDKs
 fountLib.baseURL = FOUNT_BASE_URL.endsWith('/') ? FOUNT_BASE_URL : `${FOUNT_BASE_URL}/`;
@@ -216,12 +216,18 @@ app.get('/t/:identifier', async (req, res) => {
             throw new Error('Tapestry not found. Identifier may have expired.');
         }
 
+        // Get emojicode from metadata
+        const metadata = bdoMetadataMap.get(pubKey);
+        const emojicode = metadata.emojicode;
+
+        console.log(`🔗 Found emojicode: ${emojicode}`);
+
         let links = [];
         let userName = 'Anonymous';
 
         try {
-            // Fetch BDO by pubKey
-            const linkHubBDO = await bdoLib.getBDO(pubKey);
+            // Fetch BDO by emojicode (same as emojicode route)
+            const linkHubBDO = await bdoLib.getBDOByEmojicode(emojicode);
 
             console.log('📦 Glyphenge BDO fetched:', JSON.stringify(linkHubBDO).substring(0, 200));
 

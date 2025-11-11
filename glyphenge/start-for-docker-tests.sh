@@ -5,9 +5,9 @@
 
 echo "🚀 Starting Glyphenge for Docker test environment..."
 echo "   Glyphenge Port: 5125"
-echo "   BDO Port (Docker): 5114"
+echo "   BDO Service: http://localhost:5114"
 echo ""
-echo "Note: Clients construct URLs based on their own environment,"
-echo "so we only need to set the PORT here."
+echo "Note: Clients construct URLs, but server needs to know"
+echo "which BDO service to fetch from."
 
-PORT=5125 node server.js
+PORT=5125 BDO_BASE_URL=http://localhost:5114 node server.js
