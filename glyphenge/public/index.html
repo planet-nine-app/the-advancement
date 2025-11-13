@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glyphenge - You've Got Places to Go</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="landing-container">
+        <!-- Left Side: Example Card -->
+        <div class="left-panel">
+            <h1 class="tagline">You've got places to go.</h1>
+            <div class="example-card">
+                <svg viewBox="0 0 600 700" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Sunset gradient background -->
+                    <defs>
+                        <linearGradient id="sunsetGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+                            <stop offset="50%" style="stop-color:#feca57;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#ee5a6f;stop-opacity:1" />
+                        </linearGradient>
+
+                        <!-- Link card gradients -->
+                        <linearGradient id="linkGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="linkGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="linkGrad3" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="linkGrad4" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#ec4899;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#db2777;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Background -->
+                    <rect width="600" height="700" fill="url(#sunsetGradient)" rx="20"/>
+
+                    <!-- Title -->
+                    <text x="300" y="80" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="bold" fill="white" text-anchor="middle">
+                        Planet Nine Awesome
+                    </text>
+
+                    <!-- Link Cards -->
+                    <!-- Card 1: GitHub -->
+                    <g transform="translate(50, 140)">
+                        <rect width="500" height="80" fill="url(#linkGrad1)" rx="12" opacity="0.95"/>
+                        <circle cx="40" cy="40" r="25" fill="white" opacity="0.3"/>
+                        <text x="80" y="35" font-family="system-ui" font-size="16" font-weight="600" fill="white">GitHub</text>
+                        <text x="80" y="55" font-family="system-ui" font-size="14" fill="white" opacity="0.9">github.com/planet-nine</text>
+                        <text x="460" y="45" font-family="system-ui" font-size="24" fill="white" opacity="0.6">→</text>
+                    </g>
+
+                    <!-- Card 2: The Advancement -->
+                    <g transform="translate(50, 240)">
+                        <rect width="500" height="80" fill="url(#linkGrad2)" rx="12" opacity="0.95"/>
+                        <circle cx="40" cy="40" r="25" fill="white" opacity="0.3"/>
+                        <text x="80" y="35" font-family="system-ui" font-size="16" font-weight="600" fill="white">The Advancement</text>
+                        <text x="80" y="55" font-family="system-ui" font-size="14" fill="white" opacity="0.9">Privacy-first browser extension</text>
+                        <text x="460" y="45" font-family="system-ui" font-size="24" fill="white" opacity="0.6">→</text>
+                    </g>
+
+                    <!-- Card 3: The Nullary -->
+                    <g transform="translate(50, 340)">
+                        <rect width="500" height="80" fill="url(#linkGrad3)" rx="12" opacity="0.95"/>
+                        <circle cx="40" cy="40" r="25" fill="white" opacity="0.3"/>
+                        <text x="80" y="35" font-family="system-ui" font-size="16" font-weight="600" fill="white">The Nullary</text>
+                        <text x="80" y="55" font-family="system-ui" font-size="14" fill="white" opacity="0.9">SVG-first social apps</text>
+                        <text x="460" y="45" font-family="system-ui" font-size="24" fill="white" opacity="0.6">→</text>
+                    </g>
+
+                    <!-- Card 4: Glyphenge -->
+                    <g transform="translate(50, 440)">
+                        <rect width="500" height="80" fill="url(#linkGrad4)" rx="12" opacity="0.95"/>
+                        <circle cx="40" cy="40" r="25" fill="white" opacity="0.3"/>
+                        <text x="80" y="35" font-family="system-ui" font-size="16" font-weight="600" fill="white">Glyphenge</text>
+                        <text x="80" y="55" font-family="system-ui" font-size="14" fill="white" opacity="0.9">Beautiful link tapestries</text>
+                        <text x="460" y="45" font-family="system-ui" font-size="24" fill="white" opacity="0.6">→</text>
+                    </g>
+
+                    <!-- Footer emoji -->
+                    <text x="300" y="650" font-size="48" text-anchor="middle" opacity="0.7">✨</text>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Right Side: Call to Action -->
+        <div class="right-panel">
+            <h2 class="cta-text">Let us make them...</h2>
+            <div class="button-grid">
+                <button class="style-button stunning" onclick="selectStyle('stunning')">Stunning</button>
+                <button class="style-button dazzling" onclick="selectStyle('dazzling')">Dazzling</button>
+                <button class="style-button electric" onclick="selectStyle('electric')">Electric</button>
+                <button class="style-button polished" onclick="selectStyle('polished')">Polished</button>
+                <button class="style-button professional" onclick="selectStyle('professional')">Professional</button>
+                <button class="style-button captivating" onclick="selectStyle('captivating')">Captivating</button>
+                <button class="style-button delightful" onclick="selectStyle('delightful')">Delightful</button>
+                <button class="style-button magical" onclick="selectStyle('magical')">Magical</button>
+                <button class="style-button basic" onclick="selectStyle('basic')">Basic</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function selectStyle(style) {
+            window.location.href = `/create?style=${style}`;
+        }
+    </script>
+</body>
+</html>

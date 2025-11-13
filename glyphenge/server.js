@@ -47,8 +47,9 @@ app.use(express.static(join(__dirname, 'public')));
 app.use(express.json());
 
 /**
- * Main route - Displays user's links
+ * Main route - Landing page or tapestry display
  *
+ * No query params: Show landing page
  * Query params (Method 1 - Emojicode):
  * - emojicode: 8-emoji identifier for Glyphenge BDO
  *
@@ -60,6 +61,13 @@ app.use(express.json());
 app.get('/', async (req, res) => {
     try {
         const { emojicode, pubKey, timestamp, signature } = req.query;
+
+        // If no query parameters, serve landing page
+        if (!emojicode && !pubKey && !timestamp && !signature) {
+            const fs = await import('fs/promises');
+            const landingPage = await fs.readFile(join(__dirname, 'public', 'index.html'), 'utf-8');
+            return res.send(landingPage);
+        }
 
         let links = [];
         let userName = 'Anonymous';
