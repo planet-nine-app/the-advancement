@@ -7,72 +7,99 @@
     <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <div class="create-container">
+    <div class="create-page">
         <!-- Header -->
         <div class="create-header">
             <h1>Create Your Link Tapestry</h1>
             <span class="style-badge" id="style-badge">Stunning</span>
         </div>
 
-        <!-- Input Section -->
-        <div class="input-section">
-            <div class="input-tabs">
-                <button class="tab-button active" onclick="switchTab('import')">Import from Service</button>
-                <button class="tab-button" onclick="switchTab('manual')">Add Links Manually</button>
+        <!-- Main Content: Two Panels -->
+        <div class="create-content">
+            <!-- Left Panel: Link Management -->
+            <div class="left-create-panel">
+                <div class="input-section">
+                    <h2>Your Links</h2>
+
+                    <div class="input-tabs">
+                        <button class="tab-button active" onclick="switchTab('import')">Import Links</button>
+                        <button class="tab-button" onclick="switchTab('manual')">Add Manually</button>
+                    </div>
+
+                    <!-- Import Tab -->
+                    <div class="tab-content active" id="import-tab">
+                        <div class="form-group">
+                            <label for="import-url">Import from Linktree or similar</label>
+                            <input type="url" id="import-url" placeholder="https://linktr.ee/username">
+                        </div>
+                        <button class="add-link-button" onclick="importLinks(event)">Import Links</button>
+                    </div>
+
+                    <!-- Manual Tab -->
+                    <div class="tab-content" id="manual-tab">
+                        <div class="form-group">
+                            <label for="link-title">Link Title</label>
+                            <input type="text" id="link-title" placeholder="GitHub">
+                        </div>
+                        <div class="form-group">
+                            <label for="link-url">Link URL</label>
+                            <input type="url" id="link-url" placeholder="https://github.com/username">
+                        </div>
+                        <button class="add-link-button" onclick="addLink()">Add Link</button>
+                    </div>
+
+                    <!-- Link List -->
+                    <div class="link-list" id="link-list"></div>
+                </div>
+
+                <!-- Buy Button (Below Left Panel) -->
+                <button class="buy-button" onclick="handlePurchase()">
+                    <span class="glow"></span>
+                    <span class="price">$20</span>
+                    <span class="action">Create Your Tapestry</span>
+                </button>
             </div>
 
-            <!-- Import Tab -->
-            <div class="tab-content active" id="import-tab">
-                <div class="form-group">
-                    <label for="import-url">Import from Linktree, Beacons, or other service</label>
-                    <input type="url" id="import-url" placeholder="https://linktr.ee/username">
+            <!-- Right Panel: Live Preview -->
+            <div class="right-create-panel">
+                <div class="preview-section">
+                    <h2>Preview</h2>
+                    <div class="preview-container" id="preview-container">
+                        <div class="preview-placeholder">
+                            Add links to see your tapestry preview
+                        </div>
+                    </div>
                 </div>
-                <button class="add-link-button" onclick="importLinks()">Import Links</button>
-            </div>
 
-            <!-- Manual Tab -->
-            <div class="tab-content" id="manual-tab">
-                <div class="form-group">
-                    <label for="link-title">Link Title</label>
-                    <input type="text" id="link-title" placeholder="GitHub">
+                <!-- Template Carousel (Below Right Panel) -->
+                <div class="carousel-section">
+                    <h2>Choose Template</h2>
+                    <div class="carousel-container">
+                        <button class="carousel-arrow" onclick="scrollCarousel(-1)">‹</button>
+                        <div class="carousel-track" id="carousel-track"></div>
+                        <button class="carousel-arrow" onclick="scrollCarousel(1)">›</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="link-url">Link URL</label>
-                    <input type="url" id="link-url" placeholder="https://github.com/username">
-                </div>
-                <button class="add-link-button" onclick="addLink()">Add Link</button>
-
-                <div class="link-list" id="link-list"></div>
             </div>
         </div>
-
-        <!-- Template Carousel -->
-        <div class="carousel-section">
-            <h2>Choose Your Template</h2>
-            <div class="carousel-container">
-                <button class="carousel-arrow" onclick="scrollCarousel(-1)">‹</button>
-                <div class="carousel-track" id="carousel-track"></div>
-                <button class="carousel-arrow" onclick="scrollCarousel(1)">›</button>
-            </div>
-        </div>
-
-        <!-- Create Button -->
-        <button class="create-button" onclick="createTapestry()">Create My Tapestry ✨</button>
     </div>
 
+    <script src="https://js.stripe.com/v3/"></script>
     <script>
         // Get style from URL parameter
         const urlParams = new URLSearchParams(window.location.search);
         const selectedStyle = urlParams.get('style') || 'stunning';
 
-        // Update badge color and text
+        // Update badge
         const badge = document.getElementById('style-badge');
         badge.textContent = selectedStyle.charAt(0).toUpperCase() + selectedStyle.slice(1);
         badge.className = `style-badge ${selectedStyle}`;
 
         // State
         let links = [];
-        let selectedTemplate = null;
+        let selectedTemplate = 0;
+        let stripe = null;
+        let elements = null;
 
         // Tab switching
         function switchTab(tab) {
@@ -92,15 +119,59 @@
         }
 
         // Import links
-        async function importLinks() {
+        async function importLinks(event) {
             const url = document.getElementById('import-url').value;
             if (!url) {
                 alert('Please enter a URL to import from');
                 return;
             }
 
-            // For now, show a message - actual import would call backend
-            alert('Import functionality coming soon! For now, please add links manually.');
+            try {
+                // Show loading state
+                const importButton = event.target;
+                const originalText = importButton.textContent;
+                importButton.textContent = 'Importing...';
+                importButton.disabled = true;
+
+                // Call the parse endpoint
+                const response = await fetch('/parse-linktree', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Add all imported links to the links array
+                    data.links.forEach(link => {
+                        links.push(link);
+                    });
+
+                    // Update UI
+                    renderLinkList();
+                    updatePreview();
+
+                    // Clear input and show success
+                    document.getElementById('import-url').value = '';
+                    alert(`✅ Successfully imported ${data.links.length} links from @${data.username}'s Linktree!`);
+                } else {
+                    alert(`❌ ${data.error}`);
+                }
+
+                // Restore button
+                importButton.textContent = originalText;
+                importButton.disabled = false;
+
+            } catch (error) {
+                console.error('Import error:', error);
+                alert('Failed to import links. Please try again.');
+
+                // Restore button on error
+                const importButton = event.target;
+                importButton.textContent = 'Import Links';
+                importButton.disabled = false;
+            }
         }
 
         // Add link manually
@@ -115,6 +186,7 @@
 
             links.push({ title, url });
             renderLinkList();
+            updatePreview();
 
             // Clear inputs
             document.getElementById('link-title').value = '';
@@ -125,11 +197,17 @@
         function removeLink(index) {
             links.splice(index, 1);
             renderLinkList();
+            updatePreview();
         }
 
         // Render link list
         function renderLinkList() {
             const listContainer = document.getElementById('link-list');
+            if (links.length === 0) {
+                listContainer.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">No links added yet</p>';
+                return;
+            }
+
             listContainer.innerHTML = links.map((link, index) => `
                 <div class="link-item">
                     <div>
@@ -145,58 +223,81 @@
         // Template definitions for each style
         const templates = {
             stunning: [
-                { name: 'Sunset', colors: ['#ff6b6b', '#ee5a6f', '#feca57'] },
-                { name: 'Ocean', colors: ['#0984e3', '#74b9ff', '#00cec9'] },
-                { name: 'Forest', colors: ['#00b894', '#55efc4', '#a29bfe'] }
+                { name: 'Sunset', colors: ['#ff6b6b', '#ee5a6f', '#feca57'], linkColors: ['#10b981', '#3b82f6', '#8b5cf6', '#ec4899'] },
+                { name: 'Ocean', colors: ['#0984e3', '#74b9ff', '#00cec9'], linkColors: ['#0984e3', '#74b9ff', '#00cec9', '#6c5ce7'] },
+                { name: 'Forest', colors: ['#00b894', '#55efc4', '#a29bfe'], linkColors: ['#00b894', '#55efc4', '#6c5ce7', '#fd79a8'] }
             ],
             dazzling: [
-                { name: 'Rainbow', colors: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3'] },
-                { name: 'Neon', colors: ['#ff00ff', '#00ffff', '#ffff00'] },
-                { name: 'Aurora', colors: ['#a8edea', '#fed6e3', '#f093fb'] }
+                { name: 'Rainbow', colors: ['#ff6b6b', '#feca57', '#48dbfb'], linkColors: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3'] },
+                { name: 'Neon', colors: ['#ff00ff', '#00ffff', '#ffff00'], linkColors: ['#ff00ff', '#00ffff', '#ffff00', '#00ff00'] },
+                { name: 'Aurora', colors: ['#a8edea', '#fed6e3', '#f093fb'], linkColors: ['#a8edea', '#fed6e3', '#f093fb', '#ffecd2'] }
             ],
             electric: [
-                { name: 'Lightning', colors: ['#00d2ff', '#3a47d5', '#4facfe'] },
-                { name: 'Cyber', colors: ['#00f260', '#0575e6', '#667eea'] },
-                { name: 'Volt', colors: ['#fcff9e', '#c67700', '#ee0979'] }
+                { name: 'Lightning', colors: ['#00d2ff', '#3a47d5', '#4facfe'], linkColors: ['#00d2ff', '#3a47d5', '#4facfe', '#00f2fe'] },
+                { name: 'Cyber', colors: ['#00f260', '#0575e6', '#667eea'], linkColors: ['#00f260', '#0575e6', '#667eea', '#764ba2'] },
+                { name: 'Volt', colors: ['#fcff9e', '#c67700', '#ee0979'], linkColors: ['#fcff9e', '#c67700', '#ee0979', '#ff6a00'] }
             ],
             polished: [
-                { name: 'Steel', colors: ['#2c3e50', '#4ca1af', '#536976'] },
-                { name: 'Graphite', colors: ['#232526', '#414345', '#667eea'] },
-                { name: 'Silver', colors: ['#bdc3c7', '#2c3e50', '#95a5a6'] }
+                { name: 'Steel', colors: ['#2c3e50', '#4ca1af', '#536976'], linkColors: ['#4ca1af', '#536976', '#bdc3c7', '#95a5a6'] },
+                { name: 'Graphite', colors: ['#232526', '#414345', '#667eea'], linkColors: ['#414345', '#667eea', '#764ba2', '#868f96'] },
+                { name: 'Silver', colors: ['#bdc3c7', '#2c3e50', '#95a5a6'], linkColors: ['#2c3e50', '#95a5a6', '#7f8c8d', '#34495e'] }
             ],
             professional: [
-                { name: 'Corporate', colors: ['#141e30', '#243b55', '#2c3e50'] },
-                { name: 'Executive', colors: ['#1e3c72', '#2a5298', '#7f8c8d'] },
-                { name: 'Business', colors: ['#2c3e50', '#34495e', '#7f8c8d'] }
+                { name: 'Corporate', colors: ['#141e30', '#243b55', '#2c3e50'], linkColors: ['#243b55', '#2c3e50', '#34495e', '#7f8c8d'] },
+                { name: 'Executive', colors: ['#1e3c72', '#2a5298', '#7f8c8d'], linkColors: ['#2a5298', '#7f8c8d', '#95a5a6', '#3498db'] },
+                { name: 'Business', colors: ['#2c3e50', '#34495e', '#7f8c8d'], linkColors: ['#34495e', '#7f8c8d', '#95a5a6', '#2c3e50'] }
             ],
             captivating: [
-                { name: 'Passion', colors: ['#fc466b', '#3f5efb', '#f093fb'] },
-                { name: 'Dream', colors: ['#fa709a', '#fee140', '#30cfd0'] },
-                { name: 'Mystery', colors: ['#654ea3', '#eaafc8', '#667eea'] }
+                { name: 'Passion', colors: ['#fc466b', '#3f5efb', '#f093fb'], linkColors: ['#fc466b', '#3f5efb', '#f093fb', '#4facfe'] },
+                { name: 'Dream', colors: ['#fa709a', '#fee140', '#30cfd0'], linkColors: ['#fa709a', '#fee140', '#30cfd0', '#764ba2'] },
+                { name: 'Mystery', colors: ['#654ea3', '#eaafc8', '#667eea'], linkColors: ['#654ea3', '#eaafc8', '#667eea', '#764ba2'] }
             ],
             delightful: [
-                { name: 'Sunshine', colors: ['#fdbb2d', '#22c1c3', '#feca57'] },
-                { name: 'Candy', colors: ['#ff9a9e', '#fecfef', '#fad0c4'] },
-                { name: 'Spring', colors: ['#a8edea', '#fed6e3', '#81fbb8'] }
+                { name: 'Sunshine', colors: ['#fdbb2d', '#22c1c3', '#feca57'], linkColors: ['#fdbb2d', '#22c1c3', '#feca57', '#ee5a6f'] },
+                { name: 'Candy', colors: ['#ff9a9e', '#fecfef', '#fad0c4'], linkColors: ['#ff9a9e', '#fecfef', '#fad0c4', '#ff6b6b'] },
+                { name: 'Spring', colors: ['#a8edea', '#fed6e3', '#81fbb8'], linkColors: ['#a8edea', '#fed6e3', '#81fbb8', '#10b981'] }
             ],
             magical: [
-                { name: 'Unicorn', colors: ['#a8edea', '#fed6e3', '#f093fb'] },
-                { name: 'Fairy', colors: ['#ffecd2', '#fcb69f', '#ff9a9e'] },
-                { name: 'Wizard', colors: ['#667eea', '#764ba2', '#f093fb'] }
+                { name: 'Unicorn', colors: ['#a8edea', '#fed6e3', '#f093fb'], linkColors: ['#a8edea', '#fed6e3', '#f093fb', '#ffecd2'] },
+                { name: 'Fairy', colors: ['#ffecd2', '#fcb69f', '#ff9a9e'], linkColors: ['#ffecd2', '#fcb69f', '#ff9a9e', '#fecfef'] },
+                { name: 'Wizard', colors: ['#667eea', '#764ba2', '#f093fb'], linkColors: ['#667eea', '#764ba2', '#f093fb', '#a8edea'] }
             ],
             basic: [
-                { name: 'Clean', colors: ['#6a85b6', '#bac8e0', '#95a5a6'] },
-                { name: 'Simple', colors: ['#7f8c8d', '#bdc3c7', '#ecf0f1'] },
-                { name: 'Minimal', colors: ['#95a5a6', '#bdc3c7', '#ecf0f1'] }
+                { name: 'Clean', colors: ['#6a85b6', '#bac8e0', '#95a5a6'], linkColors: ['#6a85b6', '#bac8e0', '#95a5a6', '#7f8c8d'] },
+                { name: 'Simple', colors: ['#7f8c8d', '#bdc3c7', '#ecf0f1'], linkColors: ['#7f8c8d', '#bdc3c7', '#95a5a6', '#34495e'] },
+                { name: 'Minimal', colors: ['#95a5a6', '#bdc3c7', '#ecf0f1'], linkColors: ['#95a5a6', '#bdc3c7', '#ecf0f1', '#7f8c8d'] }
             ]
         };
 
-        // Generate template SVG
-        function generateTemplateSVG(template, linkCount = 4) {
-            const height = Math.max(400, linkCount * 110 + 60);
+        // Generate live preview SVG
+        function generatePreviewSVG(template, userLinks) {
+            const linkCount = userLinks.length || 1;
+            const height = Math.max(400, linkCount * 110 + 180);
+
             const gradientStops = template.colors.map((color, index) => {
                 const offset = (index / (template.colors.length - 1)) * 100;
                 return `<stop offset="${offset}%" style="stop-color:${color};stop-opacity:1" />`;
+            }).join('');
+
+            const linkCards = userLinks.map((link, i) => {
+                const color = template.linkColors[i % template.linkColors.length];
+                const colorDark = shadeColor(color, -20);
+
+                return `
+                    <defs>
+                        <linearGradient id="linkGrad${i}" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:${color};stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:${colorDark};stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <g transform="translate(50, ${140 + i * 100})">
+                        <rect width="500" height="80" fill="url(#linkGrad${i})" rx="12" opacity="0.95"/>
+                        <circle cx="40" cy="40" r="25" fill="white" opacity="0.3"/>
+                        <text x="80" y="35" font-family="system-ui" font-size="16" font-weight="600" fill="white">${escapeXML(link.title)}</text>
+                        <text x="80" y="55" font-family="system-ui" font-size="14" fill="white" opacity="0.9">${escapeXML(getDomain(link.url))}</text>
+                        <text x="460" y="45" font-family="system-ui" font-size="24" fill="white" opacity="0.6">→</text>
+                    </g>
+                `;
             }).join('');
 
             return `
@@ -207,19 +308,48 @@
                         </linearGradient>
                     </defs>
                     <rect width="600" height="${height}" fill="url(#bg-${template.name})" rx="20"/>
-                    <text x="300" y="60" font-family="system-ui" font-size="28" font-weight="bold" fill="white" text-anchor="middle">
-                        ${template.name} Template
+                    <text x="300" y="80" font-family="system-ui" font-size="32" font-weight="bold" fill="white" text-anchor="middle">
+                        Your Awesome Links
                     </text>
-                    ${Array.from({length: linkCount}).map((_, i) => `
-                        <g transform="translate(50, ${120 + i * 100})">
-                            <rect width="500" height="80" fill="white" opacity="0.2" rx="12"/>
-                            <text x="250" y="45" font-family="system-ui" font-size="16" fill="white" text-anchor="middle">
-                                Link ${i + 1}
-                            </text>
-                        </g>
-                    `).join('')}
+                    ${linkCards}
+                    <text x="300" y="${height - 50}" font-size="48" text-anchor="middle" opacity="0.7">✨</text>
                 </svg>
             `;
+        }
+
+        // Generate template card SVG (smaller, for carousel)
+        function generateTemplateSVG(template) {
+            const gradientStops = template.colors.map((color, index) => {
+                const offset = (index / (template.colors.length - 1)) * 100;
+                return `<stop offset="${offset}%" style="stop-color:${color};stop-opacity:1" />`;
+            }).join('');
+
+            return `
+                <svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="tmpl-${template.name}" x1="0%" y1="0%" x2="0%" y2="100%">
+                            ${gradientStops}
+                        </linearGradient>
+                    </defs>
+                    <rect width="600" height="400" fill="url(#tmpl-${template.name})" rx="20"/>
+                    <text x="300" y="200" font-family="system-ui" font-size="28" font-weight="bold" fill="white" text-anchor="middle" opacity="0.9">
+                        ${template.name}
+                    </text>
+                </svg>
+            `;
+        }
+
+        // Update live preview
+        function updatePreview() {
+            const container = document.getElementById('preview-container');
+            const styleTemplates = templates[selectedStyle] || templates.stunning;
+            const template = styleTemplates[selectedTemplate];
+
+            if (links.length === 0) {
+                container.innerHTML = '<div class="preview-placeholder">Add links to see your tapestry preview</div>';
+            } else {
+                container.innerHTML = generatePreviewSVG(template, links);
+            }
         }
 
         // Render carousel
@@ -228,13 +358,13 @@
             const styleTemplates = templates[selectedStyle] || templates.stunning;
 
             track.innerHTML = styleTemplates.map((template, index) => `
-                <div class="template-card" onclick="selectTemplate(${index})">
+                <div class="template-card ${index === selectedTemplate ? 'selected' : ''}" onclick="selectTemplate(${index})">
                     ${generateTemplateSVG(template)}
                 </div>
             `).join('') + `
-                <div class="add-template-card" onclick="addCustomTemplate()">
+                <div class="add-template-card">
                     <div class="plus-icon">+</div>
-                    <div class="add-text">Add Custom</div>
+                    <div class="add-text">More Coming Soon</div>
                 </div>
             `;
         }
@@ -242,75 +372,377 @@
         // Select template
         function selectTemplate(index) {
             selectedTemplate = index;
-            const cards = document.querySelectorAll('.template-card');
-            cards.forEach((card, i) => {
-                if (i === index) {
-                    card.classList.add('selected');
-                } else {
-                    card.classList.remove('selected');
-                }
-            });
-        }
-
-        // Add custom template
-        function addCustomTemplate() {
-            alert('Custom template creation coming soon! For now, please select from the available templates.');
+            renderCarousel();
+            updatePreview();
         }
 
         // Scroll carousel
         function scrollCarousel(direction) {
             const track = document.getElementById('carousel-track');
-            const scrollAmount = 320; // card width + gap
+            const scrollAmount = 320;
             track.scrollBy({
                 left: direction * scrollAmount,
                 behavior: 'smooth'
             });
         }
 
-        // Create tapestry
-        async function createTapestry() {
-            if (links.length === 0) {
-                alert('Please add at least one link');
-                return;
-            }
+        // Helper: Shade color
+        function shadeColor(color, percent) {
+            const num = parseInt(color.replace("#",""), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = (num >> 16) + amt;
+            const G = (num >> 8 & 0x00FF) + amt;
+            const B = (num & 0x0000FF) + amt;
+            return "#" + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 +
+                (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255))
+                .toString(16).slice(1);
+        }
 
-            if (selectedTemplate === null) {
-                alert('Please select a template');
-                return;
-            }
-
-            const styleTemplates = templates[selectedStyle];
-            const template = styleTemplates[selectedTemplate];
-
-            // Create tapestry via API
+        // Helper: Get domain from URL
+        function getDomain(url) {
             try {
-                const response = await fetch('/create', {
+                const domain = new URL(url).hostname.replace('www.', '');
+                return domain;
+            } catch {
+                return url;
+            }
+        }
+
+        // Helper: Escape XML
+        function escapeXML(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&apos;');
+        }
+
+        // Handle purchase
+        async function handlePurchase() {
+            if (links.length === 0) {
+                alert('Please add at least one link before purchasing');
+                return;
+            }
+
+            try {
+                console.log('💳 Creating payment intent...');
+
+                const response = await fetch('/create-payment-intent', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        title: `${selectedStyle.charAt(0).toUpperCase() + selectedStyle.slice(1)} Tapestry`,
-                        links: links,
-                        style: selectedStyle,
-                        template: template.name
-                    })
+                    headers: { 'Content-Type': 'application/json' }
                 });
 
-                const result = await response.json();
-
-                if (result.success) {
-                    // Redirect to tapestry view
-                    window.location.href = `/?emojicode=${encodeURIComponent(result.emojicode)}`;
-                } else {
-                    alert('Failed to create tapestry: ' + (result.error || 'Unknown error'));
+                if (!response.ok) {
+                    throw new Error('Failed to create payment intent');
                 }
+
+                const { clientSecret, publishableKey } = await response.json();
+
+                console.log('✅ Payment intent created');
+
+                stripe = Stripe(publishableKey);
+                elements = stripe.elements({ clientSecret: clientSecret });
+
+                const paymentElement = elements.create('payment');
+                showPaymentModal(paymentElement);
+
             } catch (error) {
-                console.error('Create tapestry error:', error);
-                alert('Failed to create tapestry. Please try again.');
+                console.error('❌ Payment error:', error);
+                alert('Payment failed. Please try again.');
             }
+        }
+
+        function showPaymentModal(paymentElement) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+
+            const formContainer = document.createElement('div');
+            formContainer.style.cssText = `
+                background: white;
+                padding: 40px;
+                border-radius: 20px;
+                max-width: 500px;
+                width: 90%;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            `;
+
+            formContainer.innerHTML = `
+                <h2 style="margin: 0 0 10px 0; color: #333;">Complete Purchase</h2>
+                <p style="margin: 0 0 30px 0; color: #666;">$20.00 for your Glyphenge Tapestry</p>
+                <div id="payment-element" style="margin-bottom: 20px;"></div>
+                <button id="submit-payment" style="
+                    width: 100%;
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                    color: white;
+                    border: none;
+                    padding: 15px;
+                    border-radius: 10px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    margin-bottom: 10px;
+                ">Pay $20</button>
+                <button id="cancel-payment" style="
+                    width: 100%;
+                    background: #e5e7eb;
+                    color: #666;
+                    border: none;
+                    padding: 15px;
+                    border-radius: 10px;
+                    font-size: 16px;
+                    cursor: pointer;
+                ">Cancel</button>
+                <div id="payment-message" style="
+                    margin-top: 20px;
+                    padding: 10px;
+                    border-radius: 5px;
+                    display: none;
+                "></div>
+            `;
+
+            modal.appendChild(formContainer);
+            document.body.appendChild(modal);
+
+            paymentElement.mount('#payment-element');
+
+            document.getElementById('submit-payment').addEventListener('click', async () => {
+                const submitButton = document.getElementById('submit-payment');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Processing...';
+
+                try {
+                    // Confirm payment (handle success inline, no redirect)
+                    const { error } = await stripe.confirmPayment({
+                        elements,
+                        redirect: 'if_required'
+                    });
+
+                    if (error) {
+                        showMessage(error.message, 'error');
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Pay $20';
+                    } else {
+                        // Payment succeeded! Now create the tapestry
+                        submitButton.textContent = 'Creating Tapestry...';
+
+                        try {
+                            const createResponse = await fetch('/create', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    title: 'My Glyphenge',
+                                    links: links,
+                                    source: 'create-page',
+                                    style: selectedStyle
+                                })
+                            });
+
+                            if (!createResponse.ok) {
+                                throw new Error('Failed to create tapestry');
+                            }
+
+                            const tapestryData = await createResponse.json();
+
+                            // Close payment modal
+                            document.body.removeChild(modal);
+
+                            // Show success with emojicode
+                            showSuccessPage(tapestryData);
+
+                        } catch (createError) {
+                            showMessage('Payment successful but tapestry creation failed. Please contact support.', 'error');
+                            submitButton.disabled = false;
+                            submitButton.textContent = 'Pay $20';
+                        }
+                    }
+                } catch (err) {
+                    showMessage('Payment failed. Please try again.', 'error');
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Pay $20';
+                }
+            });
+
+            document.getElementById('cancel-payment').addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+        }
+
+        function showMessage(message, type) {
+            const messageElement = document.getElementById('payment-message');
+            messageElement.textContent = message;
+            messageElement.style.display = 'block';
+            messageElement.style.background = type === 'error' ? '#fee2e2' : '#d1fae5';
+            messageElement.style.color = type === 'error' ? '#991b1b' : '#065f46';
+        }
+
+        // Show success page with emojicode and URLs
+        function showSuccessPage(tapestryData) {
+            const { emojicode, pubKey, uuid } = tapestryData;
+
+            // Construct URLs (client constructs, server doesn't)
+            const emojicodeUrl = `${window.location.origin}?emojicode=${encodeURIComponent(emojicode)}`;
+            const alphanumericUrl = `${window.location.origin}/t/${pubKey.substring(0, 16)}`;
+            const bdoUrl = `http://localhost:3003/emoji/${encodeURIComponent(emojicode)}`;
+
+            // Replace entire page with success view
+            document.body.innerHTML = `
+                <div style="
+                    min-height: 100vh;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                ">
+                    <div style="
+                        background: white;
+                        border-radius: 20px;
+                        padding: 60px 40px;
+                        max-width: 600px;
+                        width: 100%;
+                        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                        text-align: center;
+                    ">
+                        <div style="font-size: 64px; margin-bottom: 20px;">✨</div>
+                        <h1 style="color: #333; margin-bottom: 10px; font-size: 2rem;">Your Tapestry is Ready!</h1>
+                        <p style="color: #666; margin-bottom: 40px; font-size: 1.1rem;">Share your magical link tapestry with the world</p>
+
+                        <!-- Emojicode -->
+                        <div style="
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            color: white;
+                            padding: 20px;
+                            border-radius: 15px;
+                            margin-bottom: 30px;
+                        ">
+                            <div style="font-size: 0.9rem; opacity: 0.9; margin-bottom: 8px;">Your Emojicode</div>
+                            <div style="
+                                font-size: 2rem;
+                                font-family: monospace;
+                                letter-spacing: 2px;
+                                cursor: pointer;
+                                padding: 10px;
+                                background: rgba(255,255,255,0.1);
+                                border-radius: 8px;
+                            " onclick="copyToClipboard('${emojicode}', this)" title="Click to copy">
+                                ${emojicode}
+                            </div>
+                            <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 8px;">👆 Click to copy</div>
+                        </div>
+
+                        <!-- URLs -->
+                        <div style="margin-bottom: 30px;">
+                            <h3 style="color: #333; margin-bottom: 15px; font-size: 1.2rem;">Share Your Links</h3>
+
+                            <!-- Emojicode URL -->
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; color: #666; font-size: 0.9rem; margin-bottom: 5px;">Emojicode URL (Persistent)</label>
+                                <div style="
+                                    background: #f3f4f6;
+                                    padding: 12px;
+                                    border-radius: 8px;
+                                    font-family: monospace;
+                                    font-size: 0.85rem;
+                                    word-break: break-all;
+                                    cursor: pointer;
+                                    border: 2px solid transparent;
+                                    transition: border-color 0.2s;
+                                " onclick="copyToClipboard('${emojicodeUrl}', this)">
+                                    ${emojicodeUrl}
+                                </div>
+                            </div>
+
+                            <!-- Alphanumeric URL -->
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; color: #666; font-size: 0.9rem; margin-bottom: 5px;">Browser-Friendly URL</label>
+                                <div style="
+                                    background: #f3f4f6;
+                                    padding: 12px;
+                                    border-radius: 8px;
+                                    font-family: monospace;
+                                    font-size: 0.85rem;
+                                    word-break: break-all;
+                                    cursor: pointer;
+                                    border: 2px solid transparent;
+                                    transition: border-color 0.2s;
+                                " onclick="copyToClipboard('${alphanumericUrl}', this)">
+                                    ${alphanumericUrl}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <a href="${emojicodeUrl}" style="
+                                flex: 1;
+                                min-width: 200px;
+                                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                                color: white;
+                                padding: 15px 30px;
+                                border-radius: 10px;
+                                text-decoration: none;
+                                font-weight: 600;
+                                display: inline-block;
+                                transition: transform 0.2s, box-shadow 0.2s;
+                            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 30px rgba(16, 185, 129, 0.4)'"
+                               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 20px rgba(16, 185, 129, 0.3)'">
+                                View Your Tapestry
+                            </a>
+                            <a href="/create" style="
+                                flex: 1;
+                                min-width: 200px;
+                                background: #e5e7eb;
+                                color: #333;
+                                padding: 15px 30px;
+                                border-radius: 10px;
+                                text-decoration: none;
+                                font-weight: 600;
+                                display: inline-block;
+                                transition: transform 0.2s;
+                            " onmouseover="this.style.transform='translateY(-2px)'"
+                               onmouseout="this.style.transform='translateY(0)'">
+                                Create Another
+                            </a>
+                        </div>
+
+                        <!-- Footer Note -->
+                        <p style="color: #999; font-size: 0.85rem; margin-top: 30px;">
+                            💾 Your tapestry is saved to your session and can be accessed anytime
+                        </p>
+                    </div>
+                </div>
+
+                <script>
+                    function copyToClipboard(text, element) {
+                        navigator.clipboard.writeText(text).then(() => {
+                            const originalBorder = element.style.border;
+                            element.style.border = '2px solid #10b981';
+                            setTimeout(() => {
+                                element.style.border = originalBorder;
+                            }, 1000);
+                        });
+                    }
+                </script>
+            `;
         }
 
         // Initialize
         renderCarousel();
+        renderLinkList();
+        updatePreview();
     </script>
 </body>
 </html>

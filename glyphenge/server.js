@@ -14,6 +14,8 @@
  */
 
 import express from 'express';
+import session from 'express-session';
+import store from 'memorystore';
 import fountLib from 'fount-js';
 import bdoLib from 'bdo-js';
 import sessionless from 'sessionless-node';
@@ -24,12 +26,15 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+const MemoryStore = store(session);
+
 const app = express();
 const PORT = process.env.PORT || 3010;
 
 // Configuration
 const FOUNT_BASE_URL = process.env.FOUNT_BASE_URL || 'https://plr.allyabase.com/plugin/allyabase/fount/';
 const BDO_BASE_URL = process.env.BDO_BASE_URL || 'http://localhost:3003';
+const ADDIE_BASE_URL = process.env.ADDIE_BASE_URL || 'http://localhost:3009';
 
 // Configure SDKs
 fountLib.baseURL = FOUNT_BASE_URL.endsWith('/') ? FOUNT_BASE_URL : `${FOUNT_BASE_URL}/`;
@@ -40,7 +45,23 @@ console.log('====================================');
 console.log(`📍 Port: ${PORT}`);
 console.log(`📍 Fount URL: ${fountLib.baseURL}`);
 console.log(`📍 BDO URL: ${bdoLib.baseURL}`);
+console.log(`📍 Addie URL: ${ADDIE_BASE_URL}`);
 console.log('📍 Architecture: Server returns identifiers only (clients construct URLs)');
+
+// Session middleware - gives users persistent sessions
+app.use(session({
+  store: new MemoryStore({
+    checkPeriod: 86400000 // prune expired entries every 24h
+  }),
+  resave: false,
+  saveUninitialized: false,
+  secret: 'glyphenge-mystical-tapestry-weaver-2025',
+  cookie: {
+    maxAge: 31536000000, // 1 year (basically never expire)
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production'
+  }
+}));
 
 // Middleware
 app.use(express.static(join(__dirname, 'public')));
@@ -825,28 +846,146 @@ function escapeXML(str) {
 }
 
 /**
+ * Get or create user account
+ * Returns: { uuid, pubKey, keys, carrierBag }
+ */
+async function getOrCreateUser(req) {
+    // Check if user already has account in session
+    if (req.session.userUUID && req.session.userPubKey && req.session.userKeys && req.session.carrierBag) {
+        console.log(`✅ Existing user session: ${req.session.userUUID}`);
+        return {
+            uuid: req.session.userUUID,
+            pubKey: req.session.userPubKey,
+            keys: req.session.userKeys,
+            carrierBag: req.session.carrierBag
+        };
+    }
+
+    // Create new user (session-based for now, Fount integration later)
+    console.log('🆕 Creating new user session...');
+
+    // Generate sessionless keys for user
+    let userKeys;
+    const saveKeys = (keys) => { userKeys = keys; };
+    const getKeys = () => userKeys;
+
+    const keys = await sessionless.generateKeys(saveKeys, getKeys);
+    const pubKey = keys.pubKey;
+
+    console.log(`🔑 Generated user keys: ${pubKey.substring(0, 16)}...`);
+
+    // Generate a simple UUID for the user
+    const userUUID = `user_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+
+    // Initialize empty carrierBag
+    const carrierBag = {
+        glyphenge: []  // Will store tapestry references
+    };
+
+    console.log(`✅ User session created: ${userUUID}`);
+
+    // Store in session
+    req.session.userUUID = userUUID;
+    req.session.userPubKey = pubKey;
+    req.session.userKeys = userKeys;
+    req.session.carrierBag = carrierBag;
+
+    // Save session
+    await new Promise((resolve, reject) => {
+        req.session.save((err) => {
+            if (err) reject(err);
+            else resolve();
+        });
+    });
+
+    console.log(`✅ User session saved`);
+
+    return { uuid: userUUID, pubKey, keys: userKeys, carrierBag };
+}
+
+/**
+ * Add tapestry reference to user's session carrierBag
+ */
+async function addTapestryToUser(req, tapestryData) {
+    try {
+        console.log(`💼 Adding tapestry to user session carrierBag...`);
+
+        // Get current carrierBag from session
+        const carrierBag = req.session.carrierBag || { glyphenge: [] };
+
+        // Add tapestry reference
+        if (!carrierBag.glyphenge) {
+            carrierBag.glyphenge = [];
+        }
+
+        carrierBag.glyphenge.unshift({  // Add to beginning
+            bdoUUID: tapestryData.bdoUUID,
+            emojicode: tapestryData.emojicode,
+            pubKey: tapestryData.pubKey,
+            title: tapestryData.title,
+            linkCount: tapestryData.linkCount,
+            createdAt: tapestryData.createdAt
+        });
+
+        // Update session
+        req.session.carrierBag = carrierBag;
+
+        // Save session
+        await new Promise((resolve, reject) => {
+            req.session.save((err) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+
+        console.log(`✅ Tapestry added to carrierBag (${carrierBag.glyphenge.length} total)`);
+        return { success: true };
+
+    } catch (error) {
+        console.error('❌ Failed to add tapestry to carrierBag:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * GET /create - Serve create page
+ */
+app.get('/create', async (req, res) => {
+    const fs = await import('fs/promises');
+    const createPage = await fs.readFile(join(__dirname, 'public', 'create.html'), 'utf-8');
+    res.send(createPage);
+});
+
+/**
  * POST /create - Create Glyphenge BDO
  *
  * Flow:
- * 1. Receive raw BDO data with links from client
- * 2. Generate composite SVG based on link count
- * 3. Add svgContent to BDO
- * 4. Forward complete BDO to BDO service
- * 5. Return emojicode to client
+ * 1. Get or create user account (Fount user with session)
+ * 2. Receive raw BDO data with links from client
+ * 3. Generate composite SVG based on link count
+ * 4. Add svgContent to BDO
+ * 5. Create tapestry BDO in BDO service
+ * 6. Add tapestry reference to user's carrierBag
+ * 7. Return emojicode to client
  *
  * Body:
  * {
  *   "title": "My Links",
  *   "links": [{"title": "...", "url": "..."}, ...],
  *   "source": "linktree" | "manual" (optional),
- *   "sourceUrl": "https://..." (optional)
+ *   "sourceUrl": "https://..." (optional),
+ *   "style": "stunning" | "dazzling" | ... (optional),
+ *   "template": "Sunset" | "Ocean" | ... (optional)
  * }
  */
 app.post('/create', async (req, res) => {
     try {
         console.log('🎨 Creating Glyphenge BDO...');
 
-        const { title, links, source, sourceUrl } = req.body;
+        // Get or create user account
+        const user = await getOrCreateUser(req);
+
+        const { title, links, source, sourceUrl, style, template } = req.body;
 
         // Validate input
         if (!links || !Array.isArray(links) || links.length === 0) {
@@ -909,17 +1048,242 @@ app.post('/create', async (req, res) => {
             createdAt: new Date()
         });
 
+        // Add tapestry to user's carrierBag
+        await addTapestryToUser(req, {
+            bdoUUID: bdoUUID,
+            emojicode: emojicode,
+            pubKey: pubKey,
+            title: title || 'My Tapestry',
+            linkCount: links.length,
+            createdAt: new Date().toISOString()
+        });
+
         // Return identifiers only - let client construct URLs
         res.json({
             success: true,
             uuid: bdoUUID,
             pubKey: pubKey,
-            emojicode: emojicode
+            emojicode: emojicode,
+            userUUID: user.uuid  // Include user UUID for reference
         });
 
     } catch (error) {
         console.error('❌ Error creating Glyphenge:', error);
         res.status(500).json({
+            error: error.message
+        });
+    }
+});
+
+/**
+ * GET /my-tapestries - Get user's tapestries
+ *
+ * Returns all tapestries created by the current user from session
+ */
+app.get('/my-tapestries', async (req, res) => {
+    try {
+        // Check if user has session
+        if (!req.session.userUUID) {
+            return res.json({
+                success: true,
+                tapestries: [],
+                message: 'No user session found'
+            });
+        }
+
+        console.log(`📋 Fetching tapestries for user ${req.session.userUUID}`);
+
+        // Get carrierBag from session
+        const carrierBag = req.session.carrierBag || {};
+        const tapestries = carrierBag.glyphenge || [];
+
+        console.log(`✅ Found ${tapestries.length} tapestries`);
+
+        res.json({
+            success: true,
+            tapestries: tapestries,
+            userUUID: req.session.userUUID
+        });
+
+    } catch (error) {
+        console.error('❌ Error fetching tapestries:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+/**
+ * POST /parse-linktree - Parse links from a Linktree URL
+ *
+ * Simple endpoint for the web UI to extract links from Linktree pages
+ * Returns just the links array without creating any BDOs
+ */
+app.post('/parse-linktree', async (req, res) => {
+    try {
+        const { url } = req.body;
+
+        console.log(`🌐 Parsing Linktree URL: ${url}`);
+
+        // Validate URL
+        if (!url || !url.includes('linktr.ee')) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid Linktree URL. Please enter a linktr.ee URL.'
+            });
+        }
+
+        // Fetch Linktree page
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            }
+        });
+
+        if (!response.ok) {
+            return res.status(400).json({
+                success: false,
+                error: `Failed to fetch Linktree page: ${response.statusText}`
+            });
+        }
+
+        const html = await response.text();
+
+        // Extract __NEXT_DATA__ from page
+        const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
+        if (!nextDataMatch) {
+            return res.status(400).json({
+                success: false,
+                error: 'Could not parse Linktree page. Please check the URL and try again.'
+            });
+        }
+
+        const nextData = JSON.parse(nextDataMatch[1]);
+        const pageProps = nextData.props?.pageProps?.account;
+
+        if (!pageProps || !pageProps.links) {
+            return res.status(400).json({
+                success: false,
+                error: 'No links found on this Linktree page.'
+            });
+        }
+
+        // Extract links
+        const links = pageProps.links.map(link => ({
+            title: link.title,
+            url: link.url
+        }));
+
+        const username = pageProps.username || 'Unknown';
+
+        console.log(`✅ Extracted ${links.length} links from @${username}'s Linktree`);
+
+        res.json({
+            success: true,
+            links: links,
+            username: username,
+            source: 'linktree'
+        });
+
+    } catch (error) {
+        console.error('❌ Error parsing Linktree:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to parse Linktree page. Please try again.'
+        });
+    }
+});
+
+/**
+ * POST /create-payment-intent - Create Stripe payment intent via Addie
+ *
+ * Creates a $20 payment intent for Glyphenge tapestry purchase
+ */
+app.post('/create-payment-intent', async (req, res) => {
+    try {
+        console.log('💳 Creating payment intent via Addie...');
+
+        // Get or create user session
+        const user = await getOrCreateUser(req);
+
+        // Create/get Addie user if needed
+        if (!user.addieUUID) {
+            console.log('📝 Creating Addie user...');
+
+            // Create Addie user via PUT /user/create
+            const timestamp = Date.now().toString();
+            const message = timestamp + user.pubKey;
+            const signature = sessionless.signMessage(message, user.keys.privateKey);
+
+            const addieUserResponse = await fetch(`${ADDIE_BASE_URL}/user/create`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    timestamp,
+                    pubKey: user.pubKey,
+                    signature
+                })
+            });
+
+            if (!addieUserResponse.ok) {
+                throw new Error('Failed to create Addie user');
+            }
+
+            const addieUser = await addieUserResponse.json();
+            user.addieUUID = addieUser.uuid;
+
+            // Save to session
+            req.session.addieUUID = addieUser.uuid;
+            await new Promise((resolve, reject) => {
+                req.session.save((err) => err ? reject(err) : resolve());
+            });
+
+            console.log(`✅ Addie user created: ${user.addieUUID}`);
+        }
+
+        // Call Addie to create payment intent (without splits)
+        const timestamp = Date.now().toString();
+        const amount = 2000; // $20.00
+        const currency = 'usd';
+        const message = timestamp + user.addieUUID + amount + currency;
+        const signature = sessionless.signMessage(message, user.keys.privateKey);
+
+        const addieEndpoint = `${ADDIE_BASE_URL}/user/${user.addieUUID}/processor/stripe/intent-without-splits`;
+
+        const response = await fetch(addieEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                timestamp,
+                amount,
+                currency,
+                savePaymentMethod: false,
+                signature
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(`Addie payment intent creation failed: ${error}`);
+        }
+
+        const intentData = await response.json();
+
+        console.log(`✅ Payment intent created`);
+
+        res.json({
+            success: true,
+            clientSecret: intentData.paymentIntent,  // This is the client_secret
+            publishableKey: intentData.publishableKey,
+            customer: intentData.customer,
+            ephemeralKey: intentData.ephemeralKey
+        });
+
+    } catch (error) {
+        console.error('❌ Error creating payment intent:', error);
+        res.status(500).json({
+            success: false,
             error: error.message
         });
     }

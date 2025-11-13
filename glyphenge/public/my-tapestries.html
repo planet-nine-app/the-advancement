@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Tapestries - Glyphenge</title>
+    <link rel="stylesheet" href="/styles.css">
+    <style>
+        .tapestries-container {
+            max-width: 1200px;
+            width: 100%;
+            padding: 40px 20px;
+        }
+
+        .tapestries-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .tapestries-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .tapestries-header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .tapestries-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .tapestry-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .tapestry-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .tapestry-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .tapestry-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .tapestry-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tapestry-emojicode {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tapestry-emojicode:hover {
+            transform: scale(1.05);
+        }
+
+        .tapestry-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .action-button {
+            flex: 1;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .action-button.view {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .action-button.copy {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .create-first-button {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .create-first-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .tapestries-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; display: flex; align-items: center; justify-content: center;">
+    <div class="tapestries-container">
+        <a href="/" class="back-button">← Back to Home</a>
+
+        <div class="tapestries-header">
+            <h1>My Tapestries</h1>
+            <p id="tapestry-count">Loading your magical creations...</p>
+        </div>
+
+        <div class="tapestries-grid" id="tapestries-grid"></div>
+    </div>
+
+    <script>
+        async function loadTapestries() {
+            try {
+                const response = await fetch('/my-tapestries');
+                const data = await response.json();
+
+                if (!data.success) {
+                    showError('Failed to load tapestries');
+                    return;
+                }
+
+                const tapestries = data.tapestries || [];
+                const grid = document.getElementById('tapestries-grid');
+                const countEl = document.getElementById('tapestry-count');
+
+                if (tapestries.length === 0) {
+                    countEl.textContent = 'No tapestries yet';
+                    grid.innerHTML = `
+                        <div class="empty-state" style="grid-column: 1 / -1;">
+                            <h2>✨ No Tapestries Yet</h2>
+                            <p>You haven't created any magical link tapestries yet.<br>Create your first one and start sharing!</p>
+                            <a href="/" class="create-first-button">Create Your First Tapestry</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                countEl.textContent = `${tapestries.length} ${tapestries.length === 1 ? 'tapestry' : 'tapestries'} created`;
+
+                grid.innerHTML = tapestries.map((tapestry, index) => `
+                    <div class="tapestry-card">
+                        <h3>${tapestry.title || 'Untitled Tapestry'}</h3>
+                        <div class="tapestry-meta">
+                            <span>🔗 ${tapestry.linkCount} ${tapestry.linkCount === 1 ? 'link' : 'links'}</span>
+                            <span>📅 ${formatDate(tapestry.createdAt)}</span>
+                        </div>
+                        <div class="tapestry-emojicode" onclick="copyEmojicode('${tapestry.emojicode}')" title="Click to copy">
+                            ${tapestry.emojicode}
+                        </div>
+                        <div class="tapestry-actions">
+                            <button class="action-button view" onclick="viewTapestry('${tapestry.emojicode}')">
+                                👁️ View
+                            </button>
+                            <button class="action-button copy" onclick="copyLink('${tapestry.emojicode}')">
+                                📋 Copy Link
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('Failed to load tapestries:', error);
+                showError('Failed to load tapestries');
+            }
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 60) {
+                return `${diffMins}m ago`;
+            } else if (diffHours < 24) {
+                return `${diffHours}h ago`;
+            } else if (diffDays < 7) {
+                return `${diffDays}d ago`;
+            } else {
+                return date.toLocaleDateString();
+            }
+        }
+
+        function viewTapestry(emojicode) {
+            window.location.href = `/?emojicode=${encodeURIComponent(emojicode)}`;
+        }
+
+        function copyEmojicode(emojicode) {
+            navigator.clipboard.writeText(emojicode).then(() => {
+                showToast('Emojicode copied!');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+
+        function copyLink(emojicode) {
+            const link = `${window.location.origin}/?emojicode=${encodeURIComponent(emojicode)}`;
+            navigator.clipboard.writeText(link).then(() => {
+                showToast('Link copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #10b981, #059669);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 2000);
+        }
+
+        function showError(message) {
+            document.getElementById('tapestries-grid').innerHTML = `
+                <div class="empty-state" style="grid-column: 1 / -1;">
+                    <h2>⚠️ Error</h2>
+                    <p>${message}</p>
+                    <a href="/" class="create-first-button">Back to Home</a>
+                </div>
+            `;
+        }
+
+        // Load tapestries on page load
+        loadTapestries();
+    </script>
+
+    <style>
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    </style>
+</body>
+</html>
