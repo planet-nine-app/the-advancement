@@ -18,8 +18,10 @@ import session from 'express-session';
 import store from 'memorystore';
 import fountLib from 'fount-js';
 import bdoLib from 'bdo-js';
+import addieLib from 'addie-js';
 import sessionless from 'sessionless-node';
 import fetch from 'node-fetch';
+import { webkit } from 'playwright';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -39,6 +41,7 @@ const ADDIE_BASE_URL = process.env.ADDIE_BASE_URL || 'http://localhost:3009';
 // Configure SDKs
 fountLib.baseURL = FOUNT_BASE_URL.endsWith('/') ? FOUNT_BASE_URL : `${FOUNT_BASE_URL}/`;
 bdoLib.baseURL = BDO_BASE_URL.endsWith('/') ? BDO_BASE_URL : `${BDO_BASE_URL}/`;
+addieLib.baseURL = ADDIE_BASE_URL.endsWith('/') ? ADDIE_BASE_URL : `${ADDIE_BASE_URL}/`;
 
 console.log('✨ Glyphenge - Mystical Link Tapestry');
 console.log('====================================');
@@ -1115,16 +1118,18 @@ app.get('/my-tapestries', async (req, res) => {
 });
 
 /**
- * POST /parse-linktree - Parse links from a Linktree URL
+ * POST /parse-linktree - Parse links from a Linktree URL using Playwright WebKit
  *
- * Simple endpoint for the web UI to extract links from Linktree pages
+ * Uses real WebKit browser to bypass bot detection and execute JavaScript
  * Returns just the links array without creating any BDOs
  */
 app.post('/parse-linktree', async (req, res) => {
+    let browser = null;
+
     try {
         const { url } = req.body;
 
-        console.log(`🌐 Parsing Linktree URL: ${url}`);
+        console.log(`🌐 Parsing Linktree URL with WebKit: ${url}`);
 
         // Validate URL
         if (!url || !url.includes('linktr.ee')) {
@@ -1134,35 +1139,48 @@ app.post('/parse-linktree', async (req, res) => {
             });
         }
 
-        // Fetch Linktree page
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
-            }
+        // Launch WebKit browser
+        console.log('🚀 Launching WebKit browser...');
+        browser = await webkit.launch({
+            headless: true
         });
 
-        if (!response.ok) {
+        const context = await browser.newContext({
+            userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+            viewport: { width: 1920, height: 1080 }
+        });
+
+        const page = await context.newPage();
+
+        console.log('📄 Navigating to Linktree page...');
+
+        // Navigate to page and wait for JavaScript to execute
+        await page.goto(url, {
+            waitUntil: 'networkidle',
+            timeout: 30000
+        });
+
+        console.log('🔍 Extracting __NEXT_DATA__ from page...');
+
+        // Extract __NEXT_DATA__ after JavaScript execution
+        const nextData = await page.evaluate(() => {
+            const script = document.getElementById('__NEXT_DATA__');
+            if (!script) return null;
+            return JSON.parse(script.textContent);
+        });
+
+        if (!nextData) {
+            await browser.close();
             return res.status(400).json({
                 success: false,
-                error: `Failed to fetch Linktree page: ${response.statusText}`
+                error: 'Could not find __NEXT_DATA__ in Linktree page. The page structure may have changed.'
             });
         }
 
-        const html = await response.text();
-
-        // Extract __NEXT_DATA__ from page
-        const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/);
-        if (!nextDataMatch) {
-            return res.status(400).json({
-                success: false,
-                error: 'Could not parse Linktree page. Please check the URL and try again.'
-            });
-        }
-
-        const nextData = JSON.parse(nextDataMatch[1]);
         const pageProps = nextData.props?.pageProps?.account;
 
         if (!pageProps || !pageProps.links) {
+            await browser.close();
             return res.status(400).json({
                 success: false,
                 error: 'No links found on this Linktree page.'
@@ -1179,6 +1197,9 @@ app.post('/parse-linktree', async (req, res) => {
 
         console.log(`✅ Extracted ${links.length} links from @${username}'s Linktree`);
 
+        // Close browser
+        await browser.close();
+
         res.json({
             success: true,
             links: links,
@@ -1188,6 +1209,16 @@ app.post('/parse-linktree', async (req, res) => {
 
     } catch (error) {
         console.error('❌ Error parsing Linktree:', error);
+
+        // Make sure browser is closed
+        if (browser) {
+            try {
+                await browser.close();
+            } catch (closeError) {
+                console.error('Error closing browser:', closeError);
+            }
+        }
+
         res.status(500).json({
             success: false,
             error: 'Failed to parse Linktree page. Please try again.'
@@ -1207,34 +1238,20 @@ app.post('/create-payment-intent', async (req, res) => {
         // Get or create user session
         const user = await getOrCreateUser(req);
 
+        // Set up saveKeys/getKeys for addie-js (same pattern as bdo-js)
+        const saveKeys = (keys) => { user.keys = keys; };
+        const getKeys = () => user.keys;
+
         // Create/get Addie user if needed
         if (!user.addieUUID) {
             console.log('📝 Creating Addie user...');
 
-            // Create Addie user via PUT /user/create
-            const timestamp = Date.now().toString();
-            const message = timestamp + user.pubKey;
-            const signature = sessionless.signMessage(message, user.keys.privateKey);
-
-            const addieUserResponse = await fetch(`${ADDIE_BASE_URL}/user/create`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    timestamp,
-                    pubKey: user.pubKey,
-                    signature
-                })
-            });
-
-            if (!addieUserResponse.ok) {
-                throw new Error('Failed to create Addie user');
-            }
-
-            const addieUser = await addieUserResponse.json();
-            user.addieUUID = addieUser.uuid;
+            // Create Addie user via addie-js SDK
+            const addieUUID = await addieLib.createUser(saveKeys, getKeys);
+            user.addieUUID = addieUUID;
 
             // Save to session
-            req.session.addieUUID = addieUser.uuid;
+            req.session.addieUUID = addieUUID;
             await new Promise((resolve, reject) => {
                 req.session.save((err) => err ? reject(err) : resolve());
             });
@@ -1242,33 +1259,21 @@ app.post('/create-payment-intent', async (req, res) => {
             console.log(`✅ Addie user created: ${user.addieUUID}`);
         }
 
-        // Call Addie to create payment intent (without splits)
-        const timestamp = Date.now().toString();
+        // Create payment intent via addie-js SDK
         const amount = 2000; // $20.00
         const currency = 'usd';
-        const message = timestamp + user.addieUUID + amount + currency;
-        const signature = sessionless.signMessage(message, user.keys.privateKey);
 
-        const addieEndpoint = `${ADDIE_BASE_URL}/user/${user.addieUUID}/processor/stripe/intent-without-splits`;
+        console.log(`💰 Creating payment intent for $${amount/100}...`);
 
-        const response = await fetch(addieEndpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                timestamp,
-                amount,
-                currency,
-                savePaymentMethod: false,
-                signature
-            })
-        });
+        // Set up sessionless.getKeys for addie-js to use for signing
+        sessionless.getKeys = getKeys;
 
-        if (!response.ok) {
-            const error = await response.text();
-            throw new Error(`Addie payment intent creation failed: ${error}`);
-        }
-
-        const intentData = await response.json();
+        const intentData = await addieLib.getPaymentIntentWithoutSplits(
+            user.addieUUID,
+            'stripe',
+            amount,
+            currency
+        );
 
         console.log(`✅ Payment intent created`);
 

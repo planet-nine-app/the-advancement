@@ -320,27 +320,20 @@ body {
 }
 
 .create-content {
-    display: flex;
-    gap: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 15px;
     flex: 1;
     min-height: 0;
     overflow: hidden;
 }
 
-.left-create-panel {
-    flex: 1;
+.create-column {
     display: flex;
     flex-direction: column;
     gap: 15px;
     min-height: 0;
-}
-
-.right-create-panel {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    min-height: 0;
+    overflow: hidden;
 }
 
 .preview-section {
@@ -357,6 +350,7 @@ body {
     min-height: 0;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .preview-section h2 {
@@ -378,6 +372,7 @@ body {
     overflow: auto;
     min-height: 0;
     border: 1px solid rgba(138, 92, 246, 0.2);
+    padding: 20px;
 }
 
 .preview-container svg {
@@ -683,32 +678,40 @@ body {
 
 .carousel-section {
     background: rgba(15, 23, 42, 0.7);
-    border-radius: 24px;
-    padding: 30px;
+    border-radius: 16px;
+    padding: 15px;
     box-shadow:
         0 0 30px rgba(138, 92, 246, 0.3),
         0 10px 40px rgba(0, 0, 0, 0.5),
         inset 0 0 40px rgba(138, 92, 246, 0.1);
     border: 1px solid rgba(138, 92, 246, 0.3);
     backdrop-filter: blur(10px);
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .carousel-section h2 {
-    font-size: 1.5rem;
-    margin-bottom: 20px;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
     text-align: center;
     color: #a78bfa;
+    flex-shrink: 0;
     text-shadow: 0 0 10px rgba(138, 92, 246, 0.6);
 }
 
 .carousel-container {
     display: flex;
-    align-items: center;
-    gap: 20px;
-    overflow-x: auto;
-    padding: 20px;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding: 15px;
     background: rgba(10, 14, 39, 0.6);
-    border-radius: 16px;
+    border-radius: 12px;
     border: 1px solid rgba(138, 92, 246, 0.2);
 }
 
@@ -731,11 +734,10 @@ body {
 
 .carousel-track {
     display: flex;
-    gap: 20px;
-    overflow-x: auto;
-    scroll-behavior: smooth;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
     flex: 1;
-    padding: 10px;
 }
 
 .carousel-track::-webkit-scrollbar {
@@ -753,8 +755,8 @@ body {
 
 .template-card {
     flex-shrink: 0;
-    width: 300px;
-    height: 400px;
+    width: 100%;
+    height: 200px;
     border-radius: 12px;
     box-shadow:
         0 0 20px rgba(138, 92, 246, 0.2),
@@ -789,8 +791,8 @@ body {
 
 .add-template-card {
     flex-shrink: 0;
-    width: 300px;
-    height: 400px;
+    width: 100%;
+    height: 200px;
     border-radius: 12px;
     border: 3px dashed rgba(138, 92, 246, 0.5);
     background: rgba(10, 14, 39, 0.4);
@@ -847,6 +849,15 @@ body {
 }
 
 /* Responsive Design */
+
+/* Switch to 3-row layout when height > width */
+@media (max-aspect-ratio: 1/1) {
+    .create-content {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr 1fr;
+    }
+}
+
 @media (max-width: 1024px) {
     .button-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -872,10 +883,6 @@ body {
 
     .create-container {
         padding: 20px;
-    }
-
-    .create-content {
-        flex-direction: column;
     }
 
     .buy-button {

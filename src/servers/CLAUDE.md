@@ -437,6 +437,59 @@ Edit `custom-style.css` and redeploy. Changes will be reflected immediately.
 ### Adding Welcome Content
 Edit `welcome-visitors.json` and redeploy. This is a standard federated wiki page in JSON format.
 
+## Planet Nine Store Deployment (November 2025)
+
+In addition to federated wiki deployment, this system now supports deploying privacy-first digital artifact stores that serve federated feeds.
+
+### Store Features
+- **LLM-Powered Feed Generation**: Automatic metadata extraction using Claude AI
+- **Three Feed Types**: Libris (books), Scribus (blog posts), Canimus (music)
+- **Local Testing**: `make-store.js` for instant local development
+- **Production Deployment**: `deploy-store.js` for Digital Ocean droplets
+- **Sanora Integration**: Serves feeds from uploaded artifacts
+
+### Quick Start
+
+**Local Store** (testing):
+```bash
+cd /path/to/your-artifacts
+node /path/to/tools/make-store.js "My Bookstore"
+# Available at: http://localhost:8080
+```
+
+**Production Store** (Digital Ocean):
+```bash
+node deploy-store.js my-store /path/to/artifacts --project allyabase
+# Live at: https://my-store.allyabase.com
+```
+
+### Files
+
+```
+servers/
+├── deploy-store.js         # Store deployment to Digital Ocean
+├── setup-store.sh         # Server-side store setup script
+└── STORE-DEPLOYMENT.md    # Complete store documentation
+
+tools/
+└── make-store.js          # Local store for testing
+```
+
+### Artifact Types Supported
+
+- **Books**: `.epub`, `.pdf`, `.mobi`, `.azw3` → Libris feed
+- **Music**: `.mp3`, `.flac`, `.m4a`, `.ogg`, `.wav` → Canimus feed
+- **Blog Posts**: `.md`, `.html` → Scribus feed
+
+### Feed Specifications
+
+See [STORE-DEPLOYMENT.md](./STORE-DEPLOYMENT.md) for complete documentation including:
+- Deployment workflows
+- Feed specifications
+- Local vs production comparison
+- Troubleshooting guide
+- Integration with Sanora
+
 ## Future Enhancements
 
 Potential improvements:
@@ -461,6 +514,6 @@ Potential improvements:
 
 **Status**: Production-ready ✅
 
-**Last Updated**: October 2025
+**Last Updated**: November 2025
 
 **Maintainer**: Planet Nine Team
