@@ -357,16 +357,36 @@
             const track = document.getElementById('carousel-track');
             const styleTemplates = templates[selectedStyle] || templates.stunning;
 
-            track.innerHTML = styleTemplates.map((template, index) => `
+            const templateCards = styleTemplates.map((template, index) => `
                 <div class="template-card ${index === selectedTemplate ? 'selected' : ''}" onclick="selectTemplate(${index})">
                     ${generateTemplateSVG(template)}
                 </div>
-            `).join('') + `
-                <div class="add-template-card">
-                    <div class="plus-icon">+</div>
-                    <div class="add-text">More Coming Soon</div>
+            `).join('');
+
+            const customTemplateCard = `
+                <div class="template-card" onclick="showTemplateOptions()" style="cursor: pointer;">
+                    <svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="custom-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <rect width="600" height="400" fill="url(#custom-gradient)" rx="20"/>
+                        <text x="300" y="180" font-family="system-ui" font-size="24" font-weight="bold" fill="white" text-anchor="middle" opacity="0.9">
+                            Custom Templates
+                        </text>
+                        <text x="300" y="220" font-family="system-ui" font-size="16" fill="white" text-anchor="middle" opacity="0.8">
+                            Download spec or upload your own
+                        </text>
+                        <text x="300" y="250" font-family="system-ui" font-size="32" fill="white" text-anchor="middle" opacity="0.9">
+                            ⚙️
+                        </text>
+                    </svg>
                 </div>
             `;
+
+            track.innerHTML = templateCards + customTemplateCard;
         }
 
         // Select template
@@ -463,9 +483,11 @@
                 height: 100%;
                 background: rgba(0,0,0,0.8);
                 display: flex;
-                align-items: center;
+                align-items: flex-start;
                 justify-content: center;
                 z-index: 10000;
+                overflow-y: auto;
+                padding: 40px 20px;
             `;
 
             const formContainer = document.createElement('div');
@@ -475,7 +497,10 @@
                 border-radius: 20px;
                 max-width: 500px;
                 width: 90%;
+                max-height: calc(100vh - 80px);
+                overflow-y: auto;
                 box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                margin: auto;
             `;
 
             formContainer.innerHTML = `
@@ -738,6 +763,249 @@
                 <\/script>
             `;
         }
+
+        // Template Options Modal
+        function showTemplateOptions() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: white;
+                padding: 40px;
+                border-radius: 20px;
+                max-width: 500px;
+                width: 90%;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            `;
+
+            content.innerHTML = `
+                <h2 style="margin: 0 0 10px 0; color: #333;">Template Options</h2>
+                <p style="margin: 0 0 30px 0; color: #666;">Download template spec or upload your own</p>
+
+                <button onclick="downloadTemplateSpec()" style="
+                    width: 100%;
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                    color: white;
+                    border: none;
+                    padding: 15px;
+                    border-radius: 10px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    margin-bottom: 10px;
+                ">Download Template Spec</button>
+
+                <button onclick="showUploadTemplateForm()" style="
+                    width: 100%;
+                    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                    color: white;
+                    border: none;
+                    padding: 15px;
+                    border-radius: 10px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    margin-bottom: 10px;
+                ">Upload Custom Template</button>
+
+                <button onclick="this.closest('.modal').remove()" style="
+                    width: 100%;
+                    background: #e5e7eb;
+                    color: #666;
+                    border: none;
+                    padding: 15px;
+                    border-radius: 10px;
+                    font-size: 16px;
+                    cursor: pointer;
+                ">Cancel</button>
+            `;
+
+            content.querySelector('button[onclick*="remove"]').onclick = () => {
+                document.body.removeChild(modal);
+            };
+
+            modal.className = 'modal';
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+        }
+
+        // Download Template Specification
+        function downloadTemplateSpec() {
+            const templateSpec = {
+                _documentation: {
+                    description: "Glyphenge Custom Template Specification",
+                    version: "1.0",
+                    revenue: "Earn 2% of every $20 purchase using your template",
+                    requirements: {
+                        container: "SVG container with dynamic \\${height} placeholder",
+                        linkTemplate: "Must include <a href=\\\"\\${url}\\\" target=\\\"_blank\\\"> wrapper",
+                        placeholders: [
+                            "\\${height} - Dynamic height based on link count",
+                            "\\${url} - Link URL",
+                            "\\${title} - Link title",
+                            "\\${domain} - Extracted domain name",
+                            "\\${index} or \\${i} - Link index (0-based)"
+                        ]
+                    }
+                },
+                name: "My Custom Template",
+                colors: ["#ff6b6b", "#ee5a6f", "#feca57"],
+                linkColors: ["#10b981", "#3b82f6", "#8b5cf6", "#ec4899"],
+                background: `<svg viewBox="0 0 600 \${height}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+            <stop offset="50%" style="stop-color:#ee5a6f;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#feca57;stop-opacity:1" />
+        </linearGradient>
+    </defs>
+    <rect width="600" height="\${height}" fill="url(#bg)" rx="20"/>
+</svg>`,
+                linkTemplate: `<a href="\${url}" target="_blank">
+    <rect x="50" y="\${y}" width="500" height="80" fill="\${color}" rx="12" opacity="0.95"/>
+    <text x="80" y="\${y + 35}" font-family="system-ui" font-size="16" fill="white">\${title}</text>
+    <text x="80" y="\${y + 55}" font-family="system-ui" font-size="14" fill="white" opacity="0.9">\${domain}</text>
+</a>`
+            };
+
+            const blob = new Blob([JSON.stringify(templateSpec, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'glyphenge-template.json';
+            a.click();
+            URL.revokeObjectURL(url);
+
+            // Close modal
+            document.querySelector('.modal').remove();
+        }
+
+        // Show Upload Template Form
+        function showUploadTemplateForm() {
+            // Close current modal
+            document.querySelector('.modal').remove();
+
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: white;
+                padding: 40px;
+                border-radius: 20px;
+                max-width: 500px;
+                width: 90%;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            `;
+
+            content.innerHTML = `
+                <h2 style="margin: 0 0 10px 0; color: #333;">Upload Custom Template</h2>
+                <p style="margin: 0 0 20px 0; color: #666;">Upload your template JSON file</p>
+
+                <div style="margin-bottom: 20px;">
+                    <input type="file" id="template-file" accept=".json" style="
+                        width: 100%;
+                        padding: 10px;
+                        border: 2px dashed #d1d5db;
+                        border-radius: 10px;
+                        cursor: pointer;
+                    ">
+                </div>
+
+                <button id="upload-template-btn" style="
+                    width: 100%;
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                    color: white;
+                    border: none;
+                    padding: 15px;
+                    border-radius: 10px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    margin-bottom: 10px;
+                ">Upload Template</button>
+
+                <button onclick="this.closest('.modal').remove()" style="
+                    width: 100%;
+                    background: #e5e7eb;
+                    color: #666;
+                    border: none;
+                    padding: 15px;
+                    border-radius: 10px;
+                    font-size: 16px;
+                    cursor: pointer;
+                ">Cancel</button>
+            `;
+
+            content.querySelector('button[onclick*="remove"]').onclick = () => {
+                document.body.removeChild(modal);
+            };
+
+            content.querySelector('#upload-template-btn').onclick = () => {
+                uploadTemplate();
+            };
+
+            modal.className = 'modal';
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+        }
+
+        // Upload Template
+        async function uploadTemplate() {
+            const fileInput = document.getElementById('template-file');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a template file');
+                return;
+            }
+
+            try {
+                const text = await file.text();
+                const template = JSON.parse(text);
+
+                // Validate template structure
+                if (!template.name || !template.colors || !template.linkColors || !template.background || !template.linkTemplate) {
+                    alert('Invalid template format. Please check the specification.');
+                    return;
+                }
+
+                // Add to templates (would normally upload to server)
+                console.log('Custom template uploaded:', template);
+                alert('Template uploaded successfully! (Server upload not yet implemented)');
+
+                // Close modal
+                document.querySelector('.modal').remove();
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Failed to parse template file. Please check the format.');
+            }
+        }
+
 
         // Initialize
         renderCarousel();

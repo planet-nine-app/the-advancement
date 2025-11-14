@@ -79,6 +79,14 @@ Glyphenge implements a **centralized rendering architecture** where all SVG gene
 - Session-based user accounts and tapestry storage
 - Click-to-copy for all URLs and emojicodes
 
+**Custom Template Upload System:** (January 2025)
+- Custom Templates card in carousel with purple/pink gradient
+- Download template specification (JSON with documentation)
+- Upload custom template functionality (client-side validation)
+- Template spec includes revenue sharing information (2% per purchase)
+- Fixed JavaScript syntax error by escaping dollar signs in template literals
+- Proper use of `\\$` instead of `$` in documentation strings to prevent JS interpretation
+
 ### 🚧 Productionization Needs
 
 **Phase 1: Environment Configuration** (HIGH PRIORITY)
@@ -759,6 +767,25 @@ Will be added to allyabase Docker ecosystem with PM2 process management.
 
 **Solution**: Set `BDO_BASE_URL=http://localhost:5114` for Docker Base 1 (port 5114, not 3003).
 
+---
+
+**Issue**: JavaScript syntax error in custom template upload code: `SyntaxError: Unexpected identifier '$'. Expected '}' to end an object literal.`
+
+**Cause**: Template specification documentation strings contained `${height}` placeholders in regular double-quoted strings. JavaScript was attempting to interpret these as template literal syntax even though they weren't in backtick strings.
+
+**Solution**: Escaped all dollar signs in documentation strings using `\\$` instead of `$`:
+```javascript
+// Before (caused error):
+container: "SVG container with dynamic ${height} placeholder"
+
+// After (fixed):
+container: "SVG container with dynamic \\${height} placeholder"
+```
+
+**Files Modified**: `/glyphenge/public/create.html` lines 827-835
+
+**Result**: Custom template download/upload functionality now works without syntax errors. The carousel displays the "Custom Templates" card properly.
+
 ## Getting Back to Work
 
 When returning to Glyphenge development:
@@ -771,9 +798,19 @@ When returning to Glyphenge development:
 
 ## Last Updated
 
-**Date**: January 13, 2025
+**Date**: January 14, 2025
 
 **Changes**:
+- 🐛 Fixed JavaScript syntax error in custom template upload code
+- ✨ Re-implemented custom template upload system with proper escaping
+- 📥 Added "Custom Templates" card to carousel (purple/pink gradient)
+- 📤 Implemented template specification download (JSON with docs)
+- 📂 Added custom template upload functionality (client-side validation)
+- 🔧 Fixed dollar sign escaping issue: `\\$` instead of `$` in documentation strings
+- ✅ Template carousel now displays all templates without errors
+- 📝 Updated CLAUDE.md with troubleshooting section for syntax error
+
+**Previous Session** (January 13, 2025):
 - ✨ Implemented web-based create page with dark cosmic theme
 - 🎨 Added beautiful dark mode UI with starfield background and glowing effects
 - 🔗 Built Linktree import functionality (endpoint works, blocked by Linktree)
@@ -784,10 +821,11 @@ When returning to Glyphenge development:
 - ⚡ Connected payment confirmation to tapestry creation flow
 - 🔧 Fixed addie-js SDK integration (getPaymentIntentWithoutSplits + sessionless.getKeys)
 - 🔑 Configured Stripe test keys in Docker container (0eeee58cf9cc)
-- ✅ Verified complete payment flow ready for testing
 
 **Next Steps**:
-1. ✅ ~~Test complete payment flow with Stripe test cards~~ - Ready for testing
-2. Consider adding Puppeteer for Linktree scraping bypass
-3. Add user dashboard to view all created tapestries
-4. Initialize git repository (Phase 2)
+1. ✅ ~~Fix carousel rendering syntax error~~ - COMPLETED
+2. ✅ ~~Re-implement custom template upload~~ - COMPLETED
+3. Test complete payment flow with Stripe test cards
+4. Consider adding Puppeteer for Linktree scraping bypass
+5. Add user dashboard to view all created tapestries
+6. Initialize git repository (Phase 2)

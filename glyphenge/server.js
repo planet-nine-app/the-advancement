@@ -225,6 +225,122 @@ app.get('/', async (req, res) => {
 // In-memory mapping of pubKey to metadata for alphanumeric URLs
 const bdoMetadataMap = new Map();
 
+// Persistence tracking
+let mappingsDirty = false;
+let mappingsCounter = 0;
+let lastBDOBackup = Date.now();
+
+// File paths
+const MAPPINGS_FILE = join(__dirname, 'alphanumeric-mappings.json');
+
+/**
+ * Load alphanumeric mappings from filesystem on startup
+ */
+async function loadMappings() {
+    try {
+        const fs = await import('fs/promises');
+        const data = await fs.readFile(MAPPINGS_FILE, 'utf-8');
+        const mappings = JSON.parse(data);
+
+        for (const [pubKey, metadata] of Object.entries(mappings)) {
+            bdoMetadataMap.set(pubKey, metadata);
+        }
+
+        console.log(`📂 Loaded ${bdoMetadataMap.size} alphanumeric mappings from filesystem`);
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            console.log('📝 No existing mappings file, starting fresh');
+        } else {
+            console.error('❌ Error loading mappings:', err.message);
+        }
+    }
+}
+
+/**
+ * Save alphanumeric mappings to filesystem (batched)
+ */
+async function saveMappingsToFilesystem() {
+    try {
+        const fs = await import('fs/promises');
+        const mappings = Object.fromEntries(bdoMetadataMap);
+        await fs.writeFile(MAPPINGS_FILE, JSON.stringify(mappings, null, 2), 'utf-8');
+
+        mappingsDirty = false;
+        console.log(`💾 Saved ${bdoMetadataMap.size} alphanumeric mappings to filesystem`);
+    } catch (err) {
+        console.error('❌ Error saving mappings to filesystem:', err.message);
+    }
+}
+
+/**
+ * Backup alphanumeric mappings to BDO service (hourly)
+ */
+async function backupMappingsToBDO() {
+    try {
+        console.log('☁️ Backing up alphanumeric mappings to BDO service...');
+
+        const mappings = Object.fromEntries(bdoMetadataMap);
+
+        // Generate temporary keys for backup BDO
+        const saveKeys = (keys) => { backupKeys = keys; };
+        const getKeys = () => backupKeys;
+        let backupKeys = null;
+
+        const keys = await sessionless.generateKeys(saveKeys, getKeys);
+
+        // Create backup BDO
+        const backupBDO = {
+            title: 'Glyphenge Alphanumeric Mappings Backup',
+            type: 'glyphenge-backup',
+            mappings: mappings,
+            mappingCount: bdoMetadataMap.size,
+            backedUpAt: new Date().toISOString()
+        };
+
+        const hash = 'Glyphenge-System';
+        await bdoLib.createUser(hash, backupBDO, saveKeys, getKeys);
+
+        lastBDOBackup = Date.now();
+        console.log(`☁️ Backed up ${bdoMetadataMap.size} mappings to BDO service`);
+    } catch (err) {
+        console.error('❌ Error backing up to BDO:', err.message);
+    }
+}
+
+/**
+ * Mark mappings as dirty and potentially trigger save
+ */
+function markMappingsDirty() {
+    mappingsDirty = true;
+    mappingsCounter++;
+
+    // Batch save every 10 creates
+    if (mappingsCounter >= 10) {
+        mappingsCounter = 0;
+        saveMappingsToFilesystem();
+    }
+}
+
+// Periodic save timer (every 10 minutes if dirty)
+setInterval(() => {
+    if (mappingsDirty) {
+        console.log('⏰ 10-minute timer: Saving dirty mappings...');
+        saveMappingsToFilesystem();
+    }
+}, 10 * 60 * 1000); // 10 minutes
+
+// Hourly BDO backup timer
+setInterval(() => {
+    const hoursSinceBackup = (Date.now() - lastBDOBackup) / (1000 * 60 * 60);
+    if (hoursSinceBackup >= 1 && bdoMetadataMap.size > 0) {
+        console.log('⏰ 1-hour timer: Backing up to BDO...');
+        backupMappingsToBDO();
+    }
+}, 60 * 60 * 1000); // 1 hour
+
+// Load mappings on startup
+loadMappings();
+
 /**
  * Alphanumeric path route - /t/:identifier
  * Provides shareable alphanumeric URLs using pubKey (first 16 chars)
@@ -1050,6 +1166,7 @@ app.post('/create', async (req, res) => {
             emojicode: emojicode,
             createdAt: new Date()
         });
+        markMappingsDirty();
 
         // Add tapestry to user's carrierBag
         await addTapestryToUser(req, {
@@ -1437,6 +1554,7 @@ async function resolveGlyphengeSpell(caster, payload) {
         emojicode: emojicode,
         createdAt: new Date()
     });
+    markMappingsDirty();
 
     // Return identifiers only - let client construct URLs
     return {
@@ -1572,6 +1690,7 @@ async function resolveGlyphtreeSpell(caster, payload) {
         emojicode: emojicode,
         createdAt: new Date()
     });
+    markMappingsDirty();
 
     // Return identifiers only - let client construct URLs
     return {
