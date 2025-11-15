@@ -5,6 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Enchantment Emporium</title>
     <style>
+        :root {
+            /* Background Colors */
+            --bg-primary: #1a0033;
+            --bg-secondary: #2d0a4e;
+            --bg-overlay: rgba(255, 255, 255, 0.05);
+            --bg-overlay-dark: rgba(0, 0, 0, 0.8);
+
+            /* Accent Colors */
+            --accent-primary: #fbbf24;
+            --accent-secondary: #a78bfa;
+            --accent-success: #10b981;
+            --accent-success-dark: #059669;
+            --accent-error: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-purple-dark: #7c3aed;
+            --accent-pink: #ec4899;
+            --accent-pink-dark: #db2777;
+
+            /* Text Colors */
+            --text-primary: #e0d4f7;
+            --text-secondary: #d1c4e9;
+            --text-muted: #a78bfa;
+
+            /* Border Colors */
+            --border-primary: rgba(167, 139, 250, 0.3);
+            --border-active: #a78bfa;
+            --border-success: rgba(16, 185, 129, 0.3);
+            --border-success-active: #10b981;
+
+            /* Button Colors */
+            --btn-success-start: #10b981;
+            --btn-success-end: #059669;
+            --btn-secondary-bg: rgba(167, 139, 250, 0.2);
+            --btn-secondary-text: #a78bfa;
+            --btn-secondary-border: rgba(167, 139, 250, 0.5);
+            --btn-disabled: #4b5563;
+
+            /* Card Colors */
+            --card-bg-start: rgba(167, 139, 250, 0.1);
+            --card-bg-end: rgba(139, 92, 246, 0.1);
+            --card-border-default: rgba(167, 139, 250, 0.3);
+            --card-border-hover: #a78bfa;
+
+            /* Shadow Colors */
+            --shadow-accent: rgba(251, 191, 36, 0.5);
+            --shadow-success: rgba(16, 185, 129, 0.4);
+            --shadow-success-hover: rgba(16, 185, 129, 0.6);
+            --shadow-card: rgba(167, 139, 250, 0.3);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,8 +63,8 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a0033 0%, #2d0a4e 100%);
-            color: #e0d4f7;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
             min-height: 100vh;
             padding: 20px;
         }
@@ -23,21 +73,21 @@
             text-align: center;
             margin-bottom: 30px;
             padding: 20px;
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--bg-overlay);
             border-radius: 15px;
-            border: 1px solid rgba(167, 139, 250, 0.3);
+            border: 1px solid var(--border-primary);
         }
 
         .header h1 {
             font-size: 28px;
-            color: #fbbf24;
+            color: var(--accent-primary);
             margin-bottom: 8px;
-            text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+            text-shadow: 0 0 20px var(--shadow-accent);
         }
 
         .header p {
             font-size: 14px;
-            color: #a78bfa;
+            color: var(--text-muted);
             font-style: italic;
         }
 
@@ -51,8 +101,8 @@
 
         /* Enchantment List */
         .enchantment-card {
-            background: linear-gradient(135deg, rgba(167, 139, 250, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-            border: 2px solid rgba(167, 139, 250, 0.3);
+            background: linear-gradient(135deg, var(--card-bg-start) 0%, var(--card-bg-end) 100%);
+            border: 2px solid var(--card-border-default);
             border-radius: 15px;
             padding: 20px;
             margin-bottom: 15px;
@@ -61,10 +111,10 @@
         }
 
         .enchantment-card:hover {
-            border-color: #a78bfa;
+            border-color: var(--card-border-hover);
             background: linear-gradient(135deg, rgba(167, 139, 250, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(167, 139, 250, 0.3);
+            box-shadow: 0 8px 25px var(--shadow-card);
         }
 
         .enchantment-icon {
@@ -76,21 +126,21 @@
         .enchantment-name {
             font-size: 22px;
             font-weight: 700;
-            color: #fbbf24;
+            color: var(--accent-primary);
             margin-bottom: 5px;
             text-align: center;
         }
 
         .enchantment-subtitle {
             font-size: 14px;
-            color: #a78bfa;
+            color: var(--text-muted);
             text-align: center;
             margin-bottom: 10px;
         }
 
         .enchantment-description {
             font-size: 13px;
-            color: #d1c4e9;
+            color: var(--text-secondary);
             line-height: 1.5;
             text-align: center;
         }
@@ -99,18 +149,18 @@
             margin-top: 12px;
             padding: 10px 12px;
             background: rgba(16, 185, 129, 0.15);
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            border: 1px solid var(--border-success);
             border-radius: 8px;
             text-align: center;
             font-size: 14px;
-            color: #10b981;
+            color: var(--accent-success);
             font-weight: 600;
         }
 
         /* Detail View */
         .detail-container {
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(167, 139, 250, 0.3);
+            background: var(--bg-overlay);
+            border: 2px solid var(--border-primary);
             border-radius: 15px;
             padding: 25px;
             max-width: 600px;
@@ -132,7 +182,7 @@
         .detail-title {
             font-size: 26px;
             font-weight: 700;
-            color: #fbbf24;
+            color: var(--accent-primary);
             text-align: center;
             margin-bottom: 8px;
             text-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
@@ -140,7 +190,7 @@
 
         .detail-subtitle {
             font-size: 16px;
-            color: #a78bfa;
+            color: var(--text-muted);
             text-align: center;
             margin-bottom: 20px;
             font-style: italic;
@@ -152,13 +202,13 @@
 
         .detail-section h3 {
             font-size: 16px;
-            color: #fbbf24;
+            color: var(--accent-primary);
             margin-bottom: 10px;
         }
 
         .detail-section p {
             font-size: 14px;
-            color: #d1c4e9;
+            color: var(--text-secondary);
             line-height: 1.6;
             margin-bottom: 8px;
         }
@@ -170,7 +220,7 @@
 
         .detail-section li {
             font-size: 14px;
-            color: #d1c4e9;
+            color: var(--text-secondary);
             padding: 6px 0;
             padding-left: 25px;
             position: relative;
@@ -183,7 +233,7 @@
         }
 
         .requirements {
-            background: rgba(167, 139, 250, 0.1);
+            background: var(--card-bg-start);
             border-radius: 10px;
             padding: 15px;
             margin: 15px 0;
@@ -197,11 +247,11 @@
         }
 
         .requirement-item.met {
-            color: #10b981;
+            color: var(--accent-success);
         }
 
         .requirement-item.not-met {
-            color: #ef4444;
+            color: var(--accent-error);
         }
 
         .requirement-item .icon {
@@ -225,12 +275,12 @@
         .stat-value {
             font-size: 24px;
             font-weight: 700;
-            color: #10b981;
+            color: var(--accent-success);
         }
 
         .stat-label {
             font-size: 12px;
-            color: #a78bfa;
+            color: var(--text-muted);
             margin-top: 5px;
         }
 
@@ -248,14 +298,14 @@
         }
 
         .button-primary {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: linear-gradient(135deg, var(--btn-success-start) 0%, var(--btn-success-end) 100%);
             color: white;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            box-shadow: 0 4px 15px var(--shadow-success);
         }
 
         .button-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+            box-shadow: 0 6px 20px var(--shadow-success-hover);
         }
 
         .button-primary:active {
@@ -263,15 +313,15 @@
         }
 
         .button-primary:disabled {
-            background: #4b5563;
+            background: var(--btn-disabled);
             cursor: not-allowed;
             box-shadow: none;
         }
 
         .button-secondary {
-            background: rgba(167, 139, 250, 0.2);
-            color: #a78bfa;
-            border: 1px solid rgba(167, 139, 250, 0.5);
+            background: var(--btn-secondary-bg);
+            color: var(--btn-secondary-text);
+            border: 1px solid var(--btn-secondary-border);
         }
 
         .button-secondary:hover {
@@ -300,21 +350,21 @@
         .success-title {
             font-size: 32px;
             font-weight: 700;
-            color: #fbbf24;
+            color: var(--accent-primary);
             margin-bottom: 15px;
-            text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+            text-shadow: 0 0 20px var(--shadow-accent);
         }
 
         .success-message {
             font-size: 16px;
-            color: #d1c4e9;
+            color: var(--text-secondary);
             line-height: 1.6;
             margin-bottom: 25px;
         }
 
         .emojicode-display {
             background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%);
-            border: 2px solid #10b981;
+            border: 2px solid var(--accent-success);
             border-radius: 15px;
             padding: 20px;
             margin: 25px 0;
@@ -329,32 +379,32 @@
 
         .emojicode-label {
             font-size: 12px;
-            color: #a78bfa;
+            color: var(--text-muted);
             margin-bottom: 8px;
         }
 
         .emojicode-value {
             font-size: 32px;
             font-family: monospace;
-            color: #10b981;
+            color: var(--accent-success);
             letter-spacing: 3px;
             margin: 10px 0;
         }
 
         .emojicode-hint {
             font-size: 11px;
-            color: #a78bfa;
+            color: var(--text-muted);
             font-style: italic;
         }
 
         .url-display {
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--bg-overlay);
             border-radius: 10px;
             padding: 15px;
             margin: 15px 0;
             font-family: monospace;
             font-size: 12px;
-            color: #a78bfa;
+            color: var(--text-muted);
             word-break: break-all;
         }
 
@@ -363,7 +413,7 @@
             text-align: center;
             padding: 40px;
             background: rgba(255, 255, 255, 0.03);
-            border: 2px dashed rgba(167, 139, 250, 0.3);
+            border: 2px dashed var(--border-primary);
             border-radius: 15px;
             margin-top: 20px;
         }
@@ -376,7 +426,7 @@
 
         .coming-soon-text {
             font-size: 18px;
-            color: #a78bfa;
+            color: var(--text-muted);
             opacity: 0.7;
         }
 
@@ -387,7 +437,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
+            background: var(--bg-overlay-dark);
             display: none;
             align-items: center;
             justify-content: center;
@@ -416,7 +466,7 @@
         .loading-text {
             margin-top: 20px;
             font-size: 18px;
-            color: #a78bfa;
+            color: var(--text-muted);
         }
 
         /* Payment Method Selection */
@@ -433,10 +483,10 @@
         .payment-method-button {
             flex: 1;
             padding: 15px;
-            border: 2px solid rgba(167, 139, 250, 0.3);
+            border: 2px solid var(--border-primary);
             border-radius: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            color: #a78bfa;
+            background: var(--bg-overlay);
+            color: var(--text-muted);
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -444,20 +494,20 @@
         }
 
         .payment-method-button:hover {
-            background: rgba(167, 139, 250, 0.1);
-            border-color: #a78bfa;
+            background: var(--card-bg-start);
+            border-color: var(--border-active);
         }
 
         .payment-method-button.selected {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            border-color: #10b981;
+            background: linear-gradient(135deg, var(--btn-success-start) 0%, var(--btn-success-end) 100%);
+            border-color: var(--border-success-active);
             color: white;
         }
 
         .payment-option {
             display: none;
             padding: 15px;
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--bg-overlay);
             border-radius: 10px;
             margin-top: 10px;
         }
@@ -469,10 +519,10 @@
         .word-of-power-input {
             width: 100%;
             padding: 12px;
-            border: 2px solid rgba(167, 139, 250, 0.3);
+            border: 2px solid var(--border-primary);
             border-radius: 8px;
             background: rgba(255, 255, 255, 0.1);
-            color: #e0d4f7;
+            color: var(--text-primary);
             font-size: 16px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin-bottom: 10px;
@@ -481,20 +531,20 @@
 
         .word-of-power-input:focus {
             outline: none;
-            border-color: #10b981;
+            border-color: var(--border-success-active);
             box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
         }
 
         .word-of-power-hint {
             font-size: 12px;
-            color: #a78bfa;
+            color: var(--text-muted);
             margin-top: 5px;
             font-style: italic;
         }
 
         .payment-info {
             font-size: 14px;
-            color: #d1c4e9;
+            color: var(--text-secondary);
             line-height: 1.5;
         }
     </style>
@@ -555,18 +605,20 @@
                 subtitle: 'Link Tapestry Weaver',
                 icon: '🔮',
                 description: 'Weave your links into a mystical public tapestry accessible to anyone via an emojicode rune.',
-                costMP: 10,
-                costNineum: 100,
-                wordOfPowerHash: '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8', // 'abracadabra'
+                mp: false,
+                cost: 1500,
                 requirements: [
                     { text: 'At least 1 link in carrierBag', check: 'hasLinks' },
-                    { text: '10 MP or 100 nineum', check: 'hasFunds' }
+                    { text: '$15 payment', check: 'alwaysTrue' }
                 ],
                 benefits: [
                     'Public link tapestry',
                     'Shareable emojicode rune',
-                    '3 mystical layouts',
-                    'No tracking or surveillance'
+                    '9 mystical style categories',
+                    '3 adaptive layouts (compact, grid, dense)',
+                    'Custom template support',
+                    'No tracking or surveillance',
+                    '$5 savings vs website ($20)'
                 ]
             },
             {
@@ -636,13 +688,29 @@
                 card.className = 'enchantment-card';
                 card.onclick = () => showDetail(ench.id);
 
+                // Determine cost display
+                let costText = '';
+                if (ench.mp !== false && ench.costMP) {
+                    // Has MP cost
+                    costText = `Cost: ${ench.costMP} MP`;
+                    if (ench.costNineum) {
+                        costText += ` or ${ench.costNineum} nineum`;
+                    }
+                } else if (ench.cost) {
+                    // Money only
+                    costText = `Cost: $${(ench.cost / 100).toFixed(2)}`;
+                } else if (ench.costNineum) {
+                    // Nineum only
+                    costText = `Cost: ${ench.costNineum} nineum`;
+                }
+
                 card.innerHTML = `
                     <div class="enchantment-icon">${ench.icon}</div>
                     <div class="enchantment-name">${ench.name}</div>
                     <div class="enchantment-subtitle">${ench.subtitle}</div>
                     <div class="enchantment-description">${ench.description}</div>
                     <div class="enchantment-cost">
-                        Cost: ${ench.costMP} MP or ${ench.costNineum} nineum
+                        ${costText}
                     </div>
                 `;
 
@@ -696,40 +764,50 @@
                     </div>
                 </div>
 
-                <div class="payment-methods">
-                    <h3 style="margin-bottom: 10px; color: #fbbf24;">💰 Choose Payment Method:</h3>
-
-                    <div class="payment-method-buttons">
-                        <button class="payment-method-button selected" onclick="selectPaymentMethod('mp')">
-                            ✨ Magic Points
-                        </button>
-                        <button class="payment-method-button" onclick="selectPaymentMethod('money')">
-                            💳 Money
-                        </button>
-                    </div>
-
-                    <div id="mp-option" class="payment-option active">
-                        <div class="payment-info">
-                            <strong>Magic Points Payment (${ench.costMP} MP)</strong>
-                            <p style="margin-top: 8px;">Use your accumulated magic points. Requires a word of power to authorize.</p>
-                        </div>
-                        <div style="margin-top: 12px;">
-                            <input type="text"
-                                   id="word-of-power"
-                                   class="word-of-power-input"
-                                   placeholder="Enter word of power"
-                                   autocomplete="off">
-                            <div class="word-of-power-hint">Whisper the ancient word to unlock your magic...</div>
+                ${ench.mp === false ? `
+                    <div class="payment-methods">
+                        <h3 style="margin-bottom: 10px; color: #fbbf24;">💰 Payment:</h3>
+                        <div class="payment-info" style="padding: 15px; background: rgba(255, 255, 255, 0.05); border-radius: 10px;">
+                            <strong>Card Payment ($${(ench.cost / 100).toFixed(2)})</strong>
+                            <p style="margin-top: 8px;">Pay securely with your credit/debit card via Stripe.</p>
                         </div>
                     </div>
+                ` : `
+                    <div class="payment-methods">
+                        <h3 style="margin-bottom: 10px; color: #fbbf24;">💰 Choose Payment Method:</h3>
 
-                    <div id="money-option" class="payment-option">
-                        <div class="payment-info">
-                            <strong>Money Payment ($${(ench.costNineum / 100).toFixed(2)})</strong>
-                            <p style="margin-top: 8px;">Pay with your credit/debit card via secure Stripe payment.</p>
+                        <div class="payment-method-buttons">
+                            <button class="payment-method-button selected" onclick="selectPaymentMethod('mp')">
+                                ✨ Magic Points
+                            </button>
+                            <button class="payment-method-button" onclick="selectPaymentMethod('money')">
+                                💳 Money
+                            </button>
+                        </div>
+
+                        <div id="mp-option" class="payment-option active">
+                            <div class="payment-info">
+                                <strong>Magic Points Payment (${ench.costMP} MP)</strong>
+                                <p style="margin-top: 8px;">Use your accumulated magic points. Requires a word of power to authorize.</p>
+                            </div>
+                            <div style="margin-top: 12px;">
+                                <input type="text"
+                                       id="word-of-power"
+                                       class="word-of-power-input"
+                                       placeholder="Enter word of power"
+                                       autocomplete="off">
+                                <div class="word-of-power-hint">Whisper the ancient word to unlock your magic...</div>
+                            </div>
+                        </div>
+
+                        <div id="money-option" class="payment-option">
+                            <div class="payment-info">
+                                <strong>Money Payment ($${(ench.costNineum / 100).toFixed(2)})</strong>
+                                <p style="margin-top: 8px;">Pay with your credit/debit card via secure Stripe payment.</p>
+                            </div>
                         </div>
                     </div>
-                </div>
+                `}
 
                 <button class="button button-primary" ${!canCast ? 'disabled' : ''} onclick="castEnchantment('${ench.id}')">
                     Cast ${ench.name}
@@ -766,7 +844,11 @@
                 case 'hasLinks':
                     return userStats.linkCount > 0;
                 case 'hasFunds':
-                    return userStats.mp >= 10 || userStats.nineum >= 100;
+                    // Check if user has MP (for MP-based spells)
+                    return userStats.mp >= 10;
+                case 'alwaysTrue':
+                    // Always passes (for money-only spells that use Stripe)
+                    return true;
                 default:
                     return false;
             }
@@ -803,8 +885,13 @@
             const ench = enchantments.find(e => e.id === enchantmentId);
             if (!ench) return;
 
-            // Validate payment method
-            if (selectedPaymentMethod === 'mp') {
+            // Determine payment method
+            let paymentMethod = 'money';  // Default to money
+
+            // If spell supports MP and user selected MP payment
+            if (ench.mp !== false && selectedPaymentMethod === 'mp') {
+                paymentMethod = 'mp';
+
                 // Validate word of power (CLIENT-SIDE CHECK via SHA256)
                 const wordOfPower = document.getElementById('word-of-power').value.trim();
 
@@ -826,9 +913,6 @@
                     alert(`❌ Insufficient Magic Points! You need ${ench.costMP} MP but only have ${userStats.mp} MP.`);
                     return;
                 }
-            } else if (selectedPaymentMethod === 'money') {
-                // Money payment will go through Addie
-                // No validation needed here, Stripe will handle it
             }
 
             // Show loading
@@ -839,7 +923,7 @@
                 window.webkit.messageHandlers.emporium.postMessage({
                     action: 'castEnchantment',
                     enchantmentId: enchantmentId,
-                    paymentMethod: selectedPaymentMethod
+                    paymentMethod: paymentMethod
                 });
             }
         }

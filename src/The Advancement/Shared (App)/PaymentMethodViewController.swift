@@ -1337,6 +1337,15 @@ class PaymentMethodViewController: UIViewController, WKScriptMessageHandler, WKN
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         NSLog("PAYMENTMETHOD: ✅ WebView loaded successfully")
+
+        // Inject theme CSS variables into the WebView
+        ThemeManager.shared.injectThemeIntoWebView(webView) { success in
+            if success {
+                NSLog("PAYMENTMETHOD: ✅ Theme injected successfully")
+            } else {
+                NSLog("PAYMENTMETHOD: ⚠️ Theme injection failed, using default CSS")
+            }
+        }
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {

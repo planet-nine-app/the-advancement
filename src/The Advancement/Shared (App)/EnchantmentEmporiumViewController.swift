@@ -507,6 +507,21 @@ class EnchantmentEmporiumViewController: UIViewController, WKScriptMessageHandle
         present(alert, animated: true)
     }
 
+    // MARK: - WKNavigationDelegate
+
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        NSLog("EMPORIUM: 🎨 Page loaded, injecting theme...")
+
+        // Inject theme CSS variables into the WebView
+        ThemeManager.shared.injectThemeIntoWebView(webView) { success in
+            if success {
+                NSLog("EMPORIUM: ✅ Theme injected successfully")
+            } else {
+                NSLog("EMPORIUM: ⚠️ Theme injection failed, using default CSS")
+            }
+        }
+    }
+
 }
 
 #endif

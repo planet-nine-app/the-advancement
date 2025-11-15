@@ -124,11 +124,41 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <style>
+        :root {
+            /* Background Colors */
+            --bg-primary: #1a0033;
+            --bg-secondary: #2d0a4e;
+            --bg-black: #000000;
+
+            /* Accent Colors */
+            --accent-success: #10b981;
+            --accent-success-dark: #059669;
+            --accent-purple: #8b5cf6;
+            --accent-purple-light: #a78bfa;
+            --accent-pink: #e91e63;
+            --accent-yellow: #fbbf24;
+
+            /* Text Colors */
+            --text-primary: #e0d4f7;
+
+            /* Alpha Colors (for fills with opacity) */
+            --pink-fill: rgba(233, 30, 99, 0.2);
+            --yellow-fill: rgba(251, 191, 36, 0.15);
+            --purple-fill: rgba(167, 139, 250, 0.15);
+            --purple-input: rgba(139, 92, 246, 0.15);
+            --success-fill: rgba(16, 185, 129, 0.15);
+            --button-active: rgba(16, 185, 129, 0.3);
+
+            /* Drop Shadows */
+            --shadow-purple: rgba(139, 92, 246, 0.5);
+            --shadow-yellow: rgba(251, 191, 36, 0.6);
+        }
+
         * { margin: 0; padding: 0; -webkit-user-select: none; -webkit-user-drag: none; }
-        html, body { width: 100%; min-height: 100%; overflow-x: hidden; background-color: #000000; }
+        html, body { width: 100%; min-height: 100%; overflow-x: hidden; background-color: var(--bg-black); }
         #mainSVG { width: 100vw; min-height: 100vh; display: block; }
         .button-group { cursor: pointer; }
-        .button-group:active rect { fill: rgba(16, 185, 129, 0.3); }
+        .button-group:active rect { fill: var(--button-active); }
         input { -webkit-user-select: text; }
     </style>
 </head>
@@ -152,8 +182,8 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
                 <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
             </filter>
             <radialGradient id="bgGradient" cx="50%" cy="50%" r="70%">
-                <stop offset="0%" style="stop-color:#1a0033; stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#000000; stop-opacity:1" />
+                <stop offset="0%" style="stop-color:var(--bg-primary); stop-opacity:1" />
+                <stop offset="100%" style="stop-color:var(--bg-black); stop-opacity:1" />
             </radialGradient>
         </defs>
 
@@ -161,42 +191,52 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
         <rect width="100" height="140" fill="url(#bgGradient)"/>
 
         <!-- Title -->
-        <text x="50" y="22" text-anchor="middle" style="font-family: -apple-system; font-size: 5px; font-weight: 700; letter-spacing: 0.5px;" fill="#10b981" filter="url(#greenGlow)">
+        <text x="50" y="22" text-anchor="middle" style="font-family: -apple-system; font-size: 5px; font-weight: 700; letter-spacing: 0.5px;" fill="var(--accent-success)" filter="url(#greenGlow)">
             THE ADVANCEMENT
         </text>
 
         <!-- Post Button (top left) -->
         <g id="postPaymentButton" class="button-group">
-            <ellipse cx="15" cy="15" rx="12" ry="9" fill="rgba(233, 30, 99, 0.2)" stroke="#e91e63" stroke-width="0.3" filter="url(#pinkGlow)">
+            <ellipse cx="15" cy="15" rx="12" ry="9" fill="var(--pink-fill)" stroke="var(--accent-pink)" stroke-width="0.3" filter="url(#pinkGlow)">
                 <animate attributeName="opacity" values="0.6;1;0.6" dur="2.5s" repeatCount="indefinite"/>
             </ellipse>
-            <text x="15" y="13" text-anchor="middle" style="font-family: -apple-system; font-size: 1.8px; font-weight: 700; letter-spacing: 0.1px;" fill="#e91e63" filter="url(#pinkGlow)">
+            <text x="15" y="13" text-anchor="middle" style="font-family: -apple-system; font-size: 1.8px; font-weight: 700; letter-spacing: 0.1px;" fill="var(--accent-pink)" filter="url(#pinkGlow)">
                 Push me
             </text>
-            <text x="15" y="17" text-anchor="middle" style="font-family: -apple-system; font-size: 1.8px; font-weight: 700; letter-spacing: 0.1px;" fill="#e91e63" filter="url(#pinkGlow)">
+            <text x="15" y="17" text-anchor="middle" style="font-family: -apple-system; font-size: 1.8px; font-weight: 700; letter-spacing: 0.1px;" fill="var(--accent-pink)" filter="url(#pinkGlow)">
                 to post
             </text>
         </g>
 
         <!-- Carrier Bag Button (top right) -->
         <g id="bagButton" class="button-group">
-            <ellipse cx="85" cy="15" rx="12" ry="9" fill="rgba(233, 30, 99, 0.2)" stroke="#e91e63" stroke-width="0.3" filter="url(#pinkGlow)">
+            <ellipse cx="85" cy="15" rx="12" ry="9" fill="var(--pink-fill)" stroke="var(--accent-pink)" stroke-width="0.3" filter="url(#pinkGlow)">
                 <animate attributeName="opacity" values="0.6;1;0.6" dur="2.5s" repeatCount="indefinite"/>
             </ellipse>
-            <text x="85" y="17" text-anchor="middle" style="font-family: -apple-system; font-size: 3.5px; font-weight: 700; letter-spacing: 0.2px;" fill="#e91e63" filter="url(#pinkGlow)">
+            <text x="85" y="17" text-anchor="middle" style="font-family: -apple-system; font-size: 3.5px; font-weight: 700; letter-spacing: 0.2px;" fill="var(--accent-pink)" filter="url(#pinkGlow)">
                 BAG
+            </text>
+        </g>
+
+        <!-- Debug Theme Button (below BAG button) -->
+        <g id="debugThemeButton" class="button-group">
+            <rect x="74" y="24" width="22" height="7" rx="1" fill="var(--yellow-fill)" stroke="var(--accent-yellow)" stroke-width="0.3" filter="url(#yellowGlow)">
+                <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
+            </rect>
+            <text x="85" y="28.5" text-anchor="middle" style="font-family: -apple-system; font-size: 2px; font-weight: 600; letter-spacing: 0.1px;" fill="var(--accent-yellow)" filter="url(#yellowGlow)">
+                🔵 TEST THEME
             </text>
         </g>
 
         <!-- Enchantment Emporium Button (center below title) -->
         <g id="emporiumButton" class="button-group">
-            <ellipse cx="50" cy="28" rx="18" ry="6" fill="rgba(167, 139, 250, 0.15)" stroke="#a78bfa" stroke-width="0.3" filter="url(#purpleGlow)">
+            <ellipse cx="50" cy="28" rx="18" ry="6" fill="var(--purple-fill)" stroke="var(--accent-purple-light)" stroke-width="0.3" filter="url(#purpleGlow)">
                 <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite"/>
             </ellipse>
-            <text x="42" y="29.5" text-anchor="middle" style="font-family: -apple-system; font-size: 2.5px; font-weight: 600; letter-spacing: 0.1px;" fill="#fbbf24" filter="url(#yellowGlow)">
+            <text x="42" y="29.5" text-anchor="middle" style="font-family: -apple-system; font-size: 2.5px; font-weight: 600; letter-spacing: 0.1px;" fill="var(--accent-yellow)" filter="url(#yellowGlow)">
                 ✨
             </text>
-            <text x="50" y="29.5" text-anchor="middle" style="font-family: -apple-system; font-size: 2.2px; font-weight: 600; letter-spacing: 0.15px;" fill="#a78bfa" filter="url(#purpleGlow)">
+            <text x="50" y="29.5" text-anchor="middle" style="font-family: -apple-system; font-size: 2.2px; font-weight: 600; letter-spacing: 0.15px;" fill="var(--accent-purple-light)" filter="url(#purpleGlow)">
                 Enchantment Emporium
             </text>
         </g>
@@ -210,18 +250,18 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
         <g id="inputArea" transform="translate(0, 102)">
             <!-- POST Button -->
             <g id="postButton" class="button-group">
-                <rect x="30" y="15" width="40" height="8" rx="1" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="0.25" filter="url(#greenGlow)" opacity="0.9">
+                <rect x="30" y="15" width="40" height="8" rx="1" fill="var(--success-fill)" stroke="var(--accent-success)" stroke-width="0.25" filter="url(#greenGlow)" opacity="0.9">
                     <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
                 </rect>
-                <text x="50" y="20" text-anchor="middle" style="font-family: -apple-system; font-size: 3px; font-weight: 600; letter-spacing: 0.3px;" fill="#10b981" filter="url(#greenGlow)">
+                <text x="50" y="20" text-anchor="middle" style="font-family: -apple-system; font-size: 3px; font-weight: 600; letter-spacing: 0.3px;" fill="var(--accent-success)" filter="url(#greenGlow)">
                     POST
                 </text>
             </g>
 
             <!-- Keyboard Installation Notice (hidden by default, moved down 20 units) -->
             <g id="keyboardNotice" class="button-group" opacity="0">
-                <rect x="10" y="45" width="80" height="6" rx="1" fill="rgba(251, 191, 36, 0.1)" stroke="#fbbf24" stroke-width="0.2" opacity="0.8"/>
-                <text x="50" y="49" text-anchor="middle" style="font-family: -apple-system; font-size: 2px; font-weight: 500; letter-spacing: 0.1px;" fill="#fbbf24" opacity="0.9">
+                <rect x="10" y="45" width="80" height="6" rx="1" fill="var(--yellow-fill)" stroke="var(--accent-yellow)" stroke-width="0.2" opacity="0.8"/>
+                <text x="50" y="49" text-anchor="middle" style="font-family: -apple-system; font-size: 2px; font-weight: 500; letter-spacing: 0.1px;" fill="var(--text-primary)" opacity="0.9">
                     ⌨️ Enable AdvanceKey in Settings
                 </text>
             </g>
@@ -230,7 +270,7 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
 
     <!-- HTML input styled to look like the purple SVG rect -->
     <div style="position: absolute; top: calc(102 / 140 * 100vh); left: 10vw; width: 80vw; height: calc(10 / 140 * 100vh); pointer-events: auto;">
-        <input type="text" id="textInput" placeholder="Enter text to post..." style="width: 100%; height: 100%; background: rgba(139, 92, 246, 0.15); border: 1px solid #8b5cf6; border-radius: 4px; outline: none; color: #8b5cf6; font-family: -apple-system; font-size: 2.5vh; font-weight: 500; pointer-events: auto; padding: 0 2vw; box-sizing: border-box; filter: drop-shadow(0 0 8px rgba(139, 92, 246, 0.5));" />
+        <input type="text" id="textInput" placeholder="Enter text to post..." style="width: 100%; height: 100%; background: var(--purple-input); border: 1px solid var(--accent-purple); border-radius: 4px; outline: none; color: var(--text-primary); font-family: -apple-system; font-size: 2.5vh; font-weight: 500; pointer-events: auto; padding: 0 2vw; box-sizing: border-box; filter: drop-shadow(0 0 8px var(--shadow-purple));" />
     </div>
 
     <script>
@@ -340,6 +380,16 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             // Send to Swift
             webkit.messageHandlers.mainApp.postMessage({
                 action: 'openEmporium'
+            });
+        });
+
+        // Debug Theme button click handler
+        document.getElementById('debugThemeButton').addEventListener('click', function() {
+            console.log('🔵 Debug Theme button clicked');
+
+            // Send to Swift
+            webkit.messageHandlers.mainApp.postMessage({
+                action: 'applyDebugTheme'
             });
         });
 
@@ -460,6 +510,13 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             const currentBDOs = displayArea.querySelectorAll('g').length;
             const yOffset = currentBDOs * 25;
 
+            // Get CSS variables from computed style
+            const rootStyles = getComputedStyle(document.documentElement);
+            const pinkFill = rootStyles.getPropertyValue('--pink-fill').trim();
+            const accentPink = rootStyles.getPropertyValue('--accent-pink').trim();
+            const accentYellow = rootStyles.getPropertyValue('--accent-yellow').trim();
+            const shadowYellow = rootStyles.getPropertyValue('--shadow-yellow').trim();
+
             // Create SVG for this BDO
             const bdoGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             bdoGroup.setAttribute('transform', `translate(0, ${yOffset})`);
@@ -471,8 +528,8 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             rect.setAttribute('width', '80');
             rect.setAttribute('height', '20');
             rect.setAttribute('rx', '1');
-            rect.setAttribute('fill', 'rgba(236, 72, 153, 0.15)');
-            rect.setAttribute('stroke', '#ec4899');
+            rect.setAttribute('fill', pinkFill);
+            rect.setAttribute('stroke', accentPink);
             rect.setAttribute('stroke-width', '0.25');
             rect.setAttribute('filter', 'url(#pinkGlow)');
             bdoGroup.appendChild(rect);
@@ -483,7 +540,7 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             text.setAttribute('y', '8');
             text.setAttribute('text-anchor', 'middle');
             text.setAttribute('style', 'font-family: -apple-system; font-size: 3px; font-weight: 600;');
-            text.setAttribute('fill', '#ec4899');
+            text.setAttribute('fill', accentPink);
             text.textContent = bdoData.text;
             bdoGroup.appendChild(text);
 
@@ -497,7 +554,7 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
                 top: calc(${totalYOffset} / 140 * 100vh + 12vh);
                 left: 50%;
                 transform: translateX(-50%);
-                color: #fbbf24;
+                color: ${accentYellow};
                 font-family: -apple-system;
                 font-size: 4vh;
                 font-weight: 400;
@@ -505,7 +562,7 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
                 user-select: text;
                 -webkit-user-select: text;
                 pointer-events: auto;
-                filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.6));
+                filter: drop-shadow(0 0 8px ${shadowYellow});
                 letter-spacing: 0.2em;
             `;
             emojiOverlay.textContent = bdoData.emojicode || '🌟';
@@ -557,6 +614,8 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             openKeyboardSettings()
         } else if action == "openEmporium" {
             openEnchantmentEmporium()
+        } else if action == "applyDebugTheme" {
+            applyDebugTestTheme()
         }
     }
 
@@ -898,6 +957,39 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
         navController.modalPresentationStyle = .fullScreen
 
         present(navController, animated: true)
+    }
+
+    // MARK: - Debug Theme
+
+    private func applyDebugTestTheme() {
+        NSLog("🔵 Applying debug test theme...")
+
+        // Apply the debug theme in ThemeManager
+        ThemeManager.shared.applyDebugTestTheme()
+
+        // Inject theme into main screen's WebView
+        ThemeManager.shared.injectThemeIntoWebView(webView) { [weak self] success in
+            if success {
+                NSLog("MAINVC: ✅ Debug theme injected into main screen")
+            } else {
+                NSLog("MAINVC: ⚠️ Failed to inject debug theme into main screen")
+            }
+
+            // Show confirmation
+            let alert = UIAlertController(
+                title: "🔵 Debug Theme Applied",
+                message: "Test theme applied with:\n• Blue background\n• Light gray text\n• White highlights\n• Red accents\n\nTheme is now active on main screen and will apply to Enchantment Emporium when opened!",
+                preferredStyle: .alert
+            )
+
+            alert.addAction(UIAlertAction(title: "Open Emporium", style: .default) { [weak self] _ in
+                self?.openEnchantmentEmporium()
+            })
+
+            alert.addAction(UIAlertAction(title: "OK", style: .cancel))
+
+            self?.present(alert, animated: true)
+        }
     }
 
     // MARK: - Payment Methods

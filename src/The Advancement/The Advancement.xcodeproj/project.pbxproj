@@ -107,6 +107,7 @@
 				Resources/PaymentMethod.html,
 				Resources/Script.js,
 				Resources/Style.css,
+				ThemeManager.swift,
 				ViewController.swift,
 			);
 			target = CA54CAFD2E5A0A99007D062D /* The Advancement (iOS) */;

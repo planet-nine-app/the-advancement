@@ -211,6 +211,18 @@ open http://localhost:3456
 - **Architecture**: Client → Glyphenge (adds svgContent) → BDO Service (storage)
 - **Code Reduction**: Clients simplified by 200-350 lines by removing SVG generation
 - **Word of Power Protection**: Client-side SHA256 validation for MP payments (see below)
+- **Enchantment Emporium Integration**: Available as $15 spell in iOS/Android apps (25% discount vs $20 website price)
+
+### ✅ **Enchantment Emporium Glyphenge Spell** (November 2025)
+- **App-Exclusive Pricing**: $15 via Enchantment Emporium vs $20 on website (25% app discount)
+- **Money-Only Payment**: $15 via Stripe (no MP or nineum involved)
+- **Spell Properties**: `mp: false`, `cost: 1500` (where 100 = $1)
+- **Enhanced Benefits Display**: 9 style categories, 3 adaptive layouts, custom templates, no tracking
+- **Shared Implementation**: Single EnchantmentEmporium.html file used by both iOS and Android
+- **Simplified UI**: Money-only spells show payment info directly without payment method selector
+- **Requirements**: At least 1 link in carrierBag + `alwaysTrue` check (Stripe handles payment validation)
+- **Success Flow**: Cast spell → Stripe payment → Create tapestry via Glyphenge service → Display emojicode → Save to carrierBag
+- **File**: `src/The Advancement/Shared (App)/Resources/EnchantmentEmporium.html`
 
 ### ✅ **Client-Side Word of Power Validation** (January 2025)
 - **Browser-Based Security**: Word of power validation happens entirely in the browser using SHA256 hashing

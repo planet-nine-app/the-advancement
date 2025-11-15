@@ -1,0 +1,54 @@
+{
+  "name": "Planet Nine Dark",
+  "version": "1.0",
+  "colors": {
+    "background": {
+      "primary": "#1a0033",
+      "secondary": "#2d0a4e",
+      "overlay": "rgba(255, 255, 255, 0.05)",
+      "overlayDark": "rgba(0, 0, 0, 0.8)"
+    },
+    "accent": {
+      "primary": "#fbbf24",
+      "secondary": "#a78bfa",
+      "success": "#10b981",
+      "successDark": "#059669",
+      "error": "#ef4444",
+      "purple": "#8b5cf6",
+      "purpleDark": "#7c3aed",
+      "pink": "#ec4899",
+      "pinkDark": "#db2777"
+    },
+    "text": {
+      "primary": "#e0d4f7",
+      "secondary": "#d1c4e9",
+      "muted": "#a78bfa"
+    },
+    "border": {
+      "primary": "rgba(167, 139, 250, 0.3)",
+      "active": "#a78bfa",
+      "success": "rgba(16, 185, 129, 0.3)",
+      "successActive": "#10b981"
+    },
+    "button": {
+      "successStart": "#10b981",
+      "successEnd": "#059669",
+      "secondaryBg": "rgba(167, 139, 250, 0.2)",
+      "secondaryText": "#a78bfa",
+      "secondaryBorder": "rgba(167, 139, 250, 0.5)",
+      "disabled": "#4b5563"
+    },
+    "card": {
+      "bgStart": "rgba(167, 139, 250, 0.1)",
+      "bgEnd": "rgba(139, 92, 246, 0.1)",
+      "borderDefault": "rgba(167, 139, 250, 0.3)",
+      "borderHover": "#a78bfa"
+    },
+    "shadow": {
+      "accent": "rgba(251, 191, 36, 0.5)",
+      "success": "rgba(16, 185, 129, 0.4)",
+      "successHover": "rgba(16, 185, 129, 0.6)",
+      "card": "rgba(167, 139, 250, 0.3)"
+    }
+  }
+}
