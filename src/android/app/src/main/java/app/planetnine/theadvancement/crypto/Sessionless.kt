@@ -216,4 +216,154 @@ class Sessionless(context: Context) {
 
         Log.d(TAG, "Keys cleared from storage")
     }
+
+    // MARK: - Multi-Base Key Management
+
+    /**
+     * Get keys for a specific base URL
+     * Returns null if no keys exist for this base
+     */
+    fun getKeys(forBase: String): Keys? {
+        Log.d(TAG, "Getting keys for base: $forBase")
+
+        val sanitizedBase = sanitizeBaseURL(forBase)
+        val privateKey = prefs.getString("${sanitizedBase}_private", null)
+        val publicKey = prefs.getString("${sanitizedBase}_public", null)
+
+        return if (privateKey != null && publicKey != null) {
+            Log.d(TAG, "Found keys for base: $sanitizedBase")
+            Keys(publicKey, privateKey)
+        } else {
+            Log.d(TAG, "No keys found for base: $sanitizedBase")
+            null
+        }
+    }
+
+    /**
+     * Save keys for a specific base URL
+     * Returns true if successful, false otherwise
+     */
+    fun saveKeys(keys: Keys, forBase: String): Boolean {
+        return try {
+            Log.d(TAG, "Saving keys for base: $forBase")
+
+            val sanitizedBase = sanitizeBaseURL(forBase)
+
+            // Delete existing keys for this base first
+            deleteKeys(forBase)
+
+            // Save new keys
+            prefs.edit()
+                .putString("${sanitizedBase}_private", keys.privateKey)
+                .putString("${sanitizedBase}_public", keys.publicKey)
+                .apply()
+
+            Log.d(TAG, "Keys saved for base: $sanitizedBase")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to save keys for base: $forBase", e)
+            false
+        }
+    }
+
+    /**
+     * Delete keys for a specific base URL
+     * Returns true if successful, false otherwise
+     */
+    fun deleteKeys(forBase: String): Boolean {
+        return try {
+            Log.d(TAG, "Deleting keys for base: $forBase")
+
+            val sanitizedBase = sanitizeBaseURL(forBase)
+
+            prefs.edit()
+                .remove("${sanitizedBase}_private")
+                .remove("${sanitizedBase}_public")
+                .apply()
+
+            Log.d(TAG, "Keys deleted for base: $sanitizedBase")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to delete keys for base: $forBase", e)
+            false
+        }
+    }
+
+    /**
+     * Get all base URLs that have keys stored
+     * Returns a list of base URLs (unsanitized)
+     */
+    fun getAllBasesWithKeys(): List<String> {
+        Log.d(TAG, "Getting all bases with keys")
+
+        val allKeys = prefs.all.keys
+        val bases = mutableSetOf<String>()
+
+        // Find all keys ending with "_private" or "_public"
+        for (key in allKeys) {
+            if (key.endsWith("_private") || key.endsWith("_public")) {
+                // Remove the suffix to get the sanitized base
+                val sanitizedBase = key.removeSuffix("_private").removeSuffix("_public")
+
+                // Skip the default keys (no base prefix)
+                if (sanitizedBase == KEY_PRIVATE || sanitizedBase == KEY_PUBLIC) {
+                    continue
+                }
+
+                bases.add(sanitizedBase)
+            }
+        }
+
+        Log.d(TAG, "Found ${bases.size} bases with keys")
+        return bases.toList()
+    }
+
+    /**
+     * Migrate existing single-key storage to multi-base storage
+     * Useful for upgrading from old version to new multi-base system
+     * Returns true if migration successful or no migration needed
+     */
+    fun migrateToMultiBase(defaultBase: String): Boolean {
+        return try {
+            Log.d(TAG, "Migrating to multi-base storage with default base: $defaultBase")
+
+            // Check if default keys exist
+            val existingKeys = getKeys()
+            if (existingKeys == null) {
+                Log.d(TAG, "No existing keys to migrate")
+                return true
+            }
+
+            // Save to the specified base
+            val success = saveKeys(existingKeys, defaultBase)
+
+            if (success) {
+                Log.d(TAG, "Successfully migrated keys to base: $defaultBase")
+            } else {
+                Log.e(TAG, "Failed to migrate keys to base: $defaultBase")
+            }
+
+            success
+        } catch (e: Exception) {
+            Log.e(TAG, "Migration failed", e)
+            false
+        }
+    }
+
+    /**
+     * Sanitize base URL to create a valid SharedPreferences key
+     * Converts URL to a safe identifier by replacing special characters
+     *
+     * Examples:
+     * - "https://localhost:5116" -> "localhost_5116"
+     * - "http://example.com:8080/path" -> "example_com_8080_path"
+     */
+    private fun sanitizeBaseURL(baseURL: String): String {
+        return baseURL
+            .replace("https://", "")
+            .replace("http://", "")
+            .replace(":", "_")
+            .replace("/", "_")
+            .replace(".", "_")
+    }
 }

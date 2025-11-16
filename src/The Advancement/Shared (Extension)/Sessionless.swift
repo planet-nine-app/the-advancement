@@ -257,7 +257,203 @@ public class Sessionless {
         }
         return nil
     }
-    
+
+    // MARK: - Multi-Base Key Management
+
+    /// Get keys for a specific base
+    public func getKeys(forBase baseURL: String) -> Keys? {
+        logger.info("ADVANCEMENT - 🔑 Getting keys for base: \(baseURL)")
+
+        let service = "sessionless_keys_\(sanitizeBaseURL(baseURL))"
+
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: "privateKey",
+            kSecAttrAccessGroup as String: keychainAccessGroup,
+            kSecReturnData as String: true
+        ]
+
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        if status != errSecSuccess {
+            if status == errSecItemNotFound {
+                logger.info("ADVANCEMENT - No keys found for base: \(baseURL)")
+            } else {
+                logger.error("ADVANCEMENT - ❌ Failed to retrieve keys for base \(baseURL): \(status)")
+            }
+            return nil
+        }
+
+        guard let data = result as? Data,
+              let privateKey = String(data: data, encoding: .utf8) else {
+            logger.error("ADVANCEMENT - ❌ Failed to decode keys for base: \(baseURL)")
+            return nil
+        }
+
+        // Derive public key from private key
+        guard let publicKey = derivePublicKey(from: privateKey) else {
+            logger.error("ADVANCEMENT - ❌ Failed to derive public key for base: \(baseURL)")
+            return nil
+        }
+
+        logger.info("ADVANCEMENT - ✅ Keys retrieved for base: \(baseURL)")
+        logger.debug("ADVANCEMENT - Public key: \(String(publicKey.prefix(20)))...")
+        return Keys(publicKey: publicKey, privateKey: privateKey)
+    }
+
+    /// Save keys for a specific base
+    public func saveKeys(_ keys: Keys, forBase baseURL: String) -> Bool {
+        logger.info("ADVANCEMENT - 💾 Saving keys for base: \(baseURL)")
+
+        let service = "sessionless_keys_\(sanitizeBaseURL(baseURL))"
+
+        // Delete existing keys first
+        deleteKeys(forBase: baseURL)
+
+        guard let data = keys.privateKey.data(using: .utf8) else {
+            logger.error("ADVANCEMENT - ❌ Failed to encode private key for base: \(baseURL)")
+            return false
+        }
+
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: "privateKey",
+            kSecAttrAccessGroup as String: keychainAccessGroup,
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+        ]
+
+        let status = SecItemAdd(query as CFDictionary, nil)
+
+        if status == errSecSuccess {
+            logger.info("ADVANCEMENT - ✅ Keys saved for base: \(baseURL)")
+            return true
+        } else {
+            logger.error("ADVANCEMENT - ❌ Failed to save keys for base \(baseURL): \(status)")
+            return false
+        }
+    }
+
+    /// Delete keys for a specific base
+    public func deleteKeys(forBase baseURL: String) -> Bool {
+        logger.info("ADVANCEMENT - 🗑️ Deleting keys for base: \(baseURL)")
+
+        let service = "sessionless_keys_\(sanitizeBaseURL(baseURL))"
+
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: "privateKey",
+            kSecAttrAccessGroup as String: keychainAccessGroup
+        ]
+
+        let status = SecItemDelete(query as CFDictionary)
+
+        if status == errSecSuccess {
+            logger.info("ADVANCEMENT - ✅ Keys deleted for base: \(baseURL)")
+            return true
+        } else if status == errSecItemNotFound {
+            logger.info("ADVANCEMENT - No keys to delete for base: \(baseURL)")
+            return true
+        } else {
+            logger.error("ADVANCEMENT - ❌ Failed to delete keys for base \(baseURL): \(status)")
+            return false
+        }
+    }
+
+    /// Get all base URLs that have stored keys
+    public func getAllBasesWithKeys() -> [String] {
+        logger.info("ADVANCEMENT - 📋 Fetching all bases with stored keys...")
+
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccessGroup as String: keychainAccessGroup,
+            kSecMatchLimit as String: kSecMatchLimitAll,
+            kSecReturnAttributes as String: true
+        ]
+
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        guard status == errSecSuccess,
+              let items = result as? [[String: Any]] else {
+            logger.info("ADVANCEMENT - No bases with keys found")
+            return []
+        }
+
+        // Filter for sessionless_keys_* services and extract base URLs
+        let bases = items.compactMap { item -> String? in
+            guard let service = item[kSecAttrService as String] as? String,
+                  service.hasPrefix("sessionless_keys_") else {
+                return nil
+            }
+            return String(service.dropFirst("sessionless_keys_".count))
+        }
+
+        logger.info("ADVANCEMENT - ✅ Found \(bases.count) bases with keys")
+        return bases
+    }
+
+    /// Migrate existing single-key storage to multi-base storage
+    public func migrateToMultiBase(defaultBase: String) -> Bool {
+        logger.info("ADVANCEMENT - 🔄 Migrating to multi-base key storage...")
+
+        // Get existing keys using old method
+        guard let existingKeys = getKeys() else {
+            logger.info("ADVANCEMENT - No existing keys to migrate")
+            return false
+        }
+
+        // Save to default base
+        let success = saveKeys(existingKeys, forBase: defaultBase)
+
+        if success {
+            logger.info("ADVANCEMENT - ✅ Migration successful - keys saved for base: \(defaultBase)")
+            logger.info("ADVANCEMENT - Note: Old keys still exist in keychain for backward compatibility")
+        } else {
+            logger.error("ADVANCEMENT - ❌ Migration failed")
+        }
+
+        return success
+    }
+
+    // MARK: - Private Helpers
+
+    /// Sanitize base URL for use as keychain identifier
+    private func sanitizeBaseURL(_ baseURL: String) -> String {
+        // Remove protocol and special characters
+        return baseURL
+            .replacingOccurrences(of: "https://", with: "")
+            .replacingOccurrences(of: "http://", with: "")
+            .replacingOccurrences(of: ":", with: "_")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: ".", with: "_")
+    }
+
+    /// Derive public key from private key using JavaScript crypto
+    private func derivePublicKey(from privateKey: String) -> String? {
+        guard let jsContext = jsContext,
+              let sessionless = jsContext.objectForKeyedSubscript("globalThis")?.objectForKeyedSubscript("sessionless"),
+              let getPublicKey = sessionless.objectForKeyedSubscript("getPublicKey") else {
+            logger.error("ADVANCEMENT - ❌ Cannot derive public key: crypto.js not loaded")
+            return nil
+        }
+
+        guard let result = getPublicKey.call(withArguments: [privateKey]) else {
+            logger.error("ADVANCEMENT - ❌ Failed to call getPublicKey")
+            return nil
+        }
+
+        // Result should be a byte array
+        let pubKeyData = Data(bytes: result.toArray() as [UInt8])
+        let pubKeyHex = pubKeyData.hexEncodedString()
+
+        return pubKeyHex
+    }
+
     public func sign(message: String) -> String? {
         logger.info("ADVANCEMENT - 🖊️ Signing message...")
 

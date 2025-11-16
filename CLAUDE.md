@@ -80,6 +80,18 @@ open http://localhost:3456
 - **Test Keys Support**: Stripe test keys configured in Docker container for development
 - **Complete Flow**: HTML form → Swift/Kotlin → Backend → Stripe Issuing API
 
+### ✅ **Multi-Base Sessionless Key Storage** (January 2025)
+- **Separate Keys Per Base**: Store unique cryptographic keys for each Planet Nine base
+- **Secure Isolation**: Each base's keys stored independently for enhanced security
+- **iOS Keychain**: Separate keychain items per base (e.g., "sessionless_keys_localhost_5116")
+- **Android SharedPreferences**: Suffixed keys per base (e.g., "localhost_5116_private")
+- **URL Sanitization**: Automatic conversion of URLs to valid storage identifiers
+- **Migration Support**: Backward-compatible migration from single-key to multi-base storage
+- **Key Management Methods**: getKeys(forBase:), saveKeys(_:forBase:), deleteKeys(forBase:), getAllBasesWithKeys()
+- **Cross-Platform**: Identical API on both iOS (Swift) and Android (Kotlin)
+- **Comprehensive Logging**: Full visibility into key operations for debugging
+- **Future-Proof**: Enables seamless cross-base authentication and commerce
+
 ### ✅ **Ad Covering System** (September 2025)
 - **Dual Mode Experience**: Peaceful ficus plants OR interactive slime monsters
 - **Real-Time Detection**: MutationObserver-based ad scanning
