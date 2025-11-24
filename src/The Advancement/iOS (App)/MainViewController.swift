@@ -228,6 +228,16 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             </text>
         </g>
 
+        <!-- Connect from Web Button (below post button, on left) -->
+        <g id="webHandoffButton" class="button-group">
+            <rect x="4" y="24" width="22" height="7" rx="1" fill="var(--success-fill)" stroke="var(--accent-success)" stroke-width="0.3" filter="url(#greenGlow)">
+                <animate attributeName="opacity" values="0.7;1;0.7" dur="2s" repeatCount="indefinite"/>
+            </rect>
+            <text x="15" y="28.5" text-anchor="middle" style="font-family: -apple-system; font-size: 1.8px; font-weight: 600; letter-spacing: 0.1px;" fill="var(--accent-success)" filter="url(#greenGlow)">
+                Connect from Web
+            </text>
+        </g>
+
         <!-- Enchantment Emporium Button (center below title) -->
         <g id="emporiumButton" class="button-group">
             <ellipse cx="50" cy="28" rx="18" ry="6" fill="var(--purple-fill)" stroke="var(--accent-purple-light)" stroke-width="0.3" filter="url(#purpleGlow)">
@@ -390,6 +400,16 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             // Send to Swift
             webkit.messageHandlers.mainApp.postMessage({
                 action: 'applyDebugTheme'
+            });
+        });
+
+        // Connect from Web button click handler
+        document.getElementById('webHandoffButton').addEventListener('click', function() {
+            console.log('🌐 Connect from Web button clicked');
+
+            // Send to Swift
+            webkit.messageHandlers.mainApp.postMessage({
+                action: 'openWebHandoff'
             });
         });
 
@@ -616,6 +636,8 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
             openEnchantmentEmporium()
         } else if action == "applyDebugTheme" {
             applyDebugTestTheme()
+        } else if action == "openWebHandoff" {
+            openWebHandoff()
         }
     }
 
@@ -954,6 +976,18 @@ class MainViewController: UIViewController, WKNavigationDelegate, WKScriptMessag
 
         let emporiumVC = EnchantmentEmporiumViewController()
         let navController = UINavigationController(rootViewController: emporiumVC)
+        navController.modalPresentationStyle = .fullScreen
+
+        present(navController, animated: true)
+    }
+
+    // MARK: - Web Handoff
+
+    private func openWebHandoff() {
+        NSLog("🌐 Opening Web Handoff")
+
+        let handoffVC = WebHandoffViewController()
+        let navController = UINavigationController(rootViewController: handoffVC)
         navController.modalPresentationStyle = .fullScreen
 
         present(navController, animated: true)

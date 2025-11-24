@@ -37,6 +37,7 @@ public struct Configuration {
         case sanora = "sanora"
         case covenant = "covenant"
         case dolores = "dolores"
+        case linkitylink = "linkitylink"
     }
 
     // MARK: - URL Generation
@@ -66,6 +67,8 @@ public struct Configuration {
                 port = portBase + 22
             case .dolores:
                 port = portBase + 18
+            case .linkitylink:
+                port = 3010  // linkitylink service (not part of allyabase ecosystem)
             }
             return "http://127.0.0.1:\(port)"
 
@@ -86,6 +89,8 @@ public struct Configuration {
                 port = 3011
             case .dolores:
                 port = 3007
+            case .linkitylink:
+                port = 3010
             }
             return "http://localhost:\(port)"
 
@@ -121,6 +126,9 @@ public struct Configuration {
 
     /// Dolores service base URL (Discovery/audio service)
     public static let doloresBaseURL: String = serviceURL(for: .dolores)
+
+    /// Linkitylink service base URL (Link page service)
+    public static let linkitylinkBaseURL: String = serviceURL(for: .linkitylink)
 
     // MARK: - Common Endpoints
 
@@ -200,6 +208,24 @@ public struct Configuration {
 
         public static var baseURL: String {
             return doloresBaseURL
+        }
+    }
+
+    public struct Linkitylink {
+        public static func getHandoff(token: String) -> String {
+            return "\(linkitylinkBaseURL)/handoff/\(token)"
+        }
+
+        public static func verifySequence(token: String) -> String {
+            return "\(linkitylinkBaseURL)/handoff/\(token)/verify"
+        }
+
+        public static func completeHandoff(token: String) -> String {
+            return "\(linkitylinkBaseURL)/handoff/\(token)/complete"
+        }
+
+        public static var baseURL: String {
+            return linkitylinkBaseURL
         }
     }
 
